@@ -6,5 +6,4 @@ author: imarshallwidjaja
 license: MIT
 type: hybrid
 dependencies:
-  apm:
-  - /home/ivan/Projects/custom-opencode-configs
+  apm: []
