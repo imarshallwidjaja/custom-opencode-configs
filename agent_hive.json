@@ -1,0 +1,112 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tctinh/agent-hive/main/packages/opencode-hive/schema/agent_hive.schema.json",
+  "agentMode": "dedicated",
+  "delegateMode": "task",
+  "disableMcps": [
+    "context7"
+  ],
+  "agents": {
+    "hive-master": {
+      "model": "github-copilot/gpt-5.4",
+      "variant": "high",
+      "temperature": 0.7,
+      "autoLoadSkills": [
+        "parallel-exploration"
+      ]
+    },
+    "architect-planner": {
+      "model": "github-copilot/gpt-5.4",
+      "variant": "high",
+      "temperature": 1,
+      "autoLoadSkills": [
+        "brainstorming",
+        "writing-plans",
+        "parallel-exploration"
+      ]
+    },
+    "swarm-orchestrator": {
+      "model": "github-copilot/gpt-5.4",
+      "variant": "high",
+      "temperature": 1,
+      "autoLoadSkills": [
+        "dispatching-parallel-agents",
+        "parallel-exploration",
+        "executing-plans"
+      ]
+    },
+    "scout-researcher": {
+      "model": "github-copilot/claude-sonnet-4.6",
+      "variant": "high",
+      "temperature": 1,
+      "autoLoadSkills": []
+    },
+    "forager-worker": {
+      "model": "github-copilot/gpt-5.3-codex",
+      "variant": "high",
+      "temperature": 0.7,
+      "autoLoadSkills": [
+        "verification-before-completion"
+      ]
+    },
+    "hygienic-reviewer": {
+      "model": "github-copilot/gpt-5.4",
+      "variant": "high",
+      "temperature": 0.3,
+      "autoLoadSkills": [
+        "code-reviewer"
+      ]
+    }
+  },
+  "customAgents": {
+    "forager-smart": {
+      "baseAgent": "forager-worker",
+      "description": "Only use this worker for tasks that require a high level of intelligence, reasoning, and creativity to solve complex problems that are not well defined or have many steps or decisions to make.",
+      "model": "github-copilot/gpt-5.4",
+      "variant": "high",
+      "temperature": 1
+    },
+    "forager-capable": {
+      "baseAgent": "forager-worker",
+      "description": "Only use this worker for tasks that require an agent that has extra capabilities to write better code and make use of complex tools calls to complete multiple actions.",
+      "model": "github-copilot/claude-opus-4.6",
+      "variant": "high",
+      "temperature": 0.7
+    },
+    "forager-documents": {
+      "baseAgent": "forager-worker",
+      "description": "Use this worker for document-heavy tasks. This includes things like writing documentation, creating reports, and other non-code documents.",
+      "model": "github-copilot/gpt-5.4",
+      "variant": "high",
+      "temperature": 1,
+      "autoLoadSkills": [
+        "humanizer",
+        "stop-slop"
+      ]
+    },
+    "forager-simple": {
+      "baseAgent": "forager-worker",
+      "description": "Only use this worker for tasks that require a low level of intelligence and creativity which are well defined and do not have many interdependent steps or decisions to make.",
+      "model": "github-copilot/claude-sonnet-4.6",
+      "variant": "high",
+      "temperature": 0.5
+    },
+    "hygienic-reviewer-documents": {
+      "baseAgent": "hygienic-reviewer",
+      "description": "Use this reviewer for reviewing documents that are not majorly code. This includes things like implementation plans, technical specifications, and other non-code documents.",
+      "model": "github-copilot/gpt-5.4",
+      "variant": "high",
+      "temperature": 1,
+      "autoLoadSkills": [
+        "humanizer",
+        "stop-slop"
+      ]
+    },
+    "hygienic-reviewer-ultrabrain": {
+      "baseAgent": "hygienic-reviewer",
+      "description": "Only use this reviewer for deep logical reasoning and complex architectural decisions. It is used when the orchestrator hits a wall and needs high-intelligence strategic backup.",
+      "model": "github-copilot/gpt-5.4",
+      "variant": "xhigh",
+      "temperature": 1
+    }
+  }
+}
