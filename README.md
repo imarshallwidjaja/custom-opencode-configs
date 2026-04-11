@@ -65,6 +65,36 @@ Optional:
 
 - `CONTEXT7_API_KEY` if you want to enable the bundled `context7` remote MCP entry in `opencode.json`
 
+### Copy-paste quick start
+
+For a fresh machine with the shared AGENTS profile:
+
+```bash
+curl -fsSL https://opencode.ai/install | bash
+git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
+cd custom-opencode-configs
+opencode auth login -p github-copilot
+./scripts/install-profile.sh
+opencode
+```
+
+For a fresh machine with the sanitized personal-default AGENTS profile:
+
+```bash
+curl -fsSL https://opencode.ai/install | bash
+git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
+cd custom-opencode-configs
+opencode auth login -p github-copilot
+OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
+opencode
+```
+
+Where:
+
+- the repository clone requires GitHub access to the private repo
+- `opencode auth login -p github-copilot` requires a GitHub account with Copilot access
+- the first `opencode` run should fetch `opencode-hive@latest` automatically from the plugin config
+
 ### Fresh machine setup
 
 1. Install OpenCode:
@@ -73,7 +103,12 @@ Optional:
 curl -fsSL https://opencode.ai/install | bash
 ```
 
-2. Clone this repository.
+2. Clone this repository:
+
+```bash
+git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
+cd custom-opencode-configs
+```
 
 3. Authenticate OpenCode to GitHub Copilot:
 
@@ -87,6 +122,12 @@ opencode auth login -p github-copilot
 ./scripts/install-profile.sh
 ```
 
+To install the sanitized personal-default AGENTS profile instead:
+
+```bash
+OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
+```
+
 5. Optional but recommended with OpenCode: install the Agent Hive VS Code extension for plan review, sidebar status, and comments:
 
 ```bash
@@ -95,7 +136,13 @@ code --install-extension tctinh.vscode-hive
 
 If the `code` CLI is not available, install `Agent Hive` from the VS Code marketplace manually.
 
-6. If you want optional MCP or LSP bundles, install their prerequisites first and then apply the relevant snippet with `scripts/enable-optional.sh`.
+6. Start OpenCode once and let it resolve the plugin from `opencode.json`:
+
+```bash
+opencode
+```
+
+7. If you want optional MCP or LSP bundles, install their prerequisites first and then apply the relevant snippet with `scripts/enable-optional.sh`.
 
 ## AGENTS profiles
 
@@ -105,18 +152,6 @@ Available profiles:
 
 - `shared`: the portable default
 - `personal-default`: the portable default plus a sanitized version of the author's preferred operating and writing voice
-
-Install the default shared profile:
-
-```bash
-./scripts/install-profile.sh
-```
-
-Install the sanitized personal-default profile:
-
-```bash
-OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
-```
 
 Install into the default global config directory:
 
@@ -138,6 +173,15 @@ The installer does two things:
 2. Copies the packaged `.apm/skills`, `.apm/agents`, and `.apm/prompts` payload into the same config tree.
 
 If the target directory already contains config, the installer creates a timestamped backup under `~/.config/opencode/.backup/` before replacing files.
+
+After install, the target directory should contain:
+
+- `opencode.json`
+- `agent_hive.json`
+- `AGENTS.md`
+- `skills/`
+- `agents/`
+- `commands/`
 
 The direct copy is intentional. APM does not install arbitrary JSON files, and `apm install -g` does not accept a local package path. That means a cloned checkout needs a small installer layer even though the repo itself is still a valid APM package.
 
@@ -228,6 +272,17 @@ Recommended order:
 2. Verify they are on `PATH`.
 3. Run `./scripts/install-profile.sh`.
 4. Run `./scripts/enable-optional.sh lsp-all-recommended`.
+
+Copy-paste example:
+
+```bash
+npm install -g @vtsls/language-server
+uv tool install ruff@latest
+uv tool install ty@latest
+# install marksman using its official instructions first
+./scripts/install-profile.sh
+./scripts/enable-optional.sh lsp-all-recommended
+```
 
 Verification commands:
 
