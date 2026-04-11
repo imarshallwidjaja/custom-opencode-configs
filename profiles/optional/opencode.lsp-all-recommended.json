@@ -1,0 +1,50 @@
+{
+  "lsp": {
+    "marksman": {
+      "command": [
+        "marksman",
+        "server"
+      ],
+      "extensions": [
+        ".md",
+        ".markdown"
+      ]
+    },
+    "vtsls": {
+      "command": [
+        "vtsls",
+        "--stdio"
+      ],
+      "extensions": [
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".mjs",
+        ".cjs",
+        ".mts",
+        ".cts"
+      ]
+    },
+    "ruff": {
+      "command": [
+        "ruff",
+        "server"
+      ],
+      "extensions": [
+        ".py",
+        ".pyi"
+      ]
+    },
+    "ty": {
+      "command": [
+        "ty",
+        "server"
+      ],
+      "extensions": [
+        ".py",
+        ".pyi"
+      ]
+    }
+  }
+}

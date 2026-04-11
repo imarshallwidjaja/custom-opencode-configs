@@ -34,6 +34,37 @@ Portability:
 - high
 - no local binary required
 
+### `opencode.lsp-all-recommended.json`
+
+Purpose: Adds all four recommended LSPs in one snippet: `marksman`, `vtsls`, `ruff`, and `ty`.
+
+Prerequisites:
+
+- `marksman` available on `PATH`
+- `vtsls` available on `PATH`
+- `ruff` available on `PATH`
+- `ty` available on `PATH`
+- for `vtsls`, a working Node.js runtime is expected
+
+Install guidance:
+
+- `vtsls`: install Node.js LTS, then run `npm install -g @vtsls/language-server`
+- `ruff`: install `uv`, then run `uv tool install ruff@latest`
+- `ty`: install `uv`, then run `uv tool install ty@latest`
+- `marksman`: use the official package-manager or release-binary instructions at `https://github.com/artempyanykh/marksman/blob/main/docs/install.md`
+
+Verification:
+
+- `marksman --help`
+- `vtsls --stdio`
+- `ruff server --help`
+- `ty server --help`
+
+Portability:
+
+- medium
+- suitable once all four binaries are installed and discoverable on `PATH`
+
 ### `opencode.lsp-markdown-typescript.json`
 
 Purpose: Adds `marksman` for Markdown and `vtsls` for TypeScript and JavaScript.
@@ -81,6 +112,20 @@ The merge workflow involves the following:
 2. Verify the listed dependencies on the target machine.
 3. Merge the relevant JSON object into `opencode.json`.
 4. Start Opencode and confirm the integration loads without command-not-found errors.
+
+## Automated merge
+
+Use `scripts/enable-optional.sh` to validate prerequisites and merge a snippet into the active config.
+
+```bash
+./scripts/enable-optional.sh lsp-all-recommended
+```
+
+Some notes:
+
+- the script requires `jq`
+- it creates a timestamped backup of the current `opencode.json` before replacing it
+- it refuses to apply a snippet if the listed binaries or environment variables are missing
 
 ## Recommended policy
 
