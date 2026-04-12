@@ -20,6 +20,7 @@ Use this repository as the source of truth for the portable Opencode profile.
 - Shared skills, command prompts, and agents belong in `.apm/`.
 - Personal or domain-specific automation should stay out of the base package unless it is clearly marked optional.
 - When migrating content from another tool-specific layout, normalize it to the current Opencode directory conventions.
+- When prompts or agents delegate worker or subagent tasks, require retries to run in a new session instead of resuming a failed one. Pass concise context from prior failed sessions, including what was attempted, where it failed, relevant errors, and the most likely cause, so the retried worker can avoid repeating the same path.
 
 ## Verification
 
