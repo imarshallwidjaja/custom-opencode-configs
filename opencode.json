@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "github-copilot/gpt-5.4",
+  "small_model": "github-copilot/gpt-5-mini",
   "agent": {
     "explore": {
       "model": "github-copilot/claude-sonnet-4.6",
