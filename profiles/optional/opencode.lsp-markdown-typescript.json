@@ -1,5 +1,8 @@
 {
   "lsp": {
+    "typescript": {
+      "disabled": true
+    },
     "marksman": {
       "command": [
         "marksman",

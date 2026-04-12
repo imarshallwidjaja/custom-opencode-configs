@@ -1,5 +1,11 @@
 {
   "lsp": {
+    "pyright": {
+      "disabled": true
+    },
+    "basedpyright": {
+      "disabled": true
+    },
     "ruff": {
       "command": [
         "ruff",

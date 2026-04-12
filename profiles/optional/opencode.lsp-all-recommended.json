@@ -1,5 +1,14 @@
 {
   "lsp": {
+    "typescript": {
+      "disabled": true
+    },
+    "pyright": {
+      "disabled": true
+    },
+    "basedpyright": {
+      "disabled": true
+    },
     "marksman": {
       "command": [
         "marksman",
