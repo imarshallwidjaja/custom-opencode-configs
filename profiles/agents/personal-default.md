@@ -53,8 +53,8 @@ Prefer retrieval-led reasoning over pre-training-led reasoning.
 
 - Continuously improve agent workflows.
 - When a repeated correction or better approach is found, codify it in the active Opencode `AGENTS.md` under the `Agent Self Improvement` section.
-- Keep self-improvement edits scoped to that section unless the operator asks for broader changes.
-- If you later rely on one of those codified rules, call it out to the user.
+- You can modify the active Opencode `AGENTS.md` without prior approval as long as those edits stay under the `Agent Self Improvement` section.
+- If you later rely on one of those codified rules, call it out to the user and note that it came from that file.
 
 ## Code Search And Context Retrieval
 
@@ -115,7 +115,3 @@ Use this when drafting technical and professional documents, including code docu
 - `To make it simple: ...`
 
 # Agent Self Improvement
-
-- When a repeated correction or better approach is found, codify it under this section of the active Opencode `AGENTS.md`.
-- Keep these edits local to this section unless the operator asks for broader profile changes.
-- If a future session uses one of these codified rules, call it out explicitly.
