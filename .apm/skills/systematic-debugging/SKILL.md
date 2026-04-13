@@ -114,10 +114,13 @@ You MUST complete each phase before proceeding to the next.
    See `root-cause-tracing.md` in this directory for the complete backward tracing technique.
 
    **Quick version:**
-   - Where does bad value originate?
-   - What called this with bad value?
-   - Keep tracing up until you find the source
-   - Fix at source, not at symptom
+    - Where does bad value originate?
+    - What called this with bad value?
+    - Keep tracing up until you find the source
+    - Fix at source, not at symptom
+
+   **WHEN the visible error may be downstream noise from an unintended request, hidden write, restore path, or competing source of truth:**
+   - Use `root-cause-finder` to trace to the first unintended side effect before changing downstream contracts or parsing.
 
 ### Phase 2: Pattern Analysis
 
@@ -284,7 +287,9 @@ These techniques are part of systematic debugging and available in this director
 - **`condition-based-waiting.md`** - Replace arbitrary timeouts with condition polling
 
 **Related skills:**
+- **root-cause-finder** - Use when the visible failure may be downstream noise from an unintended side effect or competing source of truth
 - **test-driven-development** - For creating the failing test case (Phase 4, Step 1)
+- **consolidate-test-suites** - After reproducing the bug, place durable coverage in the owning suite instead of leaving an ad-hoc regression test
 - **verification-before-completion** - Verify the fix worked before claiming success
 
 ## Real-World Impact

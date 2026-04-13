@@ -21,7 +21,7 @@ Because of that, this repo keeps the JSON profile files at the root and installs
 
 Included:
 
-- Shared skills migrated from `~/.claude/skills`
+- Shared skills migrated from the previous Claude Code skill directory
 - Shared skills already living in `~/.config/opencode/skill`
 - Shared commands from `~/.config/opencode/commands`
 - The `simplicity-reviewer` agent definition
@@ -293,6 +293,6 @@ Verification commands:
 
 ## Notes on skill migration
 
-The previous setup mixed `~/.claude/skills` and `~/.config/opencode/skill`. This repo normalizes the shared parts into one APM-installable Opencode package under `.apm/skills`.
+The previous setup mixed a Claude Code skill directory and `~/.config/opencode/skill`. This repo normalizes the shared parts into one APM-installable Opencode package under `.apm/skills`.
 
 Some skill text still refers to Hive-specific skills such as `writing-plans` or `verification-before-completion`. Those are provided by `opencode-hive`, not by this repo.

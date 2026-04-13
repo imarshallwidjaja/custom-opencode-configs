@@ -195,6 +195,14 @@ Keep tests green. Don't add behavior.
 
 Next failing test for next feature.
 
+## Test Placement
+
+For bug fixes, regressions, or architectural changes, writing the test first is only part of the decision. Once you have reproduced the behavior, use `consolidate-test-suites` to decide which layer owns the invariant and which canonical suite should keep the durable coverage.
+
+- Prefer folding the test into the owning existing suite.
+- Do not keep duplicate coverage across layers unless each layer proves a different failure mode.
+- Do not leave a standalone regression test in place just because it was the fastest way to reproduce the bug.
+
 ## Good Tests
 
 | Quality | Good | Bad |
@@ -336,6 +344,7 @@ Before marking work complete:
 - [ ] Output pristine (no errors, warnings)
 - [ ] Tests use real code (mocks only if unavoidable)
 - [ ] Edge cases and errors covered
+- [ ] For bug fixes or architectural changes, final test placement follows `consolidate-test-suites`
 
 Can't check all boxes? You skipped TDD. Start over.
 
@@ -360,6 +369,10 @@ When adding mocks or test utilities, read @testing-anti-patterns.md to avoid com
 - Testing mock behavior instead of real behavior
 - Adding test-only methods to production classes
 - Mocking without understanding dependencies
+
+**Related skills:**
+- **consolidate-test-suites** - Use after reproducing the behavior to place lasting coverage in the owning canonical suite
+- **verification-before-completion** - Use before claiming success so test results and placement decisions are both verified
 
 ## Final Rule
 
