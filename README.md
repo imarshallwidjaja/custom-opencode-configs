@@ -65,6 +65,23 @@ Optional:
 
 - `CONTEXT7_API_KEY` if you want to enable the bundled `context7` remote MCP entry in `opencode.json`
 
+## For LLM agents
+
+If you want another Opencode agent to perform the setup for a less technical operator, point it to `FOR-LLM-AGENTS.md` in this repository.
+
+Short copy-paste prompt:
+
+```text
+Use FOR-LLM-AGENTS.md in this repository as the source of truth. Interview me one decision at a time, recommend the safest default when I am unsure, run the setup commands for me, and verify the final Opencode config.
+```
+
+That document:
+
+- inventories the real setup decisions this repo exposes
+- tells the agent which files to read first
+- gives the interview order for choosing an `AGENTS.md` profile and optional MCP or LSP bundles
+- tells the agent which commands to run and what to verify at the end
+
 ### Copy-paste quick start
 
 For a fresh machine with the shared AGENTS profile:
