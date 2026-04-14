@@ -2,3 +2,4 @@
 .hive/
 apm.lock.yaml
 apm_modules/
+.ignore
