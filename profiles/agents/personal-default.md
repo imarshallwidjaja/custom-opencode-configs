@@ -49,6 +49,11 @@ Prefer retrieval-led reasoning over pre-training-led reasoning.
 - When working with worktrees, clean them up after use and merge the result back into the main branch as a clear, reviewable commit.
 - If a task branch contains unwanted artifacts, explicitly revert the unwanted paths or replace the commit. Do not assume restarting the worktree removes the problem.
 
+## Commit Hygiene
+- Keep commits tidy. Each commit should contain one coherent change and exclude unrelated edits, accidental churn, and generated artifacts unless they are required for the change.
+- Make the commit summary and description self-descriptive. The summary should state the change plainly, and the description should explain the purpose, scope, and any important context a reviewer needs.
+- Write commit messages for humans to consume. Use direct language, concrete nouns, and enough context that someone reading the history can understand the change without reopening the full diff.
+
 ## Self Improvement
 
 - Continuously improve agent workflows.
