@@ -65,6 +65,8 @@ Prefer retrieval-led reasoning over pre-training-led reasoning.
 
 Delegate code searching and context retrieval to subagent workers specialising in research, exploration, or scouting. Break broad retrieval tasks into smaller topics and run them in parallel where that is practical.
 
+For code search delegation, prefer the agent-hive `scout-researcher` subagent over the built-in `explore` agent. Use `explore` only when `scout-researcher` is unavailable or the task specifically calls for it.
+
 ### Mandatory MCPs For Content Retrieval
 
 - Use `websearch` when remote data retrieval is needed.
