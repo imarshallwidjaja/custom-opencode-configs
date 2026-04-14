@@ -11,6 +11,12 @@ This repository versions a portable Opencode profile and packages the shared mar
 - `profiles/optional/`: optional MCP and LSP merge snippets.
 - `.apm/`: portable `skills`, `agents`, and prompt-backed commands that APM can install into an Opencode config directory.
 
+## Command index
+
+- [`/council-directive`](#prompt-backed-commands): shape a council session before running it
+- [`/council`](#prompt-backed-commands): run a read-only council and get one synthesized recommendation
+- [`/interview`](#prompt-backed-commands): clarify an under-defined problem before planning or council review
+
 ## Why the layout is split
 
 APM's OpenCode target installs markdown primitives such as `skills`, `agents`, and `commands`. It does not copy arbitrary files like `opencode.json` or `agent_hive.json`.
@@ -219,6 +225,124 @@ apm install -g owner/custom-opencode-configs#v0.1.0
 ```
 
 That APM path installs the packaged `skills`, `agents`, and command prompts. You still need to copy `opencode.json`, `agent_hive.json`, and `AGENTS.md` into your Opencode config directory.
+
+## Prompt-backed commands
+
+This profile installs prompt-backed slash commands into `commands/`.
+
+For the council workflow, the relevant commands are:
+
+- `/council-directive`: turn a rough request into a reusable council directive
+- `/council`: run a read-only council of subagents and synthesize one recommendation
+- `/interview`: optional discovery flow when the problem itself is still fuzzy
+
+Prerequisites:
+
+- run `./scripts/install-profile.sh`
+- start `opencode` once so it resolves `opencode-hive@latest`
+- open a chat session in OpenCode
+
+No setup command is required before `/council`. Use `/council-directive` when the question is still loose, when you want a paste-ready brief for a new chat, or when you want to control the council shape explicitly.
+
+### Council workflow
+
+Use `/council` directly when the question is already clear.
+
+Example:
+
+```text
+/council Should we add a council command without plugin overhead?
+```
+
+Use `/council-directive` first when you need to shape the session.
+
+Example:
+
+```text
+/council-directive We need a design review on how to expose a council workflow as prompt-backed commands.
+```
+
+That command will collect the minimum useful details, then return:
+
+- a `Council Directive` block
+- a recommendation for running `/council` in the current chat or a new chat
+- a compact `/council` invocation
+- a paste-ready new-chat prompt when a fresh session is the better fit
+
+Once the directive is ready, run `/council` with either the original problem or the directive.
+
+Example:
+
+```text
+/council
+objective: design a lightweight council workflow for OpenCode
+direction: preserve strong review quality without plugin runtime overhead
+include: design
+constraints: prompt-backed commands only, read-only council members, portable base profile
+desired output: recommended command design, risks, and operator workflow
+```
+
+### Council options
+
+`/council` accepts either a plain English prompt or a structured directive.
+
+The main directive fields are:
+
+- `objective`: the question the council must answer
+- `direction`: the lens or stance to take
+- `include`: a council alias or an explicit list of councillors
+- `constraints`: boundaries, non-goals, and compatibility requirements
+- `context`: relevant repo, product, or session context
+- `assumptions needing validation`: what still needs checking
+- `desired output`: what the operator wants back
+
+Available council aliases:
+
+- `design`: `scout-researcher`, `architect-planner`, `hygienic-reviewer`, `forager-smart`
+- `decision`: `scout-researcher`, `architect-planner`, `hygienic-reviewer-ultrabrain`, `forager-smart`
+- `minimal-change`: `scout-researcher`, `simplicity-reviewer`, `hygienic-reviewer`, `forager-simple`
+- `documents`: `scout-researcher`, `forager-documents`, `hygienic-reviewer-documents`
+
+You can also name councillors directly.
+
+Example:
+
+```text
+/council
+objective: assess whether this refactor should be split further
+direction: bias toward the smallest safe change
+include: scout-researcher, simplicity-reviewer, hygienic-reviewer, forager-simple
+desired output: go/no-go recommendation plus main risks
+```
+
+If you mention a `worker` seat without naming one, the command defaults to:
+
+- `forager-simple` for clearly minimal-change work
+- otherwise `forager-smart`
+
+### Read-only behavior
+
+The council commands are designed for analysis, not execution.
+
+Each councillor is instructed to:
+
+- use read, search, and research tools when needed
+- avoid all file changes
+- avoid `apply_patch`, commits, branches, PRs, plans, and worktrees
+- return analysis, tradeoffs, risks, and recommendations only
+
+This is a prompt-level contract, not a hard runtime sandbox. It is intended to preserve the strengths of council-style review without introducing another plugin dependency.
+
+### Operator prompts
+
+Common operator patterns:
+
+- direct question: `/council Should we use option A or B for this feature?`
+- guided setup: `/council-directive Help me set up a council for this API design decision`
+- structured directive: paste a `Council Directive` block under `/council`
+- new-session handoff: run `/council-directive`, then paste its `Paste Into New Chat` block into a fresh session
+
+Use `/interview` before council when the problem itself is still under-defined. Use `/council-directive` when the problem is known but the council shape, direction, or output still needs tightening.
 
 ## VS Code companion
 
