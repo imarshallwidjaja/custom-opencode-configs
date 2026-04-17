@@ -13,7 +13,7 @@ Use it when the operator says things like:
 Give the agent this repository and this document, then say:
 
 ```text
-Use FOR-LLM-AGENTS.md in this repository as the source of truth. Interview me one decision at a time, recommend the safest default when I am unsure, run the setup commands for me, and verify the final Opencode config.
+Use FOR-LLM-AGENTS.md in this repository as the source of truth. Interview me one decision at a time, recommend the safest default when I am unsure, preserve my existing AGENTS.md as the base document for any merge unless I explicitly approve full replacement, run the setup commands for me, and verify the final Opencode config.
 ```
 
 ## What This Repo Actually Supports
@@ -51,6 +51,7 @@ Some setup facts are not user choices:
 - `cymbal` is not configured through `opencode.json`. It is a separate CLI tool that the context-improved AGENTS profiles know how to use when it is installed and available on `PATH`.
 - No LSP snippet is enabled by default.
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
+- When merging into an existing `AGENTS.md`, start from the user's file and reconcile the selected profile into it instead of replacing it by default.
 
 To make it simple: use the repo scripts for the normal setup path, then offer the optional bundles only after the base profile is installed.
 
@@ -69,6 +70,11 @@ Before making changes, read these files from this repository:
 - Ask one setup question at a time.
 - Explain each option in plain language.
 - Recommend the safest default when the operator is unsure.
+- Read the user's existing `AGENTS.md` before proposing any merge edits.
+- Compare the user's `AGENTS.md` against the selected profile before writing anything.
+- Add missing prescribed guidance into the user's structure instead of overwriting it by default.
+- Identify real conflicts before editing them.
+- Ask permission before consolidating, rewriting, or deleting conflicting instructions.
 - Do not push optional tooling unless the operator wants it and the machine can support it.
 - Use the repository scripts instead of manually copying files.
 - If a prerequisite is missing, ask whether the operator wants you to install it or skip the related optional feature.
@@ -162,7 +168,7 @@ Recommendation:
 
 ### 5. Install the base profile
 
-Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, `AGENTS.md`, `skills/`, `agents/`, and `commands/` contents with this repo's versions, and it writes timestamped backups under `<target>/.backup/` first when those paths already exist.
+Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, `AGENTS.md`, `skills/`, `agents/`, and `commands/` contents with this repo's versions, and it writes timestamped backups under `<target>/.backup/` first when those paths already exist. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
 
 Run one of these:
 
@@ -185,6 +191,18 @@ OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
 If a custom config directory was chosen, include `OPENCODE_CONFIG_DIR=/path/to/dir` as well.
 
 Do not use the APM-only install path for first-time setup unless the operator explicitly asks for it.
+
+### Merge an existing `AGENTS.md` with the selected profile
+
+When the target already has an `AGENTS.md`, follow this order:
+
+1. Run `OPENCODE_AGENTS_MODE=skip ./scripts/install-profile.sh` so the installer does not replace the user's file.
+2. Read the user's current `AGENTS.md` and the selected profile from this repository.
+3. Map the sections and instruction intent in both documents.
+4. Add compatible missing guidance into the user's structure without overwriting user content by default.
+5. Stop when you find a real conflict and present it to the user.
+6. Only consolidate, rewrite, or delete conflicting instructions after explicit approval.
+7. Back up the user's `AGENTS.md` before writing the merged result.
 
 ### 6. Offer the optional context-improved bundle first
 
@@ -371,6 +389,7 @@ Use this as the source of truth for the interview.
 
 | Decision | Choices | Default | Requirements |
 |---|---|---|---|
+| AGENTS merge strategy | preserve the user's `AGENTS.md` as the base, or replace it only with explicit approval | preserve the user's file | explicit approval required before full replacement or conflict consolidation |
 | AGENTS profile | `shared`, `personal-default`, `shared-context-improved`, `personal-context-improved` | `shared` | none |
 | Config directory | `~/.config/opencode` or custom path | `~/.config/opencode` | none |
 | Context-improved bundle | enable or skip | skip | `jq`, `context-mode`, `uvx`, `CONTEXT7_API_KEY`, network access; `cymbal` optional CLI |
@@ -450,6 +469,9 @@ code --install-extension tctinh.vscode-hive
 
 - Do not ask the operator to choose model IDs from this repo. Those defaults are already encoded.
 - Do not default to direct `apm install -g` for first-time setup.
+- Do not treat AGENTS merge as a blind append.
+- Do not silently overwrite the user's existing `AGENTS.md` during merge.
+- Do not silently clean up conflicts by deleting or rewriting instructions.
 - Do not enable optional snippets without first checking their prerequisites.
 - Do not enable the context-improved bundle without also checking whether the chosen `AGENTS.md` profile matches that capability set.
 - Do not enable LSP snippets before `./scripts/install-profile.sh` has created the target `opencode.json`.
