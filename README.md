@@ -89,6 +89,7 @@ That document:
 - inventories the real setup decisions this repo exposes
 - tells the agent which files to read first
 - gives the interview order for choosing an `AGENTS.md` profile and optional context-improved, MCP, or LSP bundles
+- treats `AGENTS.md` reconciliation as an additive-first agent workflow built around `OPENCODE_AGENTS_MODE=skip`, not as a normal installer path
 - tells the agent which commands to run and what to verify at the end
 
 ### Copy-paste quick start
@@ -201,7 +202,7 @@ The repository now includes `profiles/optional/opencode.context-improved.json` f
 Purpose:
 
 - keep the base profile portable and remote-first
-- let an operator opt into `context-mode`, local `ast_grep`, and enabled `context7` in one merge
+- let an operator opt into `context-mode`, local `ast_grep`, and enabled `context7` in one additive snippet merge
 - normalize local absolute paths into portable `PATH`-based commands and environment variables
 
 Prerequisites:
@@ -253,7 +254,7 @@ The installer does two things:
 1. Copies `opencode.json`, `agent_hive.json`, and the selected `AGENTS.md` profile into the target Opencode config directory.
 2. Copies the packaged `.apm/skills`, `.apm/agents`, and `.apm/prompts` payload into the same config tree.
 
-If the target directory already contains config, the installer creates a timestamped backup under `~/.config/opencode/.backup/` before replacing files.
+If the target directory already contains config, the installer creates a timestamped backup under `<target config dir>/.backup/` before replacing the files in that target directory.
 
 After install, the target directory should contain:
 

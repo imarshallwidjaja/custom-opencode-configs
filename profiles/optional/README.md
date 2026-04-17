@@ -46,6 +46,7 @@ Some notes:
 - `cymbal` is a separate CLI tool for local code navigation, but it is not wired through `opencode.json`; the AGENTS profiles use it when the current Opencode environment exposes it
 - this bundle supersedes `opencode.mcp-context7-enabled.json` on machines that want the full tool stack
 - pair it with `profiles/agents/shared-context-improved.md` or `profiles/agents/personal-context-improved.md` so the installed `AGENTS.md` assumes the same capabilities the config actually enables
+- when the AGENTS guidance is being reconciled, merge the added routing rules into the existing hand-maintained `AGENTS.md` structurally; do not treat the profile as a wholesale replacement for that file
 
 Portability:
 
@@ -148,6 +149,8 @@ The merge workflow involves the following:
 2. Verify the listed dependencies on the target machine.
 3. Merge the relevant JSON object into `opencode.json`.
 4. Start Opencode and confirm the integration loads without command-not-found errors.
+
+For `AGENTS.md`, keep the existing file and fold in the new routing rules structurally instead of replacing it.
 
 ## Automated merge
 

@@ -52,6 +52,8 @@ Use this when:
 
 The installer uses `shared` by default.
 
+The installer always replaces the selected `AGENTS.md` after backing it up. When the operator needs to keep an existing file and reconcile the new routing rules afterward, the merge flow should use `OPENCODE_AGENTS_MODE=skip` so the user's file stays in place.
+
 Install the shared profile:
 
 ```bash
@@ -80,5 +82,6 @@ Some notes:
 
 - the `*-context-improved` AGENTS profiles should be paired with `./scripts/enable-optional.sh context-improved`
 - the plain `shared` and `personal-default` profiles are the capability-safe defaults for the base install
+- `skip` is the preservation path for an existing `AGENTS.md`; it leaves the file untouched so the agent can fold in the new guidance structurally afterward
 
 The installer backs up any existing target config files before replacing them.
