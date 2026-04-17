@@ -8,9 +8,19 @@ TARGET_DIR="${OPENCODE_CONFIG_DIR:-${HOME}/.config/opencode}"
 AGENTS_PROFILE="${OPENCODE_AGENTS_PROFILE:-shared}"
 AGENTS_SOURCE="${REPO_ROOT}/profiles/agents/${AGENTS_PROFILE}.md"
 
+list_agents_profiles() {
+  local profile_file
+  for profile_file in "${REPO_ROOT}"/profiles/agents/*.md; do
+    basename "${profile_file}" ".md"
+  done | sort
+}
+
 if [[ ! -f "${AGENTS_SOURCE}" ]]; then
   printf 'Unknown AGENTS profile: %s\n' "${AGENTS_PROFILE}" >&2
-  printf 'Available profiles:\n  shared\n  personal-default\n' >&2
+  printf 'Available profiles:\n' >&2
+  while IFS= read -r profile_name; do
+    printf '  %s\n' "${profile_name}" >&2
+  done < <(list_agents_profiles)
   exit 1
 fi
 

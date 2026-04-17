@@ -8,7 +8,7 @@ This repository versions a portable Opencode profile and packages the shared mar
 - `agent_hive.json`: the starting `agent-hive` layout, kept on remote-only GitHub Copilot models.
 - `AGENTS.md`: repository instructions for maintaining this repo.
 - `profiles/agents/`: installable `AGENTS.md` profiles for Opencode.
-- `profiles/optional/`: optional MCP and LSP merge snippets.
+- `profiles/optional/`: optional MCP, LSP, and workflow merge snippets.
 - `.apm/`: portable `skills`, `agents`, and prompt-backed commands that APM can install into an Opencode config directory.
 
 ## Command index
@@ -31,12 +31,14 @@ Included:
 - Shared skills already living in `~/.config/opencode/skill`
 - Shared commands from `~/.config/opencode/commands`
 - The `simplicity-reviewer` agent definition
+- Portable tool-routing guidance for `context-mode`, `ast-grep`, `grep_app`, `context7`, `cymbal`, and `read`
 
 Excluded from the base profile:
 
 - Local provider proxy definitions
 - Embedded API keys and account files
 - Absolute filesystem paths
+- Machine-specific local MCP and plugin paths
 - Personal or domain-specific skills such as `resume-tailoring` and `poraki-phase2-forecast-operator`
 
 ## Dependency model
@@ -70,6 +72,7 @@ Prerequisites:
 Optional:
 
 - `CONTEXT7_API_KEY` if you want to enable the bundled `context7` remote MCP entry in `opencode.json`
+- `context-mode` on `PATH`, `uvx` on `PATH`, and optionally the `cymbal` CLI on `PATH` if you want the `context-improved` overlay and the full local navigation workflow
 
 ## For LLM agents
 
@@ -85,7 +88,7 @@ That document:
 
 - inventories the real setup decisions this repo exposes
 - tells the agent which files to read first
-- gives the interview order for choosing an `AGENTS.md` profile and optional MCP or LSP bundles
+- gives the interview order for choosing an `AGENTS.md` profile and optional context-improved, MCP, or LSP bundles
 - tells the agent which commands to run and what to verify at the end
 
 ### Copy-paste quick start
@@ -109,6 +112,18 @@ git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
 cd custom-opencode-configs
 opencode auth login -p github-copilot
 OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
+opencode
+```
+
+For a machine where you want the context-improved overlay and matching AGENTS profile:
+
+```bash
+curl -fsSL https://opencode.ai/install | bash
+git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
+cd custom-opencode-configs
+opencode auth login -p github-copilot
+OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... ./scripts/enable-optional.sh context-improved
 opencode
 ```
 
@@ -151,6 +166,18 @@ To install the sanitized personal-default AGENTS profile instead:
 OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
 ```
 
+To install the shared context-improved AGENTS profile instead:
+
+```bash
+OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
+```
+
+To install the personal context-improved AGENTS profile instead:
+
+```bash
+OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
+```
+
 5. Optional but recommended with OpenCode: install the Agent Hive VS Code extension for plan review, sidebar status, and comments:
 
 ```bash
@@ -167,6 +194,35 @@ opencode
 
 7. If you want optional MCP or LSP bundles, install their prerequisites first and then apply the relevant snippet with `scripts/enable-optional.sh`.
 
+### Optional context-improved bundle
+
+The repository now includes `profiles/optional/opencode.context-improved.json` for the local context and structural-search toolchain.
+
+Purpose:
+
+- keep the base profile portable and remote-first
+- let an operator opt into `context-mode`, local `ast_grep`, and enabled `context7` in one merge
+- normalize local absolute paths into portable `PATH`-based commands and environment variables
+
+Prerequisites:
+
+- `context-mode` available on `PATH`
+- `uvx` available on `PATH`
+- `CONTEXT7_API_KEY` set in the environment
+
+Enable it with:
+
+```bash
+./scripts/enable-optional.sh context-improved
+```
+
+Some notes:
+
+- the context-improved overlay replaces the live machine's absolute local plugin and MCP paths with portable command names
+- `cymbal` is a separate CLI tool, not an `opencode.json` entry; the packaged AGENTS profiles instruct agents to use it when the running Opencode environment exposes it
+- if you only want the remote docs MCP, the narrower `mcp-context7-enabled` snippet still exists
+- pair this overlay with `shared-context-improved` or `personal-context-improved` so the installed `AGENTS.md` matches the enabled toolchain
+
 ## AGENTS profiles
 
 The installer does not use the repository root `AGENTS.md` as the global Opencode profile. It installs one of the profiles from `profiles/agents/`.
@@ -175,6 +231,8 @@ Available profiles:
 
 - `shared`: the portable default
 - `personal-default`: the portable default plus a sanitized version of the author's preferred operating and writing voice
+- `shared-context-improved`: the shared profile plus strong routing rules for the optional context-improved toolchain
+- `personal-context-improved`: the personal-default profile plus strong routing rules for the optional context-improved toolchain
 
 Install into the default global config directory:
 

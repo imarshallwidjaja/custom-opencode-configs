@@ -23,23 +23,32 @@ Do not invent extra setup questions. This repository exposes the following real 
 1. Which installable `AGENTS.md` profile to use:
    - `shared`
    - `personal-default`
+   - `shared-context-improved`
+   - `personal-context-improved`
 2. Which Opencode config directory to install into:
    - default `~/.config/opencode`
    - a custom `OPENCODE_CONFIG_DIR`
-3. Whether to enable the optional `context7` MCP snippet.
-4. Whether to enable one optional LSP snippet:
+3. Whether to enable the optional context-improved bundle:
    - none
-   - `lsp-markdown-typescript`
-   - `lsp-python`
-   - `lsp-all-recommended`
-5. Whether to install the optional VS Code `tctinh.vscode-hive` extension.
+   - `context-improved`
+4. Whether to enable the optional `context7`-only MCP snippet when the full context-improved bundle is not being used:
+   - none
+   - `mcp-context7-enabled`
+5. Whether to enable one optional LSP snippet:
+    - none
+    - `lsp-markdown-typescript`
+    - `lsp-python`
+    - `lsp-all-recommended`
+6. Whether to install the optional VS Code `tctinh.vscode-hive` extension.
 
 Some setup facts are not user choices:
 
 - The default full install path is `./scripts/install-profile.sh`.
 - The repo uses remote GitHub Copilot models in `opencode.json` and `agent_hive.json`.
 - The published `opencode-hive@latest` plugin is installed by Opencode on first run.
+- The optional context-improved bundle adds `context-mode@latest`, local `ast_grep`, and enabled `context7` in one merge.
 - `context7` is present in the base config but disabled by default.
+- `cymbal` is not configured through `opencode.json`. It is a separate CLI tool that the context-improved AGENTS profiles know how to use when it is installed and available on `PATH`.
 - No LSP snippet is enabled by default.
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
 
@@ -63,6 +72,8 @@ Before making changes, read these files from this repository:
 - Do not push optional tooling unless the operator wants it and the machine can support it.
 - Use the repository scripts instead of manually copying files.
 - If a prerequisite is missing, ask whether the operator wants you to install it or skip the related optional feature.
+- If the operator wants the context-improved workflow, explain that it has two parts: a matching `AGENTS.md` profile and the `context-improved` JSON overlay.
+- Make it clear that `cymbal` is an optional CLI dependency, not a bundled config entry. If it is missing, the context-improved profile can still work, but agents will fall back to the other available search tools.
 - Keep the operator informed about what you are about to run.
 
 ## Recommended Defaults
@@ -73,6 +84,11 @@ Use these defaults unless the operator asks for something else:
 - Use the `shared` AGENTS profile.
 - Skip optional MCP and LSP snippets unless there is a clear need.
 - Install the VS Code Hive extension only if the operator uses VS Code.
+
+When the operator explicitly wants the richer local search and context workflow, recommend this pair together:
+
+- `shared-context-improved` as the AGENTS profile
+- `context-improved` as the optional JSON overlay
 
 ## Interview And Setup Workflow
 
@@ -129,17 +145,20 @@ opencode auth login -p github-copilot
 Ask:
 
 ```text
-Do you want the neutral shared profile, or the personal-default profile that also makes the agent write in this repository author's preferred style?
+Do you want the neutral shared profile, the personal-default profile with the author's writing style, or one of the context-improved variants that assume the richer optional local toolchain is enabled too?
 ```
 
 Explain the options like this:
 
 - `shared`: the safest team-friendly default
 - `personal-default`: the shared rules plus the author's writing voice and phrase patterns
+- `shared-context-improved`: the shared profile plus strong routing rules for `context-mode`, `ast-grep`, `context7`, and optional `cymbal`
+- `personal-context-improved`: the personal-default profile plus the same context-improved routing rules
 
 Recommendation:
 
 - Recommend `shared` unless the operator explicitly wants the author's style.
+- Recommend `shared-context-improved` only when the operator wants that richer workflow and is willing to satisfy the extra dependencies.
 
 ### 5. Install the base profile
 
@@ -155,11 +174,54 @@ Run one of these:
 OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
 ```
 
+```bash
+OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
+```
+
+```bash
+OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
+```
+
 If a custom config directory was chosen, include `OPENCODE_CONFIG_DIR=/path/to/dir` as well.
 
 Do not use the APM-only install path for first-time setup unless the operator explicitly asks for it.
 
-### 6. Offer the optional `context7` MCP
+### 6. Offer the optional context-improved bundle first
+
+Ask:
+
+```text
+Do you want the richer local context and code-navigation workflow on this machine? That enables context-mode, local ast-grep, and context7 together, and it pairs best with the shared-context-improved or personal-context-improved AGENTS profile.
+```
+
+Only enable it if:
+
+- the operator wants it
+- `jq` is installed
+- `context-mode` is on `PATH`
+- `uvx` is on `PATH`
+- `CONTEXT7_API_KEY` is set
+- the machine can reach `https://mcp.context7.com/mcp`
+
+Optional but recommended for the full navigation workflow:
+
+- `cymbal` on `PATH`
+
+Explain this clearly:
+
+- `cymbal` is a CLI tool the AGENTS profile can call when it is installed
+- it is not configured in `opencode.json`
+- if it is missing, the context-improved profile still works, but agents will fall back to the other available search tools
+
+If the operator wants the context-improved bundle but the selected AGENTS profile is not one of the context-improved variants, offer to switch the AGENTS profile first.
+
+If all conditions are met, run:
+
+```bash
+./scripts/enable-optional.sh context-improved
+```
+
+### 7. Offer the optional `context7` MCP when the full bundle is not being used
 
 Ask:
 
@@ -170,6 +232,8 @@ Do you want me to enable the optional context7 documentation MCP? It needs a CON
 Only enable it if:
 
 - the operator wants it
+- the context-improved bundle was not already enabled
+- `jq` is installed
 - `CONTEXT7_API_KEY` is set
 - the machine can reach `https://mcp.context7.com/mcp`
 
@@ -184,7 +248,7 @@ Some notes:
 - `scripts/enable-optional.sh` requires `jq`.
 - `agent_hive.json` still disables `context7` for Hive workers by default. That is part of this profile.
 
-### 7. Offer the optional LSP bundles
+### 8. Offer the optional LSP bundles
 
 Ask this first:
 
@@ -230,7 +294,7 @@ Apply the chosen bundle with:
 
 Do not apply an LSP snippet before the base profile exists in the target directory.
 
-### 8. Offer the optional VS Code extension
+### 9. Offer the optional VS Code extension
 
 Ask:
 
@@ -246,7 +310,7 @@ code --install-extension tctinh.vscode-hive
 
 If the `code` CLI is not available, tell the operator to install `Agent Hive` from the VS Code marketplace manually.
 
-### 9. Start Opencode once
+### 10. Start Opencode once
 
 Run:
 
@@ -256,11 +320,13 @@ opencode
 
 This allows Opencode to resolve `opencode-hive@latest` from `opencode.json` on first run.
 
+If the context-improved bundle was enabled, this first run also needs to succeed without command-not-found errors for `context-mode` or the local MCP tooling.
+
 Success signal:
 
 - Opencode starts without reporting plugin-resolution or command-not-found errors for the base profile.
 
-### 10. Verify the final state
+### 11. Verify the final state
 
 Verify that the target config directory now contains:
 
@@ -275,17 +341,27 @@ If optional snippets were enabled, verify that the relevant entries exist in `op
 
 Concrete checks:
 
+- if `context-improved` was enabled, verify `plugin` includes `context-mode@latest`
+- if `context-improved` was enabled, verify `mcp.context-mode`, `mcp.ast_grep`, and `mcp.context7.enabled` exist in `opencode.json`
 - if `context7` was enabled, verify `mcp.context7.enabled` is `true`
 - if an LSP bundle was enabled, verify the expected `lsp.<name>.command` entries exist for the selected servers
 - if `lsp-markdown-typescript` was enabled, verify `lsp.typescript.disabled` is `true`
 - if `lsp-python` or `lsp-all-recommended` was enabled, verify `lsp.pyright.disabled` and `lsp.basedpyright.disabled` are `true`
 
+If the operator wanted `cymbal`, verify that `cymbal` is available on `PATH` with a simple command such as:
+
+```bash
+which cymbal
+```
+
 Then report back with:
 
 - the install directory used
 - the AGENTS profile selected
+- whether the context-improved bundle was enabled
 - whether `context7` was enabled
 - which LSP bundle, if any, was enabled
+- whether `cymbal` is installed as a CLI on this machine
 - whether the VS Code extension was installed
 - any skipped options and why
 
@@ -295,9 +371,10 @@ Use this as the source of truth for the interview.
 
 | Decision | Choices | Default | Requirements |
 |---|---|---|---|
-| AGENTS profile | `shared`, `personal-default` | `shared` | none |
+| AGENTS profile | `shared`, `personal-default`, `shared-context-improved`, `personal-context-improved` | `shared` | none |
 | Config directory | `~/.config/opencode` or custom path | `~/.config/opencode` | none |
-| `context7` MCP | enable or skip | skip | `jq`, `CONTEXT7_API_KEY`, network access |
+| Context-improved bundle | enable or skip | skip | `jq`, `context-mode`, `uvx`, `CONTEXT7_API_KEY`, network access; `cymbal` optional CLI |
+| `context7` MCP only | enable or skip | skip | `jq`, `CONTEXT7_API_KEY`, network access |
 | LSP bundle | none, `lsp-markdown-typescript`, `lsp-python`, `lsp-all-recommended` | none | `jq` plus required binaries |
 | VS Code Hive extension | install or skip | skip unless operator uses VS Code | VS Code and usually `code` CLI |
 
@@ -315,13 +392,31 @@ Base install with the personal profile:
 OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
 ```
 
+Base install with the shared context-improved profile:
+
+```bash
+OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
+```
+
+Base install with the personal context-improved profile:
+
+```bash
+OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
+```
+
 Base install into a custom config directory:
 
 ```bash
 OPENCODE_CONFIG_DIR=/path/to/opencode-config ./scripts/install-profile.sh
 ```
 
-Enable `context7`:
+Enable the context-improved bundle:
+
+```bash
+./scripts/enable-optional.sh context-improved
+```
+
+Enable `context7` only:
 
 ```bash
 ./scripts/enable-optional.sh mcp-context7-enabled
@@ -356,6 +451,8 @@ code --install-extension tctinh.vscode-hive
 - Do not ask the operator to choose model IDs from this repo. Those defaults are already encoded.
 - Do not default to direct `apm install -g` for first-time setup.
 - Do not enable optional snippets without first checking their prerequisites.
+- Do not enable the context-improved bundle without also checking whether the chosen `AGENTS.md` profile matches that capability set.
 - Do not enable LSP snippets before `./scripts/install-profile.sh` has created the target `opencode.json`.
 - Do not assume `personal-default` is appropriate for every operator.
+- Do not describe `cymbal` as a bundled MCP or JSON config entry. It is a separate CLI dependency.
 - Do not overwhelm the operator with all questions at once.

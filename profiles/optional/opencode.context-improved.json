@@ -1,0 +1,26 @@
+{
+  "plugin": [
+    "opencode-hive@latest",
+    "context-mode@latest"
+  ],
+  "mcp": {
+    "ast_grep": {
+      "type": "local",
+      "command": [
+        "uvx",
+        "--from",
+        "git+https://github.com/ast-grep/ast-grep-mcp",
+        "ast-grep-server"
+      ]
+    },
+    "context-mode": {
+      "type": "local",
+      "command": [
+        "context-mode"
+      ]
+    },
+    "context7": {
+      "enabled": true
+    }
+  }
+}

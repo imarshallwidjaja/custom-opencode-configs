@@ -47,6 +47,14 @@ check_command() {
 }
 
 case "${SNIPPET_NAME}" in
+  context-improved)
+    check_command context-mode
+    check_command uvx
+    if [[ -z "${CONTEXT7_API_KEY:-}" ]]; then
+      printf 'CONTEXT7_API_KEY is not set.\n' >&2
+      exit 1
+    fi
+    ;;
   lsp-all-recommended)
     check_command marksman
     check_command vtsls

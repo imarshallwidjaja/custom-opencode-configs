@@ -33,6 +33,7 @@ Prefer retrieval-led reasoning over pre-training-led reasoning.
 - `brainstorming`
 - `systematic-debugging`
 - `test-driven-development`
+- `consolidate-test-suites`
 - `verification-before-completion`
 
 ### UI And UX
@@ -50,6 +51,7 @@ Prefer retrieval-led reasoning over pre-training-led reasoning.
 - If a task branch contains unwanted artifacts, explicitly revert the unwanted paths or replace the commit. Do not assume restarting the worktree removes the problem.
 
 ## Commit Hygiene
+
 - Keep commits tidy. Each commit should contain one coherent change and exclude unrelated edits, accidental churn, and generated artifacts unless they are required for the change.
 - Make the commit summary and description self-descriptive. The summary should state the change plainly, and the description should explain the purpose, scope, and any important context a reviewer needs.
 - Write commit messages for humans to consume. Use direct language, concrete nouns, and enough context that someone reading the history can understand the change without reopening the full diff.
@@ -67,10 +69,17 @@ Delegate code searching and context retrieval to subagent workers specialising i
 
 For code search delegation, prefer the agent-hive `scout-researcher` subagent over the built-in `explore` agent. Use `explore` only when `scout-researcher` is unavailable or the task specifically calls for it.
 
-### Mandatory MCPs For Content Retrieval
+### Retrieval Policy
 
-- Use `websearch` when remote data retrieval is needed.
-- Use `context7` for up-to-date library and framework documentation.
+- Use the tools that are actually available in the current Opencode environment rather than assuming optional MCPs are installed.
+- Prefer the narrowest retrieval path that answers the question cleanly.
+- For repository exploration, use local search and navigation tools first and only fetch remote information when the task truly needs it.
+- When exact file text matters for an edit, read the narrowed file window directly.
+- If a machine has an optional retrieval bundle installed, prefer the matching `*-context-improved` AGENTS profile so the tool-routing policy matches the available capabilities.
+
+## Optional Context-Improved Pairing
+
+- Use `shared-context-improved` when the `context-improved` optional overlay is enabled and you want the stronger routing policy for `context-mode`, `ast-grep`, `grep_app`, `context7`, and `cymbal`.
 
 ## Browser Usage
 
@@ -84,5 +93,20 @@ For code search delegation, prefer the agent-hive `scout-researcher` subagent ov
 - For evaluative writing, state the main judgment early, then move from operating model to technical evidence.
 - Name concrete system objects early and avoid vague glue phrases unless they are immediately grounded in specifics.
 - Keep related issues grouped together instead of forcing one issue per paragraph.
+
+## Writing Style
+
+Use this style for technical and professional documents, notes, PRs, commits, and similar prose.
+
+- Write for a technical peer. Assume platform names and common acronyms are known.
+- Be process-first and pragmatic. Explain what must exist before something can run.
+- Define concepts early, then move into operational steps.
+- Use calm, direct statements. Avoid hype, marketing language, and heavy hedging.
+- Start with a one-sentence definition of the thing.
+- Follow with purpose, prerequisites or dependencies, then the workflow.
+- Use `Where:` to introduce short definitions or mappings.
+- Add `Some notes:` for edge cases, constraints, and gotchas.
+- When a sequence is easy to misread, add `To make it simple:` and restate it plainly.
+- Prefer concrete nouns and system objects such as documents, collections, variables, hooks, workflows, schemas, and source of truth.
 
 # Agent Self Improvement

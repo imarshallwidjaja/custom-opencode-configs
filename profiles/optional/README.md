@@ -1,4 +1,4 @@
-# Optional MCP And LSP Bundles
+# Optional MCP, LSP, And Workflow Bundles
 
 This directory contains merge snippets for machine-dependent integrations that should not be enabled in the base profile by default.
 
@@ -15,6 +15,42 @@ Purpose:
 These snippets are not installed automatically. They are intended to be reviewed and merged into `opencode.json` when the listed prerequisites are present.
 
 ## Bundles
+
+### `opencode.context-improved.json`
+
+Purpose: Enables the portable context-improved overlay in one merge.
+
+It adds:
+
+- the published `context-mode` plugin alongside `opencode-hive@latest`
+- a local `context-mode` MCP launched from `PATH`
+- a local `ast_grep` MCP launched through `uvx`
+- the bundled remote `context7` MCP entry already present in the base profile
+
+Prerequisites:
+
+- `context-mode` available on `PATH`
+- `uvx` available on `PATH`
+- network access to `https://mcp.context7.com/mcp`
+- `CONTEXT7_API_KEY` set in the environment
+
+Verification:
+
+- `context-mode --help`
+- `uvx --help`
+- `printenv CONTEXT7_API_KEY`
+
+Some notes:
+
+- this bundle normalizes the live local setup into portable `PATH`-based commands and environment variables
+- `cymbal` is a separate CLI tool for local code navigation, but it is not wired through `opencode.json`; the AGENTS profiles use it when the current Opencode environment exposes it
+- this bundle supersedes `opencode.mcp-context7-enabled.json` on machines that want the full tool stack
+- pair it with `profiles/agents/shared-context-improved.md` or `profiles/agents/personal-context-improved.md` so the installed `AGENTS.md` assumes the same capabilities the config actually enables
+
+Portability:
+
+- medium
+- suitable when the local Node and `uv` runtimes are already installed and the operator wants the context and structural-search toolchain enabled together
 
 ### `opencode.mcp-context7-enabled.json`
 
@@ -116,6 +152,12 @@ The merge workflow involves the following:
 ## Automated merge
 
 Use `scripts/enable-optional.sh` to validate prerequisites and merge a snippet into the active config.
+
+```bash
+./scripts/enable-optional.sh context-improved
+```
+
+Other examples:
 
 ```bash
 ./scripts/enable-optional.sh lsp-all-recommended
