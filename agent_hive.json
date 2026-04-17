@@ -35,7 +35,7 @@
       ]
     },
     "scout-researcher": {
-      "model": "github-copilot/claude-sonnet-4.6",
+      "model": "github-copilot/gpt-5.4-mini",
       "variant": "high",
       "temperature": 1,
       "autoLoadSkills": []
@@ -75,7 +75,7 @@
     "forager-documents": {
       "baseAgent": "forager-worker",
       "description": "Use this worker for document-heavy tasks. This includes things like writing documentation, creating reports, and other non-code documents.",
-      "model": "github-copilot/gpt-5.4",
+      "model": "github-copilot/gpt-5.4-mini",
       "variant": "high",
       "temperature": 1,
       "autoLoadSkills": [
@@ -86,7 +86,7 @@
     "forager-simple": {
       "baseAgent": "forager-worker",
       "description": "Only use this worker for tasks that require a low level of intelligence and creativity which are well defined and do not have many interdependent steps or decisions to make.",
-      "model": "github-copilot/claude-sonnet-4.6",
+      "model": "github-copilot/gpt-5.4-mini",
       "variant": "high",
       "temperature": 0.5
     },
