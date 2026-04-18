@@ -35,6 +35,7 @@ Purpose: The shared profile plus strong routing rules for the optional context-i
 Use this when:
 
 - you have enabled `profiles/optional/opencode.context-improved.json`
+- you have also applied the matching `agent_hive.context-improved.json` overlay, either through `./scripts/enable-optional.sh context-improved` or automatically through `./scripts/install-profile.sh`
 - `context-mode`, local `ast_grep`, and enabled `context7` are actually available in the running environment
 - you want agents to prefer the richer context and navigation workflow explicitly
 
@@ -46,6 +47,7 @@ Use this when:
 
 - you want the agent to default to the repo author's style
 - you have enabled `profiles/optional/opencode.context-improved.json`
+- you have also applied the matching `agent_hive.context-improved.json` overlay, either through `./scripts/enable-optional.sh context-improved` or automatically through `./scripts/install-profile.sh`
 - you want the AGENTS policy to assume the context-improved tool bundle is present
 
 ## Install selection
@@ -69,18 +71,19 @@ OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
 Install the shared context-improved profile:
 
 ```bash
-OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
 ```
 
 Install the personal context-improved profile:
 
 ```bash
-OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
 ```
 
 Some notes:
 
-- the `*-context-improved` AGENTS profiles should be paired with `./scripts/enable-optional.sh context-improved`
+- the `*-context-improved` AGENTS profiles auto-apply `context-improved` during `./scripts/install-profile.sh`; use `./scripts/enable-optional.sh context-improved` when you want to add the bundle after a plain install
+- the `*-context-improved` install commands require `jq`, `context-mode`, `uvx`, and `CONTEXT7_API_KEY` because the installer preflights and auto-applies the matching bundle
 - the plain `shared` and `personal-default` profiles are the capability-safe defaults for the base install
 - `skip` is the preservation path for an existing `AGENTS.md`; it leaves the file untouched so the agent can fold in the new guidance structurally afterward
 

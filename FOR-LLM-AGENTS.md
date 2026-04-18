@@ -46,7 +46,7 @@ Some setup facts are not user choices:
 - The default full install path is `./scripts/install-profile.sh`.
 - The repo uses remote GitHub Copilot models in `opencode.json` and `agent_hive.json`.
 - The published `opencode-hive@latest` plugin is installed by Opencode on first run.
-- The optional context-improved bundle adds `context-mode@latest`, local `ast_grep`, and enabled `context7` in one merge.
+- The optional context-improved bundle adds `context-mode@latest`, local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay that disables `ast_grep` for Hive workers.
 - `context7` is present in the base config but disabled by default.
 - `cymbal` is not configured through `opencode.json`. It is a separate CLI tool that the context-improved AGENTS profiles know how to use when it is installed and available on `PATH`.
 - No LSP snippet is enabled by default.
@@ -78,7 +78,7 @@ Before making changes, read these files from this repository:
 - Do not push optional tooling unless the operator wants it and the machine can support it.
 - Use the repository scripts instead of manually copying files.
 - If a prerequisite is missing, ask whether the operator wants you to install it or skip the related optional feature.
-- If the operator wants the context-improved workflow, explain that it has two parts: a matching `AGENTS.md` profile and the `context-improved` JSON overlay.
+- If the operator wants the context-improved workflow, explain that the matching `shared-context-improved` or `personal-context-improved` profile now applies the `context-improved` JSON overlays automatically during install.
 - Make it clear that `cymbal` is an optional CLI dependency, not a bundled config entry. If it is missing, the context-improved profile can still work, but agents will fall back to the other available search tools.
 - Keep the operator informed about what you are about to run.
 
@@ -168,7 +168,7 @@ Recommendation:
 
 ### 5. Install the base profile
 
-Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, `AGENTS.md`, `skills/`, `agents/`, and `commands/` contents with this repo's versions, and it writes timestamped backups under `<target>/.backup/` first when those paths already exist. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
+Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, `AGENTS.md`, `skills/`, `agents/`, and `commands/` contents with this repo's versions, and it writes timestamped backups under `<target>/.backup/` first when those paths already exist. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `context-mode`, `uvx`, and `CONTEXT7_API_KEY`, then auto-applies the matching `context-improved` overlays. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
 
 Run one of these:
 
@@ -181,11 +181,11 @@ OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
 ```
 
 ```bash
-OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
 ```
 
 ```bash
-OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
 ```
 
 If a custom config directory was chosen, include `OPENCODE_CONFIG_DIR=/path/to/dir` as well.
@@ -209,7 +209,7 @@ When the target already has an `AGENTS.md`, follow this order:
 Ask:
 
 ```text
-Do you want the richer local context and code-navigation workflow on this machine? That enables context-mode, local ast-grep, and context7 together, and it pairs best with the shared-context-improved or personal-context-improved AGENTS profile.
+Do you want the richer local context and code-navigation workflow on this machine? That enables context-mode, local ast-grep, and context7 together, adds the matching Agent Hive overlay, and pairs best with the shared-context-improved or personal-context-improved AGENTS profile.
 ```
 
 Only enable it if:
@@ -231,9 +231,11 @@ Explain this clearly:
 - it is not configured in `opencode.json`
 - if it is missing, the context-improved profile still works, but agents will fall back to the other available search tools
 
+If the operator wants the context-improved bundle and the selected AGENTS profile is one of the context-improved variants, let `scripts/install-profile.sh` handle it automatically.
+
 If the operator wants the context-improved bundle but the selected AGENTS profile is not one of the context-improved variants, offer to switch the AGENTS profile first.
 
-If all conditions are met, run:
+If all conditions are met and the selected AGENTS profile is not one of the context-improved variants, run:
 
 ```bash
 ./scripts/enable-optional.sh context-improved
@@ -265,6 +267,8 @@ Some notes:
 
 - `scripts/enable-optional.sh` requires `jq`.
 - `agent_hive.json` still disables `context7` for Hive workers by default. That is part of this profile.
+- the `context-improved` bundle additionally disables `ast_grep` for Hive workers through its `agent_hive.json` overlay.
+- when `shared-context-improved` or `personal-context-improved` is selected, `scripts/install-profile.sh` applies that bundle automatically instead of requiring this separate step.
 
 ### 8. Offer the optional LSP bundles
 
@@ -414,13 +418,13 @@ OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
 Base install with the shared context-improved profile:
 
 ```bash
-OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
 ```
 
 Base install with the personal context-improved profile:
 
 ```bash
-OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
 ```
 
 Base install into a custom config directory:
@@ -434,6 +438,8 @@ Enable the context-improved bundle:
 ```bash
 ./scripts/enable-optional.sh context-improved
 ```
+
+Use that command when the install already used `shared` or `personal-default` and you want to add the richer bundle afterward.
 
 Enable `context7` only:
 

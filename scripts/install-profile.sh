@@ -7,6 +7,36 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TARGET_DIR="${OPENCODE_CONFIG_DIR:-${HOME}/.config/opencode}"
 AGENTS_PROFILE="${OPENCODE_AGENTS_PROFILE:-shared}"
 AGENTS_SOURCE="${REPO_ROOT}/profiles/agents/${AGENTS_PROFILE}.md"
+ENABLE_OPTIONAL_SCRIPT="${SCRIPT_DIR}/enable-optional.sh"
+
+check_command() {
+  local binary="$1"
+  if ! command -v "${binary}" >/dev/null 2>&1; then
+    printf 'Missing prerequisite on PATH: %s\n' "${binary}" >&2
+    exit 1
+  fi
+}
+
+profile_needs_context_improved() {
+  case "${AGENTS_PROFILE}" in
+    shared-context-improved|personal-context-improved)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+preflight_context_improved() {
+  check_command jq
+  check_command context-mode
+  check_command uvx
+  if [[ -z "${CONTEXT7_API_KEY:-}" ]]; then
+    printf 'CONTEXT7_API_KEY is not set. It is required for %s.\n' "${AGENTS_PROFILE}" >&2
+    exit 1
+  fi
+}
 
 list_agents_profiles() {
   local profile_file
@@ -22,6 +52,10 @@ if [[ ! -f "${AGENTS_SOURCE}" ]]; then
     printf '  %s\n' "${profile_name}" >&2
   done < <(list_agents_profiles)
   exit 1
+fi
+
+if profile_needs_context_improved; then
+  preflight_context_improved
 fi
 
 BACKUP_DIR=""
@@ -60,8 +94,15 @@ for prompt_file in "${REPO_ROOT}"/.apm/prompts/*.prompt.md; do
   install -m 0644 "${prompt_file}" "${TARGET_DIR}/commands/${prompt_name}.md"
 done
 
+if profile_needs_context_improved; then
+  OPENCODE_CONFIG_DIR="${TARGET_DIR}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 "${ENABLE_OPTIONAL_SCRIPT}" context-improved
+fi
+
 printf 'Installed Opencode profile into %s\n' "${TARGET_DIR}"
 printf 'Installed AGENTS profile: %s\n' "${AGENTS_PROFILE}"
+if profile_needs_context_improved; then
+  printf 'Auto-applied optional bundle: context-improved\n'
+fi
 if [[ -n "${BACKUP_DIR}" ]]; then
   printf 'Backed up replaced config into %s\n' "${BACKUP_DIR}"
 fi

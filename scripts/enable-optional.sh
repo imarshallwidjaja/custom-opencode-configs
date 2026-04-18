@@ -6,7 +6,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TARGET_DIR="${OPENCODE_CONFIG_DIR:-${HOME}/.config/opencode}"
 TARGET_JSON="${TARGET_DIR}/opencode.json"
+TARGET_AGENT_HIVE_JSON="${TARGET_DIR}/agent_hive.json"
 SNIPPET_NAME="${1:-}"
+SKIP_BACKUP="${OPENCODE_OPTIONAL_SKIP_BACKUP:-0}"
 
 usage() {
   printf 'Usage: %s <snippet-name>\n' "$(basename "$0")" >&2
@@ -46,6 +48,36 @@ check_command() {
   fi
 }
 
+BACKUP_DIR=""
+
+backup_json() {
+  local source_path="$1"
+  local backup_name="$2"
+
+  if [[ "${SKIP_BACKUP}" == "1" ]]; then
+    return
+  fi
+
+  if [[ -f "${source_path}" ]]; then
+    if [[ -z "${BACKUP_DIR}" ]]; then
+      BACKUP_DIR="${TARGET_DIR}/.backup/$(date +%Y%m%d-%H%M%S)"
+      mkdir -p "${BACKUP_DIR}"
+    fi
+    cp -a "${source_path}" "${BACKUP_DIR}/${backup_name}"
+  fi
+}
+
+merge_json() {
+  local target_path="$1"
+  local snippet_path="$2"
+  local tmpfile
+
+  tmpfile="$(mktemp)"
+  jq -s '.[0] * .[1]' "${target_path}" "${snippet_path}" > "${tmpfile}"
+  install -m 0644 "${tmpfile}" "${target_path}"
+  rm -f "${tmpfile}"
+}
+
 case "${SNIPPET_NAME}" in
   context-improved)
     check_command context-mode
@@ -77,14 +109,23 @@ case "${SNIPPET_NAME}" in
     ;;
 esac
 
-BACKUP_DIR="${TARGET_DIR}/.backup/$(date +%Y%m%d-%H%M%S)"
-mkdir -p "${BACKUP_DIR}"
-cp -a "${TARGET_JSON}" "${BACKUP_DIR}/opencode.json"
+backup_json "${TARGET_JSON}" "opencode.json"
+merge_json "${TARGET_JSON}" "${SNIPPET_FILE}"
 
-tmpfile="$(mktemp)"
-jq -s '.[0] * .[1]' "${TARGET_JSON}" "${SNIPPET_FILE}" > "${tmpfile}"
-install -m 0644 "${tmpfile}" "${TARGET_JSON}"
-rm -f "${tmpfile}"
+AGENT_HIVE_SNIPPET_FILE="${REPO_ROOT}/profiles/optional/agent_hive.${SNIPPET_NAME}.json"
+if [[ -f "${AGENT_HIVE_SNIPPET_FILE}" ]]; then
+  if [[ ! -f "${TARGET_AGENT_HIVE_JSON}" ]]; then
+    printf 'Target config not found: %s\n' "${TARGET_AGENT_HIVE_JSON}" >&2
+    exit 1
+  fi
+  backup_json "${TARGET_AGENT_HIVE_JSON}" "agent_hive.json"
+  merge_json "${TARGET_AGENT_HIVE_JSON}" "${AGENT_HIVE_SNIPPET_FILE}"
+fi
 
 printf 'Applied %s to %s\n' "${SNIPPET_NAME}" "${TARGET_JSON}"
-printf 'Backed up the previous config to %s\n' "${BACKUP_DIR}"
+if [[ -f "${AGENT_HIVE_SNIPPET_FILE}" ]]; then
+  printf 'Applied %s to %s\n' "${SNIPPET_NAME}" "${TARGET_AGENT_HIVE_JSON}"
+fi
+if [[ -n "${BACKUP_DIR}" ]]; then
+  printf 'Backed up the previous config to %s\n' "${BACKUP_DIR}"
+fi

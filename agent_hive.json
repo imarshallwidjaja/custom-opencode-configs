@@ -55,6 +55,12 @@
       "autoLoadSkills": [
         "code-reviewer"
       ]
+    },
+    "hive-helper": {
+      "model": "github-copilot/gpt-5.4-mini",
+      "variant": "high",
+      "temperature": 0.3,
+      "autoLoadSkills": []
     }
   },
   "customAgents": {
@@ -63,7 +69,7 @@
       "description": "Only use this worker for tasks that require a high level of intelligence, reasoning, and creativity to solve complex problems that are not well defined or have many steps or decisions to make.",
       "model": "github-copilot/gpt-5.4",
       "variant": "high",
-      "temperature": 1
+      "temperature": 0.7
     },
     "forager-capable": {
       "baseAgent": "forager-worker",
@@ -90,10 +96,20 @@
       "variant": "high",
       "temperature": 0.5
     },
+    "forager-ui": {
+      "baseAgent": "forager-worker",
+      "description": "Only use this worker for tasks that involve writing code related to user interfaces and experiences. This includes things like frontend code, design systems, and other UI/UX-related code.",
+      "model": "github-copilot/gemini-3.1-pro-preview",
+      "variant": "high",
+      "temperature": 1,
+      "autoLoadSkills": [
+        "web-design-guidelines"
+      ]
+    },
     "hygienic-reviewer-documents": {
       "baseAgent": "hygienic-reviewer",
       "description": "Use this reviewer for reviewing documents that are not majorly code. This includes things like implementation plans, technical specifications, and other non-code documents.",
-      "model": "github-copilot/gpt-5.4",
+      "model": "github-copilot/gemini-3.1-pro-preview",
       "variant": "high",
       "temperature": 1,
       "autoLoadSkills": [
@@ -107,6 +123,13 @@
       "model": "github-copilot/gpt-5.4",
       "variant": "xhigh",
       "temperature": 1
+    },
+    "hygienic-reviewer-technical": {
+      "baseAgent": "hygienic-reviewer",
+      "description": "Only use this reviewer for reviewing the technical aspects of code, such as correctness, efficiency, and security. It is used when the orchestrator needs a second pair of eyes to review code for technical quality.",
+      "model": "github-copilot/claude-opus-4.6",
+      "variant": "high",
+      "temperature": 0.3
     }
   }
 }

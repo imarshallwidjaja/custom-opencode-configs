@@ -1,0 +1,6 @@
+{
+  "disableMcps": [
+    "context7",
+    "ast_grep"
+  ]
+}

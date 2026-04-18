@@ -123,8 +123,7 @@ curl -fsSL https://opencode.ai/install | bash
 git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
 cd custom-opencode-configs
 opencode auth login -p github-copilot
-OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
-CONTEXT7_API_KEY=... ./scripts/enable-optional.sh context-improved
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
 opencode
 ```
 
@@ -170,14 +169,16 @@ OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
 To install the shared context-improved AGENTS profile instead:
 
 ```bash
-OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
 ```
 
 To install the personal context-improved AGENTS profile instead:
 
 ```bash
-OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
 ```
+
+Those two context-improved profile installs also require `jq`, `context-mode`, and `uvx` on `PATH`. The installer preflights those dependencies and auto-applies the matching `context-improved` overlay when they are present.
 
 5. Optional but recommended with OpenCode: install the Agent Hive VS Code extension for plan review, sidebar status, and comments:
 
@@ -197,12 +198,13 @@ opencode
 
 ### Optional context-improved bundle
 
-The repository now includes `profiles/optional/opencode.context-improved.json` for the local context and structural-search toolchain.
+The repository now includes `profiles/optional/opencode.context-improved.json` plus a matching `profiles/optional/agent_hive.context-improved.json` overlay for the local context and structural-search toolchain.
 
 Purpose:
 
 - keep the base profile portable and remote-first
 - let an operator opt into `context-mode`, local `ast_grep`, and enabled `context7` in one additive snippet merge
+- keep the base Agent Hive profile portable while disabling `ast_grep` for Hive workers only when the context-improved bundle is enabled
 - normalize local absolute paths into portable `PATH`-based commands and environment variables
 
 Prerequisites:
@@ -217,12 +219,17 @@ Enable it with:
 ./scripts/enable-optional.sh context-improved
 ```
 
+Use that command when you want to add the bundle after a plain `shared` or `personal-default` install. If you install `shared-context-improved` or `personal-context-improved`, `scripts/install-profile.sh` applies this bundle automatically after preflighting the same prerequisites.
+
 Some notes:
 
 - the context-improved overlay replaces the live machine's absolute local plugin and MCP paths with portable command names
+- `./scripts/enable-optional.sh context-improved` updates both `opencode.json` and `agent_hive.json`
+- `scripts/install-profile.sh` auto-applies the same overlay when `OPENCODE_AGENTS_PROFILE` is `shared-context-improved` or `personal-context-improved`
+- the Agent Hive sidecar keeps the base profile on `disableMcps: ["context7"]` and adds `ast_grep` only for the context-improved bundle
 - `cymbal` is a separate CLI tool, not an `opencode.json` entry; the packaged AGENTS profiles instruct agents to use it when the running Opencode environment exposes it
 - if you only want the remote docs MCP, the narrower `mcp-context7-enabled` snippet still exists
-- pair this overlay with `shared-context-improved` or `personal-context-improved` so the installed `AGENTS.md` matches the enabled toolchain
+- pair this overlay with `shared-context-improved` or `personal-context-improved` so the installed `AGENTS.md` matches the enabled toolchain; selecting one of those profiles during install now handles the pairing automatically
 
 ## AGENTS profiles
 
