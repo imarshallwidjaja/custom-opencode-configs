@@ -2,6 +2,8 @@
 
 This directory contains installable `AGENTS.md` profiles for Opencode.
 
+All four profiles share the same baseline quality and delegation rules. That includes the expected-versus-validated parity wording, the new-session retry rule for failed subagents, explicit instructions that subagents must return a final response before finishing, and the document-writing guidance that points resume work at `resume-tailoring` when that skill exists in the running environment.
+
 ## Why this exists
 
 The repository root `AGENTS.md` governs work on this repository itself. The files in this directory are the profiles that get copied into `~/.config/opencode/AGENTS.md` by `scripts/install-profile.sh`.

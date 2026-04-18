@@ -31,7 +31,7 @@ Included:
 - Shared skills already living in `~/.config/opencode/skill`
 - Shared commands from `~/.config/opencode/commands`
 - The `simplicity-reviewer` agent definition
-- Portable tool-routing guidance for `context-mode`, `ast-grep`, `grep_app`, `context7`, `cymbal`, and `read`
+- Portable AGENTS guidance for validation language, subagent workflow, and tool routing
 
 Excluded from the base profile:
 
@@ -39,7 +39,12 @@ Excluded from the base profile:
 - Embedded API keys and account files
 - Absolute filesystem paths
 - Machine-specific local MCP and plugin paths
-- Personal or domain-specific skills such as `resume-tailoring` and `poraki-phase2-forecast-operator`
+- Bundled personal or domain-specific skills such as `resume-tailoring` and `poraki-phase2-forecast-operator`
+
+Some notes:
+
+- the installable `AGENTS.md` profiles can still instruct agents to use optional external skills such as `resume-tailoring` when those skills are available in the running environment
+- those references do not mean this repository packages those skills in `.apm/`
 
 ## Dependency model
 
@@ -90,6 +95,7 @@ That document:
 - tells the agent which files to read first
 - gives the interview order for choosing an `AGENTS.md` profile and optional context-improved, MCP, or LSP bundles
 - treats `AGENTS.md` reconciliation as an additive-first agent workflow built around `OPENCODE_AGENTS_MODE=skip`, not as a normal installer path
+- treats AGENTS profile selection as operating-policy selection too, not only a toolchain choice
 - tells the agent which commands to run and what to verify at the end
 
 ### Copy-paste quick start
@@ -235,12 +241,14 @@ Some notes:
 
 The installer does not use the repository root `AGENTS.md` as the global Opencode profile. It installs one of the profiles from `profiles/agents/`.
 
+All four installable profiles share the same baseline quality and delegation rules. That includes the expected-versus-validated parity wording, the new-session retry rule for failed subagents, the requirement that subagents always return a final response before finishing, and the document-writing guidance that points resume work at `resume-tailoring` when that skill is available.
+
 Available profiles:
 
 - `shared`: the portable default
-- `personal-default`: the portable default plus a sanitized version of the author's preferred operating and writing voice
-- `shared-context-improved`: the shared profile plus strong routing rules for the optional context-improved toolchain
-- `personal-context-improved`: the personal-default profile plus strong routing rules for the optional context-improved toolchain
+- `personal-default`: the shared baseline plus a sanitized version of the author's preferred operating and writing voice
+- `shared-context-improved`: the shared baseline plus strong routing rules for the optional context-improved toolchain
+- `personal-context-improved`: the personal-default profile plus the same context-improved routing rules
 
 Install into the default global config directory:
 

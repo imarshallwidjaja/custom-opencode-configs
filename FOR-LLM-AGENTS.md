@@ -52,6 +52,8 @@ Some setup facts are not user choices:
 - No LSP snippet is enabled by default.
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
 - When merging into an existing `AGENTS.md`, start from the user's file and reconcile the selected profile into it instead of replacing it by default.
+- AGENTS profile selection changes operating rules, not just tool routing. Preserve the selected profile's parity-validation wording, failed-subagent retry policy, subagent final-response instructions, and resume-work guidance when merging.
+- The installable profiles can mention `resume-tailoring` as guidance for resume, CV, and cover-letter work. Treat that as profile policy only. It does not mean this repository bundles that skill.
 
 To make it simple: use the repo scripts for the normal setup path, then offer the optional bundles only after the base profile is installed.
 
@@ -81,6 +83,8 @@ Before making changes, read these files from this repository:
 - If the operator wants the context-improved workflow, explain that the matching `shared-context-improved` or `personal-context-improved` profile now applies the `context-improved` JSON overlays automatically during install.
 - Make it clear that `cymbal` is an optional CLI dependency, not a bundled config entry. If it is missing, the context-improved profile can still work, but agents will fall back to the other available search tools.
 - Keep the operator informed about what you are about to run.
+- Treat AGENTS profile choice as an operating-policy choice too, not only a toolchain choice.
+- During AGENTS merges, preserve the selected profile's parity-validation wording, new-session retry rule for failed subagents, explicit subagent final-response instructions, and resume-work guidance.
 
 ## Recommended Defaults
 
@@ -199,7 +203,7 @@ When the target already has an `AGENTS.md`, follow this order:
 1. Run `OPENCODE_AGENTS_MODE=skip ./scripts/install-profile.sh` so the installer does not replace the user's file.
 2. Read the user's current `AGENTS.md` and the selected profile from this repository.
 3. Map the sections and instruction intent in both documents.
-4. Add compatible missing guidance into the user's structure without overwriting user content by default.
+4. Add compatible missing guidance into the user's structure without overwriting user content by default. That includes the profile's parity-validation wording, failed-subagent retry policy, subagent final-response instructions, and `resume-tailoring` guidance when the selected profile includes it.
 5. Stop when you find a real conflict and present it to the user.
 6. Only consolidate, rewrite, or delete conflicting instructions after explicit approval.
 7. Back up the user's `AGENTS.md` before writing the merged result.

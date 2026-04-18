@@ -15,8 +15,8 @@ Prefer retrieval-led reasoning over pre-training-led reasoning.
 - Run all relevant checks such as lint, format, type-check, build, and tests before submitting changes.
 - Never claim checks passed unless they were actually run.
 - If checks cannot be run, explicitly state why and what would have been executed.
-- When working in phases, do not label durable git-tracked artifacts as `phase 1` or `step 2`. Use descriptive names that reflect the actual work being done.
-- When discussing parity, readiness, or sign-off, distinguish between expected parity and validated parity.
+- When working in steps or phases, do not label durable git-tracked artifacts as `phase 1` or `step 2`. Use descriptive names that reflect the actual work being done. Version tags such as `v1` and `v2` are allowed.
+- When discussing parity, readiness, or sign-off, distinguish between expected parity and validated parity. If the implementation work appears sufficient, say the expected outcome is parity and state separately that proof still requires rerunning the tracked validation pack. Do not present missing validation alone as if it were a known remaining defect.
 
 ## Delegation And Subagents
 
@@ -24,9 +24,16 @@ Prefer retrieval-led reasoning over pre-training-led reasoning.
 - Delegate well-defined pieces of work when they require multiple steps or tools.
 - Ask subagents to provide a final summary of their findings.
 - Keep delegated tasks narrowly scoped. If a task is too broad, split it into smaller goals and delegate those separately.
-- If a subagent fails, prefer assigning the work to a new subagent with better context instead of repeatedly resuming the same failed thread.
-- When a task provides `worker_prompt.md`, pass it verbatim to the worker.
-- Keep the todo list current at every task transition.
+- If a subagent fails its task, reassign the work to a new subagent session instead of resuming the old one. Pass concise context from the failed attempt, including what was tried, where it failed, any relevant errors, and the most likely cause, so the retried worker does not repeat the same path. If a subagent fails multiple times, reconsider whether the task is well-defined enough.
+- When a task provides `worker_prompt.md`, pass it verbatim to the worker and instruct the worker to follow it exactly.
+- When `todowrite` is available, keep the todo list current at each task transition. Update it immediately when a task starts, completes, or becomes blocked.
+
+### Instructions For Subagents
+
+- If you are a subagent, always return a final response about your work or findings before finishing.
+- Follow any explicit output format or structure from the orchestrator.
+- If no format was specified, provide a summary covering what was completed, key findings, and any blockers or failures, including relevant errors and attempted approaches.
+- Do not end the session without providing a response.
 
 ### Mandatory Skill Usage
 
@@ -95,7 +102,7 @@ Where:
 
 - Follow the `context-mode` skill as the detailed operating policy.
 - Think in code when you need to analyze, count, filter, compare, parse, transform, or process data. Write code through `context-mode` tools and print only the result you need.
-- Do not use `curl`, `wget`, inline HTTP in shell, or direct URL fetching when `context-mode` is available.
+- Do not use `curl`, `wget`, inline HTTP in shell, or direct URL fetching when `context-mode` is available. Use the sandboxed `context-mode` fetch and execute paths instead.
 - Do not use direct shell, `read`, or broad search tools for analysis if the result may be large or uncertain. Route those cases through `context-mode` so only bounded output enters context.
 - If a file is being read to edit it, direct `read` is correct. If a file is being read only to analyze it, prefer the `context-mode` file execution path.
 
@@ -128,6 +135,7 @@ Where:
 - Narrow remote searches with repository, language, path, or regex filters when possible.
 - Prefer `grep_app` over generic web fetches when exploring GitHub source code or looking for public implementation examples.
 - Do not use `grep_app` for local workspace search when `cymbal`, `ast-grep`, `grep`, or `read` can answer the question directly.
+- Use `context7` for official library documentation, `grep_app` for public code examples, and `websearch` for broader web research.
 
 #### Read Rules
 
@@ -154,6 +162,7 @@ Where:
 ## Document Writing
 
 - When writing documentation intended for humans, also use `stop-slop` and `humanizer`.
+- When working on resumes, CVs, or cover letters, use `resume-tailoring`.
 - For evaluative writing, state the main judgment early, then move from operating model to technical evidence.
 - Name concrete system objects early and avoid vague glue phrases unless they are immediately grounded in specifics.
 - Keep related issues grouped together instead of forcing one issue per paragraph.
