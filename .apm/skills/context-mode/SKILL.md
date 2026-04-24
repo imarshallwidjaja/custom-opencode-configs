@@ -77,7 +77,7 @@ Do not pull raw data into chat and process it mentally.
    - multiple commands or follow-up search -> `ctx_batch_execute`
    - one command or script -> `ctx_execute`
    - one file under analysis -> `ctx_execute_file`
-   - external docs or page -> `ctx_fetch_and_index` then `ctx_search`
+   - external docs/page -> `ctx_fetch_and_index` then `ctx_search`
 
 3. Print findings, not dumps.
    - stdout is what enters context

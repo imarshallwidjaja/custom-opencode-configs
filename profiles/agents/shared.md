@@ -15,6 +15,7 @@ Prefer retrieval-led reasoning over pre-training-led reasoning.
 - Run all relevant checks such as lint, format, type-check, build, and tests before submitting changes.
 - Never claim checks passed unless they were actually run.
 - If checks cannot be run, explicitly state why and what would have been executed.
+- When a change affects installation flow, setup choices, profile selection, optional components, or dependency expectations, update the operator-facing docs and agent instructions that govern that workflow as part of the same change.
 - When working in steps or phases, do not label durable git-tracked artifacts as `phase 1` or `step 2`. Use descriptive names that reflect the actual work being done. Version tags such as `v1` and `v2` are allowed.
 - When discussing parity, readiness, or sign-off, distinguish between expected parity and validated parity. If the implementation work appears sufficient, say the expected outcome is parity and state separately that proof still requires rerunning the tracked validation pack. Do not present missing validation alone as if it were a known remaining defect.
 

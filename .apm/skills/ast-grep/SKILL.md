@@ -47,7 +47,7 @@ Unavailable here:
 
 Alternates:
 - Use `ast_grep_find_code` or `ast_grep_find_code_by_rule` to verify structural candidates before editing.
-- Use LSP diagnostics and project lint, type-check, build, and test commands for broad quality checks.
+- Use LSP diagnostics and project lint/typecheck/build/test commands for broad quality checks.
 - Use `cymbal`, `grep`, and `read` for import discovery and narrow local inspection.
 
 ## Default workflow
@@ -104,7 +104,7 @@ Prefer the narrowest project path and language that answers the question.
 
 - If text search would return many false positives, use ast-grep.
 - If the match depends on syntax context, use a YAML rule.
-- If the question is `how is this symbol connected?`, use `cymbal` first.
+- If the question is "how is this symbol connected?", use `cymbal` first.
 - If you already know the exact file and just need lines for editing, use `read`.
 
 ## Example progression

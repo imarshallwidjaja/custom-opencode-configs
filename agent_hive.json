@@ -74,7 +74,7 @@
     "forager-capable": {
       "baseAgent": "forager-worker",
       "description": "Only use this worker for tasks that require an agent that has extra capabilities to write better code and make use of complex tools calls to complete multiple actions.",
-      "model": "github-copilot/claude-opus-4.6",
+      "model": "github-copilot/gpt-5.3-codex",
       "variant": "high",
       "temperature": 0.7
     },
@@ -124,10 +124,17 @@
       "variant": "xhigh",
       "temperature": 1
     },
+    "hygienic-reviewer-opus": {
+      "baseAgent": "hygienic-reviewer",
+      "description": "Only use this reviewer when requested by the operator in direct reference. This reviewer is a much stronger version of hygienic-reviewer-technical. It thinks indepth to problem solve and review code with a very high level of intelligence, creativity, and reasoning.",
+      "model": "github-copilot/claude-opus-4.7",
+      "variant": "high",
+      "temperature": 0.7
+    },
     "hygienic-reviewer-technical": {
       "baseAgent": "hygienic-reviewer",
       "description": "Only use this reviewer for reviewing the technical aspects of code, such as correctness, efficiency, and security. It is used when the orchestrator needs a second pair of eyes to review code for technical quality.",
-      "model": "github-copilot/claude-opus-4.6",
+      "model": "github-copilot/claude-sonnet-4.6",
       "variant": "high",
       "temperature": 0.3
     }
