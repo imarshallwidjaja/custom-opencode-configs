@@ -2,7 +2,7 @@
 
 This directory contains installable `AGENTS.md` profiles for Opencode.
 
-All four profiles share the same baseline quality and delegation rules. That includes the expected-versus-validated parity wording, the new-session retry rule for failed subagents, explicit instructions that subagents must return a final response before finishing, and the document-writing guidance that points resume work at `resume-tailoring` when that skill exists in the running environment.
+All four profiles share the same baseline quality, delegation, verification, search, browser, and document-conversion rules. The `personal-*` profiles add the sanitized operator-writing style; the `shared*` profiles intentionally omit that voice layer.
 
 ## Why this exists
 
@@ -17,16 +17,16 @@ Purpose: A portable default for other operators.
 Use this when:
 
 - you want the repo's shared operating rules
-- you do not want the author's more opinionated writing defaults
+- you do not want the more opinionated writing-style defaults
 - you want the safest starting point for another machine or team member
 
 ### `personal-default.md`
 
-Purpose: The shared profile plus a sanitized version of the author's preferred writing and operating voice.
+Purpose: The shared profile plus a sanitized operator-writing voice.
 
 Use this when:
 
-- you want the agent to default to the repo author's style
+- you want the agent to default to the operator-style writing profile
 - you are comfortable with a more opinionated `AGENTS.md`
 - you want a ready-made profile instead of writing a personal one from scratch
 
@@ -47,7 +47,7 @@ Purpose: The personal-default profile plus strong routing rules for the optional
 
 Use this when:
 
-- you want the agent to default to the repo author's style
+- you want the agent to default to the operator-style writing profile
 - you have enabled `profiles/optional/opencode.context-improved.json`
 - you have also applied the matching `agent_hive.context-improved.json` overlay, either through `./scripts/enable-optional.sh context-improved` or automatically through `./scripts/install-profile.sh`
 - you want the AGENTS policy to assume the context-improved tool bundle is present
