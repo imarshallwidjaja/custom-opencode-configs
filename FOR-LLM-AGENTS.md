@@ -25,26 +25,31 @@ Do not invent extra setup questions. This repository exposes the following real 
    - `personal-default`
    - `shared-context-improved`
    - `personal-context-improved`
-2. Which Opencode config directory to install into:
+2. Which Agent Hive model profile to install:
+   - `default`
+   - `openai-opencode-go`
+   - `copilot-opencode-go`
+3. Which Opencode config directory to install into:
    - default `~/.config/opencode`
    - a custom `OPENCODE_CONFIG_DIR`
-3. Whether to enable the optional context-improved bundle:
+4. Whether to enable the optional context-improved bundle:
    - none
    - `context-improved`
-4. Whether to enable the optional `context7`-only MCP snippet when the full context-improved bundle is not being used:
+5. Whether to enable the optional `context7`-only MCP snippet when the full context-improved bundle is not being used:
    - none
    - `mcp-context7-enabled`
-5. Whether to enable one optional LSP snippet:
+6. Whether to enable one optional LSP snippet:
     - none
     - `lsp-markdown-typescript`
     - `lsp-python`
     - `lsp-all-recommended`
-6. Whether to install the optional VS Code `tctinh.vscode-hive` extension.
+7. Whether to install the optional VS Code `tctinh.vscode-hive` extension.
 
 Some setup facts are not user choices:
 
 - The default full install path is `./scripts/install-profile.sh`.
-- The repo uses remote GitHub Copilot models in `opencode.json` and `agent_hive.json`.
+- The default repo profile uses remote GitHub Copilot models in `opencode.json` and `agent_hive.json`.
+- Alternate Agent Hive profiles live under `profiles/agent-hive/` and are selected with `OPENCODE_AGENT_HIVE_PROFILE`.
 - The published `opencode-hive@latest` plugin is installed by Opencode on first run.
 - The optional context-improved bundle adds `context-mode@latest`, local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay that disables `ast_grep` for Hive workers.
 - `context7` is present in the base config but disabled by default.
@@ -53,7 +58,7 @@ Some setup facts are not user choices:
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
 - When merging into an existing `AGENTS.md`, start from the user's file and reconcile the selected profile into it instead of replacing it by default.
 - AGENTS profile selection changes operating rules, not just tool routing. Preserve the selected profile's parity-validation wording, failed-subagent retry policy, subagent final-response instructions, and resume-work guidance when merging.
-- The installable profiles can mention `resume-tailoring` as guidance for resume, CV, and cover-letter work. Treat that as profile policy only. It does not mean this repository bundles that skill.
+- The repository packages `resume-tailoring` under `.apm/skills/`. `poraki-phase2-forecast-operator` remains local-only.
 
 To make it simple: use the repo scripts for the normal setup path, then offer the optional bundles only after the base profile is installed.
 
@@ -181,6 +186,22 @@ Recommendation:
 
 ### 5. Install the base profile
 
+Ask:
+
+```text
+Which Agent Hive model profile should I install: default, openai-opencode-go, or copilot-opencode-go?
+```
+
+Explain the options like this:
+
+- `default`: the repository root `agent_hive.json`, using the portable default model mix
+- `openai-opencode-go`: uses OpenAI models for major Hive roles and `opencode-go/*` models for selected scout, helper, worker, document, UI, and research roles
+- `copilot-opencode-go`: uses GitHub Copilot models for most Hive roles and `opencode-go/*` models for selected scout, helper, and simple-worker roles
+
+Recommendation:
+
+- Recommend `default` unless the operator explicitly wants one of the mixed-provider local profiles and confirms the named providers are available.
+
 Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, `AGENTS.md`, `skills/`, `agents/`, and `commands/` contents with this repo's versions, and it writes timestamped backups under `<target>/.backup/` first when those paths already exist. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `context-mode`, `uvx`, and `CONTEXT7_API_KEY`, then auto-applies the matching `context-improved` overlays. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
 
 Run one of these:
@@ -202,6 +223,8 @@ CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts
 ```
 
 If a custom config directory was chosen, include `OPENCODE_CONFIG_DIR=/path/to/dir` as well.
+
+If a non-default Agent Hive profile was chosen, include `OPENCODE_AGENT_HIVE_PROFILE=<profile-name>` as well.
 
 Do not use the APM-only install path for first-time setup unless the operator explicitly asks for it.
 
@@ -420,6 +443,7 @@ Use this as the source of truth for the interview.
 |---|---|---|---|
 | AGENTS merge strategy | preserve the user's `AGENTS.md` as the base, or replace it only with explicit approval | preserve the user's file | explicit approval required before full replacement or conflict consolidation |
 | AGENTS profile | `shared`, `personal-default`, `shared-context-improved`, `personal-context-improved` | `shared` | none |
+| Agent Hive profile | `default`, `openai-opencode-go`, `copilot-opencode-go` | `default` | selected model providers must be available in Opencode |
 | Config directory | `~/.config/opencode` or custom path | `~/.config/opencode` | none |
 | Context-improved bundle | enable or skip | skip | `jq`, `context-mode`, `uvx`, `CONTEXT7_API_KEY`, network access; `cymbal` optional CLI |
 | `context7` MCP only | enable or skip | skip | `jq`, `CONTEXT7_API_KEY`, network access |
@@ -438,6 +462,18 @@ Base install with the personal profile:
 
 ```bash
 OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
+```
+
+Base install with the OpenAI plus `opencode-go` Agent Hive profile:
+
+```bash
+OPENCODE_AGENT_HIVE_PROFILE=openai-opencode-go ./scripts/install-profile.sh
+```
+
+Base install with the Copilot plus `opencode-go` Agent Hive profile:
+
+```bash
+OPENCODE_AGENT_HIVE_PROFILE=copilot-opencode-go ./scripts/install-profile.sh
 ```
 
 Base install with the shared context-improved profile:
@@ -499,6 +535,7 @@ code --install-extension tctinh.vscode-hive
 ## What Not To Do
 
 - Do not ask the operator to choose model IDs from this repo. Those defaults are already encoded.
+- Do not select a mixed-provider Agent Hive profile unless the operator confirms the named providers are available.
 - Do not default to direct `apm install -g` for first-time setup.
 - Do not treat AGENTS merge as a blind append.
 - Do not silently overwrite the user's existing `AGENTS.md` during merge.

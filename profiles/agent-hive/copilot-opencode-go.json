@@ -1,0 +1,117 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tctinh/agent-hive/main/packages/opencode-hive/schema/agent_hive.schema.json",
+  "agentMode": "dedicated",
+  "disableMcps": ["context7", "ast_grep"],
+  "agents": {
+    "hive-master": {
+      "model": "github-copilot/gpt-5.4",
+      "variant": "high",
+      "temperature": 0.7,
+      "autoLoadSkills": ["parallel-exploration"]
+    },
+    "architect-planner": {
+      "model": "github-copilot/gpt-5.5",
+      "variant": "high",
+      "temperature": 1,
+      "autoLoadSkills": ["brainstorming", "writing-plans", "parallel-exploration"]
+    },
+    "swarm-orchestrator": {
+      "model": "github-copilot/gpt-5.4",
+      "variant": "high",
+      "temperature": 1,
+      "autoLoadSkills": ["dispatching-parallel-agents", "parallel-exploration", "executing-plans"]
+    },
+    "scout-researcher": {
+      "model": "opencode-go/kimi-k2.6",
+      "variant": "high",
+      "temperature": 1,
+      "autoLoadSkills": []
+    },
+    "forager-worker": {
+      "model": "github-copilot/gpt-5.5",
+      "variant": "low",
+      "temperature": 0.7,
+      "autoLoadSkills": ["verification-before-completion"]
+    },
+    "hygienic-reviewer": {
+      "model": "github-copilot/gpt-5.4",
+      "variant": "high",
+      "temperature": 0.7,
+      "autoLoadSkills": ["code-reviewer"]
+    },
+    "hive-helper": {
+    "model": "opencode-go/kimi-k2.6",
+    "variant": "high",
+    "temperature": 0.3,
+    "autoLoadSkills": []
+    }
+  },
+  "customAgents": {
+    "forager-smart": {
+      "baseAgent": "forager-worker",
+      "description": "Only use this worker for tasks that require a high level of intelligence, reasoning, and creativity to solve complex problems that are not well defined or have many steps or decisions to make.",
+      "model": "github-copilot/gpt-5.5",
+      "variant": "high",
+      "temperature": 0.7
+    },
+    "forager-capable": {
+      "baseAgent": "forager-worker",
+      "description": "Only use this worker for tasks that require an agent that has extra capabilities to write better code and make use of complex tools calls to complete multiple actions.",
+      "model": "github-copilot/gpt-5.3-codex",
+      "variant": "xhigh",
+      "temperature": 0.7
+    },
+    "forager-documents": {
+      "baseAgent": "forager-worker",
+      "description": "Use this worker for document-heavy tasks. This includes things like writing documentation, creating reports, and other non-code documents.",
+      "model": "github-copilot/gemini-3.1-pro-preview",
+      "variant": "high",
+      "temperature": 1,
+      "autoLoadSkills": ["humanizer", "stop-slop"]
+    },
+    "forager-simple": {
+      "baseAgent": "forager-worker",
+      "description": "Only use this worker for tasks that require a low level of intelligence and creativity which are well defined and do not have many interdependent steps or decisions to make.",
+      "model": "opencode-go/deepseek-v4-flash",
+      "variant": "high",
+      "temperature": 0.5
+    },
+    "forager-ui": {
+      "baseAgent": "forager-worker",
+      "description": "Only use this worker for tasks that involve writing code related to user interfaces and experiences. This includes things like frontend code, design systems, and other UI/UX-related code.",
+      "model": "github-copilot/gemini-3.1-pro-preview",
+      "variant": "high",
+      "temperature": 1,
+      "autoLoadSkills": ["web-design-guidelines"]
+    },
+    "hygienic-reviewer-documents": {
+      "baseAgent": "hygienic-reviewer",
+      "description": "Use this reviewer for reviewing documents that are not majorly code. This includes things like implementation plans, technical specifications, and other non-code documents.",
+      "model": "github-copilot/gemini-3.1-pro-preview",
+      "variant": "high",
+      "temperature": 1,
+      "autoLoadSkills": ["humanizer", "stop-slop"]
+    },
+    "hygienic-reviewer-ultrabrain": {
+      "baseAgent": "hygienic-reviewer",
+      "description": "Only use this reviewer for deep logical reasoning and complex architectural decisions. It is used when the orchestrator hits a wall and needs high-intelligence strategic backup.",
+      "model": "github-copilot/gpt-5.5",
+      "variant": "xhigh",
+      "temperature": 1
+    },
+    "hygienic-reviewer-opus": {
+      "baseAgent": "hygienic-reviewer",
+      "description": "Only use this reviewer when requested by the operator in direct reference. This reviewer is a much stronger version of hygienic-reviewer-technical. It thinks indepth to problem solve and review code with a very high level of intelligence, creativity, and reasoning.",
+      "model": "github-copilot/claude-opus-4.7",
+      "variant": "high",
+      "temperature": 0.7
+    },
+    "hygienic-reviewer-technical": {
+      "baseAgent": "hygienic-reviewer",
+      "description": "Only use this reviewer for reviewing the technical aspects of code, such as correctness, efficiency, and security. It is used when the orchestrator needs a second pair of eyes to review code for technical quality.",
+      "model": "github-copilot/gpt-5.5",
+      "variant": "medium",
+      "temperature": 0.3
+    }
+  }
+}

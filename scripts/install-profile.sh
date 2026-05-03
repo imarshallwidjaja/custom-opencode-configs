@@ -7,6 +7,12 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TARGET_DIR="${OPENCODE_CONFIG_DIR:-${HOME}/.config/opencode}"
 AGENTS_PROFILE="${OPENCODE_AGENTS_PROFILE:-shared}"
 AGENTS_SOURCE="${REPO_ROOT}/profiles/agents/${AGENTS_PROFILE}.md"
+AGENT_HIVE_PROFILE="${OPENCODE_AGENT_HIVE_PROFILE:-default}"
+if [[ "${AGENT_HIVE_PROFILE}" == "default" ]]; then
+  AGENT_HIVE_SOURCE="${REPO_ROOT}/agent_hive.json"
+else
+  AGENT_HIVE_SOURCE="${REPO_ROOT}/profiles/agent-hive/${AGENT_HIVE_PROFILE}.json"
+fi
 ENABLE_OPTIONAL_SCRIPT="${SCRIPT_DIR}/enable-optional.sh"
 
 check_command() {
@@ -45,12 +51,30 @@ list_agents_profiles() {
   done | sort
 }
 
+list_agent_hive_profiles() {
+  printf 'default\n'
+  local profile_file
+  for profile_file in "${REPO_ROOT}"/profiles/agent-hive/*.json; do
+    [[ -e "${profile_file}" ]] || continue
+    basename "${profile_file}" ".json"
+  done | sort
+}
+
 if [[ ! -f "${AGENTS_SOURCE}" ]]; then
   printf 'Unknown AGENTS profile: %s\n' "${AGENTS_PROFILE}" >&2
   printf 'Available profiles:\n' >&2
   while IFS= read -r profile_name; do
     printf '  %s\n' "${profile_name}" >&2
   done < <(list_agents_profiles)
+  exit 1
+fi
+
+if [[ ! -f "${AGENT_HIVE_SOURCE}" ]]; then
+  printf 'Unknown Agent Hive profile: %s\n' "${AGENT_HIVE_PROFILE}" >&2
+  printf 'Available profiles:\n' >&2
+  while IFS= read -r profile_name; do
+    printf '  %s\n' "${profile_name}" >&2
+  done < <(list_agent_hive_profiles)
   exit 1
 fi
 
@@ -83,7 +107,7 @@ backup_path "${TARGET_DIR}/commands"
 mkdir -p "${TARGET_DIR}/skills" "${TARGET_DIR}/agents" "${TARGET_DIR}/commands"
 
 install -m 0644 "${REPO_ROOT}/opencode.json" "${TARGET_DIR}/opencode.json"
-install -m 0644 "${REPO_ROOT}/agent_hive.json" "${TARGET_DIR}/agent_hive.json"
+install -m 0644 "${AGENT_HIVE_SOURCE}" "${TARGET_DIR}/agent_hive.json"
 install -m 0644 "${AGENTS_SOURCE}" "${TARGET_DIR}/AGENTS.md"
 cp -a "${REPO_ROOT}/.apm/skills/." "${TARGET_DIR}/skills/"
 cp -a "${REPO_ROOT}/.apm/agents/." "${TARGET_DIR}/agents/"
@@ -100,6 +124,7 @@ fi
 
 printf 'Installed Opencode profile into %s\n' "${TARGET_DIR}"
 printf 'Installed AGENTS profile: %s\n' "${AGENTS_PROFILE}"
+printf 'Installed Agent Hive profile: %s\n' "${AGENT_HIVE_PROFILE}"
 if profile_needs_context_improved; then
   printf 'Auto-applied optional bundle: context-improved\n'
 fi

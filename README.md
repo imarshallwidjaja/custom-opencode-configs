@@ -6,6 +6,7 @@ This repository versions a portable Opencode profile and packages the shared mar
 
 - `opencode.json`: the base Opencode config. It uses the published `opencode-hive@latest` plugin instead of a local checkout.
 - `agent_hive.json`: the starting `agent-hive` layout, kept on remote-only GitHub Copilot models.
+- `profiles/agent-hive/`: optional full `agent_hive.json` profiles for alternate model mixes.
 - `AGENTS.md`: repository instructions for maintaining this repo.
 - `profiles/agents/`: installable `AGENTS.md` profiles for Opencode.
 - `profiles/optional/`: optional MCP, LSP, and workflow merge snippets.
@@ -39,12 +40,11 @@ Excluded from the base profile:
 - Embedded API keys and account files
 - Absolute filesystem paths
 - Machine-specific local MCP and plugin paths
-- Bundled personal or domain-specific skills such as `resume-tailoring` and `poraki-phase2-forecast-operator`
+- Bundled domain-specific skills such as `poraki-phase2-forecast-operator`
 
 Some notes:
 
-- the installable `AGENTS.md` profiles can still instruct agents to use optional external skills such as `resume-tailoring` when those skills are available in the running environment
-- those references do not mean this repository packages those skills in `.apm/`
+- `resume-tailoring` is now packaged under `.apm/skills/`; `poraki-phase2-forecast-operator` remains local-only
 
 ## Dependency model
 
@@ -73,6 +73,8 @@ Prerequisites:
 - `opencode`
 - `jq` if you want to use `scripts/enable-optional.sh`
 - GitHub Copilot access for the `github-copilot/*` models used by `agent_hive.json`
+- OpenAI and `opencode-go/*` provider access if you select `OPENCODE_AGENT_HIVE_PROFILE=openai-opencode-go`
+- GitHub Copilot and `opencode-go/*` provider access if you select `OPENCODE_AGENT_HIVE_PROFILE=copilot-opencode-go`
 
 Optional:
 
@@ -289,6 +291,34 @@ After install, the target directory should contain:
 - `commands/`
 
 The direct copy is intentional. APM does not install arbitrary JSON files, and `apm install -g` does not accept a local package path. That means a cloned checkout needs a small installer layer even though the repo itself is still a valid APM package.
+
+### Agent Hive model profiles
+
+The installer uses the repository root `agent_hive.json` by default. Alternate full Agent Hive profiles live under `profiles/agent-hive/` and can be selected with `OPENCODE_AGENT_HIVE_PROFILE`.
+
+Available Agent Hive profiles:
+
+- `default`: installs the repository root `agent_hive.json`
+- `openai-opencode-go`: installs `profiles/agent-hive/openai-opencode-go.json`
+- `copilot-opencode-go`: installs `profiles/agent-hive/copilot-opencode-go.json`
+
+Install with the OpenAI plus `opencode-go` profile:
+
+```bash
+OPENCODE_AGENT_HIVE_PROFILE=openai-opencode-go ./scripts/install-profile.sh
+```
+
+Install with the Copilot plus `opencode-go` profile:
+
+```bash
+OPENCODE_AGENT_HIVE_PROFILE=copilot-opencode-go ./scripts/install-profile.sh
+```
+
+Some notes:
+
+- this choice only changes the installed `agent_hive.json`
+- it does not add provider credentials, local proxy plugins, or local provider shims to `opencode.json`
+- use these profiles only when the target Opencode environment can resolve every provider/model named in the selected profile
 
 The installed `opencode.json` follows the upstream Agent Hive OpenCode setup and uses:
 
