@@ -1,6 +1,6 @@
 ---
 name: test-driven-development
-description: Use when implementing any feature or bugfix, before writing implementation code
+description: Use when implementing any feature or bugfix, before writing implementation code. If loading this also load consolidate-test-suites
 ---
 
 # Test-Driven Development (TDD)
