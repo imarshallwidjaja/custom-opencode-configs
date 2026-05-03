@@ -28,19 +28,19 @@ AGENTS.md is behavioral memory, not documentation. Every rule should change agen
 
 Load skills on these triggers, not mechanically for unrelated trivial requests.
 
-| Trigger | Required workflow |
+| Trigger | Required skill |
 | --- | --- |
 | Creative work: features, components, behavior changes, UX changes | `brainstorming` |
 | Bug, test failure, unexpected behavior, protocol/state/hydration issue | `systematic-debugging` |
 | Implementing a feature or bugfix in code | `test-driven-development` and `consolidate-test-suites` |
 | Adding, moving, or deleting tests after a fix or architecture change | `consolidate-test-suites` |
-| Before claiming work is complete, fixed, or passing | `verification-before-completion` |
+| Before claiming work is complete, fixed, or passing | Hive skill `verification-before-completion` |
 | Starting isolated feature work or executing an approved implementation plan | `using-git-worktrees` |
 | React or Next.js UI/performance work | `react-best-practices` |
 | UI review, accessibility audit, visual/UX critique | `web-design-guidelines` |
 | Human-facing documentation, reports, PR prose, commit prose | `stop-slop` and `humanizer` |
 | Resumes, CVs, cover letters | `resume-tailoring` |
-| AGENTS.md bootstrap, review, pruning, or update | `agents-md-mastery` |
+| AGENTS.md bootstrap, review, pruning, or update | Hive skill `agents-md-mastery` |
 
 ## Quality Gates
 
@@ -124,16 +124,10 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 - When writing human-facing prose, load `stop-slop` and `humanizer`.
 - Start with the operating context, role, system, or concrete situation when that framing is clear.
 - Define the thing early, then move through purpose, prerequisites or dependencies, and workflow.
-- Name concrete system objects early.
+- Name concrete system objects early: `Dockerfile`, `config.ini`, `vm_meta.data`, `pg_restore`, collections, hooks, schemas, workflows, source of truth.
 - Explain what must exist before something can run. Prefer prerequisites, inputs, state, handoff points, and failure boundaries over broad capability claims.
 - For evaluative writing, start with the classification or main judgment, then move from operating model to technical evidence.
 - Keep related issues grouped instead of forcing one issue per paragraph.
-
-## Browser Usage
-
-- Use `agent-browser` for interactive web work: opening pages, clicking, waiting, filling forms, reading rendered content, and downloading files.
-- Prefer `agent-browser` over `webfetch` whenever page state, DOM interaction, or file download is involved.
-- Use `webfetch` only for lightweight, read-only page retrieval when no interaction is needed.
 
 ## MarkItDown And PDFs
 

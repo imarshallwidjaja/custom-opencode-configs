@@ -46,6 +46,7 @@ Some notes:
 - this bundle normalizes the live local setup into portable `PATH`-based commands and environment variables
 - this bundle updates both `opencode.json` and `agent_hive.json`
 - the installer auto-applies this bundle for the `shared-context-improved` and `personal-context-improved` AGENTS profiles after preflighting the same prerequisites
+- install `cymbal` with `brew install 1broseidon/tap/cymbal` when the machine uses Homebrew and you want the full local navigation workflow
 - `cymbal` is a separate CLI tool for local code navigation, but it is not wired through `opencode.json`; the AGENTS profiles use it when the current Opencode environment exposes it
 - this bundle supersedes `opencode.mcp-context7-enabled.json` on machines that want the full tool stack
 - pair it with `profiles/agents/shared-context-improved.md` or `profiles/agents/personal-context-improved.md` so the installed `AGENTS.md` assumes the same capabilities the config actually enables

@@ -77,7 +77,13 @@ Prerequisites:
 Optional:
 
 - `CONTEXT7_API_KEY` if you want to enable the bundled `context7` remote MCP entry in `opencode.json`
-- `context-mode` on `PATH`, `uvx` on `PATH`, and optionally the `cymbal` CLI on `PATH` if you want the `context-improved` overlay and the full local navigation workflow
+- `context-mode` on `PATH`, `uvx` on `PATH`, and `cymbal` on `PATH` if you want the `context-improved` overlay and the full local navigation workflow
+
+Install `cymbal` with Homebrew when you want that workflow:
+
+```bash
+brew install 1broseidon/tap/cymbal
+```
 
 ## For LLM agents
 
@@ -126,6 +132,7 @@ For a machine where you want the context-improved overlay and matching AGENTS pr
 
 ```bash
 curl -fsSL https://opencode.ai/install | bash
+brew install 1broseidon/tap/cymbal
 git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
 cd custom-opencode-configs
 opencode auth login -p github-copilot
@@ -137,6 +144,7 @@ Where:
 
 - the repository clone requires GitHub access to the private repo
 - `opencode auth login -p github-copilot` requires a GitHub account with Copilot access
+- `brew install 1broseidon/tap/cymbal` is the supported way to put `cymbal` on `PATH` for the context-improved workflow
 - the first `opencode` run should fetch `opencode-hive@latest` automatically from the plugin config
 
 ### Fresh machine setup

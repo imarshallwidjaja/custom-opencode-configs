@@ -82,6 +82,7 @@ Before making changes, read these files from this repository:
 - If a prerequisite is missing, ask whether the operator wants you to install it or skip the related optional feature.
 - If the operator wants the context-improved workflow, explain that the matching `shared-context-improved` or `personal-context-improved` profile now applies the `context-improved` JSON overlays automatically during install.
 - Make it clear that `cymbal` is an optional CLI dependency, not a bundled config entry. If it is missing, the context-improved profile can still work, but agents will fall back to the other available search tools.
+- When the operator wants `cymbal`, install it with Homebrew using `brew install 1broseidon/tap/cymbal` if Homebrew is available on the machine.
 - Keep the operator informed about what you are about to run.
 - Treat AGENTS profile choice as an operating-policy choice too, not only a toolchain choice.
 - During AGENTS merges, preserve the selected profile's parity-validation wording, new-session retry rule for failed subagents, explicit subagent final-response instructions, and resume-work guidance.
@@ -133,6 +134,14 @@ If `opencode` is missing, the standard install command is:
 ```bash
 curl -fsSL https://opencode.ai/install | bash
 ```
+
+If the operator wants the richer local navigation workflow and `cymbal` is missing, install it with:
+
+```bash
+brew install 1broseidon/tap/cymbal
+```
+
+Only do that when Homebrew is available. If `brew` is missing, explain that `cymbal` stays optional and continue with the base install unless the operator asks you to stop and install Homebrew first.
 
 If the repository is not already cloned, clone it before continuing.
 
@@ -228,6 +237,12 @@ Only enable it if:
 Optional but recommended for the full navigation workflow:
 
 - `cymbal` on `PATH`
+
+If `cymbal` is missing and `brew` is available, install it with:
+
+```bash
+brew install 1broseidon/tap/cymbal
+```
 
 Explain this clearly:
 
@@ -378,6 +393,12 @@ If the operator wanted `cymbal`, verify that `cymbal` is available on `PATH` wit
 
 ```bash
 which cymbal
+```
+
+If `brew` was used to install it, prefer confirming the installed formula too:
+
+```bash
+brew list --versions cymbal
 ```
 
 Then report back with:

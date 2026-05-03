@@ -2,7 +2,7 @@
 
 This directory contains installable `AGENTS.md` profiles for Opencode.
 
-All four profiles share the same baseline quality, delegation, verification, search, browser, and document-conversion rules. The `personal-*` profiles add the sanitized operator-writing style; the `shared*` profiles intentionally omit that voice layer.
+All four profiles share the same baseline quality, delegation, verification, search, browser, and document-conversion rules. The `personal-*` profiles add the author's operator-writing style; the `shared*` profiles intentionally omit that voice layer.
 
 ## Why this exists
 
@@ -22,11 +22,11 @@ Use this when:
 
 ### `personal-default.md`
 
-Purpose: The shared profile plus a sanitized operator-writing voice.
+Purpose: The shared profile plus the author's operator-writing voice.
 
 Use this when:
 
-- you want the agent to default to the operator-style writing profile
+- you want the agent to default to the author's operator-style writing profile
 - you are comfortable with a more opinionated `AGENTS.md`
 - you want a ready-made profile instead of writing a personal one from scratch
 
