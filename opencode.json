@@ -3,11 +3,11 @@
   "small_model": "github-copilot/gpt-5-mini",
   "agent": {
     "explore": {
-      "model": "github-copilot/gpt-5.4-mini",
+      "model": "opencode-go/kimi-k2.6",
       "temperature": 1
     },
     "simplicity-reviewer": {
-      "model": "github-copilot/claude-sonnet-4.6"
+      "model": "opencode-go/glm-5.1"
     }
   },
   "plugin": [

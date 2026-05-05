@@ -26,7 +26,7 @@ It adds:
 - a local `context-mode` MCP launched from `PATH`
 - a local `ast_grep` MCP launched through `uvx`
 - the bundled remote `context7` MCP entry already present in the base profile
-- the matching `agent_hive.context-improved.json` overlay so Hive workers keep `ast_grep` disabled while the main Opencode session can use it
+- the matching `agent_hive.context-improved.json` overlay for installer compatibility; the base Agent Hive profiles already keep `ast_grep` disabled for Hive workers
 
 Prerequisites:
 

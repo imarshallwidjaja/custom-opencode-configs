@@ -4,8 +4,8 @@ This repository versions a portable Opencode profile and packages the shared mar
 
 ## What is here
 
-- `opencode.json`: the base Opencode config. It uses the published `opencode-hive@latest` plugin instead of a local checkout.
-- `agent_hive.json`: the starting `agent-hive` layout, kept on remote-only GitHub Copilot models.
+- `opencode.json`: the base Opencode config. It uses the published `opencode-hive@latest` plugin instead of a local checkout, with `opencode-go/*` models for selected built-in Opencode agents.
+- `agent_hive.json`: the starting `agent-hive` layout, kept on the default GitHub Copilot model mix.
 - `profiles/agent-hive/`: optional full `agent_hive.json` profiles for alternate model mixes.
 - `AGENTS.md`: repository instructions for maintaining this repo.
 - `profiles/agents/`: installable `AGENTS.md` profiles for Opencode.
@@ -52,7 +52,7 @@ This profile is intentionally split into two layers.
 
 Base layer:
 
-- works with remote-only models
+- uses documented GitHub Copilot and `opencode-go/*` model access
 - avoids local proxy assumptions
 - avoids MCP and LSP entries that would fail on a fresh machine
 
@@ -62,7 +62,7 @@ Optional layer:
 - documents the required executables, environment variables, and verification commands
 - keeps activation explicit so a human or agent can decide what to enable on a given machine
 
-To make it simple: the base profile should be safe to install anywhere, and local tooling should be added only after its prerequisites are present.
+To make it simple: the base profile expects the documented model providers, and local tooling should be added only after its prerequisites are present.
 
 ## Install
 
@@ -73,6 +73,7 @@ Prerequisites:
 - `opencode`
 - `jq` if you want to use `scripts/enable-optional.sh`
 - GitHub Copilot access for the `github-copilot/*` models used by `agent_hive.json`
+- `opencode-go/*` provider access for the base `opencode.json` agent overrides
 - OpenAI and `opencode-go/*` provider access if you select `OPENCODE_AGENT_HIVE_PROFILE=openai-opencode-go`
 - GitHub Copilot and `opencode-go/*` provider access if you select `OPENCODE_AGENT_HIVE_PROFILE=copilot-opencode-go`
 
@@ -218,9 +219,9 @@ The repository now includes `profiles/optional/opencode.context-improved.json` p
 
 Purpose:
 
-- keep the base profile portable and remote-first
+- keep the base profile provider-portable without local plugin or MCP paths
 - let an operator opt into `context-mode`, local `ast_grep`, and enabled `context7` in one additive snippet merge
-- keep the base Agent Hive profile portable while disabling `ast_grep` for Hive workers only when the context-improved bundle is enabled
+- keep MCP and LSP tooling opt-in while Agent Hive workers consistently disable MCPs they should not use directly
 - normalize local absolute paths into portable `PATH`-based commands and environment variables
 
 Prerequisites:
@@ -242,7 +243,7 @@ Some notes:
 - the context-improved overlay replaces the live machine's absolute local plugin and MCP paths with portable command names
 - `./scripts/enable-optional.sh context-improved` updates both `opencode.json` and `agent_hive.json`
 - `scripts/install-profile.sh` auto-applies the same overlay when `OPENCODE_AGENTS_PROFILE` is `shared-context-improved` or `personal-context-improved`
-- the Agent Hive sidecar keeps the base profile on `disableMcps: ["context7"]` and adds `ast_grep` only for the context-improved bundle
+- the Agent Hive sidecar is retained for install compatibility, but the base Agent Hive profiles already disable both `context7` and `ast_grep` for Hive workers
 - `cymbal` is a separate CLI tool, not an `opencode.json` entry; the packaged AGENTS profiles instruct agents to use it when the running Opencode environment exposes it
 - if you only want the remote docs MCP, the narrower `mcp-context7-enabled` snippet still exists
 - pair this overlay with `shared-context-improved` or `personal-context-improved` so the installed `AGENTS.md` matches the enabled toolchain; selecting one of those profiles during install now handles the pairing automatically
@@ -319,6 +320,7 @@ Some notes:
 - this choice only changes the installed `agent_hive.json`
 - it does not add provider credentials, local proxy plugins, or local provider shims to `opencode.json`
 - use these profiles only when the target Opencode environment can resolve every provider/model named in the selected profile
+- the Agent Hive profiles share the same agent names, descriptions, and non-model settings; they differ only by `model`, `variant`, and `temperature`
 
 The installed `opencode.json` follows the upstream Agent Hive OpenCode setup and uses:
 
@@ -474,7 +476,7 @@ Use it for:
 
 ## Extending the profile
 
-The current baseline is intentionally conservative. It gives you a working remote `agent-hive` setup without assuming local proxies or a multi-provider model matrix.
+The current baseline is intentionally conservative about local tooling. It expects documented GitHub Copilot and `opencode-go/*` model access, but it does not assume local proxy plugins, MCP binaries, or LSP binaries.
 
 To extend it later:
 

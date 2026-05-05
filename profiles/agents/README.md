@@ -39,6 +39,7 @@ Use this when:
 - you have enabled `profiles/optional/opencode.context-improved.json`
 - you have also applied the matching `agent_hive.context-improved.json` overlay, either through `./scripts/enable-optional.sh context-improved` or automatically through `./scripts/install-profile.sh`
 - `context-mode`, local `ast_grep`, and enabled `context7` are actually available in the running environment
+- `cymbal` is available on `PATH` when you want agents to start unfamiliar-code navigation there
 - you want agents to prefer the richer context and navigation workflow explicitly
 
 ### `personal-context-improved.md`
@@ -51,6 +52,7 @@ Use this when:
 - you have enabled `profiles/optional/opencode.context-improved.json`
 - you have also applied the matching `agent_hive.context-improved.json` overlay, either through `./scripts/enable-optional.sh context-improved` or automatically through `./scripts/install-profile.sh`
 - you want the AGENTS policy to assume the context-improved tool bundle is present
+- `cymbal` is available on `PATH` when you want agents to start unfamiliar-code navigation there
 
 ## Install selection
 

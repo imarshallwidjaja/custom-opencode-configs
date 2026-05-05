@@ -4,6 +4,8 @@ This directory contains alternate full `agent_hive.json` profiles for `scripts/i
 
 The repository root `agent_hive.json` remains the default profile. Use these files when the target machine should run a different model mix while keeping the same installed `opencode.json`, `AGENTS.md`, skills, agents, and commands.
 
+All Agent Hive profiles share the same agent names, descriptions, and non-model settings. Profiles should only differ by `model`, `variant`, and `temperature`. If `variant` or `temperature` is absent in a profile, treat that absence as intentional.
+
 ## Profiles
 
 ### `openai-opencode-go.json`
@@ -18,7 +20,7 @@ Use this when:
 
 ### `copilot-opencode-go.json`
 
-Purpose: Uses GitHub Copilot-hosted models for most Hive roles, with `opencode-go/*` models for selected scout, helper, and simple-worker roles.
+Purpose: Uses GitHub Copilot-hosted models for most Hive roles, with `opencode-go/*` models for selected scout, helper, simple-worker, and capable-research roles.
 
 Use this when:
 

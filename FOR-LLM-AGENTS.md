@@ -48,10 +48,10 @@ Do not invent extra setup questions. This repository exposes the following real 
 Some setup facts are not user choices:
 
 - The default full install path is `./scripts/install-profile.sh`.
-- The default repo profile uses remote GitHub Copilot models in `opencode.json` and `agent_hive.json`.
+- The default repo profile uses GitHub Copilot models in `agent_hive.json` and `opencode-go/*` models for selected built-in Opencode agents in `opencode.json`.
 - Alternate Agent Hive profiles live under `profiles/agent-hive/` and are selected with `OPENCODE_AGENT_HIVE_PROFILE`.
 - The published `opencode-hive@latest` plugin is installed by Opencode on first run.
-- The optional context-improved bundle adds `context-mode@latest`, local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay that disables `ast_grep` for Hive workers.
+- The optional context-improved bundle adds `context-mode@latest`, local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay kept for install compatibility. The base Agent Hive profiles already disable `context7` and `ast_grep` for Hive workers.
 - `context7` is present in the base config but disabled by default.
 - `cymbal` is not configured through `opencode.json`. It is a separate CLI tool that the context-improved AGENTS profiles know how to use when it is installed and available on `PATH`.
 - No LSP snippet is enabled by default.
@@ -196,11 +196,13 @@ Explain the options like this:
 
 - `default`: the repository root `agent_hive.json`, using the portable default model mix
 - `openai-opencode-go`: uses OpenAI models for major Hive roles and `opencode-go/*` models for selected scout, helper, worker, document, UI, and research roles
-- `copilot-opencode-go`: uses GitHub Copilot models for most Hive roles and `opencode-go/*` models for selected scout, helper, and simple-worker roles
+- `copilot-opencode-go`: uses GitHub Copilot models for most Hive roles and `opencode-go/*` models for selected scout, helper, simple-worker, and capable-research roles
 
 Recommendation:
 
 - Recommend `default` unless the operator explicitly wants one of the mixed-provider local profiles and confirms the named providers are available.
+
+The Agent Hive profiles share the same agent names, descriptions, and non-model settings. Treat `model`, `variant`, and `temperature` as the only intended differences between profiles; when `variant` or `temperature` is absent in a profile, preserve that absence.
 
 Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, `AGENTS.md`, `skills/`, `agents/`, and `commands/` contents with this repo's versions, and it writes timestamped backups under `<target>/.backup/` first when those paths already exist. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `context-mode`, `uvx`, and `CONTEXT7_API_KEY`, then auto-applies the matching `context-improved` overlays. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
 
@@ -308,8 +310,8 @@ If all conditions are met, run:
 Some notes:
 
 - `scripts/enable-optional.sh` requires `jq`.
-- `agent_hive.json` still disables `context7` for Hive workers by default. That is part of this profile.
-- the `context-improved` bundle additionally disables `ast_grep` for Hive workers through its `agent_hive.json` overlay.
+- `agent_hive.json` disables `context7` and `ast_grep` for Hive workers by default. That is part of this profile.
+- the `context-improved` bundle keeps a matching `agent_hive.json` overlay for compatibility with the installer flow.
 - when `shared-context-improved` or `personal-context-improved` is selected, `scripts/install-profile.sh` applies that bundle automatically instead of requiring this separate step.
 
 ### 8. Offer the optional LSP bundles

@@ -30,6 +30,7 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 
 | Trigger | Required skill |
 | --- | --- |
+| Finding and reading code, tests or documentation in a codebase you are unfamiliar with | `cymbal` |
 | Creative work: features, components, behavior changes, UX changes | `brainstorming` |
 | Bug, test failure, unexpected behavior, protocol/state/hydration issue | `systematic-debugging` |
 | Implementing a feature or bugfix in code | `test-driven-development` and `consolidate-test-suites` |

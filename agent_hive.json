@@ -1,9 +1,9 @@
 {
   "$schema": "https://raw.githubusercontent.com/tctinh/agent-hive/main/packages/opencode-hive/schema/agent_hive.schema.json",
   "agentMode": "dedicated",
-  "delegateMode": "task",
   "disableMcps": [
-    "context7"
+    "context7",
+    "ast_grep"
   ],
   "agents": {
     "hive-master": {
@@ -91,7 +91,7 @@
     },
     "forager-simple": {
       "baseAgent": "forager-worker",
-      "description": "Only use this worker for tasks that require a low level of intelligence and creativity which are well defined and do not have many interdependent steps or decisions to make.",
+      "description": "Only use this worker for tasks that require a low level of decision making and creativity which are well defined and do not have many interdependent steps or decisions to make.",
       "model": "github-copilot/gpt-5.4-mini",
       "variant": "high",
       "temperature": 0.5
@@ -108,12 +108,21 @@
     },
     "hygienic-reviewer-documents": {
       "baseAgent": "hygienic-reviewer",
-      "description": "Use this reviewer for reviewing documents that are not majorly code. This includes things like implementation plans, technical specifications, and other non-code documents.",
+      "description": "Only use this reviewer for reviewing documents that are not code or code designs. This includes things like human readmes, workflows, technical specifications, and other non-code documents.",
       "model": "github-copilot/gemini-3.1-pro-preview",
       "variant": "high",
       "temperature": 1,
       "autoLoadSkills": [
         "humanizer",
+        "stop-slop"
+      ]
+    },
+    "hygienic-reviewer-plans": {
+      "baseAgent": "hygienic-reviewer",
+      "description": "Use this reviewer for reviewing implementation plans, designs, and specifications work. Used when the you need a verification on the overall approach to a problem or project.",
+      "model": "github-copilot/gpt-5.4",
+      "variant": "high",
+      "autoLoadSkills": [
         "stop-slop"
       ]
     },
@@ -133,10 +142,17 @@
     },
     "hygienic-reviewer-technical": {
       "baseAgent": "hygienic-reviewer",
-      "description": "Only use this reviewer for reviewing the technical aspects of code, such as correctness, efficiency, and security. It is used when the orchestrator needs a second pair of eyes to review code for technical quality.",
+      "description": "Only use this reviewer for reviewing the technical aspects of code, such as correctness, efficiency, and security. It is used when the orchestrator needs a second pair of eyes to review code for technical quality. Reviews should only be scoped for code implementation.",
       "model": "github-copilot/claude-sonnet-4.6",
       "variant": "high",
       "temperature": 0.3
+    },
+    "scout-researcher-capable": {
+      "baseAgent": "scout-researcher",
+      "description": "Only use this researcher for research tasks that require a high level of intelligence, reasoning, and creativity to discover answers not well defined or without clear expectations.",
+      "model": "github-copilot/gpt-5.4",
+      "variant": "high",
+      "temperature": 1
     }
   }
 }
