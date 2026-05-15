@@ -1,6 +1,7 @@
 ---
 name: cymbal
-description: Use when navigating existing code with the cymbal CLI: locating symbols, tracing callers or callees, finding implementations, scoping change impact, mapping imports, or orienting in an unfamiliar repo before targeted reads.
+description: |
+  Use when navigating existing code with the cymbal CLI: locating symbols, tracing callers or callees, finding implementations, scoping change impact, mapping imports, or orienting in an unfamiliar repo before targeted reads.
 ---
 
 # Cymbal Skill
