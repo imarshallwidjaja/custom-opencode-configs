@@ -10,7 +10,7 @@
     }
   },
   "plugin": [
-    "opencode-hive@latest"
+    "oc-arkive@latest"
   ],
   "compaction": {
     "auto": false,
