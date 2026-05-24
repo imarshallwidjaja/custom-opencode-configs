@@ -10,7 +10,7 @@ Use this repository as the source of truth for the portable Opencode profile.
 
 ## Configuration Rules
 
-- Prefer remote plugin references such as `opencode-hive` over local build paths.
+- Prefer remote plugin references such as `oc-arkive` over local build paths.
 - Prefer environment variables for API keys and other machine-specific values.
 - Keep the default profile limited to documented provider access; do not add local provider shims without documenting their prerequisites.
 - Add optional providers, MCPs, and LSPs only when their prerequisites are documented in `README.md`.

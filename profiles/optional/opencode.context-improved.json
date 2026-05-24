@@ -1,6 +1,6 @@
 {
   "plugin": [
-    "opencode-hive@latest",
+    "oc-arkive@latest",
     "context-mode@latest"
   ],
   "mcp": {

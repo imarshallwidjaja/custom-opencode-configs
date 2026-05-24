@@ -22,7 +22,7 @@ Purpose: Enables the portable context-improved overlay in one merge.
 
 It adds:
 
-- the published `context-mode` plugin alongside `opencode-hive@latest`
+- the published `context-mode` plugin alongside `oc-arkive@latest`
 - a local `context-mode` MCP launched from `PATH`
 - a local `ast_grep` MCP launched through `uvx`
 - the bundled remote `context7` MCP entry already present in the base profile

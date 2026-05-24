@@ -4,7 +4,7 @@ This repository versions a portable Opencode profile and packages the shared mar
 
 ## What is here
 
-- `opencode.json`: the base Opencode config. It uses the published `opencode-hive@latest` plugin instead of a local checkout, with `opencode-go/*` models for selected built-in Opencode agents.
+- `opencode.json`: the base Opencode config. It uses the published `oc-arkive@latest` plugin instead of a local checkout, with `opencode-go/*` models for selected built-in Opencode agents.
 - `agent_hive.json`: the starting `agent-hive` layout, kept on the default GitHub Copilot model mix.
 - `profiles/agent-hive/`: optional full `agent_hive.json` profiles for alternate model mixes.
 - `AGENTS.md`: repository instructions for maintaining this repo.
@@ -148,7 +148,7 @@ Where:
 - the repository clone requires GitHub access to the private repo
 - `opencode auth login -p github-copilot` requires a GitHub account with Copilot access
 - `brew install 1broseidon/tap/cymbal` is the supported way to put `cymbal` on `PATH` for the context-improved workflow
-- the first `opencode` run should fetch `opencode-hive@latest` automatically from the plugin config
+- the first `opencode` run should fetch `oc-arkive@latest` automatically from the plugin config
 
 ### Fresh machine setup
 
@@ -326,7 +326,7 @@ The installed `opencode.json` follows the upstream Agent Hive OpenCode setup and
 
 ```json
 {
-  "plugin": ["opencode-hive@latest"]
+  "plugin": ["oc-arkive@latest"]
 }
 ```
 
@@ -353,7 +353,7 @@ For the council workflow, the relevant commands are:
 Prerequisites:
 
 - run `./scripts/install-profile.sh`
-- start `opencode` once so it resolves `opencode-hive@latest`
+- start `opencode` once so it resolves `oc-arkive@latest`
 - open a chat session in OpenCode
 
 No setup command is required before `/council`. Use `/council-directive` when the question is still loose, when you want a paste-ready brief for a new chat, or when you want to control the council shape explicitly.
@@ -550,4 +550,4 @@ Verification commands:
 
 The previous setup mixed a Claude Code skill directory and `~/.config/opencode/skills`. This repo normalizes the shared parts into one APM-installable Opencode package under `.apm/skills`.
 
-Some skill text still refers to Hive-specific skills such as `writing-plans` or `verification-before-completion`. Those are provided by `opencode-hive`, not by this repo.
+Some skill text still refers to Hive-specific skills such as `writing-plans` or `verification-before-completion`. Those are provided by `oc-arkive`, not by this repo.

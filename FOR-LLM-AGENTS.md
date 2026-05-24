@@ -50,7 +50,7 @@ Some setup facts are not user choices:
 - The default full install path is `./scripts/install-profile.sh`.
 - The default repo profile uses GitHub Copilot models in `agent_hive.json` and `opencode-go/*` models for selected built-in Opencode agents in `opencode.json`.
 - Alternate Agent Hive profiles live under `profiles/agent-hive/` and are selected with `OPENCODE_AGENT_HIVE_PROFILE`.
-- The published `opencode-hive@latest` plugin is installed by Opencode on first run.
+- The published `oc-arkive@latest` plugin is installed by Opencode on first run.
 - The optional context-improved bundle adds `context-mode@latest`, local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay kept for install compatibility. The base Agent Hive profiles already disable `context7` and `ast_grep` for Hive workers.
 - `context7` is present in the base config but disabled by default.
 - `cymbal` is not configured through `opencode.json`. It is a separate CLI tool that the context-improved AGENTS profiles know how to use when it is installed and available on `PATH`.
@@ -384,7 +384,7 @@ Run:
 opencode
 ```
 
-This allows Opencode to resolve `opencode-hive@latest` from `opencode.json` on first run.
+This allows Opencode to resolve `oc-arkive@latest` from `opencode.json` on first run.
 
 If the context-improved bundle was enabled, this first run also needs to succeed without command-not-found errors for `context-mode` or the local MCP tooling.
 
