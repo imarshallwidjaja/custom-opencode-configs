@@ -7,6 +7,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TARGET_DIR="${OPENCODE_CONFIG_DIR:-${HOME}/.config/opencode}"
 AGENTS_PROFILE="${OPENCODE_AGENTS_PROFILE:-shared}"
 AGENTS_SOURCE="${REPO_ROOT}/profiles/agents/${AGENTS_PROFILE}.md"
+AGENTS_MODE="${OPENCODE_AGENTS_MODE:-install}"
 AGENT_HIVE_PROFILE="${OPENCODE_AGENT_HIVE_PROFILE:-default}"
 if [[ "${AGENT_HIVE_PROFILE}" == "default" ]]; then
   AGENT_HIVE_SOURCE="${REPO_ROOT}/agent_hive.json"
@@ -78,6 +79,16 @@ if [[ ! -f "${AGENT_HIVE_SOURCE}" ]]; then
   exit 1
 fi
 
+case "${AGENTS_MODE}" in
+  install|skip)
+    ;;
+  *)
+    printf 'Unknown OPENCODE_AGENTS_MODE: %s\n' "${AGENTS_MODE}" >&2
+    printf 'Expected one of: install, skip\n' >&2
+    exit 1
+    ;;
+esac
+
 if profile_needs_context_improved; then
   preflight_context_improved
 fi
@@ -99,7 +110,9 @@ mkdir -p "${TARGET_DIR}"
 
 backup_path "${TARGET_DIR}/opencode.json"
 backup_path "${TARGET_DIR}/agent_hive.json"
-backup_path "${TARGET_DIR}/AGENTS.md"
+if [[ "${AGENTS_MODE}" == "install" ]]; then
+  backup_path "${TARGET_DIR}/AGENTS.md"
+fi
 backup_path "${TARGET_DIR}/skills"
 backup_path "${TARGET_DIR}/agents"
 backup_path "${TARGET_DIR}/commands"
@@ -108,7 +121,9 @@ mkdir -p "${TARGET_DIR}/skills" "${TARGET_DIR}/agents" "${TARGET_DIR}/commands"
 
 install -m 0644 "${REPO_ROOT}/opencode.json" "${TARGET_DIR}/opencode.json"
 install -m 0644 "${AGENT_HIVE_SOURCE}" "${TARGET_DIR}/agent_hive.json"
-install -m 0644 "${AGENTS_SOURCE}" "${TARGET_DIR}/AGENTS.md"
+if [[ "${AGENTS_MODE}" == "install" ]]; then
+  install -m 0644 "${AGENTS_SOURCE}" "${TARGET_DIR}/AGENTS.md"
+fi
 cp -a "${REPO_ROOT}/.apm/skills/." "${TARGET_DIR}/skills/"
 cp -a "${REPO_ROOT}/.apm/agents/." "${TARGET_DIR}/agents/"
 
@@ -123,7 +138,11 @@ if profile_needs_context_improved; then
 fi
 
 printf 'Installed Opencode profile into %s\n' "${TARGET_DIR}"
-printf 'Installed AGENTS profile: %s\n' "${AGENTS_PROFILE}"
+if [[ "${AGENTS_MODE}" == "install" ]]; then
+  printf 'Installed AGENTS profile: %s\n' "${AGENTS_PROFILE}"
+else
+  printf 'Skipped AGENTS.md replacement; selected profile for manual merge: %s\n' "${AGENTS_PROFILE}"
+fi
 printf 'Installed Agent Hive profile: %s\n' "${AGENT_HIVE_PROFILE}"
 if profile_needs_context_improved; then
   printf 'Auto-applied optional bundle: context-improved\n'

@@ -13,7 +13,7 @@ This repo is for installing a ready-to-use Opencode profile. It keeps secrets, l
 - `AGENTS.md`: the selected operating profile for Opencode agents
 - `skills/`, `agents/`, and `commands/`: shared markdown assets used by Opencode
 
-If the target config directory already contains files with those names, the installer writes a timestamped backup under `<target>/.backup/` before replacing them.
+If the target config directory already contains files with those names, the installer writes a timestamped backup under `<target>/.backup/` before replacing them. Set `OPENCODE_AGENTS_MODE=skip` when you want to update the profile files but keep an existing `AGENTS.md` in place for a manual merge.
 
 ## Requirements
 
@@ -81,6 +81,35 @@ Where:
 - `opencode auth login -p github-copilot` requires a GitHub account with Copilot access
 - `brew install 1broseidon/tap/cymbal` is only needed when you want the full context-improved local navigation workflow
 - the first `opencode` run should resolve `oc-arkive@latest` automatically from `opencode.json`
+
+## Updating an existing install
+
+To update an older install in place, update this repository clone and rerun the installer against the same Opencode config directory:
+
+```bash
+git pull
+./scripts/install-profile.sh
+```
+
+Use the same profile environment variables the install should keep, for example:
+
+```bash
+git pull
+OPENCODE_AGENTS_PROFILE=personal-default OPENCODE_AGENT_HIVE_PROFILE=copilot-opencode-go ./scripts/install-profile.sh
+```
+
+Use `OPENCODE_AGENTS_MODE=skip` when the target already has a hand-maintained `AGENTS.md` that should stay as the base document for a manual merge:
+
+```bash
+git pull
+OPENCODE_AGENTS_MODE=skip ./scripts/install-profile.sh
+```
+
+Some notes:
+
+- `curl -fsSL https://opencode.ai/install | bash` updates or installs the Opencode binary; it does not update this profile
+- the installer writes timestamped backups under `<target>/.backup/` before replacing managed files
+- prefer preserving an existing customized `AGENTS.md` when unsure, then merge the selected profile guidance manually
 
 ## Install options
 

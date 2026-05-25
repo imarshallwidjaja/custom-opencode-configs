@@ -61,6 +61,60 @@ Some setup facts are not user choices:
 
 To make it simple: use the repo scripts for the normal setup path, then offer the optional bundles only after the base profile is installed.
 
+## Updating An Existing Install
+
+Use this workflow when the operator already has an older version of this repository's config installed and wants to update it in place.
+
+Start by explaining the update boundary: `curl -fsSL https://opencode.ai/install | bash` updates or installs the Opencode binary, but it does not update this repository's profile files. Updating the profile means updating the repository clone and rerunning this repo's installer against the active Opencode config directory.
+
+Follow this safe order:
+
+1. Identify the target config directory. Recommend `~/.config/opencode` unless the existing install clearly uses a custom `OPENCODE_CONFIG_DIR`. If uncertain, ask:
+
+```text
+I recommend updating the normal Opencode config at ~/.config/opencode. Is this the config you want updated, or do you use a custom OPENCODE_CONFIG_DIR?
+```
+
+2. Inspect the existing target before writing. Check whether `opencode.json`, `agent_hive.json`, `AGENTS.md`, `skills/`, `agents/`, or `commands/` exist. Read the existing `AGENTS.md` when present and note any local operator-specific instructions.
+3. Update the repository clone with `git pull`. If the repository is not cloned, clone it first. If there are local changes in the repository clone, stop and ask before pulling or changing branches.
+4. Choose the AGENTS profile. Recommend preserving the currently intended profile when it is evident from prior install notes or operator preference; otherwise recommend `shared` as the safest portable default. If uncertain, ask one question and include the recommendation.
+5. Choose the Agent Hive model profile. Recommend preserving the existing selected profile when it is evident; otherwise recommend `default` unless the operator explicitly wants `copilot-opencode-go` or `openai-opencode-go` and confirms the required providers are available.
+6. Decide how to handle the existing `AGENTS.md`:
+   - If the operator wants the current canonical profile and approves replacement, run the installer normally. It will back up the old `AGENTS.md` before replacing it.
+   - If the existing `AGENTS.md` has local instructions or the operator is unsure, recommend preservation. Run the installer with `OPENCODE_AGENTS_MODE=skip`, then merge the selected profile guidance into the user's file manually after comparing both documents.
+7. Run the installer with the selected environment variables. Preserve `OPENCODE_CONFIG_DIR`, `OPENCODE_AGENTS_PROFILE`, and `OPENCODE_AGENT_HIVE_PROFILE` when they were selected.
+8. Reapply optional bundles only when the operator wants them and prerequisites pass. Do not assume an older local optional setup still belongs in the updated config.
+9. Verify the result: validate `opencode.json` and `agent_hive.json` as JSON, run `opencode` or the smallest available Opencode startup check, and report the backup directory printed by the installer.
+
+Clean replacement example:
+
+```bash
+git pull
+./scripts/install-profile.sh
+```
+
+Preserve and manually merge an existing `AGENTS.md`:
+
+```bash
+git pull
+OPENCODE_AGENTS_MODE=skip ./scripts/install-profile.sh
+```
+
+Custom directory and selected profiles:
+
+```bash
+git pull
+OPENCODE_CONFIG_DIR=/path/to/opencode-config OPENCODE_AGENTS_PROFILE=personal-default OPENCODE_AGENT_HIVE_PROFILE=copilot-opencode-go ./scripts/install-profile.sh
+```
+
+Some notes:
+
+- never use direct `apm install -g ...` as the update path for this full profile because it does not update `opencode.json`, `agent_hive.json`, or `AGENTS.md`
+- never silently overwrite an existing hand-maintained `AGENTS.md`; preserve it by default when uncertain
+- do not delete `.backup/` directories during an update
+- if `git pull` fails because the repository clone has local edits, stop and ask whether to preserve, commit, stash, or discard those edits
+- when updating from a much older config, prefer asking one focused question with a recommendation over presenting every install option again
+
 ## Files To Read First
 
 Before making changes, read these files from this repository:
