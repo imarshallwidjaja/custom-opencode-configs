@@ -43,12 +43,12 @@ Do not invent extra setup questions. This repository exposes the following real 
     - `lsp-markdown-typescript`
     - `lsp-python`
     - `lsp-all-recommended`
-7. Whether to install the optional VS Code `tctinh.vscode-hive` extension.
+7. Whether to install the optional Agent Hive / `oc-arkive` VS Code companion from the latest release `.vsix`.
 
 Some setup facts are not user choices:
 
 - The default full install path is `./scripts/install-profile.sh`.
-- The default repo profile uses GitHub Copilot models in `agent_hive.json` and `opencode-go/*` models for selected built-in Opencode agents in `opencode.json`.
+- The default repo profile uses OpenAI models plus selected `opencode-go/*` models in `agent_hive.json`, and `opencode-go/*` models for selected built-in Opencode agents in `opencode.json`.
 - Alternate Agent Hive profiles live under `profiles/agent-hive/` and are selected with `OPENCODE_AGENT_HIVE_PROFILE`.
 - The published `oc-arkive@latest` plugin is installed by Opencode on first run.
 - The optional context-improved bundle adds `context-mode@latest`, local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay kept for install compatibility. The base Agent Hive profiles already disable `context7` and `ast_grep` for Hive workers.
@@ -58,7 +58,6 @@ Some setup facts are not user choices:
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
 - When merging into an existing `AGENTS.md`, start from the user's file and reconcile the selected profile into it instead of replacing it by default.
 - AGENTS profile selection changes operating rules, not just tool routing. Preserve the selected profile's parity-validation wording, failed-subagent retry policy, subagent final-response instructions, and resume-work guidance when merging.
-- The repository packages `resume-tailoring` under `.apm/skills/`. `poraki-phase2-forecast-operator` remains local-only.
 
 To make it simple: use the repo scripts for the normal setup path, then offer the optional bundles only after the base profile is installed.
 
@@ -99,7 +98,7 @@ Use these defaults unless the operator asks for something else:
 - Install into `~/.config/opencode`.
 - Use the `shared` AGENTS profile.
 - Skip optional MCP and LSP snippets unless there is a clear need.
-- Install the VS Code Hive extension only if the operator uses VS Code.
+- Install the VS Code companion extension only if the operator uses VS Code.
 
 When the operator explicitly wants the richer local search and context workflow, recommend this pair together:
 
@@ -194,13 +193,13 @@ Which Agent Hive model profile should I install: default, openai-opencode-go, or
 
 Explain the options like this:
 
-- `default`: the repository root `agent_hive.json`, using the portable default model mix
-- `openai-opencode-go`: uses OpenAI models for major Hive roles and `opencode-go/*` models for selected scout, helper, worker, document, UI, and research roles
+- `default`: the repository root `agent_hive.json`, using the OpenAI plus `opencode-go` model mix
+- `openai-opencode-go`: the named copy of the default OpenAI plus `opencode-go` model mix
 - `copilot-opencode-go`: uses GitHub Copilot models for most Hive roles and `opencode-go/*` models for selected scout, helper, simple-worker, and capable-research roles
 
 Recommendation:
 
-- Recommend `default` unless the operator explicitly wants one of the mixed-provider local profiles and confirms the named providers are available.
+- Recommend `default` unless the operator explicitly wants the named `openai-opencode-go` copy or the Copilot mixed-provider profile and confirms the named providers are available.
 
 The Agent Hive profiles share the same agent names, descriptions, and non-model settings. Treat `model`, `variant`, and `temperature` as the only intended differences between profiles; when `variant` or `temperature` is absent in a profile, preserve that absence.
 
@@ -365,16 +364,21 @@ Do not apply an LSP snippet before the base profile exists in the target directo
 Ask:
 
 ```text
-Do you use VS Code on this machine, and if so, do you want the optional Agent Hive extension installed there too?
+Do you use VS Code on this machine, and if so, do you want the optional Agent Hive / oc-arkive extension installed there too?
 ```
 
-If yes and the `code` CLI is available, run:
+If yes and the `code` CLI is available, install the `.vsix` from the latest Agent Hive fork release:
 
 ```bash
-code --install-extension tctinh.vscode-hive
+curl -L -o vscode-arkive.vsix https://github.com/imarshallwidjaja/agent-hive/releases/latest/download/vscode-arkive.vsix
+code --install-extension ./vscode-arkive.vsix
 ```
 
-If the `code` CLI is not available, tell the operator to install `Agent Hive` from the VS Code marketplace manually.
+If the `code` CLI is not available, give the operator the latest release page and tell them to install the `vscode-arkive.vsix` asset manually:
+
+```text
+https://github.com/imarshallwidjaja/agent-hive/releases/latest
+```
 
 ### 10. Start Opencode once
 
@@ -450,7 +454,7 @@ Use this as the source of truth for the interview.
 | Context-improved bundle | enable or skip | skip | `jq`, `context-mode`, `uvx`, `CONTEXT7_API_KEY`, network access; `cymbal` optional CLI |
 | `context7` MCP only | enable or skip | skip | `jq`, `CONTEXT7_API_KEY`, network access |
 | LSP bundle | none, `lsp-markdown-typescript`, `lsp-python`, `lsp-all-recommended` | none | `jq` plus required binaries |
-| VS Code Hive extension | install or skip | skip unless operator uses VS Code | VS Code and usually `code` CLI |
+| VS Code companion extension | install or skip | skip unless operator uses VS Code | VS Code and usually `code` CLI; latest Agent Hive fork release `.vsix` |
 
 ## Commands The Agent Will Usually Need
 
@@ -528,10 +532,11 @@ Enable all recommended LSPs:
 ./scripts/enable-optional.sh lsp-all-recommended
 ```
 
-Install the VS Code Hive extension:
+Install the VS Code companion extension:
 
 ```bash
-code --install-extension tctinh.vscode-hive
+curl -L -o vscode-arkive.vsix https://github.com/imarshallwidjaja/agent-hive/releases/latest/download/vscode-arkive.vsix
+code --install-extension ./vscode-arkive.vsix
 ```
 
 ## What Not To Do

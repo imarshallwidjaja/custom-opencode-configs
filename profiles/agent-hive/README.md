@@ -2,7 +2,7 @@
 
 This directory contains alternate full `agent_hive.json` profiles for `scripts/install-profile.sh`.
 
-The repository root `agent_hive.json` remains the default profile. Use these files when the target machine should run a different model mix while keeping the same installed `opencode.json`, `AGENTS.md`, skills, agents, and commands.
+The repository root `agent_hive.json` is the default OpenAI plus `opencode-go` profile. Use these files when the target machine should run a different named model mix while keeping the same installed `opencode.json`, `AGENTS.md`, skills, agents, and commands.
 
 All Agent Hive profiles share the same agent names, descriptions, and non-model settings. Profiles should only differ by `model`, `variant`, and `temperature`. If `variant` or `temperature` is absent in a profile, treat that absence as intentional. Each profile includes `hive-builder` for ad-hoc execution sessions used by newer `oc-arkive` builds.
 
@@ -30,7 +30,7 @@ Use this when:
 
 ## Install Selection
 
-Install the default root `agent_hive.json` profile:
+Install the default root `agent_hive.json` profile, which matches `openai-opencode-go.json`:
 
 ```bash
 ./scripts/install-profile.sh

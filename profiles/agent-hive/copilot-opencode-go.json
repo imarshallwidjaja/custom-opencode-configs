@@ -1,25 +1,38 @@
 {
   "$schema": "https://raw.githubusercontent.com/imarshallwidjaja/agent-hive/main/packages/opencode-hive/schema/agent_hive.schema.json",
   "agentMode": "dedicated",
-  "disableMcps": ["context7", "ast_grep"],
+  "disableMcps": [
+    "context7",
+    "ast_grep"
+  ],
   "agents": {
     "hive-master": {
       "model": "github-copilot/gpt-5.4",
       "variant": "high",
       "temperature": 0.7,
-      "autoLoadSkills": ["parallel-exploration"]
+      "autoLoadSkills": [
+        "parallel-exploration"
+      ]
     },
     "architect-planner": {
       "model": "github-copilot/gpt-5.5",
       "variant": "high",
       "temperature": 1,
-      "autoLoadSkills": ["brainstorming", "writing-plans", "parallel-exploration"]
+      "autoLoadSkills": [
+        "brainstorming",
+        "writing-plans",
+        "parallel-exploration"
+      ]
     },
     "swarm-orchestrator": {
       "model": "github-copilot/gpt-5.4",
       "variant": "high",
       "temperature": 1,
-      "autoLoadSkills": ["dispatching-parallel-agents", "parallel-exploration", "executing-plans"]
+      "autoLoadSkills": [
+        "dispatching-parallel-agents",
+        "parallel-exploration",
+        "executing-plans"
+      ]
     },
     "scout-researcher": {
       "model": "opencode-go/kimi-k2.6",
@@ -31,23 +44,27 @@
       "model": "github-copilot/gpt-5.5",
       "variant": "low",
       "temperature": 0.7,
-      "autoLoadSkills": ["verification-before-completion"]
+      "autoLoadSkills": [
+        "verification-before-completion"
+      ]
     },
     "hygienic-reviewer": {
       "model": "github-copilot/gpt-5.4",
       "variant": "high",
       "temperature": 0.7,
-      "autoLoadSkills": ["code-reviewer"]
+      "autoLoadSkills": [
+        "code-reviewer"
+      ]
+    },
+    "hive-helper": {
+      "model": "opencode-go/kimi-k2.6",
+      "variant": "high",
+      "temperature": 0.3,
+      "autoLoadSkills": []
     },
     "hive-builder": {
       "model": "github-copilot/gpt-5.5",
       "variant": "high"
-    },
-    "hive-helper": {
-    "model": "opencode-go/kimi-k2.6",
-    "variant": "high",
-    "temperature": 0.3,
-    "autoLoadSkills": []
     }
   },
   "customAgents": {
@@ -71,7 +88,10 @@
       "model": "github-copilot/gemini-3.1-pro-preview",
       "variant": "high",
       "temperature": 1,
-      "autoLoadSkills": ["humanizer", "stop-slop"]
+      "autoLoadSkills": [
+        "humanizer",
+        "stop-slop"
+      ]
     },
     "forager-simple": {
       "baseAgent": "forager-worker",
@@ -86,7 +106,9 @@
       "model": "github-copilot/gemini-3.1-pro-preview",
       "variant": "high",
       "temperature": 1,
-      "autoLoadSkills": ["web-design-guidelines"]
+      "autoLoadSkills": [
+        "web-design-guidelines"
+      ]
     },
     "hygienic-reviewer-documents": {
       "baseAgent": "hygienic-reviewer",
@@ -94,14 +116,19 @@
       "model": "github-copilot/gemini-3.1-pro-preview",
       "variant": "high",
       "temperature": 1,
-      "autoLoadSkills": ["humanizer", "stop-slop"]
+      "autoLoadSkills": [
+        "humanizer",
+        "stop-slop"
+      ]
     },
     "hygienic-reviewer-plans": {
       "baseAgent": "hygienic-reviewer",
       "description": "Use this reviewer for reviewing implementation plans, designs, and specifications work. Used when the you need a verification on the overall approach to a problem or project.",
       "model": "github-copilot/gpt-5.5",
       "variant": "high",
-      "autoLoadSkills": ["stop-slop"]
+      "autoLoadSkills": [
+        "stop-slop"
+      ]
     },
     "hygienic-reviewer-ultrabrain": {
       "baseAgent": "hygienic-reviewer",
@@ -128,7 +155,8 @@
       "baseAgent": "scout-researcher",
       "description": "Only use this researcher for research tasks that require a high level of intelligence, reasoning, and creativity to discover answers not well defined or without clear expectations.",
       "model": "opencode-go/deepseek-v4-pro",
-      "variant": "max"
+      "variant": "max",
+      "temperature": 1
     }
   }
 }
