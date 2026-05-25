@@ -143,6 +143,7 @@ Use this for technical docs, professional notes, PRs, commits, reviews, applicat
 | Applications or professional summaries | Write as someone who has already done the work and is explaining how they operate | Sales pitch, deferential applicant tone, generic enthusiasm |
 | Thin or incomplete source material | Name the visible role concepts and attach them to real evidence | Foregrounding that the source is incomplete unless the user asked for a research note |
 | Reviews and critiques | State the finding, risk, and evidence directly | Reader-management, praise-first framing, or self-validating explanations |
+| Informal messages, emails, class assignments, casual notes | Write what you think. Use natural qualifiers: "I think," "seems," "from what I can tell," "bit unclear honestly." Be direct and simple. Sentence fragments and conversational rhythm are fine. Present facts as personal observation, not reported research. Close plainly ("Cheers," not "Kind regards"). | Avoid performative formality. Do not over-polish into operator-voice cadence. Do not use this register for resumes, cover letters, criteria responses, or professional application documents. |
 
 ### Voice And Cadence
 
@@ -170,6 +171,13 @@ Use this for technical docs, professional notes, PRs, commits, reviews, applicat
 - Avoid apologising for gaps or spending a paragraph softening them. State the real gap once, then show the adjacent work.
 - Avoid generic closers such as "I would welcome the opportunity" when a direct statement of value is stronger.
 - Avoid hype, marketing language, rhetorical flourishes, em-dash reveals, and pull-quote style sentences.
+
+### Casual-Voice Notes
+
+- This register is opt-in. The default remains operator voice.
+- Trigger when the task is a casual email, informal message, class assignment, or the user explicitly asks for a casual tone.
+- Hard guard: never use casual register in resumes, cover letters, criteria responses, or professional application documents.
+- Review expectation: apply stop-slop lightly for casual texts. Remove AI-default filler and throat-clearing, but keep natural human qualifiers like "I think," "seems," and "from what I can tell." The goal is to sound like a human thinking, not a polished document.
 
 ## MarkItDown And PDFs
 

@@ -2,5 +2,14 @@
   "disableMcps": [
     "context7",
     "ast_grep"
-  ]
+  ],
+  "agents": {
+    "scout-researcher": {
+      "autoLoadSkills": [
+        "cymbal",
+        "ast-grep",
+        "context-mode"
+      ]
+    }
+  }
 }

@@ -222,6 +222,7 @@ Purpose:
 - keep the base profile provider-portable without local plugin or MCP paths
 - let an operator opt into `context-mode`, local `ast_grep`, and enabled `context7` in one additive snippet merge
 - keep MCP and LSP tooling opt-in while Agent Hive workers consistently disable MCPs they should not use directly
+- load the matching navigation skills for `scout-researcher` when the context-improved toolchain is enabled
 - normalize local absolute paths into portable `PATH`-based commands and environment variables
 
 Prerequisites:
@@ -241,9 +242,9 @@ Use that command when you want to add the bundle after a plain `shared` or `pers
 Some notes:
 
 - the context-improved overlay replaces the live machine's absolute local plugin and MCP paths with portable command names
-- `./scripts/enable-optional.sh context-improved` updates both `opencode.json` and `agent_hive.json`
+- `./scripts/enable-optional.sh context-improved` updates both `opencode.json` and `agent_hive.json`, including `scout-researcher` skill loading for the local navigation workflow
 - `scripts/install-profile.sh` auto-applies the same overlay when `OPENCODE_AGENTS_PROFILE` is `shared-context-improved` or `personal-context-improved`
-- the Agent Hive sidecar is retained for install compatibility, but the base Agent Hive profiles already disable both `context7` and `ast_grep` for Hive workers
+- the Agent Hive sidecar keeps `context7` and `ast_grep` disabled for Hive workers while loading `cymbal`, `ast-grep`, and `context-mode` for Scout research
 - `cymbal` is a separate CLI tool, not an `opencode.json` entry; the packaged AGENTS profiles instruct agents to use it when the running Opencode environment exposes it
 - if you only want the remote docs MCP, the narrower `mcp-context7-enabled` snippet still exists
 - pair this overlay with `shared-context-improved` or `personal-context-improved` so the installed `AGENTS.md` matches the enabled toolchain; selecting one of those profiles during install now handles the pairing automatically
@@ -321,6 +322,7 @@ Some notes:
 - it does not add provider credentials, local proxy plugins, or local provider shims to `opencode.json`
 - use these profiles only when the target Opencode environment can resolve every provider/model named in the selected profile
 - the Agent Hive profiles share the same agent names, descriptions, and non-model settings; they differ only by `model`, `variant`, and `temperature`
+- each Agent Hive profile includes `hive-builder` for ad-hoc execution sessions used by newer `oc-arkive` builds
 
 The installed `opencode.json` follows the upstream Agent Hive OpenCode setup and uses:
 

@@ -61,6 +61,10 @@
       "variant": "high",
       "temperature": 0.3,
       "autoLoadSkills": []
+    },
+    "hive-builder": {
+      "model": "github-copilot/gpt-5.4",
+      "variant": "high"
     }
   },
   "customAgents": {

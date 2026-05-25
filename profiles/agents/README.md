@@ -44,7 +44,7 @@ Use this when:
 
 ### `personal-context-improved.md`
 
-Purpose: The personal-default profile plus strong routing rules for the optional context-improved toolchain.
+Purpose: The personal-default profile plus strong routing rules for the optional context-improved toolchain and an opt-in casual-message register.
 
 Use this when:
 

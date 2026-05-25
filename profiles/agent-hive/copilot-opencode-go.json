@@ -39,6 +39,10 @@
       "temperature": 0.7,
       "autoLoadSkills": ["code-reviewer"]
     },
+    "hive-builder": {
+      "model": "github-copilot/gpt-5.5",
+      "variant": "high"
+    },
     "hive-helper": {
     "model": "opencode-go/kimi-k2.6",
     "variant": "high",

@@ -26,7 +26,7 @@ It adds:
 - a local `context-mode` MCP launched from `PATH`
 - a local `ast_grep` MCP launched through `uvx`
 - the bundled remote `context7` MCP entry already present in the base profile
-- the matching `agent_hive.context-improved.json` overlay for installer compatibility; the base Agent Hive profiles already keep `ast_grep` disabled for Hive workers
+- the matching `agent_hive.context-improved.json` overlay, which keeps `ast_grep` and `context7` disabled for Hive workers while loading `cymbal`, `ast-grep`, and `context-mode` for Scout research
 
 Prerequisites:
 
@@ -44,7 +44,7 @@ Verification:
 Some notes:
 
 - this bundle normalizes the live local setup into portable `PATH`-based commands and environment variables
-- this bundle updates both `opencode.json` and `agent_hive.json`
+- this bundle updates both `opencode.json` and `agent_hive.json`, including Scout skill loading for the local navigation workflow
 - the installer auto-applies this bundle for the `shared-context-improved` and `personal-context-improved` AGENTS profiles after preflighting the same prerequisites
 - install `cymbal` with `brew install 1broseidon/tap/cymbal` when the machine uses Homebrew and you want the full local navigation workflow
 - `cymbal` is a separate CLI tool for local code navigation, but it is not wired through `opencode.json`; the AGENTS profiles use it when the current Opencode environment exposes it
