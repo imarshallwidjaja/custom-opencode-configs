@@ -1,32 +1,51 @@
 {
   "$schema": "https://raw.githubusercontent.com/imarshallwidjaja/agent-hive/main/packages/opencode-hive/schema/agent_hive.schema.json",
   "agentMode": "dedicated",
-  "disableMcps": ["context7", "ast_grep"],
+  "disableMcps": [
+    "context7",
+    "ast_grep"
+  ],
   "agents": {
     "hive-master": {
       "model": "github-copilot/gpt-5.5",
       "variant": "medium",
-      "autoLoadSkills": ["parallel-exploration"]
+      "autoLoadSkills": [
+        "parallel-exploration"
+      ]
     },
     "architect-planner": {
       "model": "github-copilot/gpt-5.5",
       "variant": "high",
-      "autoLoadSkills": ["brainstorming", "writing-plans", "parallel-exploration"]
+      "autoLoadSkills": [
+        "brainstorming",
+        "writing-plans",
+        "parallel-exploration"
+      ]
     },
     "swarm-orchestrator": {
       "model": "github-copilot/gpt-5.5",
       "variant": "medium",
-      "autoLoadSkills": ["dispatching-parallel-agents", "parallel-exploration", "executing-plans"]
+      "autoLoadSkills": [
+        "dispatching-parallel-agents",
+        "parallel-exploration",
+        "executing-plans"
+      ]
     },
     "scout-researcher": {
       "model": "opencode-go/deepseek-v4-flash",
       "variant": "max",
-      "autoLoadSkills": ["cymbal", "ast-grep", "context-mode"]
+      "autoLoadSkills": [
+        "cymbal",
+        "ast-grep",
+        "context-mode"
+      ]
     },
     "forager-worker": {
       "model": "github-copilot/gpt-5.5",
       "variant": "medium",
-      "autoLoadSkills": ["verification"]
+      "autoLoadSkills": [
+        "verification"
+      ]
     },
     "plan-reviewer": {
       "model": "github-copilot/gpt-5.5",
@@ -57,69 +76,79 @@
   "customAgents": {
     "forager-smart": {
       "baseAgent": "forager-worker",
-      "description": "Choose for implementation tasks where the hard part is reasoning: ambiguous requirements, multi-step code changes, cross-file behavior, non-obvious edge cases, or design-sensitive implementation. Do not use for simple mechanical edits.",
+      "description": "Exception route for implementation where the base worker is likely to make a design mistake. Use only for ambiguous behavior, cross-file state changes, or edge cases requiring a choice between competing implementations. Default to forager-worker for normal edits, straightforward fixes, and bounded feature work.",
       "model": "github-copilot/gpt-5.5",
       "variant": "xhigh"
     },
     "forager-capable": {
       "baseAgent": "forager-worker",
-      "description": "Choose for implementation tasks that need stronger tool use and code execution than the default worker: broad edits, failing checks, generated evidence, or complex local workflows. Do not use when the task is primarily strategy, review, or research.",
+      "description": "Exception route for implementation that depends on heavy local execution. Use only when the task requires broad edits plus running or debugging checks, generated artifacts, or multi-step tool workflows. Default to forager-worker when the files and verification path are already clear. Do not use for strategy, review, or research.",
       "model": "github-copilot/gpt-5.4",
       "variant": "xhigh"
     },
     "forager-documents": {
       "baseAgent": "forager-worker",
-      "description": "Choose for writing or editing human-facing documents: READMEs, operator guides, reports, specifications, workflow docs, and prose-heavy project artifacts. Do not use for code review or implementation work unless the task is mostly documentation.",
+      "description": "Exception route for prose-dominant work. Use only when the main deliverable is documentation, operator guidance, specs, reports, or substantial human-facing text. Default to forager-worker when documentation is incidental to code changes. Do not use for code review.",
       "model": "github-copilot/gpt-5.4",
       "variant": "high",
-      "autoLoadSkills": ["humanizer", "stop-slop"]
+      "autoLoadSkills": [
+        "humanizer",
+        "stop-slop"
+      ]
     },
     "forager-simple": {
       "baseAgent": "forager-worker",
-      "description": "Choose for small, well-scoped implementation tasks with obvious files, low ambiguity, and little branching: renames, config tweaks, simple fixes, or bounded edits. Do not use for architecture-sensitive or multi-system changes.",
+      "description": "Exception route for small mechanical implementation. Use only when the files, edit shape, and verification path are obvious: renames, config tweaks, simple fixes, or bounded edits. Default to forager-worker for normal task-backed implementation. Do not use for architecture-sensitive, ambiguous, or multi-system changes.",
       "model": "opencode-go/deepseek-v4-pro",
       "variant": "max"
     },
     "forager-ui": {
       "baseAgent": "forager-worker",
-      "description": "Choose for frontend implementation work: React or UI components, layout, styling, design systems, accessibility, browser behavior, and UX polish. Do not use for backend-only work or review-only tasks.",
+      "description": "Exception route for UI implementation. Use only when the main change affects user-visible interface behavior, layout, styling, accessibility, React/component state, or UX polish. Default to forager-worker for backend work or incidental UI text edits. Do not use for review-only tasks.",
       "model": "opencode-go/kimi-k2.6",
-      "autoLoadSkills": ["web-design-guidelines"]
+      "autoLoadSkills": [
+        "web-design-guidelines"
+      ]
     },
-    "plan-reviewer-ultrabrain": {
+    "plan-reviewer-xhigh-reasoning": {
       "baseAgent": "plan-reviewer",
-      "description": "Choose for difficult plan-readiness review: unclear sequencing, hidden dependencies, missing handoffs, vague acceptance criteria, or worker instructions likely to fail in execution. Returns plan blockers, not architecture advice or code review.",
+      "description": "Escalation-only xhigh-reasoning plan reviewer. Use only when the default plan-reviewer cannot resolve a concrete blocker involving cross-system sequencing, irreversible migration risk, conflicting requirements, or worker handoff likely to fail. Default to plan-reviewer for routine plan review, missing detail, and general quality checks. Returns plan blockers, not architecture advice or code review.",
       "model": "github-copilot/gpt-5.5",
       "variant": "xhigh"
     },
     "code-reviewer-ui": {
       "baseAgent": "code-reviewer",
-      "description": "Choose for implementation review of UI-facing changes: component behavior, accessibility, visual regressions, responsive layout, frontend state, design-system fit, and user-visible edge cases. Do not use for general backend review.",
+      "description": "Exception route for UI-facing implementation review. Use only when the primary risk is user-visible behavior, accessibility, responsive layout, frontend state, visual regression, or design-system fit. Default to code-reviewer for general implementation correctness and backend review.",
       "model": "opencode-go/kimi-k2.6",
-      "autoLoadSkills": ["web-design-guidelines"]
+      "autoLoadSkills": [
+        "web-design-guidelines"
+      ]
     },
     "code-reviewer-documentation": {
       "baseAgent": "code-reviewer",
-      "description": "Choose for review of documentation or prose changes against the task: accuracy, operator usefulness, setup flow, terminology, completeness, and AI-slop. Do not use for implementation correctness unless docs and code changed together.",
+      "description": "Exception route for documentation review. Use only when the diff is mostly prose, setup flow, operator guidance, terminology, or human-facing documentation. Default to code-reviewer when code correctness is the primary risk, even if docs changed too.",
       "model": "github-copilot/gpt-5.4",
       "variant": "high",
-      "autoLoadSkills": ["humanizer", "stop-slop"]
+      "autoLoadSkills": [
+        "humanizer",
+        "stop-slop"
+      ]
     },
-    "code-reviewer-ultrabrain": {
+    "code-reviewer-xhigh-reasoning": {
       "baseAgent": "code-reviewer",
-      "description": "Choose for high-stakes implementation review where subtle defects matter: concurrency, persistence, security, migrations, public contracts, complex refactors, or architecture-sensitive correctness. Reviews the diff against the task; does not redesign the approach.",
+      "description": "Escalation-only xhigh-reasoning code reviewer. Use only after default code-reviewer when there is a named high-risk concern: security boundary, data loss, concurrency race, migration correctness, or public API breakage. Default to code-reviewer for routine diffs, style, tests, docs, UI, and general correctness review. Reviews the diff against the task; does not redesign the approach.",
       "model": "github-copilot/gpt-5.5",
       "variant": "xhigh"
     },
-    "oracle-ultrabrain": {
+    "approach-advisor-xhigh-reasoning": {
       "baseAgent": "approach-advisor",
-      "description": "Choose for oracle-style strategic advice when the path is unclear: architecture tradeoffs, stalled debugging direction, migration strategy, integration boundaries, or decisions that may change the plan. Advisory only; does not approve plans, review diffs, or implement.",
+      "description": "Escalation-only xhigh-reasoning approach advisor. Use only when the operator or planner has a named strategic decision that would materially change architecture, persistence, deployment, or integration boundaries. Do not use for normal planning, implementation review, code review, or vague uncertainty. Advisory only; does not approve plans, review diffs, or implement.",
       "model": "github-copilot/gpt-5.5",
       "variant": "xhigh"
     },
     "scout-researcher-capable": {
       "baseAgent": "scout-researcher",
-      "description": "Choose for hard research where retrieval needs synthesis: unfamiliar code paths, cross-repo or multi-domain investigation, ambiguous root-cause discovery, external docs plus local code, or questions without a known file target. Read-only; do not use for edits.",
+      "description": "Exception route for research that needs synthesis beyond the default scout. Use only for unfamiliar code paths, cross-repo or multi-domain investigation, ambiguous root-cause discovery, external docs plus local code, or questions without a known file target. Default to scout-researcher for normal bounded discovery. Read-only; do not use for edits.",
       "model": "opencode-go/deepseek-v4-pro",
       "variant": "max"
     }

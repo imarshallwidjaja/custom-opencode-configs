@@ -27,7 +27,7 @@ Prioritize clarifying:
 Council aliases:
 
 - `design` -> `scout-researcher`, `architect-planner`, `approach-advisor`, `forager-smart`
-- `decision` -> `scout-researcher`, `architect-planner`, `oracle-ultrabrain`, `forager-smart`
+- `decision` -> `scout-researcher`, `architect-planner`, `approach-advisor-xhigh-reasoning`, `forager-smart`
 - `minimal-change` -> `scout-researcher`, `simplicity-reviewer`, `code-reviewer`, `forager-simple`
 - `documents` -> `scout-researcher`, `forager-documents`, `code-reviewer-documentation`
 
