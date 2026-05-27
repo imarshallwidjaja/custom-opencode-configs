@@ -4,13 +4,13 @@ This directory contains alternate full `agent_hive.json` profiles for `scripts/i
 
 The repository root `agent_hive.json` is the default OpenAI plus `opencode-go` profile. Use these files when the target machine should run a different named model mix while keeping the same installed `opencode.json`, `AGENTS.md`, skills, agents, and commands.
 
-All Agent Hive profiles share the same agent names, descriptions, and non-model settings. Profiles should only differ by `model`, `variant`, and `temperature`. If `variant` or `temperature` is absent in a profile, treat that absence as intentional. Each profile includes `hive-builder` for ad-hoc execution sessions used by newer `oc-arkive` builds.
+All Agent Hive profiles share the same agent names, descriptions, and non-model settings. Profiles should only differ by `model` and `variant`; `temperature` is intentionally omitted. Each profile includes `plan-reviewer`, `code-reviewer`, `approach-advisor`, and `hive-builder` for newer `oc-arkive` builds.
 
 ## Profiles
 
 ### `openai-opencode-go.json`
 
-Purpose: Uses OpenAI-hosted GPT models for the main Hive planning, orchestration, worker, and review roles, with `opencode-go/*` models for selected scout, helper, simple-worker, document, UI, and capable-research roles.
+Purpose: Uses non-fast OpenAI-hosted GPT models for the main Hive planning, orchestration, worker, and review roles, with `opencode-go/*` models for Scout, simple-worker, UI, and capable-research roles.
 
 Use this when:
 
@@ -20,13 +20,13 @@ Use this when:
 
 ### `copilot-opencode-go.json`
 
-Purpose: Uses GitHub Copilot-hosted models for most Hive roles, with `opencode-go/*` models for selected scout, helper, simple-worker, and capable-research roles.
+Purpose: Uses GitHub Copilot-hosted GPT models for the main Hive planning, orchestration, worker, and review roles, with `opencode-go/*` models for Scout, simple-worker, UI, and capable-research roles.
 
 Use this when:
 
 - GitHub Copilot model access is available in Opencode
 - the machine also has the `opencode-go/*` provider available
-- you want the local working profile from `~/.config/opencode/agent_hive-live.json.bak`
+- you want the Copilot-provider equivalent of the default Agent Hive profile
 
 ## Install Selection
 

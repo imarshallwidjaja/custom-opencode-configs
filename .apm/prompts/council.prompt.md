@@ -28,23 +28,28 @@ Normalize the request into these council directive fields:
 
 Council aliases:
 
-- `design` -> `scout-researcher`, `architect-planner`, `hygienic-reviewer`, `forager-smart`
-- `decision` -> `scout-researcher`, `architect-planner`, `hygienic-reviewer-ultrabrain`, `forager-smart`
-- `minimal-change` -> `scout-researcher`, `simplicity-reviewer`, `hygienic-reviewer`, `forager-simple`
-- `documents` -> `scout-researcher`, `forager-documents`, `hygienic-reviewer-documents`
+- `design` -> `scout-researcher`, `architect-planner`, `approach-advisor`, `forager-smart`
+- `decision` -> `scout-researcher`, `architect-planner`, `oracle-ultrabrain`, `forager-smart`
+- `minimal-change` -> `scout-researcher`, `simplicity-reviewer`, `code-reviewer`, `forager-simple`
+- `documents` -> `scout-researcher`, `forager-documents`, `code-reviewer-documentation`
 
 Allowed councillors:
 
 - `scout-researcher`
 - `architect-planner`
-- `hygienic-reviewer`
-- `hygienic-reviewer-ultrabrain`
-- `hygienic-reviewer-documents`
+- `plan-reviewer`
+- `code-reviewer`
+- `approach-advisor`
+- `plan-reviewer-ultrabrain`
+- `code-reviewer-ultrabrain`
+- `oracle-ultrabrain`
+- `code-reviewer-documentation`
 - `simplicity-reviewer`
 - `forager-smart`
 - `forager-simple`
 - `forager-documents`
 - `forager-capable`
+- `forager-ui`
 
 Do not use these as councillors:
 

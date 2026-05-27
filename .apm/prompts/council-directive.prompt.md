@@ -26,10 +26,10 @@ Prioritize clarifying:
 
 Council aliases:
 
-- `design` -> `scout-researcher`, `architect-planner`, `hygienic-reviewer`, `forager-smart`
-- `decision` -> `scout-researcher`, `architect-planner`, `hygienic-reviewer-ultrabrain`, `forager-smart`
-- `minimal-change` -> `scout-researcher`, `simplicity-reviewer`, `hygienic-reviewer`, `forager-simple`
-- `documents` -> `scout-researcher`, `forager-documents`, `hygienic-reviewer-documents`
+- `design` -> `scout-researcher`, `architect-planner`, `approach-advisor`, `forager-smart`
+- `decision` -> `scout-researcher`, `architect-planner`, `oracle-ultrabrain`, `forager-smart`
+- `minimal-change` -> `scout-researcher`, `simplicity-reviewer`, `code-reviewer`, `forager-simple`
+- `documents` -> `scout-researcher`, `forager-documents`, `code-reviewer-documentation`
 
 If the operator requests a `worker` seat without naming one, default to:
 

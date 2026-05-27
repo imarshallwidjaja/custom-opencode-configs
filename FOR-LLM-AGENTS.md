@@ -48,7 +48,7 @@ Do not invent extra setup questions. This repository exposes the following real 
 Some setup facts are not user choices:
 
 - The default full install path is `./scripts/install-profile.sh`.
-- The default repo profile uses OpenAI models plus selected `opencode-go/*` models in `agent_hive.json`, and `opencode-go/*` models for selected built-in Opencode agents in `opencode.json`.
+- The default repo profile uses non-fast OpenAI models plus selected `opencode-go/*` models in `agent_hive.json`, and `opencode-go/*` models for selected built-in Opencode agents in `opencode.json`.
 - Alternate Agent Hive profiles live under `profiles/agent-hive/` and are selected with `OPENCODE_AGENT_HIVE_PROFILE`.
 - The published `oc-arkive@latest` plugin is installed by Opencode on first run.
 - The optional context-improved bundle adds `context-mode@latest`, local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay kept for install compatibility. The base Agent Hive profiles already disable `context7` and `ast_grep` for Hive workers.
@@ -247,9 +247,9 @@ Which Agent Hive model profile should I install: default, openai-opencode-go, or
 
 Explain the options like this:
 
-- `default`: the repository root `agent_hive.json`, using the OpenAI plus `opencode-go` model mix
-- `openai-opencode-go`: the named copy of the default OpenAI plus `opencode-go` model mix
-- `copilot-opencode-go`: uses GitHub Copilot models for most Hive roles and `opencode-go/*` models for selected scout, helper, simple-worker, and capable-research roles
+- `default`: the repository root `agent_hive.json`, using the non-fast OpenAI plus `opencode-go` model mix
+- `openai-opencode-go`: the named copy of the default non-fast OpenAI plus `opencode-go` model mix
+- `copilot-opencode-go`: uses GitHub Copilot GPT models for the same Hive roles and `opencode-go/*` models for Scout, simple-worker, UI, and capable-research roles
 
 Recommendation:
 

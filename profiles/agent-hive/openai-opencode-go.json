@@ -1,160 +1,123 @@
 {
   "$schema": "https://raw.githubusercontent.com/imarshallwidjaja/agent-hive/main/packages/opencode-hive/schema/agent_hive.schema.json",
   "agentMode": "dedicated",
-  "disableMcps": [
-    "context7",
-    "ast_grep"
-  ],
+  "disableMcps": ["context7", "ast_grep"],
   "agents": {
     "hive-master": {
       "model": "openai/gpt-5.5",
       "variant": "medium",
-      "temperature": 0.7,
-      "autoLoadSkills": [
-        "parallel-exploration"
-      ]
+      "autoLoadSkills": ["parallel-exploration"]
     },
     "architect-planner": {
       "model": "openai/gpt-5.5",
-      "variant": "xhigh",
-      "temperature": 1,
-      "autoLoadSkills": [
-        "brainstorming",
-        "writing-plans",
-        "parallel-exploration"
-      ]
+      "variant": "high",
+      "autoLoadSkills": ["brainstorming", "writing-plans", "parallel-exploration"]
     },
     "swarm-orchestrator": {
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.5",
       "variant": "medium",
-      "temperature": 1,
-      "autoLoadSkills": [
-        "dispatching-parallel-agents",
-        "parallel-exploration",
-        "executing-plans"
-      ]
+      "autoLoadSkills": ["dispatching-parallel-agents", "parallel-exploration", "executing-plans"]
     },
     "scout-researcher": {
       "model": "opencode-go/deepseek-v4-flash",
       "variant": "max",
-      "autoLoadSkills": []
+      "autoLoadSkills": ["cymbal", "ast-grep", "context-mode"]
     },
     "forager-worker": {
-      "model": "openai/gpt-5.5-fast",
-      "variant": "low",
-      "temperature": 0.7,
-      "autoLoadSkills": [
-        "verification-before-completion"
-      ]
+      "model": "openai/gpt-5.5",
+      "variant": "medium",
+      "autoLoadSkills": ["verification"]
     },
-    "hygienic-reviewer": {
-      "model": "openai/gpt-5.4-fast",
-      "variant": "xhigh",
-      "temperature": 0.3,
-      "autoLoadSkills": [
-        "code-reviewer"
-      ]
+    "plan-reviewer": {
+      "model": "openai/gpt-5.5",
+      "variant": "high"
     },
-    "hive-helper": {
-      "model": "opencode-go/deepseek-v4-pro",
-      "variant": "max",
-      "temperature": 0.3,
-      "autoLoadSkills": []
+    "code-reviewer": {
+      "model": "openai/gpt-5.5",
+      "variant": "high"
+    },
+    "approach-advisor": {
+      "model": "openai/gpt-5.5",
+      "variant": "high"
     },
     "hive-builder": {
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.5",
       "variant": "high"
+    },
+    "hive-helper": {
+      "model": "openai/gpt-5.4",
+      "variant": "medium",
+      "autoLoadSkills": []
     }
   },
   "customAgents": {
     "forager-smart": {
       "baseAgent": "forager-worker",
-      "description": "Only use this worker for tasks that require a high level of intelligence, reasoning, and creativity to solve complex problems that are not well defined or have many steps or decisions to make.",
-      "model": "openai/gpt-5.5-fast",
-      "variant": "high",
-      "temperature": 0.7
+      "description": "Choose for implementation tasks where the hard part is reasoning: ambiguous requirements, multi-step code changes, cross-file behavior, non-obvious edge cases, or design-sensitive implementation. Do not use for simple mechanical edits.",
+      "model": "openai/gpt-5.5",
+      "variant": "xhigh"
     },
     "forager-capable": {
       "baseAgent": "forager-worker",
-      "description": "Only use this worker for tasks that require an agent that has extra capabilities to write better code and make use of complex tools calls to complete multiple actions.",
-      "model": "openai/gpt-5.4-fast",
-      "variant": "high",
-      "temperature": 0.7
+      "description": "Choose for implementation tasks that need stronger tool use and code execution than the default worker: broad edits, failing checks, generated evidence, or complex local workflows. Do not use when the task is primarily strategy, review, or research.",
+      "model": "openai/gpt-5.4",
+      "variant": "xhigh"
     },
     "forager-documents": {
       "baseAgent": "forager-worker",
-      "description": "Use this worker for document-heavy tasks. This includes things like writing documentation, creating reports, and other non-code documents.",
-      "model": "opencode-go/deepseek-v4-pro",
-      "variant": "max",
-      "temperature": 1,
-      "autoLoadSkills": [
-        "humanizer",
-        "stop-slop"
-      ]
+      "description": "Choose for writing or editing human-facing documents: READMEs, operator guides, reports, specifications, workflow docs, and prose-heavy project artifacts. Do not use for code review or implementation work unless the task is mostly documentation.",
+      "model": "openai/gpt-5.4",
+      "variant": "high",
+      "autoLoadSkills": ["humanizer", "stop-slop"]
     },
     "forager-simple": {
       "baseAgent": "forager-worker",
-      "description": "Only use this worker for tasks that require a low level of decision making and creativity which are well defined and do not have many interdependent steps or decisions to make.",
-      "model": "opencode-go/deepseek-v4-flash",
-      "variant": "max",
-      "temperature": 0.5
+      "description": "Choose for small, well-scoped implementation tasks with obvious files, low ambiguity, and little branching: renames, config tweaks, simple fixes, or bounded edits. Do not use for architecture-sensitive or multi-system changes.",
+      "model": "opencode-go/deepseek-v4-pro",
+      "variant": "max"
     },
     "forager-ui": {
       "baseAgent": "forager-worker",
-      "description": "Only use this worker for tasks that involve writing code related to user interfaces and experiences. This includes things like frontend code, design systems, and other UI/UX-related code.",
+      "description": "Choose for frontend implementation work: React or UI components, layout, styling, design systems, accessibility, browser behavior, and UX polish. Do not use for backend-only work or review-only tasks.",
       "model": "opencode-go/kimi-k2.6",
-      "variant": "high",
-      "temperature": 1,
-      "autoLoadSkills": [
-        "web-design-guidelines"
-      ]
+      "autoLoadSkills": ["web-design-guidelines"]
     },
-    "hygienic-reviewer-documents": {
-      "baseAgent": "hygienic-reviewer",
-      "description": "Only use this reviewer for reviewing documents that are not code or code designs. This includes things like human readmes, workflows, technical specifications, and other non-code documents.",
-      "model": "opencode-go/deepseek-v4-pro",
-      "variant": "max",
-      "temperature": 1,
-      "autoLoadSkills": [
-        "humanizer",
-        "stop-slop"
-      ]
-    },
-    "hygienic-reviewer-plans": {
-      "baseAgent": "hygienic-reviewer",
-      "description": "Use this reviewer for reviewing implementation plans, designs, and specifications work. Used when the you need a verification on the overall approach to a problem or project.",
-      "model": "openai/gpt-5.5-fast",
-      "variant": "high",
-      "autoLoadSkills": [
-        "stop-slop"
-      ]
-    },
-    "hygienic-reviewer-ultrabrain": {
-      "baseAgent": "hygienic-reviewer",
-      "description": "Only use this reviewer for deep logical reasoning and complex architectural decisions. It is used when the orchestrator hits a wall and needs high-intelligence strategic backup.",
+    "plan-reviewer-ultrabrain": {
+      "baseAgent": "plan-reviewer",
+      "description": "Choose for difficult plan-readiness review: unclear sequencing, hidden dependencies, missing handoffs, vague acceptance criteria, or worker instructions likely to fail in execution. Returns plan blockers, not architecture advice or code review.",
       "model": "openai/gpt-5.5",
-      "variant": "xhigh",
-      "temperature": 1
+      "variant": "xhigh"
     },
-    "hygienic-reviewer-opus": {
-      "baseAgent": "hygienic-reviewer",
-      "description": "Only use this reviewer when requested by the operator in direct reference. This reviewer is a much stronger version of hygienic-reviewer-technical. It thinks indepth to problem solve and review code with a very high level of intelligence, creativity, and reasoning.",
-      "model": "opencode-go/glm-5.1",
-      "temperature": 0.7
+    "code-reviewer-ui": {
+      "baseAgent": "code-reviewer",
+      "description": "Choose for implementation review of UI-facing changes: component behavior, accessibility, visual regressions, responsive layout, frontend state, design-system fit, and user-visible edge cases. Do not use for general backend review.",
+      "model": "opencode-go/kimi-k2.6",
+      "autoLoadSkills": ["web-design-guidelines"]
     },
-    "hygienic-reviewer-technical": {
-      "baseAgent": "hygienic-reviewer",
-      "description": "Only use this reviewer for reviewing the technical aspects of code, such as correctness, efficiency, and security. It is used when the orchestrator needs a second pair of eyes to review code for technical quality. Reviews should only be scoped for code implementation.",
-      "model": "openai/gpt-5.5",
+    "code-reviewer-documentation": {
+      "baseAgent": "code-reviewer",
+      "description": "Choose for review of documentation or prose changes against the task: accuracy, operator usefulness, setup flow, terminology, completeness, and AI-slop. Do not use for implementation correctness unless docs and code changed together.",
+      "model": "openai/gpt-5.4",
       "variant": "high",
-      "temperature": 0.3
+      "autoLoadSkills": ["humanizer", "stop-slop"]
+    },
+    "code-reviewer-ultrabrain": {
+      "baseAgent": "code-reviewer",
+      "description": "Choose for high-stakes implementation review where subtle defects matter: concurrency, persistence, security, migrations, public contracts, complex refactors, or architecture-sensitive correctness. Reviews the diff against the task; does not redesign the approach.",
+      "model": "openai/gpt-5.5",
+      "variant": "xhigh"
+    },
+    "oracle-ultrabrain": {
+      "baseAgent": "approach-advisor",
+      "description": "Choose for oracle-style strategic advice when the path is unclear: architecture tradeoffs, stalled debugging direction, migration strategy, integration boundaries, or decisions that may change the plan. Advisory only; does not approve plans, review diffs, or implement.",
+      "model": "openai/gpt-5.5",
+      "variant": "xhigh"
     },
     "scout-researcher-capable": {
       "baseAgent": "scout-researcher",
-      "description": "Only use this researcher for research tasks that require a high level of intelligence, reasoning, and creativity to discover answers not well defined or without clear expectations.",
+      "description": "Choose for hard research where retrieval needs synthesis: unfamiliar code paths, cross-repo or multi-domain investigation, ambiguous root-cause discovery, external docs plus local code, or questions without a known file target. Read-only; do not use for edits.",
       "model": "opencode-go/deepseek-v4-pro",
-      "variant": "max",
-      "temperature": 1
+      "variant": "max"
     }
   }
 }

@@ -160,7 +160,7 @@ The installer uses the repository root `agent_hive.json` by default. Alternate f
 
 Available Agent Hive profiles:
 
-- `default`: installs the repository root `agent_hive.json`, matching the OpenAI plus `opencode-go` model selection
+- `default`: installs the repository root `agent_hive.json`, matching the non-fast OpenAI plus `opencode-go` model selection
 - `openai-opencode-go`: installs the named copy at `profiles/agent-hive/openai-opencode-go.json`
 - `copilot-opencode-go`: installs `profiles/agent-hive/copilot-opencode-go.json`
 
