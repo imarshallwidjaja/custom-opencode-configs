@@ -4,7 +4,7 @@ This directory contains alternate full `agent_hive.json` profiles for `scripts/i
 
 The repository root `agent_hive.json` is the default OpenAI plus `opencode-go` profile. Use these files when the target machine should run a different named model mix while keeping the same installed `opencode.json`, `AGENTS.md`, skills, agents, and commands.
 
-All Agent Hive profiles share the same agent names, descriptions, and non-model settings. Profiles should only differ by `model` and `variant`; `temperature` is intentionally omitted. Each profile includes `plan-reviewer`, `code-reviewer`, `approach-advisor`, and `hive-builder` for newer `oc-arkive` builds.
+All Agent Hive profiles share the same agent names, descriptions, and non-model settings. Profiles should only differ by `model` and `variant`; `temperature` is intentionally omitted. Each profile includes `plan-reviewer`, `code-reviewer`, `simplicity-reviewer`, `approach-advisor`, and `hive-builder` for newer `oc-arkive` builds.
 
 ## Profiles
 

@@ -125,7 +125,9 @@ if [[ "${AGENTS_MODE}" == "install" ]]; then
   install -m 0644 "${AGENTS_SOURCE}" "${TARGET_DIR}/AGENTS.md"
 fi
 cp -a "${REPO_ROOT}/.apm/skills/." "${TARGET_DIR}/skills/"
-cp -a "${REPO_ROOT}/.apm/agents/." "${TARGET_DIR}/agents/"
+if [[ -d "${REPO_ROOT}/.apm/agents" ]]; then
+  cp -a "${REPO_ROOT}/.apm/agents/." "${TARGET_DIR}/agents/"
+fi
 
 shopt -s nullglob
 for prompt_file in "${REPO_ROOT}"/.apm/prompts/*.prompt.md; do

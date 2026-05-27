@@ -11,7 +11,7 @@ This repo is for installing a ready-to-use Opencode profile. It keeps secrets, l
 - `opencode.json`: base Opencode config with `oc-arkive@latest`
 - `agent_hive.json`: Agent Hive role and model configuration
 - `AGENTS.md`: the selected operating profile for Opencode agents
-- `skills/`, `agents/`, and `commands/`: shared markdown assets used by Opencode
+- `skills/` and `commands/`: shared markdown assets used by Opencode; `agents/` is installed when standalone agent assets are packaged
 
 If the target config directory already contains files with those names, the installer writes a timestamped backup under `<target>/.backup/` before replacing them. Set `OPENCODE_AGENTS_MODE=skip` when you want to update the profile files but keep an existing `AGENTS.md` in place for a manual merge.
 
@@ -23,7 +23,7 @@ Base setup requires:
 - `curl`
 - `opencode`
 - OpenAI access for the `openai/*` models used by the default `agent_hive.json`
-- `opencode-go/*` provider access for the base `opencode.json` agent overrides and default Agent Hive scout/helper roles
+- `opencode-go/*` provider access for the base `opencode.json` `explore` override and selected Agent Hive Scout, simple-worker, UI, and capable-research roles
 
 Optional features require their own tools:
 

@@ -48,7 +48,7 @@ Do not invent extra setup questions. This repository exposes the following real 
 Some setup facts are not user choices:
 
 - The default full install path is `./scripts/install-profile.sh`.
-- The default repo profile uses non-fast OpenAI models plus selected `opencode-go/*` models in `agent_hive.json`, and `opencode-go/*` models for selected built-in Opencode agents in `opencode.json`.
+- The default repo profile uses non-fast OpenAI models plus selected `opencode-go/*` models in `agent_hive.json`, and an `opencode-go/*` model for the base Opencode `explore` override in `opencode.json`.
 - Alternate Agent Hive profiles live under `profiles/agent-hive/` and are selected with `OPENCODE_AGENT_HIVE_PROFILE`.
 - The published `oc-arkive@latest` plugin is installed by Opencode on first run.
 - The optional context-improved bundle adds `context-mode@latest`, local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay kept for install compatibility. The base Agent Hive profiles already disable `context7` and `ast_grep` for Hive workers.
@@ -255,9 +255,9 @@ Recommendation:
 
 - Recommend `default` unless the operator explicitly wants the named `openai-opencode-go` copy or the Copilot mixed-provider profile and confirms the named providers are available.
 
-The Agent Hive profiles share the same agent names, descriptions, and non-model settings. Treat `model`, `variant`, and `temperature` as the only intended differences between profiles; when `variant` or `temperature` is absent in a profile, preserve that absence.
+The Agent Hive profiles share the same agent names, descriptions, and non-model settings. Treat `model` and `variant` as the only intended differences between profiles; `temperature` is intentionally omitted. When `variant` is absent in a profile, preserve that absence.
 
-Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, `AGENTS.md`, `skills/`, `agents/`, and `commands/` contents with this repo's versions, and it writes timestamped backups under `<target>/.backup/` first when those paths already exist. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `context-mode`, `uvx`, and `CONTEXT7_API_KEY`, then auto-applies the matching `context-improved` overlays. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
+Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, `AGENTS.md`, `skills/`, optional standalone `agents/`, and `commands/` contents with this repo's versions, and it writes timestamped backups under `<target>/.backup/` first when those paths already exist. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `context-mode`, `uvx`, and `CONTEXT7_API_KEY`, then auto-applies the matching `context-improved` overlays. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
 
 Run one of these:
 

@@ -36,6 +36,10 @@
       "model": "github-copilot/gpt-5.5",
       "variant": "high"
     },
+    "simplicity-reviewer": {
+      "model": "github-copilot/gpt-5.5",
+      "variant": "medium"
+    },
     "approach-advisor": {
       "model": "github-copilot/gpt-5.5",
       "variant": "high"
