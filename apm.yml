@@ -1,7 +1,7 @@
 name: custom-opencode-configs
 version: 0.1.0
-description: Portable Opencode profile with agent-hive, shared skills, commands, and
-  agents
+description: Portable Opencode profile with agent-hive, shared skills, and optional
+  standalone assets
 author: imarshallwidjaja
 license: MIT
 type: hybrid

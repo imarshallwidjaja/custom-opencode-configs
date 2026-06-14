@@ -11,7 +11,7 @@ This repo is for installing a ready-to-use Opencode profile. It keeps secrets, l
 - `opencode.json`: base Opencode config with `oc-arkive@latest`
 - `agent_hive.json`: Agent Hive role and model configuration
 - `AGENTS.md`: the selected operating profile for Opencode agents
-- `skills/` and `commands/`: shared markdown assets used by Opencode; `agents/` is installed when standalone agent assets are packaged
+- `skills/`: shared markdown skills used by Opencode; `commands/` and `agents/` are installed only when this repository packages standalone assets for them
 
 If the target config directory already contains files with those names, the installer writes a timestamped backup under `<target>/.backup/` before replacing them. Set `OPENCODE_AGENTS_MODE=skip` when you want to update the profile files but keep an existing `AGENTS.md` in place for a manual merge.
 
@@ -274,33 +274,24 @@ ty server --help
 
 ## Prompt-backed commands
 
-This profile installs prompt-backed slash commands into `commands/`.
+This profile currently does not ship prompt-backed commands under `.apm/prompts/`.
 
-Command index:
+The old Hive-related prompt commands were removed from this profile after they were absorbed into `oc-arkive`'s built-in command surface. Use the plugin commands from Agent Hive instead, including `/interview`, `/implementation-brief`, `/hive-plan`, `/approve-sync-plan`, `/start-execution`, `/council-directive`, `/council`, and `/compact-summary`.
 
-- `/council-directive`: shape a council session before running it
-- `/council`: run a read-only council and get one synthesized recommendation
-- `/interview`: clarify an under-defined problem before planning or council review
+During install, `scripts/install-profile.sh` removes the legacy managed command files from the target `commands/` directory after backing that directory up. It removes only the old profile-managed names:
 
-Before using them:
+- `approve-sync-plan`
+- `compact-summary`
+- `council-directive`
+- `council`
+- `hive-plan`
+- `implementation-planning-prompt`
+- `interview-drill-down`
+- `interview`
+- `planning-prompt`
+- `start-execution`
 
-1. Run `./scripts/install-profile.sh`.
-2. Start `opencode` once so it resolves `oc-arkive@latest`.
-3. Open a chat session in Opencode.
-
-Use `/council` directly when the question is already clear:
-
-```text
-/council Should we add a council command without plugin overhead?
-```
-
-Use `/council-directive` first when the council needs tighter framing:
-
-```text
-/council-directive We need a design review on how to expose a council workflow as prompt-backed commands.
-```
-
-Use `/interview` before council when the problem itself is still under-defined.
+Reusable non-Hive behavior remains packaged as skills under `.apm/skills/`. If this repository later adds non-Hive prompt-backed commands that are not better expressed through Agent Hive config or `oc-arkive`, the installer will copy `.apm/prompts/*.prompt.md` into `commands/`.
 
 ## Assisted setup
 

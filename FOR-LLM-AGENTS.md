@@ -56,6 +56,7 @@ Some setup facts are not user choices:
 - `cymbal` is not configured through `opencode.json`. It is a separate CLI tool that the context-improved AGENTS profiles know how to use when it is installed and available on `PATH`.
 - No LSP snippet is enabled by default.
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
+- This profile no longer ships Hive workflow prompt-backed commands. Those commands now come from the published `oc-arkive` plugin; the installer removes the old managed command files from `commands/` after backing the directory up.
 - When merging into an existing `AGENTS.md`, start from the user's file and reconcile the selected profile into it instead of replacing it by default.
 - AGENTS profile selection changes operating rules, not just tool routing. Preserve the selected profile's parity-validation wording, failed-subagent retry policy, subagent final-response instructions, and resume-work guidance when merging.
 
@@ -75,7 +76,7 @@ Follow this safe order:
 I recommend updating the normal Opencode config at ~/.config/opencode. Is this the config you want updated, or do you use a custom OPENCODE_CONFIG_DIR?
 ```
 
-2. Inspect the existing target before writing. Check whether `opencode.json`, `agent_hive.json`, `AGENTS.md`, `skills/`, `agents/`, or `commands/` exist. Read the existing `AGENTS.md` when present and note any local operator-specific instructions.
+2. Inspect the existing target before writing. Check whether `opencode.json`, `agent_hive.json`, `AGENTS.md`, `skills/`, `agents/`, or `commands/` exist. Read the existing `AGENTS.md` when present and note any local operator-specific instructions. If `commands/` contains the old Hive prompt command files, explain that this repo now removes those managed files because `oc-arkive` owns the command surface.
 3. Update the repository clone with `git pull`. If the repository is not cloned, clone it first. If there are local changes in the repository clone, stop and ask before pulling or changing branches.
 4. Choose the AGENTS profile. Recommend preserving the currently intended profile when it is evident from prior install notes or operator preference; otherwise recommend `shared` as the safest portable default. If uncertain, ask one question and include the recommendation.
 5. Choose the Agent Hive model profile. Recommend preserving the existing selected profile when it is evident; otherwise recommend `default` unless the operator explicitly wants `copilot-opencode-go` or `openai-opencode-go` and confirms the required providers are available.
@@ -257,7 +258,7 @@ Recommendation:
 
 The Agent Hive profiles share the same agent names, descriptions, and non-model settings. Treat `model` and `variant` as the only intended differences between profiles; `temperature` is intentionally omitted. When `variant` is absent in a profile, preserve that absence.
 
-Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, `AGENTS.md`, `skills/`, optional standalone `agents/`, and `commands/` contents with this repo's versions, and it writes timestamped backups under `<target>/.backup/` first when those paths already exist. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `context-mode`, `uvx`, and `CONTEXT7_API_KEY`, then auto-applies the matching `context-improved` overlays. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
+Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, `AGENTS.md`, and `skills/` contents with this repo's versions; installs optional standalone `agents/` or prompt-backed `commands/` only when this repo packages them; removes the old managed Hive command prompt files from `commands/`; and writes timestamped backups under `<target>/.backup/` first when those paths already exist. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `context-mode`, `uvx`, and `CONTEXT7_API_KEY`, then auto-applies the matching `context-improved` overlays. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
 
 Run one of these:
 
@@ -459,7 +460,7 @@ Verify that the target config directory now contains:
 - `AGENTS.md`
 - `skills/`
 - `agents/`
-- `commands/`
+- `commands/` when present, especially legacy managed Hive prompt commands that the installer now removes
 
 If optional snippets were enabled, verify that the relevant entries exist in `opencode.json`.
 

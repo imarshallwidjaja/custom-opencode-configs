@@ -15,6 +15,18 @@ else
   AGENT_HIVE_SOURCE="${REPO_ROOT}/profiles/agent-hive/${AGENT_HIVE_PROFILE}.json"
 fi
 ENABLE_OPTIONAL_SCRIPT="${SCRIPT_DIR}/enable-optional.sh"
+LEGACY_PROMPT_COMMANDS=(
+  approve-sync-plan
+  compact-summary
+  council-directive
+  council
+  hive-plan
+  implementation-planning-prompt
+  interview-drill-down
+  interview
+  planning-prompt
+  start-execution
+)
 
 check_command() {
   local binary="$1"
@@ -117,7 +129,7 @@ backup_path "${TARGET_DIR}/skills"
 backup_path "${TARGET_DIR}/agents"
 backup_path "${TARGET_DIR}/commands"
 
-mkdir -p "${TARGET_DIR}/skills" "${TARGET_DIR}/agents" "${TARGET_DIR}/commands"
+mkdir -p "${TARGET_DIR}/skills" "${TARGET_DIR}/agents"
 
 install -m 0644 "${REPO_ROOT}/opencode.json" "${TARGET_DIR}/opencode.json"
 install -m 0644 "${AGENT_HIVE_SOURCE}" "${TARGET_DIR}/agent_hive.json"
@@ -130,7 +142,14 @@ if [[ -d "${REPO_ROOT}/.apm/agents" ]]; then
 fi
 
 shopt -s nullglob
-for prompt_file in "${REPO_ROOT}"/.apm/prompts/*.prompt.md; do
+prompt_files=("${REPO_ROOT}"/.apm/prompts/*.prompt.md)
+if (( ${#prompt_files[@]} > 0 || ${#LEGACY_PROMPT_COMMANDS[@]} > 0 )); then
+  mkdir -p "${TARGET_DIR}/commands"
+fi
+for prompt_name in "${LEGACY_PROMPT_COMMANDS[@]}"; do
+  rm -f "${TARGET_DIR}/commands/${prompt_name}.md"
+done
+for prompt_file in "${prompt_files[@]}"; do
   prompt_name="$(basename "${prompt_file}" ".prompt.md")"
   install -m 0644 "${prompt_file}" "${TARGET_DIR}/commands/${prompt_name}.md"
 done
