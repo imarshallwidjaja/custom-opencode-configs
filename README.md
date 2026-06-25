@@ -22,7 +22,7 @@ Base setup requires:
 - `git`
 - `curl`
 - `opencode`
-- OpenAI access for the `openai/*` models used by the default `agent_hive.json`
+- OpenAI access for the `openai/*` fast models used by the default `agent_hive.json`
 - `opencode-go/*` provider access for the base `opencode.json` `explore` override and selected Agent Hive Scout, simple-worker, UI, and capable-research roles
 
 Optional features require their own tools:
@@ -108,6 +108,8 @@ OPENCODE_AGENTS_MODE=skip ./scripts/install-profile.sh
 Some notes:
 
 - `curl -fsSL https://opencode.ai/install | bash` updates or installs the Opencode binary; it does not update this profile
+- Opencode may keep using a cached copy of `oc-arkive@latest` after these files are updated; restart Opencode after installing the profile, and if the command surface still matches an older release, remove or refresh the cached `oc-arkive` plugin entry according to the local Opencode cache layout before starting Opencode again
+- after restart, verify the loaded plugin manifest or available Agent Hive commands match the expected latest `oc-arkive` release
 - the installer writes timestamped backups under `<target>/.backup/` before replacing managed files
 - prefer preserving an existing customized `AGENTS.md` when unsure, then merge the selected profile guidance manually
 
@@ -160,7 +162,7 @@ The installer uses the repository root `agent_hive.json` by default. Alternate f
 
 Available Agent Hive profiles:
 
-- `default`: installs the repository root `agent_hive.json`, matching the non-fast OpenAI plus `opencode-go` model selection
+- `default`: installs the repository root `agent_hive.json`, matching the OpenAI fast plus `opencode-go` model selection
 - `openai-opencode-go`: installs the named copy at `profiles/agent-hive/openai-opencode-go.json`
 - `copilot-opencode-go`: installs `profiles/agent-hive/copilot-opencode-go.json`
 

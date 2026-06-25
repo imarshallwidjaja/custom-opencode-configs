@@ -30,7 +30,7 @@ Use this when:
 
 ## Install Selection
 
-Install the default root `agent_hive.json` profile, which matches `openai-opencode-go.json`:
+Install the default root `agent_hive.json` profile:
 
 ```bash
 ./scripts/install-profile.sh

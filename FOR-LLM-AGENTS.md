@@ -48,9 +48,10 @@ Do not invent extra setup questions. This repository exposes the following real 
 Some setup facts are not user choices:
 
 - The default full install path is `./scripts/install-profile.sh`.
-- The default repo profile uses non-fast OpenAI models plus selected `opencode-go/*` models in `agent_hive.json`, and an `opencode-go/*` model for the base Opencode `explore` override in `opencode.json`.
+- The default repo profile uses OpenAI fast models plus selected `opencode-go/*` models in `agent_hive.json`, and an `opencode-go/*` model for the base Opencode `explore` override in `opencode.json`.
 - Alternate Agent Hive profiles live under `profiles/agent-hive/` and are selected with `OPENCODE_AGENT_HIVE_PROFILE`.
 - The published `oc-arkive@latest` plugin is installed by Opencode on first run.
+- Updating this repository's profile files does not prove Opencode is using the latest cached `oc-arkive@latest` plugin. After a profile update, restart Opencode. If the Agent Hive commands or plugin manifest still match an older release, remove or refresh the cached `oc-arkive` plugin entry according to the local Opencode cache layout before starting Opencode again.
 - The optional context-improved bundle adds `context-mode@latest`, local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay kept for install compatibility. The base Agent Hive profiles already disable `context7` and `ast_grep` for Hive workers.
 - `context7` is present in the base config but disabled by default.
 - `cymbal` is not configured through `opencode.json`. It is a separate CLI tool that the context-improved AGENTS profiles know how to use when it is installed and available on `PATH`.
@@ -85,7 +86,8 @@ I recommend updating the normal Opencode config at ~/.config/opencode. Is this t
    - If the existing `AGENTS.md` has local instructions or the operator is unsure, recommend preservation. Run the installer with `OPENCODE_AGENTS_MODE=skip`, then merge the selected profile guidance into the user's file manually after comparing both documents.
 7. Run the installer with the selected environment variables. Preserve `OPENCODE_CONFIG_DIR`, `OPENCODE_AGENTS_PROFILE`, and `OPENCODE_AGENT_HIVE_PROFILE` when they were selected.
 8. Reapply optional bundles only when the operator wants them and prerequisites pass. Do not assume an older local optional setup still belongs in the updated config.
-9. Verify the result: validate `opencode.json` and `agent_hive.json` as JSON, run `opencode` or the smallest available Opencode startup check, and report the backup directory printed by the installer.
+9. Restart Opencode so config and plugin resolution are reloaded. If Opencode still exposes an older Agent Hive command surface, remove or refresh the cached `oc-arkive` plugin entry according to the local Opencode cache layout, then start Opencode again.
+10. Verify the result: validate `opencode.json` and `agent_hive.json` as JSON, run `opencode` or the smallest available Opencode startup check, confirm the `oc-arkive` plugin manifest or Agent Hive commands match the expected latest release, and report the backup directory printed by the installer.
 
 Clean replacement example:
 
@@ -248,7 +250,7 @@ Which Agent Hive model profile should I install: default, openai-opencode-go, or
 
 Explain the options like this:
 
-- `default`: the repository root `agent_hive.json`, using the non-fast OpenAI plus `opencode-go` model mix
+- `default`: the repository root `agent_hive.json`, using the OpenAI fast plus `opencode-go` model mix
 - `openai-opencode-go`: the named copy of the default non-fast OpenAI plus `opencode-go` model mix
 - `copilot-opencode-go`: uses GitHub Copilot GPT models for the same Hive roles and `opencode-go/*` models for Scout, simple-worker, UI, and capable-research roles
 
