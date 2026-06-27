@@ -22,9 +22,13 @@ Run:
 ```bash
 git status --short
 git log --oneline --decorate -10
+git diff --stat <base-branch>...HEAD
+git diff <base-branch>...HEAD
 ```
 
 Identify the likely base branch with repository conventions or `git merge-base` against common base branches such as `main` or `master`.
+
+Inspect the branch diff before recommending merge, pull request, or discard actions. Status and recent commits are not enough because they do not show the actual content being integrated or removed.
 
 ## Step 3: Present Options
 
@@ -41,6 +45,7 @@ Do not choose for the user unless they already gave explicit instructions.
 
 ### Merge Locally
 
+- Confirm the branch diff matches the intended change before switching branches.
 - Switch to the base branch.
 - Update it if the user expects that workflow.
 - Merge or squash the development branch according to repository convention.
@@ -61,6 +66,7 @@ Do not choose for the user unless they already gave explicit instructions.
 
 ### Discard
 
+- Inspect the branch diff before asking for discard confirmation.
 - Require explicit confirmation before deleting commits, branches, or worktrees.
 - State exactly what will be removed.
 - Do not use destructive commands without confirmation.

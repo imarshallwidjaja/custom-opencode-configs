@@ -1,13 +1,13 @@
 ---
 name: subagent-delegation
-description: Use when splitting work across multiple assistant sessions or lanes; schedules independent work in parallel and dependent work serially with self-contained prompts and file ownership.
+description: Use when splitting work across Cursor subagents, assistant sessions, or lanes; schedules independent work in parallel and dependent work serially with self-contained prompts and file ownership.
 ---
 
 # Subagent Delegation
 
 ## Purpose
 
-Split work safely across multiple assistant sessions or lanes without losing ownership, context, or verification quality.
+Split work safely across Cursor subagents where available, or across multiple assistant sessions or lanes when that is the available execution model, without losing ownership, context, or verification quality.
 
 ## Scheduling Rules
 
@@ -18,7 +18,7 @@ Split work safely across multiple assistant sessions or lanes without losing own
 
 ## Lane Prompt Requirements
 
-Each lane prompt must be self-contained:
+Each Cursor subagent or lane prompt must be self-contained:
 
 - Goal and acceptance criteria
 - Files or areas in scope
@@ -30,7 +30,7 @@ Each lane prompt must be self-contained:
 
 ## File Ownership
 
-For writing lanes, assign ownership up front:
+For writing Cursor subagents or lanes, assign ownership up front:
 
 - One lane owns each writable file or directory.
 - Shared generated files need one owner or a serial integration step.

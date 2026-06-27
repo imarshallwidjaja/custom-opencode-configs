@@ -55,17 +55,11 @@ path="$HOME/.local/share/agent-worktrees/$project/$branch_name"
 
 ## Baseline Setup
 
-Run project-appropriate setup and checks:
+Use the project's own setup guidance before running install or dependency commands. Prefer `README`, contributor docs, lockfile/package-manager conventions, or toolchain files over generic defaults.
 
-```bash
-if [ -f package.json ]; then npm install; fi
-if [ -f Cargo.toml ]; then cargo build; fi
-if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-if [ -f pyproject.toml ]; then poetry install; fi
-if [ -f go.mod ]; then go mod download; fi
-```
+Run only the setup command the project documents or clearly implies, such as `bun install`, `npm ci`, `pnpm install`, `poetry install`, `uv sync`, `cargo fetch`, or `go mod download`. If no setup command is documented or implied, skip dependency mutation and report that no setup command was run.
 
-Then run the nearest baseline test command, such as `npm test`, `cargo test`, `pytest`, or `go test ./...`.
+Then run the nearest documented baseline check. If the project has no documented check, infer the smallest safe read-only or low-cost validation command from local conventions rather than running broad or expensive suites by default.
 
 If baseline tests fail, report the failures before continuing so new failures are not confused with pre-existing ones.
 
