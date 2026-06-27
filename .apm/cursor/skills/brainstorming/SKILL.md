@@ -36,7 +36,8 @@ Start by understanding the current project context. Ask one question at a time, 
 
 ## After The Design
 
-- If documentation is useful, write the validated design to a project-appropriate location such as `docs/plans/YYYY-MM-DD-<topic>-design.md`.
+- You may present the validated design or summary in chat.
+- Write persistent design or planning documents, such as `docs/plans/YYYY-MM-DD-<topic>-design.md`, only after the operator explicitly requests or approves a durable file.
 - Use `using-git-worktrees` when isolated implementation work is appropriate.
 - Create a concrete implementation plan only when the user wants one or the work is large enough to need sequencing.
 

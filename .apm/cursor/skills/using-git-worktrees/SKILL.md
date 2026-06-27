@@ -22,13 +22,13 @@ If both `.worktrees/` and `worktrees/` exist, prefer `.worktrees/`.
 
 ## Safety Verification
 
-For project-local directories, verify the directory is ignored before creating a worktree:
+For project-local directories, validate the actual selected worktree root before creating a worktree:
 
 ```bash
-git check-ignore -q .worktrees 2>/dev/null || git check-ignore -q worktrees 2>/dev/null
+git check-ignore -q -- "$worktree_root"
 ```
 
-If the chosen project-local directory is not ignored, fix that hygiene issue before creating the worktree.
+If the chosen project-local worktree root is not ignored, fix that hygiene issue before creating the worktree. Do not validate only hardcoded defaults like `.worktrees` or `worktrees` when a different project-local root was selected.
 
 Global directories do not need project ignore checks because they live outside the repository.
 
