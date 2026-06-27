@@ -1,5 +1,6 @@
 ---
-description: Gives read-only strategic advice on architecture, tradeoffs, debugging direction, and implementation routes.
+name: approach-advisor
+description: Use when architecture, tradeoffs, debugging direction, or implementation route choices need read-only strategic advice.
 model: inherit
 readonly: true
 ---

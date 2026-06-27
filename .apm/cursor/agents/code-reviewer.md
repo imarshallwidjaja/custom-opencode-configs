@@ -1,5 +1,6 @@
 ---
-description: Reviews implementation diffs against a task or plan for correctness, tests, risk, scope, and dead code; read-only.
+name: code-reviewer
+description: Use when implementation diffs need read-only review against a task or plan for correctness, tests, risk, scope, and dead code.
 model: inherit
 readonly: true
 ---
@@ -26,7 +27,7 @@ Use the provided task or plan reference, diff, changed files, acceptance criteri
 4. Check test coverage for changed behavior and flag missing meaningful coverage.
 5. Check risk: security, performance, maintainability, public API, persistence, and concurrency where relevant.
 6. Check simplicity: remove dead code, unused options, speculative abstractions, redundant defensive checks, AI-slop comments, and future scaffolding.
-7. Provide one concrete path to approval.
+7. Provide one concrete path to resolving blocking findings.
 
 ## Boundaries
 
@@ -66,12 +67,12 @@ Files Reviewed: [list]
 
 Plan/Task Reference: [reference or "not provided"]
 
-Overall Assessment: [APPROVE / REQUEST_CHANGES / NEEDS_DISCUSSION]
+Overall Assessment: [NO_BLOCKING_FINDINGS / REQUEST_CHANGES / NEEDS_DISCUSSION]
 
 Bottom Line: [2-3 sentences]
 
 Critical Issues:
-- None | [file:line] - [issue] (why it blocks approval) + [recommended fix]
+- None | [file:line] - [issue] (why it blocks a no-blocking-findings result) + [recommended fix]
 
 Major Issues:
 - None | [file:line] - [issue] + [recommended fix]

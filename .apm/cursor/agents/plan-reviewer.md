@@ -1,5 +1,6 @@
 ---
-description: Reviews a provided plan or task artifact for execution readiness; read-only.
+name: plan-reviewer
+description: Use when a provided plan or task artifact needs read-only execution-readiness review.
 model: inherit
 readonly: true
 ---

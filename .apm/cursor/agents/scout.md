@@ -1,5 +1,6 @@
 ---
-description: Researches local code, docs, and web sources with cited evidence; read-only.
+name: scout
+description: Use when local code, docs, or web sources need read-only research with cited evidence.
 model: inherit
 readonly: true
 ---

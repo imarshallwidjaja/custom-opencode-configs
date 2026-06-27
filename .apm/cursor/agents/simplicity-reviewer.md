@@ -1,5 +1,6 @@
 ---
-description: Performs a deletion-biased final pass for YAGNI, dead code, duplication, and unnecessary complexity; read-only.
+name: simplicity-reviewer
+description: Use when completed implementation needs a read-only deletion-biased final pass for YAGNI, dead code, duplication, and unnecessary complexity.
 model: inherit
 readonly: true
 ---
