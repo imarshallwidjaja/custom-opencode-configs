@@ -194,9 +194,9 @@ for skill_name in expected_skills:
     if not path.is_file():
         fail(f'missing required file: skills/{skill_name}/SKILL.md')
         continue
-    unsupported_skill_files = sorted(p.name for p in skill_dir.iterdir() if p.is_file() and p.name != 'SKILL.md')
-    if unsupported_skill_files:
-        fail(f'skills/{skill_name} contains unsupported files: {unsupported_skill_files}')
+    unsupported_skill_entries = sorted(str(p.relative_to(skill_dir)) for p in skill_dir.rglob('*') if p != path)
+    if unsupported_skill_entries:
+        fail(f'skills/{skill_name} contains unsupported entries: {unsupported_skill_entries}')
     frontmatter = parse_frontmatter(path)
     if frontmatter.get('name') != skill_name:
         fail(f'skills/{skill_name}/SKILL.md frontmatter name must match folder')
