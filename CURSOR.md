@@ -86,18 +86,18 @@ ls "$cursor_target/skills"
 Expected high-level layout:
 
 ```text
-${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/approach-advisor.md
-${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/code-reviewer.md
-${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/forager.md
-${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/plan-reviewer.md
-${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/scout.md
-${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/simplicity-reviewer.md
-${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/compact-summary.md
-${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/council-directive.md
-${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/council.md
-${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/implementation-brief.md
-${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/interview.md
-${CURSOR_CONFIG_DIR:-$HOME/.cursor}/skills/<skill-name>/SKILL.md
+~/.cursor/agents/approach-advisor.md
+~/.cursor/agents/code-reviewer.md
+~/.cursor/agents/forager.md
+~/.cursor/agents/plan-reviewer.md
+~/.cursor/agents/scout.md
+~/.cursor/agents/simplicity-reviewer.md
+~/.cursor/commands/compact-summary.md
+~/.cursor/commands/council-directive.md
+~/.cursor/commands/council.md
+~/.cursor/commands/implementation-brief.md
+~/.cursor/commands/interview.md
+~/.cursor/skills/<skill-name>/SKILL.md
 ```
 
 For a non-destructive verification run, install into a temp directory and inspect that directory instead:
