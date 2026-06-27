@@ -1,4 +1,4 @@
-Run a read-only council session using the available Cursor subagents or the requested configured council group, then return one synthesized answer. If no usable councillors can be identified from available Cursor subagents or the requested group, stop and report what was missing instead of running council.
+Run a read-only council session using named Cursor subagents resolved from `include`, then return one synthesized answer. If no usable councillors can be identified from available Cursor subagents, stop and report what was missing instead of running council.
 
 Use the operator-provided question, directive, or context from runtime arguments.
 
@@ -21,7 +21,7 @@ Normalize the request into these council directive fields:
 - assumptions needing validation
 - desired output
 
-Use only councillors identified for this run from configured Cursor subagents or groups. Do not substitute stale aliases, excluded agents, unrequested or invented agents, or duplicates back into the run.
+Use only councillors identified for this run from named Cursor subagents resolved through `include`. Do not substitute stale aliases, excluded agents, unrequested or invented agents, or duplicates back into the run.
 
 Run the council by invoking each identified councillor in a fresh Cursor subagent session. Use Cursor subagents in parallel when the environment supports it and the councillors are independent. Otherwise, run them serially or ask the operator to run the named councillors. If a councillor session fails, retry it in a new fresh session rather than resuming the failed one.
 

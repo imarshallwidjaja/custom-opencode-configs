@@ -15,14 +15,14 @@ Prioritize clarifying:
 
 - the objective the council must answer
 - the direction or lens the council should take
-- which available Cursor subagents or council group to include
+- which available Cursor subagents to include
 - constraints, boundaries, or non-goals
 - what output the operator wants back
 - whether the council should run in the current session or a new session
 
-Refer to configured Cursor subagent or council group names when recommending `include`. Do not hardcode obsolete alias-to-member tables or mutable implementation workers as council seats.
+Refer to named Cursor subagents when recommending `include`. Do not hardcode obsolete alias-to-member tables or mutable implementation workers as council seats.
 
-If the best council group or member set is still unclear, recommend the smallest useful group or member set and explain why.
+If the best member set is still unclear, recommend the smallest useful set of named Cursor subagents and explain why.
 
 Default session-mode guidance:
 
@@ -48,7 +48,7 @@ State whether the operator should run `/council` in the current session or start
 
 ## Recommended Invocation
 
-If `session mode` is `current`, provide a compact `/council` invocation using the directive. Include a group or member list only when a non-default configured group or resolved member set applies.
+If `session mode` is `current`, provide a compact `/council` invocation using the directive. Include a member list only when a resolved member set applies.
 
 If `session mode` is `new`, provide a compact `/council` invocation and a paste-ready prompt block for a new chat.
 
