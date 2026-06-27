@@ -63,41 +63,17 @@ check_python() {
 validate_assets() {
   local root="$1"
   check_python
-  python3 - "$root" <<'PY'
+  AGENT_NAMES="${AGENTS[*]}" COMMAND_NAMES="${COMMANDS[*]}" SKILL_NAMES="${SKILLS[*]}" python3 - "$root" <<'PY'
+import os
 import re
 import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
 
-expected_agents = {
-    'approach-advisor',
-    'code-reviewer',
-    'forager',
-    'plan-reviewer',
-    'scout',
-    'simplicity-reviewer',
-}
-expected_commands = {
-    'compact-summary',
-    'council-directive',
-    'council',
-    'implementation-brief',
-    'interview',
-}
-expected_skills = {
-    'brainstorming',
-    'consolidate-test-suites',
-    'finishing-a-development-branch',
-    'humanizer',
-    'root-cause-finder',
-    'stop-slop',
-    'subagent-delegation',
-    'systematic-debugging',
-    'test-driven-development',
-    'using-git-worktrees',
-    'verification',
-}
+expected_agents = set(os.environ['AGENT_NAMES'].split())
+expected_commands = set(os.environ['COMMAND_NAMES'].split())
+expected_skills = set(os.environ['SKILL_NAMES'].split())
 excluded_commands = {
     'approve-sync-plan',
     'hive-plan',
@@ -213,10 +189,14 @@ for agent_name in expected_agents:
         fail(f'agents/{agent_name}.md frontmatter readonly must be true or false')
 
 for skill_name in expected_skills:
-    path = root / 'skills' / skill_name / 'SKILL.md'
+    skill_dir = root / 'skills' / skill_name
+    path = skill_dir / 'SKILL.md'
     if not path.is_file():
         fail(f'missing required file: skills/{skill_name}/SKILL.md')
         continue
+    unsupported_skill_files = sorted(p.name for p in skill_dir.iterdir() if p.is_file() and p.name != 'SKILL.md')
+    if unsupported_skill_files:
+        fail(f'skills/{skill_name} contains unsupported files: {unsupported_skill_files}')
     frontmatter = parse_frontmatter(path)
     if frontmatter.get('name') != skill_name:
         fail(f'skills/{skill_name}/SKILL.md frontmatter name must match folder')
@@ -304,11 +284,13 @@ install_assets() {
 
   for name in "${AGENTS[@]}"; do
     backup_path "${TARGET_DIR}/agents/${name}.md"
+    rm -rf "${TARGET_DIR}/agents/${name}.md"
     install -m 0644 "${root}/agents/${name}.md" "${TARGET_DIR}/agents/${name}.md"
     printf 'Copied agents/%s.md -> %s\n' "${name}" "${TARGET_DIR}/agents/${name}.md"
   done
   for name in "${COMMANDS[@]}"; do
     backup_path "${TARGET_DIR}/commands/${name}.md"
+    rm -rf "${TARGET_DIR}/commands/${name}.md"
     install -m 0644 "${root}/commands/${name}.md" "${TARGET_DIR}/commands/${name}.md"
     printf 'Copied commands/%s.md -> %s\n' "${name}" "${TARGET_DIR}/commands/${name}.md"
   done
