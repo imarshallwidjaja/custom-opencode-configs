@@ -1,6 +1,6 @@
-Run a read-only council session using the available Cursor subagents or the requested configured council group, then return one synthesized answer. If no usable councillors remain after resolution, stop and report the resolver warnings and errors instead of running council.
+Run a read-only council session using the available Cursor subagents or the requested configured council group, then return one synthesized answer. If no usable councillors can be identified from available Cursor subagents or the requested group, stop and report what was missing instead of running council.
 
-Use the operator-provided question, directive, or context from runtime arguments and from any command preamble that lists the requested group, resolved councillors, or warnings.
+Use the operator-provided question, directive, or context from runtime arguments.
 
 Treat the council as an analysis workflow, not an execution workflow.
 
@@ -21,9 +21,9 @@ Normalize the request into these council directive fields:
 - assumptions needing validation
 - desired output
 
-Use only councillors resolved for this run from configured Cursor subagents or groups. Do not substitute stale aliases, excluded agents, placeholder agents, mutable implementation workers, or duplicates back into the run.
+Use only councillors identified for this run from configured Cursor subagents or groups. Do not substitute stale aliases, excluded agents, unrequested or invented agents, or duplicates back into the run.
 
-Run the council by invoking each resolved councillor in a fresh Cursor subagent session. Launch councillor sessions in parallel when they are independent. If a councillor session fails, retry it in a new fresh session rather than resuming the failed one.
+Run the council by invoking each identified councillor in a fresh Cursor subagent session. Use Cursor subagents in parallel when the environment supports it and the councillors are independent. Otherwise, run them serially or ask the operator to run the named councillors. If a councillor session fails, retry it in a new fresh session rather than resuming the failed one.
 
 Give every councillor the same core problem statement plus a role-specific framing. Include this read-only contract in every councillor prompt:
 
@@ -47,7 +47,7 @@ Ask each councillor to return:
 - assumptions and unknowns
 - recommended next step
 
-If `include` names too many councillors after resolution, trim to the smallest useful set for synthesis, usually 3-4 seats, without violating the resolved member list shown in the command preamble.
+If `include` names too many councillors, trim to the smallest useful set for synthesis, usually 3-4 seats, without violating the operator's requested member list.
 
 After all councillors respond, synthesize the result yourself.
 
@@ -59,7 +59,7 @@ Synthesis rules:
 - preserve the strongest disagreements when they are decision-relevant
 - give a clear recommendation even when the council is split
 
-When usable councillors are resolved and council runs, use this output format:
+When usable councillors are identified and council runs, use this output format:
 
 ## Council Directive
 
