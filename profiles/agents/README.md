@@ -8,7 +8,7 @@ All four profiles share the same baseline quality, delegation, verification, sea
 
 The repository root `AGENTS.md` governs work on this repository itself. The files in this directory are the profiles that get copied into `~/.config/opencode/AGENTS.md` by `scripts/install-profile.sh`.
 
-These Opencode AGENTS profiles are not Cursor global Rules. Cursor default-Agent guidance lives in the selected Cursor asset root at `rules/default-agent.md` (`.apm/cursor` by default, or `cursor-assets/` if the fallback root is used). Use `./scripts/cursor-assets.sh print-rules` and paste the output into Cursor Settings -> Rules.
+These Opencode AGENTS profiles are not Cursor global Rules. Cursor default-Agent guidance lives in the Cursor asset root and is printed by the helper. Use `./scripts/cursor-assets.sh print-rules` and paste the output into Cursor Settings -> Rules.
 
 ## Profiles
 

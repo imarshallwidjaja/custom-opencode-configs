@@ -19,9 +19,17 @@ The default source root is `.apm/cursor`. If APM validation rejects unknown `.ap
 
 Current APM documentation shows project-local Cursor deployment under a repository `.cursor/` directory. It does not prove that pure `apm install -g` deploys agents, commands, skills, and Rules into global `~/.cursor`.
 
-For v1, `scripts/cursor-assets.sh` is the installer boundary. It validates the selected asset root, copies supported assets into the global Cursor config directory, and prints the Rules text for manual paste.
+For v1, `scripts/cursor-assets.sh` is the installer boundary. It validates the selected asset root, copies supported assets into the target Cursor config directory, and prints the Rules text for manual paste. When install replaces existing Cursor files or directories, it writes backups under the helper's backup directory before replacement.
 
 The target defaults to `~/.cursor`. For inspection, set `CURSOR_CONFIG_DIR` to a temporary directory.
+
+## Prerequisites
+
+- Run commands from this repository root.
+- `python3` must be available on `PATH`.
+- `scripts/cursor-assets.sh` must exist and be executable.
+- The default target is `${HOME}/.cursor`.
+- Set `CURSOR_CONFIG_DIR=/path/to/cursor-config` to validate, dry-run, or install into a custom target.
 
 ## Install Flow
 
@@ -37,7 +45,7 @@ Inspect the copy plan against a temporary target:
 CURSOR_CONFIG_DIR=/path/to/temp ./scripts/cursor-assets.sh install --dry-run
 ```
 
-Install into the real global Cursor config directory:
+Install into the target Cursor config directory:
 
 ```bash
 ./scripts/cursor-assets.sh install
@@ -66,29 +74,30 @@ The Cursor assets can describe workflows and review expectations, but they canno
 
 ## Verify The Installed Layout
 
-After installing, check the target config directory:
+After installing, check the target config directory. If you used a custom target, inspect `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` instead of the literal `~/.cursor` examples below.
 
 ```bash
-ls ~/.cursor/agents
-ls ~/.cursor/commands
-ls ~/.cursor/skills
+cursor_target="${CURSOR_CONFIG_DIR:-$HOME/.cursor}"
+ls "$cursor_target/agents"
+ls "$cursor_target/commands"
+ls "$cursor_target/skills"
 ```
 
 Expected high-level layout:
 
 ```text
-~/.cursor/agents/approach-advisor.md
-~/.cursor/agents/code-reviewer.md
-~/.cursor/agents/forager.md
-~/.cursor/agents/plan-reviewer.md
-~/.cursor/agents/scout.md
-~/.cursor/agents/simplicity-reviewer.md
-~/.cursor/commands/compact-summary.md
-~/.cursor/commands/council-directive.md
-~/.cursor/commands/council.md
-~/.cursor/commands/implementation-brief.md
-~/.cursor/commands/interview.md
-~/.cursor/skills/<skill-name>/SKILL.md
+${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/approach-advisor.md
+${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/code-reviewer.md
+${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/forager.md
+${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/plan-reviewer.md
+${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/scout.md
+${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/simplicity-reviewer.md
+${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/compact-summary.md
+${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/council-directive.md
+${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/council.md
+${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/implementation-brief.md
+${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/interview.md
+${CURSOR_CONFIG_DIR:-$HOME/.cursor}/skills/<skill-name>/SKILL.md
 ```
 
 For a non-destructive verification run, install into a temp directory and inspect that directory instead:
@@ -96,6 +105,8 @@ For a non-destructive verification run, install into a temp directory and inspec
 ```bash
 CURSOR_CONFIG_DIR=/path/to/temp ./scripts/cursor-assets.sh install
 ```
+
+Then inspect `/path/to/temp/agents`, `/path/to/temp/commands`, and `/path/to/temp/skills`.
 
 ## Smoke Testing
 

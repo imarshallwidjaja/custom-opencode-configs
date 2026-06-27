@@ -17,6 +17,8 @@ Give the agent this repository and this document, then say:
 Use FOR-LLM-AGENTS.md in this repository as the source of truth. Interview me one decision at a time, recommend the safest default when I am unsure, preserve my existing AGENTS.md as the base document for any merge unless I explicitly approve full replacement, run the setup commands for me, and verify the final Opencode config.
 ```
 
+If the request is only for Cursor assets, replace the final Opencode verification instruction with Cursor validation, install or dry-run, Rules paste guidance, and target-layout verification.
+
 ## What This Repo Actually Supports
 
 Do not invent extra setup questions. This repository exposes the following real choices:
@@ -48,7 +50,7 @@ Do not invent extra setup questions. This repository exposes the following real 
 8. Whether to install the separate Cursor prompt-level assets:
    - skip Cursor setup
    - validate and inspect the Cursor assets only
-   - install the Cursor assets into global `~/.cursor` and paste Rules manually
+   - install the Cursor assets into `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` and paste Rules manually
 
 Some setup facts are not user choices:
 
@@ -64,8 +66,9 @@ Some setup facts are not user choices:
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
 - This profile no longer ships Hive workflow prompt-backed commands. Those commands now come from the published `oc-arkive` plugin; the installer removes the old managed command files from `commands/` after backing the directory up.
 - Cursor setup is separate from Opencode setup. It does not install `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, or `oc-arkive`.
-- Cursor v1 is prompt-level behavior only. It installs Cursor assets under `~/.cursor` and requires manual paste into Cursor Settings -> Rules; it does not provide Agent Hive runtime/tool parity.
-- Cursor assets are sourced from `.apm/cursor` by default, or `cursor-assets/` if APM validation later requires the documented fallback.
+- Cursor v1 is prompt-level behavior only. It installs Cursor assets under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` and requires manual paste into Cursor Settings -> Rules; it does not provide Agent Hive runtime/tool parity.
+- Cursor asset setup must run from the repository root with `python3` and `scripts/cursor-assets.sh` available. Use `CURSOR_CONFIG_DIR=/path/to/cursor-config` only when the operator wants a custom Cursor target.
+- If the operator asks only for Cursor assets, skip Opencode install, Opencode startup, and final Opencode verification. Stop after Cursor validation, optional install, Rules paste or paste instructions, and target-layout verification.
 - When merging into an existing `AGENTS.md`, start from the user's file and reconcile the selected profile into it instead of replacing it by default.
 - AGENTS profile selection changes operating rules, not just tool routing. Preserve the selected profile's parity-validation wording, failed-subagent retry policy, subagent final-response instructions, and resume-work guidance when merging.
 
@@ -456,13 +459,7 @@ Ask:
 Do you also want the separate Cursor prompt-level assets installed for Cursor, or should we leave Cursor unchanged?
 ```
 
-Explain this boundary before running commands:
-
-- Cursor setup is separate from Opencode setup.
-- It installs Cursor assets under global `~/.cursor` through `./scripts/cursor-assets.sh`.
-- It does not install `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, or `oc-arkive`.
-- Cursor v1 is prompt-level behavior only, not Agent Hive runtime/tool parity.
-- Rules are pasted manually into Cursor Settings -> Rules; the helper does not write undocumented Cursor settings files.
+Before running commands, verify that you are in the repository root, `python3` is available, and `scripts/cursor-assets.sh` exists. Use the default target `${HOME}/.cursor` unless the operator gives a `CURSOR_CONFIG_DIR` override.
 
 If the operator only wants to inspect the assets, run:
 
@@ -472,7 +469,7 @@ CURSOR_CONFIG_DIR=/path/to/temp ./scripts/cursor-assets.sh install --dry-run
 ./scripts/cursor-assets.sh print-rules
 ```
 
-If the operator approves global installation, run:
+If the operator approves installation into the selected Cursor config target, run:
 
 ```bash
 ./scripts/cursor-assets.sh validate
@@ -484,11 +481,13 @@ Then paste the printed Rules text into Cursor Settings -> Rules, or tell the ope
 
 Verify the installed layout by checking for:
 
-- six files under `~/.cursor/agents/`
-- five files under `~/.cursor/commands/`
-- eleven `SKILL.md` files under `~/.cursor/skills/*/`
+- six files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/`
+- five files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/`
+- eleven `SKILL.md` files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/skills/*/`
 
 Do not ask the operator to install `oc-arkive` for Cursor v1. Do not use direct `apm install -g` as proof that global Cursor assets were installed.
+
+If the operator asked only for Cursor assets, stop here and report the Cursor target, validation result, install or dry-run result, and whether Rules were pasted into Cursor Settings -> Rules or handed off for manual paste.
 
 ### 11. Start Opencode once
 
@@ -566,7 +565,7 @@ Use this as the source of truth for the interview.
 | `context7` MCP only | enable or skip | skip | `jq`, `CONTEXT7_API_KEY`, network access |
 | LSP bundle | none, `lsp-markdown-typescript`, `lsp-python`, `lsp-all-recommended` | none | `jq` plus required binaries |
 | VS Code companion extension | install or skip | skip unless operator uses VS Code | VS Code and usually `code` CLI; latest Agent Hive fork release `.vsix` |
-| Cursor prompt-level assets | skip, inspect only, or install globally | skip unless operator asks for Cursor | `python3`; manual paste into Cursor Settings -> Rules |
+| Cursor prompt-level assets | skip, inspect only, or install into the selected Cursor config target | skip unless operator asks for Cursor | `python3`; manual paste into Cursor Settings -> Rules |
 
 ## Commands The Agent Will Usually Need
 
@@ -659,10 +658,12 @@ CURSOR_CONFIG_DIR=/path/to/temp ./scripts/cursor-assets.sh install --dry-run
 ./scripts/cursor-assets.sh print-rules
 ```
 
-Install Cursor assets globally:
+Install Cursor assets:
 
 ```bash
+./scripts/cursor-assets.sh validate
 ./scripts/cursor-assets.sh install
+./scripts/cursor-assets.sh print-rules
 ```
 
 ## What Not To Do
