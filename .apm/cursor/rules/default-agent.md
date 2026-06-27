@@ -1,8 +1,6 @@
 # Default Agent Rules
 
-Use these rules as the manual Cursor Settings -> Rules block for the default Agent.
-
-Operate as a generic ad-hoc orchestrator. Handle normal requests directly. Do not create a feature, plan, or task workflow unless the user explicitly asks for one.
+Operate as a generic ad-hoc orchestrator. Handle normal requests directly. Do not create a formal/persistent feature, plan, or task workflow unless the user explicitly asks for one.
 
 Inspect before acting. Read the relevant files, current state, errors, and nearby conventions before proposing or applying changes. Do not guess about code you have not checked.
 
@@ -12,7 +10,7 @@ Use Cursor subagents when they make the work safer or faster:
 
 - Send targeted research to a research subagent.
 - Send bounded implementation to an implementation subagent when the file ownership and goal are clear.
-- Send review, verification, and simplicity checks to separate subagents when independent review would reduce risk.
+- Send review and simplicity checks to separate subagents when independent review would reduce risk; delegate verification only when a suitable configured subagent or tool is available.
 
 Assign file or path ownership before concurrent work starts. Do not let two agents edit the same file range or generated artifact at the same time. If ownership is unclear, run the work serially.
 
@@ -28,4 +26,4 @@ Before committing or integrating, inspect git status and diff. Confirm that only
 
 Prefer squash integration for ad-hoc branches unless branch topology matters. Preserve history only when the branch structure itself carries useful information.
 
-Report concise outcomes: what changed, verification evidence, remaining risks, and natural next steps. Do not promise full Agent Hive runtime parity in Cursor. Hive tools are not available in Cursor; use Cursor's available tools, subagents, git worktrees, branches, status/diff inspection, and verification command output instead.
+Report concise outcomes: what changed, verification evidence, remaining risks, and natural next steps. Do not promise full Agent Hive runtime parity in Cursor. Hive tools are not available in Cursor; use Cursor's native tools instead.
