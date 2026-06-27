@@ -6,6 +6,7 @@ Use it when the operator says things like:
 
 - "Set this repo up as my Opencode config."
 - "Install this custom Opencode profile for me."
+- "Install the Cursor assets from this repo."
 - "Read this repo and walk me through the setup."
 
 ## Operator Prompt
@@ -44,6 +45,10 @@ Do not invent extra setup questions. This repository exposes the following real 
     - `lsp-python`
     - `lsp-all-recommended`
 7. Whether to install the optional Agent Hive / `oc-arkive` VS Code companion from the latest release `.vsix`.
+8. Whether to install the separate Cursor prompt-level assets:
+   - skip Cursor setup
+   - validate and inspect the Cursor assets only
+   - install the Cursor assets into global `~/.cursor` and paste Rules manually
 
 Some setup facts are not user choices:
 
@@ -58,6 +63,9 @@ Some setup facts are not user choices:
 - No LSP snippet is enabled by default.
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
 - This profile no longer ships Hive workflow prompt-backed commands. Those commands now come from the published `oc-arkive` plugin; the installer removes the old managed command files from `commands/` after backing the directory up.
+- Cursor setup is separate from Opencode setup. It does not install `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, or `oc-arkive`.
+- Cursor v1 is prompt-level behavior only. It installs Cursor assets under `~/.cursor` and requires manual paste into Cursor Settings -> Rules; it does not provide Agent Hive runtime/tool parity.
+- Cursor assets are sourced from `.apm/cursor` by default, or `cursor-assets/` if APM validation later requires the documented fallback.
 - When merging into an existing `AGENTS.md`, start from the user's file and reconcile the selected profile into it instead of replacing it by default.
 - AGENTS profile selection changes operating rules, not just tool routing. Preserve the selected profile's parity-validation wording, failed-subagent retry policy, subagent final-response instructions, and resume-work guidance when merging.
 
@@ -127,6 +135,8 @@ Before making changes, read these files from this repository:
 - `profiles/optional/README.md`
 - `scripts/install-profile.sh`
 - `scripts/enable-optional.sh`
+- `CURSOR.md` when the operator asks for Cursor setup
+- `scripts/cursor-assets.sh` when the operator asks for Cursor setup
 
 ## Interview Rules
 
@@ -156,6 +166,7 @@ Use these defaults unless the operator asks for something else:
 - Use the `shared` AGENTS profile.
 - Skip optional MCP and LSP snippets unless there is a clear need.
 - Install the VS Code companion extension only if the operator uses VS Code.
+- Skip Cursor setup unless the operator explicitly wants Cursor prompt-level assets.
 
 When the operator explicitly wants the richer local search and context workflow, recommend this pair together:
 
@@ -437,7 +448,49 @@ If the `code` CLI is not available, give the operator the latest release page an
 https://github.com/imarshallwidjaja/agent-hive/releases/latest
 ```
 
-### 10. Start Opencode once
+### 10. Offer the separate Cursor prompt-level assets
+
+Ask:
+
+```text
+Do you also want the separate Cursor prompt-level assets installed for Cursor, or should we leave Cursor unchanged?
+```
+
+Explain this boundary before running commands:
+
+- Cursor setup is separate from Opencode setup.
+- It installs Cursor assets under global `~/.cursor` through `./scripts/cursor-assets.sh`.
+- It does not install `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, or `oc-arkive`.
+- Cursor v1 is prompt-level behavior only, not Agent Hive runtime/tool parity.
+- Rules are pasted manually into Cursor Settings -> Rules; the helper does not write undocumented Cursor settings files.
+
+If the operator only wants to inspect the assets, run:
+
+```bash
+./scripts/cursor-assets.sh validate
+CURSOR_CONFIG_DIR=/path/to/temp ./scripts/cursor-assets.sh install --dry-run
+./scripts/cursor-assets.sh print-rules
+```
+
+If the operator approves global installation, run:
+
+```bash
+./scripts/cursor-assets.sh validate
+./scripts/cursor-assets.sh install
+./scripts/cursor-assets.sh print-rules
+```
+
+Then paste the printed Rules text into Cursor Settings -> Rules, or tell the operator exactly where to paste it if they prefer to do that part themselves.
+
+Verify the installed layout by checking for:
+
+- six files under `~/.cursor/agents/`
+- five files under `~/.cursor/commands/`
+- eleven `SKILL.md` files under `~/.cursor/skills/*/`
+
+Do not ask the operator to install `oc-arkive` for Cursor v1. Do not use direct `apm install -g` as proof that global Cursor assets were installed.
+
+### 11. Start Opencode once
 
 Run:
 
@@ -453,7 +506,7 @@ Success signal:
 
 - Opencode starts without reporting plugin-resolution or command-not-found errors for the base profile.
 
-### 11. Verify the final state
+### 12. Verify the final state
 
 Verify that the target config directory now contains:
 
@@ -496,6 +549,7 @@ Then report back with:
 - which LSP bundle, if any, was enabled
 - whether `cymbal` is installed as a CLI on this machine
 - whether the VS Code extension was installed
+- whether Cursor assets were skipped, inspected only, or installed; if installed, whether Rules were pasted into Cursor Settings -> Rules
 - any skipped options and why
 
 ## Decision Inventory From The Repo Audit
@@ -512,6 +566,7 @@ Use this as the source of truth for the interview.
 | `context7` MCP only | enable or skip | skip | `jq`, `CONTEXT7_API_KEY`, network access |
 | LSP bundle | none, `lsp-markdown-typescript`, `lsp-python`, `lsp-all-recommended` | none | `jq` plus required binaries |
 | VS Code companion extension | install or skip | skip unless operator uses VS Code | VS Code and usually `code` CLI; latest Agent Hive fork release `.vsix` |
+| Cursor prompt-level assets | skip, inspect only, or install globally | skip unless operator asks for Cursor | `python3`; manual paste into Cursor Settings -> Rules |
 
 ## Commands The Agent Will Usually Need
 
@@ -596,6 +651,20 @@ curl -L -o vscode-arkive.vsix https://github.com/imarshallwidjaja/agent-hive/rel
 code --install-extension ./vscode-arkive.vsix
 ```
 
+Validate and inspect Cursor assets:
+
+```bash
+./scripts/cursor-assets.sh validate
+CURSOR_CONFIG_DIR=/path/to/temp ./scripts/cursor-assets.sh install --dry-run
+./scripts/cursor-assets.sh print-rules
+```
+
+Install Cursor assets globally:
+
+```bash
+./scripts/cursor-assets.sh install
+```
+
 ## What Not To Do
 
 - Do not ask the operator to choose model IDs from this repo. Those defaults are already encoded.
@@ -609,4 +678,7 @@ code --install-extension ./vscode-arkive.vsix
 - Do not enable LSP snippets before `./scripts/install-profile.sh` has created the target `opencode.json`.
 - Do not assume `personal-default` is appropriate for every operator.
 - Do not describe `cymbal` as a bundled MCP or JSON config entry. It is a separate CLI dependency.
+- Do not treat Cursor setup as Opencode setup; it does not install `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, or `oc-arkive`.
+- Do not claim Cursor v1 has Agent Hive runtime/tool parity.
+- Do not document undocumented Cursor settings-file writes; use Cursor Settings -> Rules for the printed Rules text.
 - Do not overwhelm the operator with all questions at once.

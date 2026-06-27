@@ -2,6 +2,8 @@
 
 This directory contains merge snippets for machine-dependent integrations that should not be enabled in the base profile by default.
 
+These optional bundles are Opencode-only. Cursor v1 has no optional MCP or LSP bundle in this repository, and Cursor setup does not alter these snippets. Use `CURSOR.md` and `./scripts/cursor-assets.sh` only for the separate Cursor prompt-level asset flow.
+
 ## Operating model
 
 Each bundle is led by a partial `opencode.json` fragment and may also include a matching `agent_hive.json` overlay when Hive-specific behavior must change.

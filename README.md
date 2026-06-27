@@ -33,6 +33,8 @@ Optional features require their own tools:
 - LSP binaries if you enable an LSP bundle
 - VS Code if you want the companion extension
 
+Cursor prompt-level assets have a separate setup path. They are validated and installed by `./scripts/cursor-assets.sh`, not by the Opencode profile installer.
+
 Install Opencode if it is not already present:
 
 ```bash
@@ -199,6 +201,30 @@ Use the extension for:
 - seeing feature and task status in the sidebar
 - adding review comments while Opencode remains the execution harness
 
+## Cursor prompt-level assets
+
+This repository also ships a Cursor v1 asset bundle for prompt-level behavior. It installs reusable Cursor subagents, commands, and skills under global `~/.cursor`, then prints default-Agent Rules that you paste into Cursor Settings -> Rules.
+
+Cursor v1 is not Agent Hive runtime parity. It does not install `oc-arkive`, Hive tools, `opencode.json`, `agent_hive.json`, or an Opencode `AGENTS.md` profile.
+
+The helper selects `.apm/cursor` by default. If APM validation later requires the fallback, it also supports a top-level `cursor-assets/` root.
+
+Quick inspection flow:
+
+```bash
+./scripts/cursor-assets.sh validate
+CURSOR_CONFIG_DIR=/path/to/temp ./scripts/cursor-assets.sh install --dry-run
+./scripts/cursor-assets.sh print-rules
+```
+
+Actual global install:
+
+```bash
+./scripts/cursor-assets.sh install
+```
+
+See `CURSOR.md` for the asset list, exclusions, verification steps, and the reason this repo uses a thin helper instead of claiming direct APM global Cursor deployment.
+
 ## Optional context-improved workflow
 
 The context-improved workflow adds the local context and structural-search toolchain.
@@ -297,7 +323,7 @@ Reusable non-Hive behavior remains packaged as skills under `.apm/skills/`. If t
 
 ## Assisted setup
 
-If you want another Opencode agent to perform the setup for a less technical operator, point it to `FOR-LLM-AGENTS.md` in this repository.
+If you want another Opencode agent to perform the setup for a less technical operator, point it to `FOR-LLM-AGENTS.md` in this repository. That document covers both the Opencode profile setup and the separate Cursor prompt-level asset setup.
 
 Copy-paste prompt:
 

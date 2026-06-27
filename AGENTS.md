@@ -18,6 +18,7 @@ Use this repository as the source of truth for the portable Opencode profile.
 ## Content Rules
 
 - Shared skills, prompt-backed commands, and agents belong in `.apm/` when this repository owns them. Do not keep Hive workflow command prompts here when the equivalent behavior belongs in `oc-arkive` commands or Agent Hive config.
+- Cursor-owned assets live in the selected Cursor asset root (`.apm/cursor` by default, or `cursor-assets/` if APM validation requires the fallback) and must pass `./scripts/cursor-assets.sh validate` before docs claim they are ready.
 - Personal or domain-specific automation should stay out of the base package unless it is clearly marked optional.
 - When migrating content from another tool-specific layout, normalize it to the current Opencode directory conventions.
 - When changing install choices, AGENTS profile options, optional bundle behavior, or dependency requirements, update the operator-facing setup docs in the same change. At minimum, review `README.md`, `profiles/agents/README.md`, `profiles/optional/README.md`, and `FOR-LLM-AGENTS.md` together.
