@@ -33,7 +33,7 @@ Optional features require their own tools:
 - LSP binaries if you enable an LSP bundle
 - VS Code if you want the companion extension
 
-Cursor prompt-level assets have a separate setup path. They are validated and installed by `./scripts/cursor-assets.sh` from the repository root, not by the Opencode profile installer. That helper requires `python3`, defaults to `${HOME}/.cursor`, and accepts `CURSOR_CONFIG_DIR=/path/to/cursor-config` when you need a custom target.
+Cursor prompt-level assets have a separate setup path. They are validated and installed by `./scripts/cursor-assets.sh` from the repository root, not by the Opencode profile installer. That helper requires `python3`, defaults to `${HOME}/.cursor`, accepts `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom target, and accepts semicolon-separated `CURSOR_CONFIG_DIRS="/path/one;/path/two"` for dual installs.
 
 Install Opencode if it is not already present:
 
@@ -212,7 +212,7 @@ Prerequisites:
 - run commands from this repository root
 - `python3`
 - executable `scripts/cursor-assets.sh`
-- default target `${HOME}/.cursor`, or `CURSOR_CONFIG_DIR=/path/to/cursor-config` for a custom target
+- default target `${HOME}/.cursor`, `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom target, or `CURSOR_CONFIG_DIRS="/path/one;/path/two"` for multiple targets
 
 Quick inspection flow:
 
@@ -227,6 +227,14 @@ Actual install:
 ```bash
 ./scripts/cursor-assets.sh validate
 ./scripts/cursor-assets.sh install
+./scripts/cursor-assets.sh print-rules
+```
+
+Windows Cursor with WSL projects may need both the WSL config root and the Windows config root because Cursor can resolve file-based agents, commands, and skills differently for WSL workspaces. From WSL, use a dual install like this:
+
+```bash
+CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor" ./scripts/cursor-assets.sh install --dry-run
+CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor" ./scripts/cursor-assets.sh install
 ./scripts/cursor-assets.sh print-rules
 ```
 

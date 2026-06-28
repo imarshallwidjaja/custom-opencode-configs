@@ -50,7 +50,7 @@ Do not invent extra setup questions. This repository exposes the following real 
 8. Whether to install the separate Cursor prompt-level assets:
    - skip Cursor setup
    - validate and inspect the Cursor assets only
-   - install the Cursor assets into `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` and paste Rules manually
+   - install the Cursor assets into `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` or semicolon-separated `CURSOR_CONFIG_DIRS` targets and paste Rules manually
 
 Some setup facts are not user choices:
 
@@ -66,8 +66,9 @@ Some setup facts are not user choices:
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
 - This profile no longer ships Hive workflow prompt-backed commands. Those commands now come from the published `oc-arkive` plugin; the installer removes the old managed command files from `commands/` after backing the directory up.
 - Cursor setup is separate from Opencode setup. It does not install `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, or `oc-arkive`.
-- Cursor v1 is prompt-level behavior only. It installs Cursor assets under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` and requires manual paste into Cursor Settings -> Rules; it does not provide Agent Hive runtime/tool parity.
-- Cursor asset setup must run from the repository root with `python3` and `scripts/cursor-assets.sh` available. Use `CURSOR_CONFIG_DIR=/path/to/cursor-config` only when the operator wants a custom Cursor target.
+- Cursor v1 is prompt-level behavior only. It installs Cursor assets under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` or every target in semicolon-separated `CURSOR_CONFIG_DIRS`, and requires manual paste into Cursor Settings -> Rules; it does not provide Agent Hive runtime/tool parity.
+- Cursor asset setup must run from the repository root with `python3` and `scripts/cursor-assets.sh` available. Use `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom Cursor target, or `CURSOR_CONFIG_DIRS="/path/one;/path/two"` when Cursor needs multiple global config roots.
+- Windows Cursor with WSL projects should normally install into both the WSL config root and the Windows config root, for example `CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor"` from WSL.
 - If the operator asks only for Cursor assets, skip Opencode install, Opencode startup, and final Opencode verification. Stop after Cursor validation, optional install, Rules paste or paste instructions, and target-layout verification.
 - When merging into an existing `AGENTS.md`, start from the user's file and reconcile the selected profile into it instead of replacing it by default.
 - AGENTS profile selection changes operating rules, not just tool routing. Preserve the selected profile's parity-validation wording, failed-subagent retry policy, subagent final-response instructions, and resume-work guidance when merging.
@@ -459,7 +460,7 @@ Ask:
 Do you also want the separate Cursor prompt-level assets installed for Cursor, or should we leave Cursor unchanged?
 ```
 
-Before running commands, verify that you are in the repository root, `python3` is available, and `scripts/cursor-assets.sh` exists. Use the default target `${HOME}/.cursor` unless the operator gives a `CURSOR_CONFIG_DIR` override.
+Before running commands, verify that you are in the repository root, `python3` is available, and `scripts/cursor-assets.sh` exists. Use the default target `${HOME}/.cursor` unless the operator gives `CURSOR_CONFIG_DIR` for one target or `CURSOR_CONFIG_DIRS` for multiple targets. If the operator uses Windows Cursor with WSL projects, recommend dual install to both `$HOME/.cursor` and the Windows config path visible from WSL.
 
 If the operator only wants to inspect the assets, run:
 
@@ -484,6 +485,8 @@ Verify the installed layout by checking for:
 - six files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/`
 - five files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/`
 - eleven `SKILL.md` files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/skills/*/`
+
+If `CURSOR_CONFIG_DIRS` was used, check those three layout conditions under every target in the semicolon-separated list.
 
 Do not ask the operator to install `oc-arkive` for Cursor v1. Do not use direct `apm install -g` as proof that global Cursor assets were installed.
 
@@ -663,6 +666,15 @@ Install Cursor assets:
 ```bash
 ./scripts/cursor-assets.sh validate
 ./scripts/cursor-assets.sh install
+./scripts/cursor-assets.sh print-rules
+```
+
+Install Cursor assets into Windows and WSL global config roots from WSL:
+
+```bash
+./scripts/cursor-assets.sh validate
+CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor" ./scripts/cursor-assets.sh install --dry-run
+CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor" ./scripts/cursor-assets.sh install
 ./scripts/cursor-assets.sh print-rules
 ```
 

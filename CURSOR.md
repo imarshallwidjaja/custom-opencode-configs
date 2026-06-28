@@ -19,9 +19,9 @@ The default source root is `.apm/cursor`. If APM validation rejects unknown `.ap
 
 Current APM documentation shows project-local Cursor deployment under a repository `.cursor/` directory. It does not prove that pure `apm install -g` deploys agents, commands, skills, and Rules into global `~/.cursor`.
 
-For v1, `scripts/cursor-assets.sh` is the installer boundary. It validates the selected asset root, copies supported assets into the target Cursor config directory, and prints the Rules text for manual paste. When install replaces existing Cursor files or directories, it writes backups under the helper's backup directory before replacement.
+For v1, `scripts/cursor-assets.sh` is the installer boundary. It validates the selected asset root, copies supported assets into one or more target Cursor config directories, and prints the Rules text for manual paste. When install replaces existing Cursor files or directories, it writes backups under the helper's backup directory before replacement.
 
-The target defaults to `~/.cursor`. For inspection, set `CURSOR_CONFIG_DIR` to a temporary directory.
+The target defaults to `~/.cursor`. For inspection, set `CURSOR_CONFIG_DIR` to a temporary directory. For dual installs, set `CURSOR_CONFIG_DIRS` to a semicolon-separated list.
 
 ## Prerequisites
 
@@ -29,7 +29,21 @@ The target defaults to `~/.cursor`. For inspection, set `CURSOR_CONFIG_DIR` to a
 - `python3` must be available on `PATH`.
 - `scripts/cursor-assets.sh` must exist and be executable.
 - The default target is `${HOME}/.cursor`.
-- Set `CURSOR_CONFIG_DIR=/path/to/cursor-config` to validate, dry-run, or install into a custom target.
+- Set `CURSOR_CONFIG_DIR=/path/to/cursor-config` to validate, dry-run, or install into one custom target.
+- Set `CURSOR_CONFIG_DIRS="/path/one;/path/two"` to install into multiple Cursor config roots.
+
+## Windows Cursor With WSL Projects
+
+Windows Cursor can use a different global asset root when the active project is opened through WSL. Installing only into the Windows config directory can leave WSL projects without the file-based agents, commands, and skills; installing only into WSL can leave normal Windows projects without them.
+
+When Windows Cursor is used for both Windows and WSL workspaces, install into both config roots:
+
+```bash
+CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor" ./scripts/cursor-assets.sh install --dry-run
+CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor" ./scripts/cursor-assets.sh install
+```
+
+Replace `<WindowsUser>` with the Windows account name. The first target is the WSL global Cursor config. The second target is the Windows global Cursor config as seen from WSL. If running from Git Bash on Windows, use the Git Bash path for the Windows config instead.
 
 ## Install Flow
 
@@ -49,6 +63,12 @@ Install into the target Cursor config directory:
 
 ```bash
 ./scripts/cursor-assets.sh install
+```
+
+Install into two target Cursor config directories:
+
+```bash
+CURSOR_CONFIG_DIRS="/path/to/first;/path/to/second" ./scripts/cursor-assets.sh install
 ```
 
 Print the default-Agent Rules text:
@@ -74,7 +94,7 @@ The Cursor assets can describe workflows and review expectations, but they canno
 
 ## Verify The Installed Layout
 
-After installing, check the target config directory. If you used a custom target, inspect `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` instead of the literal `~/.cursor` examples below.
+After installing, check every target config directory. If you used a custom target, inspect `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` instead of the literal `~/.cursor` examples below. If you used `CURSOR_CONFIG_DIRS`, inspect each semicolon-separated target.
 
 ```bash
 cursor_target="${CURSOR_CONFIG_DIR:-$HOME/.cursor}"
@@ -107,6 +127,16 @@ CURSOR_CONFIG_DIR=/path/to/temp ./scripts/cursor-assets.sh install
 ```
 
 Then inspect `/path/to/temp/agents`, `/path/to/temp/commands`, and `/path/to/temp/skills`.
+
+For dual-target verification, install into two temp directories:
+
+```bash
+one="$(mktemp -d)"
+two="$(mktemp -d)"
+CURSOR_CONFIG_DIRS="$one;$two" ./scripts/cursor-assets.sh install
+```
+
+Then inspect both `$one` and `$two`.
 
 ## Smoke Testing
 

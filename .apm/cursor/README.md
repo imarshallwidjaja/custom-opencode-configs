@@ -1,17 +1,23 @@
 # Cursor Assets
 
-Prompt-level Cursor assets sourced from this repository and installed globally under `~/.cursor` by `scripts/cursor-assets.sh`.
+Prompt-level Cursor assets sourced from this repository and installed globally under Cursor config directories by `scripts/cursor-assets.sh`.
 
 ## Source-to-target layout
 
 | Source | Target | Notes |
 |--------|--------|-------|
-| `agents/*.md` | `~/.cursor/agents/*.md` | Cursor user-global subagents |
-| `commands/*.md` | `~/.cursor/commands/*.md` | Cursor user-global commands |
-| `skills/<name>/SKILL.md` | `~/.cursor/skills/<name>/SKILL.md` | Cursor user-global skills |
+| `agents/*.md` | `<cursor-config>/agents/*.md` | Cursor user-global subagents |
+| `commands/*.md` | `<cursor-config>/commands/*.md` | Cursor user-global commands |
+| `skills/<name>/SKILL.md` | `<cursor-config>/skills/<name>/SKILL.md` | Cursor user-global skills |
 | `rules/default-agent.md` | Cursor Settings -> Rules (manual paste) | Cursor exposes user rules via the Settings UI, not a deployable file path |
 
-The install target defaults to `${CURSOR_CONFIG_DIR:-$HOME/.cursor}`. Set `CURSOR_CONFIG_DIR` to a temp directory for validation or dry-run inspection.
+The install target defaults to `${CURSOR_CONFIG_DIR:-$HOME/.cursor}`. Set `CURSOR_CONFIG_DIR` to one custom target, or set `CURSOR_CONFIG_DIRS` to a semicolon-separated target list for dual installs.
+
+Windows Cursor can read different global asset roots depending on whether the active workspace is a normal Windows folder or a WSL folder. For Windows Cursor used with WSL projects, install into both roots, for example:
+
+```bash
+CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor" ./scripts/cursor-assets.sh install
+```
 
 ## Subagent readonly choices
 

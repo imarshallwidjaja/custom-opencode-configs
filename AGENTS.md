@@ -28,5 +28,5 @@ Use this repository as the source of truth for the portable Opencode profile.
 
 - Validate JSON files after edits.
 - Validate the APM package layout before claiming the profile is ready.
-- Run `./scripts/cursor-assets.sh validate` and a temporary `CURSOR_CONFIG_DIR` install when changing Cursor assets or setup guidance.
+- Run `./scripts/cursor-assets.sh validate` and a temporary `CURSOR_CONFIG_DIR` install when changing Cursor assets or setup guidance. When changing multi-root install behavior, also test a temporary semicolon-separated `CURSOR_CONFIG_DIRS` install.
 - Test the install flow against a temporary `OPENCODE_CONFIG_DIR` when changing packaging behavior.

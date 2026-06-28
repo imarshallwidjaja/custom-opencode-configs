@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-TARGET_DIR="${CURSOR_CONFIG_DIR:-${HOME}/.cursor}"
+DEFAULT_TARGET_DIR="${CURSOR_CONFIG_DIR:-${HOME}/.cursor}"
 
 AGENTS=(
   approach-advisor
@@ -40,6 +40,31 @@ usage() {
   printf '  %s validate\n' "$(basename "$0")" >&2
   printf '  %s install [--dry-run]\n' "$(basename "$0")" >&2
   printf '  %s print-rules\n' "$(basename "$0")" >&2
+  printf '\nInstall targets:\n' >&2
+  printf '  CURSOR_CONFIG_DIR=/path/to/.cursor installs into one target.\n' >&2
+  printf '  CURSOR_CONFIG_DIRS=/path/one;/path/two installs into multiple targets.\n' >&2
+}
+
+target_dirs() {
+  local target
+  local found=0
+  if [[ -n "${CURSOR_CONFIG_DIRS:-}" ]]; then
+    local IFS=';'
+    local -a targets
+    read -r -a targets <<<"${CURSOR_CONFIG_DIRS}"
+    for target in "${targets[@]}"; do
+      if [[ -n "${target}" ]]; then
+        printf '%s\n' "${target}"
+        found=1
+      fi
+    done
+    if [[ "${found}" -eq 0 ]]; then
+      printf 'CURSOR_CONFIG_DIRS was set but contained no install targets.\n' >&2
+      exit 1
+    fi
+  else
+    printf '%s\n' "${DEFAULT_TARGET_DIR}"
+  fi
 }
 
 source_root() {
@@ -247,66 +272,90 @@ PY
 
 print_copy_plan() {
   local root="$1"
+  local target_dir="$2"
   local source
+  printf 'Target: %s\n' "${target_dir}"
   for name in "${AGENTS[@]}"; do
     source="${root}/agents/${name}.md"
-    printf 'Would copy %s -> %s\n' "${source#"${root}/"}" "${TARGET_DIR}/agents/${name}.md"
+    printf 'Would copy %s -> %s\n' "${source#"${root}/"}" "${target_dir}/agents/${name}.md"
   done
   for name in "${COMMANDS[@]}"; do
     source="${root}/commands/${name}.md"
-    printf 'Would copy %s -> %s\n' "${source#"${root}/"}" "${TARGET_DIR}/commands/${name}.md"
+    printf 'Would copy %s -> %s\n' "${source#"${root}/"}" "${target_dir}/commands/${name}.md"
   done
   for name in "${SKILLS[@]}"; do
     source="${root}/skills/${name}"
-    printf 'Would copy %s -> %s\n' "${source#"${root}/"}" "${TARGET_DIR}/skills/${name}"
+    printf 'Would copy %s -> %s\n' "${source#"${root}/"}" "${target_dir}/skills/${name}"
   done
 }
 
 BACKUP_DIR=""
 
 backup_path() {
-  local path="$1"
+  local target_dir="$1"
+  local path="$2"
   if [[ -e "${path}" ]]; then
     if [[ -z "${BACKUP_DIR}" ]]; then
-      BACKUP_DIR="${TARGET_DIR}/.backup/custom-opencode-configs-cursor-$(date +%Y%m%d-%H%M%S)"
+      BACKUP_DIR="${target_dir}/.backup/custom-opencode-configs-cursor-$(date +%Y%m%d-%H%M%S)"
       mkdir -p "${BACKUP_DIR}"
     fi
-    mkdir -p "${BACKUP_DIR}/$(dirname "${path#"${TARGET_DIR}/"}")"
-    cp -a "${path}" "${BACKUP_DIR}/${path#"${TARGET_DIR}/"}"
+    mkdir -p "${BACKUP_DIR}/$(dirname "${path#"${target_dir}/"}")"
+    cp -a "${path}" "${BACKUP_DIR}/${path#"${target_dir}/"}"
+  fi
+}
+
+install_assets_into() {
+  local root="$1"
+  local target_dir="$2"
+  local name
+
+  BACKUP_DIR=""
+  mkdir -p "${target_dir}/agents" "${target_dir}/commands" "${target_dir}/skills"
+
+  for name in "${AGENTS[@]}"; do
+    backup_path "${target_dir}" "${target_dir}/agents/${name}.md"
+    rm -rf "${target_dir}/agents/${name}.md"
+    install -m 0644 "${root}/agents/${name}.md" "${target_dir}/agents/${name}.md"
+    printf 'Copied agents/%s.md -> %s\n' "${name}" "${target_dir}/agents/${name}.md"
+  done
+  for name in "${COMMANDS[@]}"; do
+    backup_path "${target_dir}" "${target_dir}/commands/${name}.md"
+    rm -rf "${target_dir}/commands/${name}.md"
+    install -m 0644 "${root}/commands/${name}.md" "${target_dir}/commands/${name}.md"
+    printf 'Copied commands/%s.md -> %s\n' "${name}" "${target_dir}/commands/${name}.md"
+  done
+  for name in "${SKILLS[@]}"; do
+    backup_path "${target_dir}" "${target_dir}/skills/${name}"
+    rm -rf "${target_dir}/skills/${name}"
+    mkdir -p "${target_dir}/skills/${name}"
+    cp -a "${root}/skills/${name}/." "${target_dir}/skills/${name}/"
+    printf 'Copied skills/%s -> %s\n' "${name}" "${target_dir}/skills/${name}"
+  done
+
+  printf 'Cursor markdown assets installed into %s\n' "${target_dir}"
+  if [[ -n "${BACKUP_DIR}" ]]; then
+    printf 'Backed up replaced Cursor assets into %s\n' "${BACKUP_DIR}"
   fi
 }
 
 install_assets() {
   local root="$1"
-  local name
+  local target_dir
 
-  mkdir -p "${TARGET_DIR}/agents" "${TARGET_DIR}/commands" "${TARGET_DIR}/skills"
+  while IFS= read -r target_dir; do
+    install_assets_into "${root}" "${target_dir}"
+  done < <(target_dirs)
 
-  for name in "${AGENTS[@]}"; do
-    backup_path "${TARGET_DIR}/agents/${name}.md"
-    rm -rf "${TARGET_DIR}/agents/${name}.md"
-    install -m 0644 "${root}/agents/${name}.md" "${TARGET_DIR}/agents/${name}.md"
-    printf 'Copied agents/%s.md -> %s\n' "${name}" "${TARGET_DIR}/agents/${name}.md"
-  done
-  for name in "${COMMANDS[@]}"; do
-    backup_path "${TARGET_DIR}/commands/${name}.md"
-    rm -rf "${TARGET_DIR}/commands/${name}.md"
-    install -m 0644 "${root}/commands/${name}.md" "${TARGET_DIR}/commands/${name}.md"
-    printf 'Copied commands/%s.md -> %s\n' "${name}" "${TARGET_DIR}/commands/${name}.md"
-  done
-  for name in "${SKILLS[@]}"; do
-    backup_path "${TARGET_DIR}/skills/${name}"
-    rm -rf "${TARGET_DIR}/skills/${name}"
-    mkdir -p "${TARGET_DIR}/skills/${name}"
-    cp -a "${root}/skills/${name}/." "${TARGET_DIR}/skills/${name}/"
-    printf 'Copied skills/%s -> %s\n' "${name}" "${TARGET_DIR}/skills/${name}"
-  done
-
-  printf 'Cursor markdown assets installed into %s\n' "${TARGET_DIR}"
-  if [[ -n "${BACKUP_DIR}" ]]; then
-    printf 'Backed up replaced Cursor assets into %s\n' "${BACKUP_DIR}"
-  fi
   printf 'Manual next step: paste the output of ./scripts/cursor-assets.sh print-rules into Cursor Settings -> Rules.\n'
+}
+
+print_all_copy_plans() {
+  local root="$1"
+  local target_dir
+
+  while IFS= read -r target_dir; do
+    print_copy_plan "${root}" "${target_dir}"
+  done < <(target_dirs)
 }
 
 main() {
@@ -327,7 +376,7 @@ main() {
           ;;
         --dry-run)
           validate_assets "${root}"
-          print_copy_plan "${root}"
+          print_all_copy_plans "${root}"
           ;;
         *)
           usage
