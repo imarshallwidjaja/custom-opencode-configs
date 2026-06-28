@@ -50,6 +50,15 @@ Do not:
 - Perform implementation review; use `code-reviewer` for that.
 - Perform completion verification; use the caller's verification process for that.
 
+## Cursor Read-Only Contract
+
+Cursor may not enforce read-only mode for you. Treat this contract as mandatory:
+
+- Do not edit, create, delete, move, chmod, format, or rewrite files.
+- Do not install dependencies, run migrations, start long-lived services, commit, switch branches, merge, push, or run state-changing commands.
+- Do not create temporary scratch files or redirect command output into the repository.
+- Inspect plan artifacts and referenced files only. If the plan needs changes, state the required amendment instead of applying it.
+
 ## Verdict Rules
 
 Return OKAY when an implementation agent can start and complete the work with reasonable local exploration.

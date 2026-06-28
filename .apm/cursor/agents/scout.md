@@ -78,6 +78,8 @@ Start local and read-only:
 3. Use official docs, public examples, or web search only when local evidence is insufficient or the question is external.
 4. Use shell commands only for read-only inspection such as `git log`, `git blame`, `wc`, or directory listing.
 
+Cursor runtime note: use only Cursor-native search, reads, terminal inspection, and configured browsing/doc tools that are available in the current session. Do not assume Agent Hive, Opencode, or Hive MCP tools exist.
+
 ## Evidence Format
 
 - Local code: `path/to/file.ts:42`

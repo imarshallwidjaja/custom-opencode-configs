@@ -36,6 +36,13 @@ For writing Cursor subagents or lanes, assign ownership up front:
 - Shared generated files need one owner or a serial integration step.
 - Documentation and code that describe the same behavior should either be owned by one lane or integrated serially.
 
+## Cursor Execution Models
+
+- If Cursor has native subagents, give each lane a separate self-contained prompt and explicit file ownership.
+- If Cursor does not provide true subagent isolation, use separate branches, worktrees, or assistant sessions for writing lanes.
+- If neither isolation nor clear ownership is available, run the work serially.
+- Keep one integration owner responsible for reading final summaries, inspecting diffs, resolving conflicts, and running combined verification.
+
 ## Failure Handling
 
 - If a lane fails, retry in a fresh session instead of resuming the failed one.

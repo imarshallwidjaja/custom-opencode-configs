@@ -40,3 +40,9 @@ Remove common AI-writing patterns from prose without changing the intended meani
 - Are repeated sentence shapes making the text sound generated?
 - Are claims backed by concrete evidence or examples?
 - Would a human technical peer write it this way?
+
+## Output
+
+- For rewrite requests, return the rewritten text by default.
+- For review-only requests, return findings with examples and suggested rewrites instead of rewriting the whole piece.
+- Preserve the original meaning, factual claims, and required tone. Do not make the prose more formal unless the user asked for that.

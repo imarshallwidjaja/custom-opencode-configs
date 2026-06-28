@@ -41,6 +41,21 @@ Start by understanding the current project context. Ask one question at a time, 
 - Use `using-git-worktrees` when isolated implementation work is appropriate.
 - Create a concrete implementation plan only when the user wants one or the work is large enough to need sequencing.
 
+## Stop Before Implementation
+
+Brainstorming stops at an approved design or implementation brief. Do not edit product files, create branches, run broad test suites, or start implementation while this skill is active unless the user explicitly moves from design to implementation.
+
+## Final Output
+
+Return a compact design summary with:
+
+- Goal and user-visible outcome.
+- Constraints and non-goals.
+- Selected approach and why it beats the alternatives.
+- Acceptance criteria.
+- Files or areas likely to change.
+- Risks, open questions, and verification plan.
+
 ## Principles
 
 - One question at a time.

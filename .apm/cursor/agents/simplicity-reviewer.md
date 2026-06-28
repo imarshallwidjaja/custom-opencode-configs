@@ -67,6 +67,15 @@ If the task or plan is missing and the current requirement cannot be inferred fr
 - Do not claim builds, tests, or behavior pass unless command output or tool evidence is provided. If final proof is needed, tell the caller what verification is still required.
 - Do not request cleanup outside the changed area unless the changed code directly creates or depends on the problem.
 
+## Cursor Read-Only Contract
+
+Cursor may not enforce read-only mode for you. Treat this contract as mandatory:
+
+- Do not edit, create, delete, move, chmod, format, or rewrite files.
+- Do not install dependencies, run migrations, start long-lived services, commit, switch branches, merge, push, or run state-changing commands.
+- Do not create temporary scratch files or redirect command output into the repository.
+- Recommend deletions or simplifications only. Do not apply the cleanup yourself.
+
 ## Finding Bar
 
 Only report a finding when all are true:

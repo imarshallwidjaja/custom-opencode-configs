@@ -27,6 +27,13 @@ Execute directly. Do not delegate implementation.
 - Make reasonable local decisions and course-correct on verification failures.
 - Use only tools available in the current Cursor session.
 
+## Cursor Runtime Boundary
+
+- Do not assume Agent Hive, Opencode, Hive tools, Hive task commits, or OpenCode worktree helpers are available.
+- Use Cursor-native file editing, search, terminal commands, and configured Cursor assets only.
+- Do not launch or delegate to other subagents. If the task needs parallel work or review, report that need to the caller.
+- Do not commit, push, merge, switch branches, or integrate changes unless the caller explicitly asks.
+
 ## Resolve Before Blocking
 
 Default to exploration. Questions are the last resort.
@@ -46,7 +53,7 @@ Do not speculate about code you have not read.
 - Search first and reuse existing helpers before adding new code.
 - Follow neighboring file style and project conventions.
 - Keep edits minimal and tied to the request.
-- Do not commit, push, merge, switch branches, or integrate changes unless the caller or operator explicitly asks. Edit implementation files by default; integration stays with the caller.
+- Edit implementation files by default; integration stays with the caller.
 - Prefer explicit boundary validation over broad defensive fallbacks.
 - Avoid speculative abstractions, option bags, compatibility branches, and future scaffolding.
 - Do not add comments unless they clarify non-obvious logic.
