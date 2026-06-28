@@ -18,12 +18,16 @@ Split work safely across Cursor subagents where available, or across multiple as
 
 ## Lane Prompt Requirements
 
-Each Cursor subagent or lane prompt must be self-contained:
+Each Cursor subagent or lane prompt must be self-contained and Cursor-native. Do not require OpenCode task-tool or `subagent_type` semantics unless the user is explicitly asking about OpenCode.
 
+- Objective and expected output
 - Goal and acceptance criteria
 - Files or areas in scope
 - Files or areas out of scope
+- Known facts and evidence
+- Prior failures or attempted fixes
 - Dependencies and assumptions
+- Constraints and file ownership
 - Verification commands expected for that lane
 - Required final summary format
 - Instruction to stop and report blockers rather than guessing on unsafe decisions
@@ -47,6 +51,7 @@ For writing Cursor subagents or lanes, assign ownership up front:
 
 - If a lane fails, retry in a fresh session instead of resuming the failed one.
 - Pass concise failure context: what was attempted, where it failed, relevant errors, and the likely cause.
+- Do not treat blind resume as recovery. A resumed or redirected still-running lane needs explicit failure context and a clear reason.
 - Do not let a failed lane block unrelated independent lanes.
 - Reconcile completed lanes before starting dependent integration work.
 

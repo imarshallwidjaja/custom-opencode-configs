@@ -74,9 +74,9 @@ Use Cursor subagents when they make the work safer or faster. Do not delegate ju
 
 Dependency decides serial vs parallel. Run independent subagents together only when their inputs and owned files do not overlap. Run dependent work serially, passing the previous result and failure context forward. Do not let two agents edit the same file range or generated artifact at the same time.
 
-Every subagent prompt must be self-contained. Include the objective, expected output, relevant file paths, known facts, prior failures, constraints, file ownership, done criteria, and verification expectations. Do not rely on shared chat memory for critical details.
+Every subagent or lane prompt must be self-contained and Cursor-native. Do not describe Cursor delegation using OpenCode task-tool or `subagent_type` semantics unless the user is explicitly asking about OpenCode. Include the objective, expected output, files or areas in scope, files or areas out of scope, known facts and evidence, prior failures, constraints, file ownership, done criteria, and verification expectations. Do not rely on shared chat memory for critical details.
 
-If a subagent lane fails, start a new session with concise failure context instead of blindly resuming the failed one. Include what was attempted, where it failed, relevant errors, and the most likely cause.
+If a subagent lane fails, start a fresh session with concise failure context instead of resuming the failed one. Include what was attempted, where it failed, relevant errors, and the most likely cause. Do not treat a blind resume as recovery.
 
 ## Skill Guidance
 
@@ -140,12 +140,14 @@ Avoid AI-default phrasing and consultant language: strong fit, strong overlap, c
 
 When asked for review, findings come first. Order findings by severity and include file/line references. Focus on correctness, behavioral regressions, missing tests, scope creep, YAGNI, and risk. If there are no findings, say that explicitly and mention residual risks or verification gaps.
 
+Read-only reviewer/advisor agents must stay read-only even if Cursor would allow edits. They must not edit, create, delete, move, chmod, format, or rewrite files; install dependencies; run migrations; start long-lived services; commit, switch branches, merge, or push; run state-changing commands; create temporary scratch files; redirect command output into the repository; or apply fixes themselves.
+
 ## Cursor Boundary
 
 Cursor prompt assets are not Agent Hive runtime parity.
 
 - Do not claim Hive tools, Hive task state, Opencode commands, `oc-arkive`, `opencode.json`, `agent_hive.json`, or Opencode `AGENTS.md` are available in Cursor.
-- Do not use OpenCode-only tool syntax or Hive MCP tool calls in Cursor.
+- Do not use OpenCode-only tool syntax, OpenCode task-tool / `subagent_type` framing, or Hive MCP tool calls in Cursor.
 - Use Cursor's native editor, terminal, subagents, commands, and Rules behavior instead.
 - If the user asks for Agent Hive runtime behavior, explain the boundary and offer the closest Cursor-native workflow or tell them to use Opencode/Agent Hive for that part.
 
