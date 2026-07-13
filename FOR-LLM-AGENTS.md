@@ -50,6 +50,7 @@ Some setup facts are not user choices:
 
 - The default full install path is `./scripts/install-profile.sh`.
 - The default repo profile uses non-fast `openai/gpt-5.6-sol` plus selected `opencode-go/*` models in `agent_hive.json`, and an `opencode-go/*` model for the base Opencode `explore` override in `opencode.json`.
+- The base `opencode.json` also sets `agent.compaction` to `openai/gpt-5.5` with `variant: low`, while keeping top-level compaction `auto` and `prune` disabled.
 - The base `opencode.json` also includes the `opencode-gpt-imagegen` plugin. It currently requires ChatGPT Plus or Pro OAuth and does not provide API-key image generation; no credentials are stored in this repository.
 - OpenAI Hive roles always use exactly `openai/gpt-5.6-sol`, never a fast variant. Portable profiles do not import personal `xai/*` or `crof/*` models.
 - Worker auto-load uses the canonical Hive skill name `verification-before-completion`. Custom agents use only supported `baseAgent` values from the current Hive contract.
@@ -58,8 +59,9 @@ Some setup facts are not user choices:
 - The optional context-improved bundle adds `context-mode@latest`, local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay. The base Agent Hive config disables `context7` and `ast_grep` for Hive workers.
 - `context7` is present in the base config but disabled by default.
 - `cymbal` is not configured through `opencode.json`. It is a separate CLI tool that the context-improved AGENTS profiles know how to use when it is installed and available on `PATH`.
+- The packaged `use-railway` skill needs the Railway CLI and Railway auth; without them it is unused.
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
-- This profile no longer ships Hive workflow prompt-backed commands. Those commands now come from the published `oc-arkive` plugin; the installer removes the old managed command files from `commands/` after backing the directory up.
+- This profile ships non-Hive prompt-backed commands `interview-drill-down` and `planning-prompt`. Hive workflow commands still come from the published `oc-arkive` plugin; the installer removes the old managed Hive command files from `commands/` after backing the directory up.
 - Cursor setup is separate from Opencode setup. It does not install `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, or `oc-arkive`.
 - Cursor v1 is prompt-level behavior only. It installs Cursor assets under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` or every target in semicolon-separated `CURSOR_CONFIG_DIRS`, and requires manual paste into Cursor Settings -> Rules; it does not provide Agent Hive runtime/tool parity.
 - Cursor asset setup must run from the repository root with `python3` and `scripts/cursor-assets.sh` available. Use `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom Cursor target, or `CURSOR_CONFIG_DIRS="/path/one;/path/two"` when Cursor needs multiple global config roots.
@@ -435,8 +437,8 @@ Then paste the printed Rules text into Cursor Settings -> Rules, or tell the ope
 Verify the installed layout by checking for:
 
 - six files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/`
-- five files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/`
-- eleven `SKILL.md` files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/skills/*/`
+- seven files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/`
+- twelve `SKILL.md` files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/skills/*/`
 
 If `CURSOR_CONFIG_DIRS` was used, check those three layout conditions under every target in the semicolon-separated list.
 

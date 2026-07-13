@@ -2,13 +2,21 @@
 
 Prompt-level Cursor assets sourced from this repository and installed globally under Cursor config directories by `scripts/cursor-assets.sh`.
 
+## Inventory
+
+- six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, `simplicity-reviewer`
+- seven commands: `compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`
+- twelve skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `humanizer`, `root-cause-finder`, `stop-slop`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, `verification`
+
+`use-railway` needs the Railway CLI and Railway auth; without them the skill is unused.
+
 ## Source-to-target layout
 
 | Source | Target | Notes |
 |--------|--------|-------|
 | `agents/*.md` | `<cursor-config>/agents/*.md` | Cursor user-global subagents |
 | `commands/*.md` | `<cursor-config>/commands/*.md` | Cursor user-global commands |
-| `skills/<name>/SKILL.md` | `<cursor-config>/skills/<name>/SKILL.md` | Cursor user-global skills |
+| `skills/<name>/` | `<cursor-config>/skills/<name>/` | Cursor user-global skills; each skill requires `SKILL.md` and may include `references/` and `scripts/` |
 | `rules/default-agent.md` | Cursor Settings -> Rules (manual paste) | Cursor exposes user rules via the Settings UI, not a deployable file path |
 
 The install target defaults to `${CURSOR_CONFIG_DIR:-$HOME/.cursor}`. Set `CURSOR_CONFIG_DIR` to one custom target, or set `CURSOR_CONFIG_DIRS` to a semicolon-separated target list for dual installs.
@@ -43,4 +51,4 @@ The `type: hybrid` field in `apm.yml` was left unchanged. External APM docs indi
 
 ## Opencode install isolation
 
-`scripts/install-profile.sh` copies from `.apm/skills/`, `.apm/agents/`, and `.apm/prompts/*.prompt.md` into the Opencode config directory. It does not copy `.apm/cursor/**`. Cursor assets under `.apm/cursor/` do not appear in the Opencode install path and do not introduce new Opencode prompt-backed commands.
+`scripts/install-profile.sh` copies from `.apm/skills/`, `.apm/agents/`, and `.apm/prompts/*.prompt.md` into the Opencode config directory. It does not copy `.apm/cursor/**`. Cursor assets under `.apm/cursor/` do not appear in the Opencode install path. Opencode prompt-backed commands come only from `.apm/prompts/`, currently `interview-drill-down` and `planning-prompt`.

@@ -9,8 +9,8 @@ Use this when you want Cursor to have similar reusable guidance, subagents, comm
 The selected Cursor asset root contains:
 
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, and `simplicity-reviewer`
-- five commands: `compact-summary`, `council-directive`, `council`, `implementation-brief`, and `interview`
-- eleven core skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `humanizer`, `root-cause-finder`, `stop-slop`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, and `verification`
+- seven commands: `compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, and `planning-prompt`
+- twelve core skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `humanizer`, `root-cause-finder`, `stop-slop`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
 - one default-Agent Rules document at `rules/default-agent.md`
 
 The default source root is `.apm/cursor`. If APM validation rejects unknown `.apm/cursor/**` content and a later task moves the bundle, the helper also supports the fallback root `cursor-assets/`. Do not hardcode only one root in local automation; let `scripts/cursor-assets.sh` select it.
@@ -31,6 +31,7 @@ The target defaults to `~/.cursor`. For inspection, set `CURSOR_CONFIG_DIR` to a
 - The default target is `${HOME}/.cursor`.
 - Set `CURSOR_CONFIG_DIR=/path/to/cursor-config` to validate, dry-run, or install into one custom target.
 - Set `CURSOR_CONFIG_DIRS="/path/one;/path/two"` to install into multiple Cursor config roots.
+- `railway` CLI plus Railway auth when you want the packaged `use-railway` skill to operate Railway infrastructure.
 
 ## Windows Cursor With WSL Projects
 
@@ -117,6 +118,8 @@ Expected high-level layout:
 ~/.cursor/commands/council.md
 ~/.cursor/commands/implementation-brief.md
 ~/.cursor/commands/interview.md
+~/.cursor/commands/interview-drill-down.md
+~/.cursor/commands/planning-prompt.md
 ~/.cursor/skills/<skill-name>/SKILL.md
 ```
 

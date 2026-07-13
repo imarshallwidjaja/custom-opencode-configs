@@ -11,7 +11,9 @@ This repo is for installing a ready-to-use Opencode profile. It keeps secrets, l
 - `opencode.json`: base Opencode config with `oc-arkive@latest`
 - `agent_hive.json`: Agent Hive role and model configuration
 - `AGENTS.md`: the selected operating profile for Opencode agents
-- `skills/`: shared markdown skills used by Opencode; `commands/` and `agents/` are installed only when this repository packages standalone assets for them
+- `skills/`: shared markdown skills used by Opencode
+- `commands/`: non-Hive prompt-backed commands packaged under `.apm/prompts/` (`interview-drill-down`, `planning-prompt`)
+- `agents/`: installed only when this repository packages standalone Opencode agents
 
 If the target config directory already contains files with those names, the installer writes a timestamped backup under `<target>/.backup/` before replacing them. Set `OPENCODE_AGENTS_MODE=skip` when you want to update the profile files but keep an existing `AGENTS.md` in place for a manual merge.
 
@@ -23,8 +25,10 @@ Base setup requires:
 - `curl`
 - `opencode`
 - OpenAI access for the non-fast `openai/gpt-5.6-sol` model used by the default `agent_hive.json`
+- OpenAI access for the base `opencode.json` `agent.compaction` override (`openai/gpt-5.5`, `variant: low`)
 - `opencode-go/*` provider access for the base `opencode.json` `explore` override and selected Agent Hive Scout, simple-worker, UI, and capable-research roles
 - OpenAI auth also covers the base `opencode-gpt-imagegen` plugin when you want image generation tools
+- `railway` CLI plus Railway auth when you want the packaged `use-railway` skill to operate Railway infrastructure
 
 Optional features require their own tools:
 
@@ -194,6 +198,7 @@ Prerequisites:
 - `python3`
 - executable `scripts/cursor-assets.sh`
 - default target `${HOME}/.cursor`, `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom target, or `CURSOR_CONFIG_DIRS="/path/one;/path/two"` for multiple targets
+- `railway` CLI plus Railway auth when using the packaged `use-railway` skill
 
 Quick inspection flow:
 
@@ -293,11 +298,14 @@ The base `opencode.json` installs:
 
 ## Prompt-backed commands
 
-This profile currently does not ship prompt-backed commands under `.apm/prompts/`.
+This profile ships two non-Hive prompt-backed commands from `.apm/prompts/`:
 
-The old Hive-related prompt commands were removed from this profile after they were absorbed into `oc-arkive`'s built-in command surface. Use the plugin commands from Agent Hive instead, including `/interview`, `/implementation-brief`, `/hive-plan`, `/approve-sync-plan`, `/start-execution`, `/council-directive`, `/council`, and `/compact-summary`.
+- `interview-drill-down`
+- `planning-prompt`
 
-During install, `scripts/install-profile.sh` removes the legacy managed command files from the target `commands/` directory after backing that directory up. It removes only the old profile-managed names:
+Hive workflow commands still come from the published `oc-arkive` plugin, including `/interview`, `/implementation-brief`, `/hive-plan`, `/approve-sync-plan`, `/start-execution`, `/council-directive`, `/council`, and `/compact-summary`. Do not keep local copies of those Hive-owned command files in the Opencode config directory.
+
+During install, `scripts/install-profile.sh` copies `.apm/prompts/*.prompt.md` into `commands/` and removes the old profile-managed Hive command names from the target `commands/` directory after backing that directory up. It removes only these Hive-owned legacy names:
 
 - `approve-sync-plan`
 - `compact-summary`
@@ -305,12 +313,10 @@ During install, `scripts/install-profile.sh` removes the legacy managed command 
 - `council`
 - `hive-plan`
 - `implementation-planning-prompt`
-- `interview-drill-down`
 - `interview`
-- `planning-prompt`
 - `start-execution`
 
-Reusable non-Hive behavior remains packaged as skills under `.apm/skills/`. If this repository later adds non-Hive prompt-backed commands that are not better expressed through Agent Hive config or `oc-arkive`, the installer will copy `.apm/prompts/*.prompt.md` into `commands/`.
+Reusable non-Hive behavior also remains packaged as skills under `.apm/skills/`. Skills that overlap with `oc-arkive` are kept here only when this profile intentionally forks them (`brainstorming`, `systematic-debugging`, `test-driven-development`). Near-duplicate plugin skills such as `ast-grep` are not packaged here. The `use-railway` skill is included by explicit request; it needs the Railway CLI and auth, and is otherwise inert.
 
 ## Assisted setup
 

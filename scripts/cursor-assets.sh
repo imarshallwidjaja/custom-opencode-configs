@@ -20,6 +20,8 @@ COMMANDS=(
   council
   implementation-brief
   interview
+  interview-drill-down
+  planning-prompt
 )
 SKILLS=(
   brainstorming
@@ -31,6 +33,7 @@ SKILLS=(
   subagent-delegation
   systematic-debugging
   test-driven-development
+  use-railway
   using-git-worktrees
   verification
 )
@@ -103,8 +106,6 @@ excluded_commands = {
     'approve-sync-plan',
     'hive-plan',
     'implementation-planning-prompt',
-    'interview-drill-down',
-    'planning-prompt',
     'start-execution',
 }
 
@@ -143,6 +144,8 @@ def parse_frontmatter(path):
     data = {}
     for line in lines[1:end]:
         if not line.strip() or line.lstrip().startswith('#'):
+            continue
+        if line.startswith('  ') or line.startswith('\t'):
             continue
         if ':' not in line:
             fail(f'{path.relative_to(root)} has invalid frontmatter line: {line}')
@@ -219,7 +222,14 @@ for skill_name in expected_skills:
     if not path.is_file():
         fail(f'missing required file: skills/{skill_name}/SKILL.md')
         continue
-    unsupported_skill_entries = sorted(str(p.relative_to(skill_dir)) for p in skill_dir.rglob('*') if p != path)
+    allowed_extra_roots = {'references', 'scripts'}
+    unsupported_skill_entries = []
+    for entry in sorted(skill_dir.iterdir(), key=lambda p: p.name):
+        if entry == path:
+            continue
+        if entry.is_dir() and entry.name in allowed_extra_roots:
+            continue
+        unsupported_skill_entries.append(str(entry.relative_to(skill_dir)))
     if unsupported_skill_entries:
         fail(f'skills/{skill_name} contains unsupported entries: {unsupported_skill_entries}')
     frontmatter = parse_frontmatter(path)
@@ -228,7 +238,11 @@ for skill_name in expected_skills:
     if not frontmatter.get('description'):
         fail(f'skills/{skill_name}/SKILL.md frontmatter is missing description')
 
-for asset in sorted(root.rglob('*.md')):
+for asset in sorted(root.rglob('*')):
+    if not asset.is_file():
+        continue
+    if asset.suffix not in {'.md', '.py', '.sh'}:
+        continue
     check_forbidden_content(asset)
 
 if errors:

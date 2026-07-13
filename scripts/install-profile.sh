@@ -17,9 +17,7 @@ LEGACY_PROMPT_COMMANDS=(
   council
   hive-plan
   implementation-planning-prompt
-  interview-drill-down
   interview
-  planning-prompt
   start-execution
 )
 
