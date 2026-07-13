@@ -22,15 +22,16 @@ Base setup requires:
 - `git`
 - `curl`
 - `opencode`
-- OpenAI access for the `openai/*` fast models used by the default `agent_hive.json`
+- OpenAI access for the non-fast `openai/gpt-5.6-sol` model used by the default `agent_hive.json`
 - `opencode-go/*` provider access for the base `opencode.json` `explore` override and selected Agent Hive Scout, simple-worker, UI, and capable-research roles
+- OpenAI auth also covers the base `opencode-gpt-imagegen` plugin when you want image generation tools
 
 Optional features require their own tools:
 
 - `jq` for `scripts/enable-optional.sh`
 - `CONTEXT7_API_KEY` for the optional `context7` MCP entry
 - `context-mode`, `uvx`, and optionally `cymbal` for the context-improved workflow
-- LSP binaries if you enable an LSP bundle
+- `npx` (Node.js) for the optional `chrome-devtools` browser MCP
 - VS Code if you want the companion extension
 
 Cursor prompt-level assets have a separate setup path. They are validated and installed by `./scripts/cursor-assets.sh` from the repository root, not by the Opencode profile installer. That helper requires `python3`, defaults to `${HOME}/.cursor`, accepts `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom target, and accepts semicolon-separated `CURSOR_CONFIG_DIRS="/path/one;/path/two"` for dual installs.
@@ -49,7 +50,7 @@ Fresh machine with the shared AGENTS profile:
 curl -fsSL https://opencode.ai/install | bash
 git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
 cd custom-opencode-configs
-opencode auth login -p github-copilot
+opencode auth login -p openai
 ./scripts/install-profile.sh
 opencode
 ```
@@ -60,7 +61,7 @@ Fresh machine with the sanitized personal-default AGENTS profile:
 curl -fsSL https://opencode.ai/install | bash
 git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
 cd custom-opencode-configs
-opencode auth login -p github-copilot
+opencode auth login -p openai
 OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
 opencode
 ```
@@ -72,7 +73,7 @@ curl -fsSL https://opencode.ai/install | bash
 brew install 1broseidon/tap/cymbal
 git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
 cd custom-opencode-configs
-opencode auth login -p github-copilot
+opencode auth login -p openai
 CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
 opencode
 ```
@@ -80,7 +81,7 @@ opencode
 Where:
 
 - the repository clone requires GitHub access to this repo
-- `opencode auth login -p github-copilot` requires a GitHub account with Copilot access
+- `opencode auth login -p openai` opens the ChatGPT OAuth flow; `opencode-gpt-imagegen` currently requires a ChatGPT Plus or Pro subscription through that OAuth path
 - `brew install 1broseidon/tap/cymbal` is only needed when you want the full context-improved local navigation workflow
 - the first `opencode` run should resolve `oc-arkive@latest` automatically from `opencode.json`
 
@@ -97,7 +98,7 @@ Use the same profile environment variables the install should keep, for example:
 
 ```bash
 git pull
-OPENCODE_AGENTS_PROFILE=personal-default OPENCODE_AGENT_HIVE_PROFILE=copilot-opencode-go ./scripts/install-profile.sh
+OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
 ```
 
 Use `OPENCODE_AGENTS_MODE=skip` when the target already has a hand-maintained `AGENTS.md` that should stay as the base document for a manual merge:
@@ -158,29 +159,9 @@ CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts
 
 The two `*-context-improved` profiles require `jq`, `context-mode`, `uvx`, and `CONTEXT7_API_KEY`. The installer preflights those dependencies and applies the matching `context-improved` overlay automatically.
 
-### Agent Hive model profiles
+### Agent Hive config
 
-The installer uses the repository root `agent_hive.json` by default. Alternate full Agent Hive profiles live under `profiles/agent-hive/` and can be selected with `OPENCODE_AGENT_HIVE_PROFILE`.
-
-Available Agent Hive profiles:
-
-- `default`: installs the repository root `agent_hive.json`, matching the OpenAI fast plus `opencode-go` model selection
-- `openai-opencode-go`: installs the named copy at `profiles/agent-hive/openai-opencode-go.json`
-- `copilot-opencode-go`: installs `profiles/agent-hive/copilot-opencode-go.json`
-
-Install with the OpenAI plus `opencode-go` profile:
-
-```bash
-OPENCODE_AGENT_HIVE_PROFILE=openai-opencode-go ./scripts/install-profile.sh
-```
-
-Install with the Copilot plus `opencode-go` profile:
-
-```bash
-OPENCODE_AGENT_HIVE_PROFILE=copilot-opencode-go ./scripts/install-profile.sh
-```
-
-Use alternate model profiles only when the target Opencode environment can resolve every provider and model named in the selected profile. These profiles change only `agent_hive.json`; they do not add provider credentials, local proxy plugins, or provider shims to `opencode.json`.
+The installer copies the repository root `agent_hive.json`. It is the sole canonical Hive config and uses OpenAI `gpt-5.6-sol` plus selected `opencode-go` roles. The target Opencode environment must resolve every provider and model it names. The installer does not add provider credentials, local proxy plugins, or provider shims to `opencode.json`. OpenAI roles always use non-fast `openai/gpt-5.6-sol`.
 
 ## VS Code companion extension
 
@@ -276,46 +257,39 @@ Enable the context-improved overlay after a plain install:
 
 If you select `shared-context-improved` or `personal-context-improved` during install, `scripts/install-profile.sh` applies this overlay automatically after checking the same prerequisites.
 
-## Optional MCP and LSP bundles
+## Optional MCP bundles
 
 Optional merge snippets live under `profiles/optional/`:
 
 - `opencode.context-improved.json`
 - `opencode.mcp-context7-enabled.json`
-- `opencode.lsp-all-recommended.json`
-- `opencode.lsp-markdown-typescript.json`
-- `opencode.lsp-python.json`
+- `opencode.chrome-devtools.json`
 
 Apply a snippet with:
 
 ```bash
-./scripts/enable-optional.sh lsp-all-recommended
+./scripts/enable-optional.sh chrome-devtools
 ```
 
 The script validates prerequisites, backs up the current config file, and merges the chosen snippet into the active config.
 
-For the full recommended LSP stack, install the binaries first:
-
-- `vtsls`: install Node.js LTS, then run `npm install -g @vtsls/language-server`
-- `ruff`: install `uv`, then run `uv tool install ruff@latest`
-- `ty`: install `uv`, then run `uv tool install ty@latest`
-- `marksman`: install it from the official package manager or release-binary instructions at <https://github.com/artempyanykh/marksman/blob/main/docs/install.md>
-
-Then apply the bundle:
-
-```bash
-./scripts/install-profile.sh
-./scripts/enable-optional.sh lsp-all-recommended
-```
+`chrome-devtools` is the canonical interactive browser solution. It requires `npx` on `PATH` and launches `chrome-devtools-mcp@latest` with a non-absolute command.
 
 Useful checks:
 
 ```bash
-marksman --help
-vtsls --stdio
-ruff server --help
-ty server --help
+npx --version
+jq '.mcp["chrome-devtools"]' "$OPENCODE_CONFIG_DIR/opencode.json"
 ```
+
+## Base plugins
+
+The base `opencode.json` installs:
+
+- `oc-arkive@latest` for Agent Hive
+- `opencode-gpt-imagegen` for OpenAI image generation tools
+
+`opencode-gpt-imagegen` currently uses ChatGPT Plus or Pro OAuth from Opencode. It does not provide an API-key image path. No credentials are embedded in this repository.
 
 ## Prompt-backed commands
 

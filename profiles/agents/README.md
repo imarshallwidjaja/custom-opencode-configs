@@ -2,7 +2,7 @@
 
 This directory contains installable `AGENTS.md` profiles for Opencode.
 
-All four profiles share the same baseline quality, delegation, verification, search, browser, and document-conversion rules. The `personal-*` profiles add the author's operator-writing style; the `shared*` profiles intentionally omit that voice layer.
+All four profiles share the same baseline quality, delegation, verification, search, browser, handoff, worktree, and document-conversion rules. Interactive browser work routes to `chrome-devtools`. The `personal-*` profiles add the author's operator-writing style; the `shared*` profiles intentionally omit that voice layer. Context-tool routing stays in the `*-context-improved` profiles only.
 
 ## Why this exists
 

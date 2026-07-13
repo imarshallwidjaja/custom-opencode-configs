@@ -91,7 +91,7 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 | Official current library/framework docs | `context7` | Resolve the library ID first unless the user provides `/org/project`; use only when available. |
 | Public GitHub implementation examples | `grep_app` | Search literal code patterns, APIs, identifiers, or syntax fragments; use only when available. |
 | General web research | `websearch` | Use for current facts beyond official docs and code examples. |
-| Interactive web pages, forms, screenshots, rendered state, downloads | `agent-browser` | Save large browser output to files when possible, then process bounded results. |
+| Interactive web pages, forms, screenshots, rendered state, downloads | `chrome-devtools` | Save large browser output to files when possible, then process bounded results. |
 
 ## Optional Context-Improved Pairing
 
@@ -105,7 +105,7 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 | Keep each commit to one coherent change | Mix accidental churn into commits |
 | Write direct, human-readable commit summaries and descriptions | Use vague messages like "update files" |
 | Ask before history rewrites | Run `git reset --hard`, force-push, or destructive commands without explicit permission |
-| Clean up worktrees after use and merge back as one coherent commit | Leave task branches/worktrees with generated artifacts |
+| When finishing a worktree, squash-merge, rebase, or cherry-pick the completed change back into the checkout branch, then remove the worktree and task branch | Use a plain merge commit from a temporary worktree branch, or leave generated artifacts/duplicate churn behind |
 | Explicitly remove or revert unwanted artifacts before merge | Assume aborting a worktree removed artifacts already committed on a task branch |
 
 ## Documentation And Writing
@@ -120,15 +120,17 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 
 ## Browser Usage
 
-- Use `agent-browser` for interactive web work: opening pages, clicking, waiting, filling forms, reading rendered content, and downloading files.
-- Prefer `agent-browser` over `webfetch` whenever page state, DOM interaction, or file download is involved.
+- Use `chrome-devtools` for interactive web work: opening pages, clicking, waiting, filling forms, reading rendered content, screenshots, and downloading files.
+- Prefer `chrome-devtools` over `webfetch` whenever page state, DOM interaction, or file download is involved.
 - Use `webfetch` only for lightweight, read-only page retrieval when no interaction is needed.
+- Save large browser output to files when possible, then process bounded results.
+- Enable the optional `chrome-devtools` OpenCode MCP bundle when interactive browser tooling is required.
 
 ## MarkItDown And PDFs
 
 - Use the globally installed `markitdown` CLI for document conversion.
 - Keep it available through `uv tool install --force 'markitdown[all]'`; do not depend on an activated pip or conda environment for CLI use.
-- For PDFs, find the actual PDF URL first. If a page only links to the paper, use `agent-browser` to inspect the rendered page and extract the direct file link.
+- For PDFs, find the actual PDF URL first. If a page only links to the paper, use `chrome-devtools` to inspect the rendered page and extract the direct file link.
 - Download the PDF to a local temp path, run `markitdown <file.pdf>`, and inspect the exit code.
 - If conversion fails because of a missing dependency, install the relevant `markitdown[...]` extra and retry the same file.
 - Keep converted output in Markdown unless the user asks for another format.

@@ -73,7 +73,16 @@ merge_json() {
   local tmpfile
 
   tmpfile="$(mktemp)"
-  jq -s '.[0] * .[1]' "${target_path}" "${snippet_path}" > "${tmpfile}"
+  jq -s '
+    .[0] as $base
+    | .[1] as $snippet
+    | ($base * $snippet)
+    | if ($snippet | has("plugin")) then
+        .plugin = (reduce (($base.plugin // []) + ($snippet.plugin // []))[] as $plugin ([]; if index($plugin) then . else . + [$plugin] end))
+      else
+        .
+      end
+  ' "${target_path}" "${snippet_path}" > "${tmpfile}"
   install -m 0644 "${tmpfile}" "${target_path}"
   rm -f "${tmpfile}"
 }
@@ -87,19 +96,8 @@ case "${SNIPPET_NAME}" in
       exit 1
     fi
     ;;
-  lsp-all-recommended)
-    check_command marksman
-    check_command vtsls
-    check_command ruff
-    check_command ty
-    ;;
-  lsp-markdown-typescript)
-    check_command marksman
-    check_command vtsls
-    ;;
-  lsp-python)
-    check_command ruff
-    check_command ty
+  chrome-devtools)
+    check_command npx
     ;;
   mcp-context7-enabled)
     if [[ -z "${CONTEXT7_API_KEY:-}" ]]; then

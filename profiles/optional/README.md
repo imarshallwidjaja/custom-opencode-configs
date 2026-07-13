@@ -1,8 +1,8 @@
-# Optional MCP, LSP, And Workflow Bundles
+# Optional MCP And Workflow Bundles
 
 This directory contains merge snippets for machine-dependent integrations that should not be enabled in the base profile by default.
 
-These optional bundles are Opencode-only. Cursor v1 has no optional MCP or LSP bundle in this repository, and Cursor setup does not alter these snippets. Use `CURSOR.md` and `./scripts/cursor-assets.sh` only for the separate Cursor prompt-level asset flow.
+These optional bundles are Opencode-only. Cursor v1 has no optional MCP bundle in this repository, and Cursor setup does not alter these snippets. Use `CURSOR.md` and `./scripts/cursor-assets.sh` only for the separate Cursor prompt-level asset flow.
 
 ## Operating model
 
@@ -24,7 +24,7 @@ Purpose: Enables the portable context-improved overlay in one merge.
 
 It adds:
 
-- the published `context-mode` plugin alongside `oc-arkive@latest`
+- the published `context-mode` plugin while preserving the base plugins, including `oc-arkive@latest` and `opencode-gpt-imagegen`
 - a local `context-mode` MCP launched from `PATH`
 - a local `ast_grep` MCP launched through `uvx`
 - the bundled remote `context7` MCP entry already present in the base profile
@@ -77,75 +77,35 @@ Portability:
 - high
 - no local binary required
 
-### `opencode.lsp-all-recommended.json`
+### `opencode.chrome-devtools.json`
 
-Purpose: Adds all four recommended LSPs in one snippet: `marksman`, `vtsls`, `ruff`, and `ty`.
+Purpose: Enables the portable Chrome DevTools MCP as the canonical interactive browser solution.
 
-Prerequisites:
+It adds:
 
-- `marksman` available on `PATH`
-- `vtsls` available on `PATH`
-- `ruff` available on `PATH`
-- `ty` available on `PATH`
-- for `vtsls`, a working Node.js runtime is expected
-
-Install guidance:
-
-- `vtsls`: install Node.js LTS, then run `npm install -g @vtsls/language-server`
-- `ruff`: install `uv`, then run `uv tool install ruff@latest`
-- `ty`: install `uv`, then run `uv tool install ty@latest`
-- `marksman`: use the official package-manager or release-binary instructions at `https://github.com/artempyanykh/marksman/blob/main/docs/install.md`
-
-Verification:
-
-- `marksman --help`
-- `vtsls --stdio`
-- `ruff server --help`
-- `ty server --help`
-
-Portability:
-
-- medium
-- suitable once all four binaries are installed and discoverable on `PATH`
-
-### `opencode.lsp-markdown-typescript.json`
-
-Purpose: Adds `marksman` for Markdown and `vtsls` for TypeScript and JavaScript.
+- a local `chrome-devtools` MCP launched through `npx` with a non-absolute command
+- `chrome-devtools-mcp@latest` resolved at runtime
 
 Prerequisites:
 
-- `marksman` available on `PATH`
-- `vtsls` available on `PATH`
-- for `vtsls`, a working Node.js runtime is expected
+- `npx` available on `PATH` (Node.js/npm toolchain)
+- network access the first time `npx` downloads `chrome-devtools-mcp@latest`
+- a Chrome/Chromium browser available for the MCP to control
 
 Verification:
 
-- `marksman --help`
-- `vtsls --stdio`
+- `npx --version`
+- after enable, confirm `mcp.chrome-devtools.command` is `["npx", "-y", "chrome-devtools-mcp@latest"]`
 
 Some notes:
 
-- `vtsls --stdio` will wait for LSP traffic. The important part is that the command exists and starts.
-- This bundle is portable only when the target machine already has these binaries installed through its preferred package manager or runtime tool.
-
-### `opencode.lsp-python.json`
-
-Purpose: Adds `ruff` and `ty` language servers for Python work.
-
-Prerequisites:
-
-- `ruff` available on `PATH`
-- `ty` available on `PATH`
-
-Verification:
-
-- `ruff server --help`
-- `ty server --help`
+- AGENTS profiles route interactive browser work to `chrome-devtools`
+- keep the command PATH-based; do not embed absolute Node or home-directory paths
 
 Portability:
 
 - medium
-- portable when the target machine already has the Python tooling installed
+- suitable when Node.js is installed and the operator wants interactive browser automation
 
 ## Merge workflow
 
@@ -169,7 +129,7 @@ Use `scripts/enable-optional.sh` to validate prerequisites and merge a snippet i
 Other examples:
 
 ```bash
-./scripts/enable-optional.sh lsp-all-recommended
+./scripts/enable-optional.sh chrome-devtools
 ```
 
 Some notes:
@@ -183,7 +143,6 @@ Some notes:
 For a shareable profile:
 
 - keep remote MCPs preferred over local MCPs
-- keep local LSPs documented but opt-in
 - avoid absolute paths
 - prefer command names resolved through `PATH`
 - record environment variables near the bundle that uses them

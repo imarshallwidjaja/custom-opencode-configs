@@ -70,14 +70,14 @@
   },
   "agents": {
     "hive-master": {
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "medium",
       "autoLoadSkills": [
         "parallel-exploration"
       ]
     },
     "architect-planner": {
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "high",
       "autoLoadSkills": [
         "brainstorming",
@@ -86,7 +86,7 @@
       ]
     },
     "swarm-orchestrator": {
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "high",
       "autoLoadSkills": [
         "dispatching-parallel-agents",
@@ -95,7 +95,7 @@
       ]
     },
     "scout-researcher": {
-      "model": "opencode-go/deepseek-v4-flash",
+      "model": "opencode-go/deepseek-v4-pro",
       "variant": "max",
       "autoLoadSkills": [
         "cymbal",
@@ -104,34 +104,34 @@
       ]
     },
     "forager-worker": {
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "medium",
       "autoLoadSkills": [
-        "verification"
+        "verification-before-completion"
       ]
     },
     "plan-reviewer": {
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "medium"
     },
     "code-reviewer": {
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "high"
     },
     "simplicity-reviewer": {
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "medium"
     },
     "approach-advisor": {
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "high"
     },
     "hive-builder": {
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "medium"
     },
     "hive-helper": {
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "medium",
       "autoLoadSkills": []
     }
@@ -140,19 +140,19 @@
     "forager-smart": {
       "baseAgent": "forager-worker",
       "description": "Escalation-only route for implementation where the base worker is likely to make a design mistake. Use only for ambiguous behavior, cross-file state changes, subtle edge cases, or choices between competing implementations. Default to forager-fast or forager-worker for normal edits, straightforward fixes, and bounded feature work.",
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "xhigh"
     },
     "forager-capable": {
       "baseAgent": "forager-worker",
       "description": "Exception route for implementation that depends on heavy local execution. Use only when the task requires broad edits plus running or debugging checks, generated artifacts, or multi-step tool workflows. Default to forager-worker when the files and verification path are already clear. Do not use for strategy, review, or research.",
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "high"
     },
     "forager-documents": {
       "baseAgent": "forager-worker",
       "description": "Exception route for prose-dominant work. Use only when the main deliverable is documentation, operator guidance, specs, reports, or substantial human-facing text. Default to forager-worker when documentation is incidental to code changes. Do not use for code review.",
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "medium",
       "autoLoadSkills": [
         "humanizer",
@@ -177,13 +177,13 @@
     "plan-reviewer-xhigh-reasoning": {
       "baseAgent": "plan-reviewer",
       "description": "Escalation-only xhigh-reasoning plan reviewer. Use only when the default plan-reviewer cannot resolve a concrete blocker involving cross-system sequencing, irreversible migration risk, conflicting requirements, or worker handoff likely to fail. Default to plan-reviewer for routine plan review, missing detail, and general quality checks. Returns plan blockers, not architecture advice or code review.",
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "xhigh"
     },
     "adversarial-plan-reviewer": {
       "baseAgent": "plan-reviewer",
       "description": "Adversarial plan-readiness reviewer. Use only when explicitly asked to stress-test a Hive plan, worker handoff, task sequencing, references, assumptions, or executable verification. Preserve plan-reviewer OKAY/REJECT semantics; reject only for real worker blockers.",
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "high",
       "autoLoadSkills": [
         "adversarial-review"
@@ -192,7 +192,7 @@
     "code-reviewer-ui": {
       "baseAgent": "code-reviewer",
       "description": "Exception route for UI-facing implementation review. Use only when the primary risk is user-visible behavior, accessibility, responsive layout, frontend state, visual regression, or design-system fit. Default to code-reviewer for general implementation correctness and backend review.",
-      "model": "opencode-go/kimi-k2.6",
+      "model": "opencode-go/glm-5.2",
       "variant": "max",
       "autoLoadSkills": [
         "web-design-guidelines"
@@ -201,7 +201,7 @@
     "code-reviewer-documentation": {
       "baseAgent": "code-reviewer",
       "description": "Exception route for documentation review. Use only when the diff is mostly prose, setup flow, operator guidance, terminology, or human-facing documentation. Default to code-reviewer when code correctness is the primary risk, even if docs changed too.",
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "medium",
       "autoLoadSkills": [
         "humanizer",
@@ -211,13 +211,13 @@
     "code-reviewer-xhigh-reasoning": {
       "baseAgent": "code-reviewer",
       "description": "Escalation-only xhigh-reasoning code reviewer. Use only after default code-reviewer when there is a named high-risk concern: security boundary, data loss, concurrency race, migration correctness, or public API breakage. Default to code-reviewer for routine diffs, style, tests, docs, UI, and general correctness review. Reviews the diff against the task; does not redesign the approach.",
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "xhigh"
     },
     "adversarial-code-reviewer": {
       "baseAgent": "code-reviewer",
       "description": "Adversarial implementation reviewer. Use only when explicitly asked to stress-test a diff, code-vs-plan implementation, risky edge cases, verification gaps, or failure modes. Preserve code-reviewer scope and focus on evidence-backed findings.",
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "high",
       "autoLoadSkills": [
         "adversarial-review"
@@ -226,7 +226,7 @@
     "adversarial-simplicity-reviewer": {
       "baseAgent": "simplicity-reviewer",
       "description": "Adversarial deletion-biased simplicity reviewer. Use only when explicitly asked to stress-test completed implementation complexity, YAGNI, dead code, duplicate logic, speculative abstractions, fallback branches, or unnecessary compatibility paths. Preserve simplicity-reviewer cleanup scope.",
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "high",
       "autoLoadSkills": [
         "adversarial-review"
@@ -235,13 +235,13 @@
     "approach-advisor-xhigh-reasoning": {
       "baseAgent": "approach-advisor",
       "description": "Escalation-only xhigh-reasoning approach advisor. Use only when the operator or planner has a named strategic decision that would materially change architecture, persistence, deployment, or integration boundaries. Do not use for normal planning, implementation review, code review, or vague uncertainty. Advisory only; does not approve plans, review diffs, or implement.",
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "xhigh"
     },
     "adversarial-approach-advisor": {
       "baseAgent": "approach-advisor",
       "description": "Adversarial strategic advisor. Use only when explicitly asked to stress-test an approach, architecture route, migration, persistence boundary, deployment path, integration design, or hard tradeoff. Preserve approach-advisor advisory scope; do not approve plans or review diffs.",
-      "model": "openai/gpt-5.5-fast",
+      "model": "openai/gpt-5.6-sol",
       "variant": "high",
       "autoLoadSkills": [
         "adversarial-review"
@@ -250,7 +250,7 @@
     "scout-researcher-capable": {
       "baseAgent": "scout-researcher",
       "description": "Exception route for research that needs synthesis beyond the default scout. Use only for unfamiliar code paths, cross-repo or multi-domain investigation, ambiguous root-cause discovery, external docs plus local code, or questions without a known file target. Default to scout-researcher for normal bounded discovery. Read-only; do not use for edits.",
-      "model": "opencode-go/deepseek-v4-pro",
+      "model": "opencode-go/kimi-k2.7-code",
       "variant": "max"
     }
   }

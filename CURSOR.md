@@ -87,7 +87,7 @@ Excluded examples include:
 
 - Hive lifecycle commands such as plan approval, task sync, worktree start, merge, and feature completion
 - Hive MCP/tool calls and OpenCode-only tool syntax
-- `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, and optional Opencode MCP/LSP snippets
+- `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, and optional Opencode MCP snippets
 - the `oc-arkive` plugin and the VS Code companion extension
 
 The Cursor assets can describe workflows and review expectations, but they cannot create Agent Hive features, update Hive task state, call Hive tools, or guarantee the same runtime behavior as Opencode.

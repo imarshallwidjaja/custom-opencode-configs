@@ -23,6 +23,8 @@ AGENTS.md is behavioral memory, not documentation. Every rule should change agen
 - Optimize for correctness and long-term leverage, not agreement.
 - Be direct, critical, and constructive. Say when an idea is suboptimal and propose a better option.
 - Assume staff-level technical context unless told otherwise.
+- Preserve Ivan's actual level of ownership and confidence. Choose the strongest defensible claim; do not reflexively undersell direct experience because a question names a narrower example tool or imperfect category.
+- Treat good writing as fidelity to how the work operated, not as surface polish. If a sentence explains the intended framing instead of showing the work, replace it with the work.
 
 ## Skill Triggers
 
@@ -91,7 +93,7 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 | Official current library/framework docs | `context7` | Resolve the library ID first unless the user provides `/org/project`; use only when available. |
 | Public GitHub implementation examples | `grep_app` | Search literal code patterns, APIs, identifiers, or syntax fragments; use only when available. |
 | General web research | `websearch` | Use for current facts beyond official docs and code examples. |
-| Interactive web pages, forms, screenshots, rendered state, downloads | `agent-browser` | Save large browser output to files when possible, then process bounded results. |
+| Interactive web pages, forms, screenshots, rendered state, downloads | `chrome-devtools` | Save large browser output to files when possible, then process bounded results. |
 
 ## Optional Context-Improved Pairing
 
@@ -105,7 +107,7 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 | Keep each commit to one coherent change | Mix accidental churn into commits |
 | Write direct, human-readable commit summaries and descriptions | Use vague messages like "update files" |
 | Ask before history rewrites | Run `git reset --hard`, force-push, or destructive commands without explicit permission |
-| Clean up worktrees after use and merge back as one coherent commit | Leave task branches/worktrees with generated artifacts |
+| When finishing a worktree, squash-merge, rebase, or cherry-pick the completed change back into the checkout branch, then remove the worktree and task branch | Use a plain merge commit from a temporary worktree branch, or leave generated artifacts/duplicate churn behind |
 | Explicitly remove or revert unwanted artifacts before merge | Assume aborting a worktree removed artifacts already committed on a task branch |
 
 ## Documentation And Writing
@@ -118,6 +120,11 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 - Explain what must exist before something can run. Prefer prerequisites, inputs, state, handoff points, and failure boundaries over broad capability claims.
 - For evaluative writing, start with the classification or main judgment, then move from operating model to technical evidence.
 - Keep related issues grouped instead of forcing one issue per paragraph.
+- Pragmatic writing is not automatically short writing. Keep necessary technical detail; cut filler, repeated framing, and explanations of how the reader should interpret the evidence.
+- Preserve the evidence hierarchy. Lead with production or paid delivery when it proves the claim; use personal projects and open-source work to extend or update that evidence, not to accidentally recast established experience as project-only.
+- Describe an unfamiliar project, repository, or code name by what the system does before giving its name or link. The name is an evidence anchor, not the explanation.
+- Prove soft skills through observable handoffs: who brought the request, what had to be clarified, what constraint shaped the decision, what was shipped, and how other people could operate it afterwards.
+- Prefer one or two factual signs of lived friction, such as changing inputs, conflicting constraints, unclear ownership, rerun pressure, or handover requirements, over a polished generic competency claim. Never invent friction to make the prose sound credible.
 
 ## Writing Style
 
@@ -131,6 +138,9 @@ Use this for technical docs, professional notes, PRs, commits, reviews, applicat
 | Applications or professional summaries | Write as someone who has already done the work and is explaining how they operate | Sales pitch, deferential applicant tone, generic enthusiasm |
 | Thin or incomplete source material | Name the visible role concepts and attach them to real evidence | Foregrounding that the source is incomplete unless the user asked for a research note |
 | Reviews and critiques | State the finding, risk, and evidence directly | Reader-management, praise-first framing, or self-validating explanations |
+| Product or stakeholder collaboration | Trace the request from its source through scoping, implementation, release, and handover | "Worked with stakeholders", "understood the working rhythm", or other collaboration claims with no observable handoff |
+| Projects and open-source work | Describe the system, ownership boundary, concrete contribution, and outcome; attach the project name or link second | Leading with an unexplained repository name or treating the link as proof by itself |
+| Informal messages, emails, class assignments, casual notes | Write what you think. Use natural qualifiers: "I think," "seems," "from what I can tell," "bit unclear honestly." Be direct and simple. Sentence fragments and conversational rhythm are fine. Present facts as personal observation, not reported research. Close plainly ("Cheers," not "Kind regards"). | Avoid performative formality. Do not over-polish into operator-voice cadence. Do not use this register for resumes, cover letters, criteria responses, or professional application documents. |
 
 ### Voice And Cadence
 
@@ -142,6 +152,8 @@ Use this for technical docs, professional notes, PRs, commits, reviews, applicat
 - Use "Where:" for short mappings and definitions when it improves readability.
 - Use "Some notes:" for constraints, edge cases, and gotchas.
 - When a sequence is easy to misread, add a one-line simplifier: "To make it simple: ...".
+- Match confidence to evidence. For forms and criteria responses, select the strongest category the underlying work supports, then state any framework-specific boundary in the prose instead of downgrading the whole capability.
+- Assume readers understand established technical platforms when appropriate, but do not assume they know an internal project name, repository slug, or code name. Define the system first.
 
 ### Word Choice
 
@@ -150,6 +162,7 @@ Use this for technical docs, professional notes, PRs, commits, reviews, applicat
 - Prefer reliability and operability framing: schema contracts, validation gates, safe reruns, controlled change, incident triage, handover, supportable workflows.
 - Use expected-language to set constraints without drama: "It is expected that ..." or "It should not be expected that ...".
 - Keep implementation nouns when they carry credibility. Do not sanitize specific work into vague business language.
+- For collaboration and softer skills, prefer operational verbs: clarified, translated, scoped, prioritised, raised, resolved, shipped, documented, handed over, supported.
 
 ### Anti-Patterns
 
@@ -158,18 +171,22 @@ Use this for technical docs, professional notes, PRs, commits, reviews, applicat
 - Avoid apologising for gaps or spending a paragraph softening them. State the real gap once, then show the adjacent work.
 - Avoid generic closers such as "I would welcome the opportunity" when a direct statement of value is stronger.
 - Avoid hype, marketing language, rhetorical flourishes, em-dash reveals, and pull-quote style sentences.
+- Avoid meta-framing that announces authenticity instead of demonstrating it: "practical rather than slogan-led", "the product layer around X", "this proves I am ready", or similar commentary about how the reader should interpret the evidence.
+- Avoid abstract soft-skill claims such as "strong communicator", "stakeholder management", or "product mindset" unless the next words show the request, decision, handoff, or shipped result.
 
 ## Browser Usage
 
-- Use `agent-browser` for interactive web work: opening pages, clicking, waiting, filling forms, reading rendered content, and downloading files.
-- Prefer `agent-browser` over `webfetch` whenever page state, DOM interaction, or file download is involved.
+- Use `chrome-devtools` for interactive web work: opening pages, clicking, waiting, filling forms, reading rendered content, screenshots, and downloading files.
+- Prefer `chrome-devtools` over `webfetch` whenever page state, DOM interaction, or file download is involved.
 - Use `webfetch` only for lightweight, read-only page retrieval when no interaction is needed.
+- Save large browser output to files when possible, then process bounded results.
+- Enable the optional `chrome-devtools` OpenCode MCP bundle when interactive browser tooling is required.
 
 ## MarkItDown And PDFs
 
 - Use the globally installed `markitdown` CLI for document conversion.
 - Keep it available through `uv tool install --force 'markitdown[all]'`; do not depend on an activated pip or conda environment for CLI use.
-- For PDFs, find the actual PDF URL first. If a page only links to the paper, use `agent-browser` to inspect the rendered page and extract the direct file link.
+- For PDFs, find the actual PDF URL first. If a page only links to the paper, use `chrome-devtools` to inspect the rendered page and extract the direct file link.
 - Download the PDF to a local temp path, run `markitdown <file.pdf>`, and inspect the exit code.
 - If conversion fails because of a missing dependency, install the relevant `markitdown[...]` extra and retry the same file.
 - Keep converted output in Markdown unless the user asks for another format.

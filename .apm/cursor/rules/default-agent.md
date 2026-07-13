@@ -108,7 +108,7 @@ Use the most precise available Cursor-native tool for the job.
 | Codebase structure or symbol flow | Cursor code navigation, LSP, or targeted terminal tools |
 | Large logs, tests, diffs, or generated output | Run commands with bounded output and summarize evidence |
 | Official current library/framework docs | Web/doc lookup when available; otherwise inspect local docs and dependency versions |
-| Interactive web pages | Browser-capable tooling if available |
+| Interactive web pages, forms, screenshots, rendered state, downloads | Browser-capable tooling if available; prefer Chrome DevTools-style browser automation when present |
 
 Think in code for analysis, counting, filtering, parsing, comparing, or transforming data. Print bounded findings, not raw dumps.
 
@@ -120,7 +120,7 @@ Think in code for analysis, counting, filtering, parsing, comparing, or transfor
 | Keep each commit to one coherent change | Mix accidental churn into commits |
 | Write direct, human-readable commit summaries | Use vague messages like `update files` |
 | Ask before history rewrites | Run destructive resets, force-push, or overwrite user changes without approval |
-| Clean up your worktrees after use | Leave temporary branches/worktrees around without explanation |
+| When finishing a worktree, squash-merge, rebase, or cherry-pick the completed change back into the checkout branch, then remove the worktree and temporary branch | Use a plain merge commit from a temporary worktree branch, or leave generated artifacts/duplicate churn behind |
 
 For ad-hoc branch integration, prefer squash-style integration when it keeps main history compact and worker commit churn is not useful. Preserve branch history only when the topology itself carries useful information or the user asks for it.
 
