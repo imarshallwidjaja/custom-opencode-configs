@@ -39,7 +39,8 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 | Starting isolated feature work or executing an approved implementation plan | `using-git-worktrees` |
 | React or Next.js UI/performance work | `react-best-practices` |
 | UI review, accessibility audit, visual/UX critique | `web-design-guidelines` |
-| Human-facing documentation, reports, PR prose, commit prose | `stop-slop` and `humanizer` |
+| Filler phrases, throat-clearing openers, mechanical cadence, rhetorical setups | `stop-slop` |
+| Promotional tone, vague attributions, chatbot artifacts, AI vocabulary clusters | `humanizer` |
 | Resumes, CVs, cover letters | `resume-tailoring` |
 | AGENTS.md bootstrap, review, pruning, or update | Hive skill `agents-md-mastery` |
 
@@ -120,15 +121,19 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 | When finishing a worktree, squash-merge, rebase, or cherry-pick the completed change back into the checkout branch, then remove the worktree and task branch | Use a plain merge commit from a temporary worktree branch, or leave generated artifacts/duplicate churn behind |
 | Explicitly remove or revert unwanted artifacts before merge | Assume aborting a worktree removed artifacts already committed on a task branch |
 
-## Documentation And Writing
+## Writing
 
-- When writing human-facing prose, load `stop-slop` and `humanizer`.
+- Load `stop-slop` for filler, formulaic structure, and cadence cleanup.
+- Load `humanizer` for promotional, vague, or chatbot-like content cleanup.
 - Start with the operating context, role, system, or concrete situation when that framing is clear.
 - Define the thing early, then move through purpose, prerequisites or dependencies, and workflow.
 - Name concrete system objects early: `Dockerfile`, `config.ini`, `vm_meta.data`, `pg_restore`, collections, hooks, schemas, workflows, source of truth.
 - Explain what must exist before something can run. Prefer prerequisites, inputs, state, handoff points, and failure boundaries over broad capability claims.
 - For evaluative writing, start with the classification or main judgment, then move from operating model to technical evidence.
 - Keep related issues grouped instead of forcing one issue per paragraph.
+- Write for a technical peer. Prefer plain statements, concrete evidence, clear reasoning.
+- Use concrete nouns over vague abstractions. Prefer hands-on verbs.
+- When a sentence explains the intended framing instead of showing the work, replace it with the work.
 
 ## Browser Usage
 

@@ -6,9 +6,9 @@
 > "Here's the thing: building products is hard. Not because the technology is complex. Because people are complex. Let that sink in."
 
 **After:**
-> "Building products is hard. Technology is manageable. People aren't."
+> "Building products is hard, not because the technology is complex, but because people are complex."
 
-**Changes:** Removed opener, binary contrast structure, and emphasis crutch. Direct statements.
+**Preserved:** The source assigns the difficulty to people rather than technology complexity.
 
 ---
 
@@ -18,9 +18,9 @@
 > "It turns out that most teams struggle with alignment. The uncomfortable truth is that nobody wants to admit they're confused. And that's okay."
 
 **After:**
-> "Teams struggle with alignment. Nobody admits confusion."
+> "Most teams struggle with alignment. Nobody wants to admit they're confused. And that's okay."
 
-**Changes:** Cut hedging ("most"), removed throat-clearing phrases, deleted permission-granting ending.
+**Preserved:** "Most," "nobody wants to admit," "confused," and the explicit reassurance "And that's okay."
 
 ---
 
@@ -30,9 +30,9 @@
 > "In today's fast-paced landscape, we need to lean into discomfort and navigate uncertainty with clarity. This matters because your competition isn't waiting."
 
 **After:**
-> "Move faster. Your competition is."
+> "We need to lean into discomfort and navigate uncertainty with clarity because your competition isn't waiting."
 
-**Changes:** Eliminated jargon entirely. Core message in six words.
+**Preserved:** "We need," discomfort, uncertainty, clarity, and the claim that the competition is not waiting.
 
 ---
 
@@ -42,9 +42,9 @@
 > "Speed. Quality. Cost. You can only pick two. That's it. That's the tradeoff."
 
 **After:**
-> "Speed, quality, cost—pick two."
+> "Of speed, quality, and cost, you can only pick two."
 
-**Changes:** Single sentence. No performative emphasis.
+**Preserved:** Speed, quality, cost, and the "can only pick two" constraint.
 
 ---
 
@@ -54,6 +54,18 @@
 > "What if I told you that the best teams don't optimize for productivity? Here's what I mean: they optimize for learning. Think about it."
 
 **After:**
-> "The best teams optimize for learning, not productivity."
+> "The best teams don't optimize for productivity. They optimize for learning."
 
-**Changes:** Direct claim. No rhetorical scaffolding.
+**Preserved:** The best teams do not optimize for productivity and do optimize for learning.
+
+---
+
+## Example 6: Imperative-Framing Risk
+
+**Before:**
+> "You might want to consider reviewing your deployment pipeline before the next release."
+
+**After:**
+> "You might consider reviewing your deployment pipeline before the next release."
+
+**Preserved:** The weak suggestion to review the deployment pipeline before the next release.

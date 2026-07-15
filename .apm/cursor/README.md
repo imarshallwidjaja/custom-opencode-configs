@@ -6,7 +6,9 @@ Prompt-level Cursor assets sourced from this repository and installed globally u
 
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, `simplicity-reviewer`
 - seven commands: `compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`
-- twelve skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `humanizer`, `root-cause-finder`, `stop-slop`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, `verification`
+- ten Cursor-specific skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, `verification`
+- two canonical skills consumed from `.apm/skills/`: `humanizer` and `stop-slop`
+- optional personal skill `ivan-writing` installed when `CURSOR_INSTALL_IVAN_WRITING=1` is set
 
 `use-railway` needs the Railway CLI and Railway auth; without them the skill is unused.
 
@@ -49,6 +51,16 @@ If APM validation rejects unknown `.apm/cursor/**` content rather than ignoring 
 
 The `type: hybrid` field in `apm.yml` was left unchanged. External APM docs indicate `type` is advisory, but the APM CLI was not available to confirm whether `hybrid` is correct or incorrect for this package layout. Changing it without CLI validation risks breaking APM metadata expectations. If a later APM CLI check confirms the field is advisory and `hybrid` is semantically wrong for an `.apm/` primitive package, correct it in the same change that adds APM CLI validation evidence.
 
+## Canonical skill sourcing
+
+`humanizer` and `stop-slop` are consumed from `.apm/skills/` (the canonical source shared with Opencode), not duplicated under `.apm/cursor/skills/`. The Cursor installer copies them from the canonical source.
+
+The personal `ivan-writing` skill is installed from `profiles/personal/skills/ivan-writing/` only when `CURSOR_INSTALL_IVAN_WRITING=1` is set. This is an opt-in because the skill contains the author's personal voice preferences. Only unset/empty and exact `1` are accepted; other values (0, false, 2) fail before any target mutation.
+
+When opt-in installs `ivan-writing`, the helper writes a marker file `skills/ivan-writing/.cursor-managed` inside the installed skill directory. On later opt-out, the skill directory is backed up and removed only when that marker exists. An unowned `ivan-writing` directory (no marker) is preserved and not modified.
+
 ## Opencode install isolation
 
 `scripts/install-profile.sh` copies from `.apm/skills/`, `.apm/agents/`, and `.apm/prompts/*.prompt.md` into the Opencode config directory. It does not copy `.apm/cursor/**`. Cursor assets under `.apm/cursor/` do not appear in the Opencode install path. Opencode prompt-backed commands come only from `.apm/prompts/`, currently `interview-drill-down` and `planning-prompt`.
+
+For personal profiles (`personal-default`, `personal-context-improved`), `scripts/install-profile.sh` also copies from `profiles/personal/skills/` into the Opencode config directory.

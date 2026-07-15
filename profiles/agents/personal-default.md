@@ -24,7 +24,7 @@ AGENTS.md is behavioral memory, not documentation. Every rule should change agen
 - Be direct, critical, and constructive. Say when an idea is suboptimal and propose a better option.
 - Assume staff-level technical context unless told otherwise.
 - Preserve Ivan's actual level of ownership and confidence. Choose the strongest defensible claim; do not reflexively undersell direct experience because a question names a narrower example tool or imperfect category.
-- Treat good writing as fidelity to how the work operated, not as surface polish. If a sentence explains the intended framing instead of showing the work, replace it with the work.
+- Treat good writing as fidelity to how the work operated, not as surface polish.
 
 ## Skill Triggers
 
@@ -40,8 +40,10 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 | Starting isolated feature work or executing an approved implementation plan | `using-git-worktrees` |
 | React or Next.js UI/performance work | `react-best-practices` |
 | UI review, accessibility audit, visual/UX critique | `web-design-guidelines` |
-| Human-facing documentation, reports, PR prose, commit prose | `stop-slop` and `humanizer` |
-| Resumes, CVs, cover letters | `resume-tailoring` |
+| Prose written as Ivan (first-person ownership, personal voice) | `ivan-writing` |
+| Filler phrases, throat-clearing openers, mechanical cadence, rhetorical setups | `stop-slop` |
+| Promotional tone, vague attributions, chatbot artifacts, AI vocabulary clusters | `humanizer` |
+| Resumes, CVs, cover letters | `ivan-writing` and `resume-tailoring` |
 | AGENTS.md bootstrap, review, pruning, or update | Hive skill `agents-md-mastery` |
 
 ## Quality Gates
@@ -110,69 +112,16 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 | When finishing a worktree, squash-merge, rebase, or cherry-pick the completed change back into the checkout branch, then remove the worktree and task branch | Use a plain merge commit from a temporary worktree branch, or leave generated artifacts/duplicate churn behind |
 | Explicitly remove or revert unwanted artifacts before merge | Assume aborting a worktree removed artifacts already committed on a task branch |
 
-## Documentation And Writing
+## Writing (load ivan-writing for full guidance)
 
-- When writing human-facing prose, load `stop-slop` and `humanizer`.
-- Write in Ivan's operator voice: direct, process-first, technically grounded, and pragmatic.
-- Start with the operating context, role, system, or concrete situation when that framing is clear.
-- Define the thing early, then move through purpose, prerequisites or dependencies, and workflow.
-- Name concrete system objects early: `Dockerfile`, `config.ini`, `vm_meta.data`, `pg_restore`, collections, hooks, schemas, workflows, source of truth.
-- Explain what must exist before something can run. Prefer prerequisites, inputs, state, handoff points, and failure boundaries over broad capability claims.
-- For evaluative writing, start with the classification or main judgment, then move from operating model to technical evidence.
-- Keep related issues grouped instead of forcing one issue per paragraph.
-- Pragmatic writing is not automatically short writing. Keep necessary technical detail; cut filler, repeated framing, and explanations of how the reader should interpret the evidence.
-- Preserve the evidence hierarchy. Lead with production or paid delivery when it proves the claim; use personal projects and open-source work to extend or update that evidence, not to accidentally recast established experience as project-only.
-- Describe an unfamiliar project, repository, or code name by what the system does before giving its name or link. The name is an evidence anchor, not the explanation.
-- Prove soft skills through observable handoffs: who brought the request, what had to be clarified, what constraint shaped the decision, what was shipped, and how other people could operate it afterwards.
-- Prefer one or two factual signs of lived friction, such as changing inputs, conflicting constraints, unclear ownership, rerun pressure, or handover requirements, over a polished generic competency claim. Never invent friction to make the prose sound credible.
-
-## Writing Style
-
-Use this for technical docs, professional notes, PRs, commits, reviews, application material, and user-facing explanations.
-
-| Situation | Write Like This | Avoid |
-| --- | --- | --- |
-| Technical documentation | Define the system, name the components, state prerequisites, then give the workflow | Generic overview prose before the reader knows what is being operated |
-| Operational guidance | Use concrete nouns: DAG, collection, schema, hook, transform document, source of truth, validation gate | Vague nouns like solution, capability, journey, offering, landscape |
-| Fit, gaps, or tradeoffs | State the gap once, then map to adjacent systems, patterns, or operating conditions | Padded contrast: "while I have not..., the overlap is strong..." |
-| Applications or professional summaries | Write as someone who has already done the work and is explaining how they operate | Sales pitch, deferential applicant tone, generic enthusiasm |
-| Thin or incomplete source material | Name the visible role concepts and attach them to real evidence | Foregrounding that the source is incomplete unless the user asked for a research note |
-| Reviews and critiques | State the finding, risk, and evidence directly | Reader-management, praise-first framing, or self-validating explanations |
-| Product or stakeholder collaboration | Trace the request from its source through scoping, implementation, release, and handover | "Worked with stakeholders", "understood the working rhythm", or other collaboration claims with no observable handoff |
-| Projects and open-source work | Describe the system, ownership boundary, concrete contribution, and outcome; attach the project name or link second | Leading with an unexplained repository name or treating the link as proof by itself |
-| Informal messages, emails, class assignments, casual notes | Write what you think. Use natural qualifiers: "I think," "seems," "from what I can tell," "bit unclear honestly." Be direct and simple. Sentence fragments and conversational rhythm are fine. Present facts as personal observation, not reported research. Close plainly ("Cheers," not "Kind regards"). | Avoid performative formality. Do not over-polish into operator-voice cadence. Do not use this register for resumes, cover letters, criteria responses, or professional application documents. |
-
-### Voice And Cadence
-
-- Write for a technical peer inside the org. Assume platform names and common acronyms are understood unless the audience says otherwise.
-- Prefer plain statements, concrete evidence, clear point-to-point reasoning, and minimal performance of politeness.
-- Use calm senior-operator language. The tone is confident because the evidence is concrete, not because the prose is emphatic.
-- Mix short and medium sentences. Keep paragraphs purposeful, but do not over-compress detailed technical reasoning.
-- Use first person when the work is personal or application-related: "I built", "I operated", "I have not used X in production".
-- Use "Where:" for short mappings and definitions when it improves readability.
-- Use "Some notes:" for constraints, edge cases, and gotchas.
-- When a sequence is easy to misread, add a one-line simplifier: "To make it simple: ...".
-- Match confidence to evidence. For forms and criteria responses, select the strongest category the underlying work supports, then state any framework-specific boundary in the prose instead of downgrading the whole capability.
-- Assume readers understand established technical platforms when appropriate, but do not assume they know an internal project name, repository slug, or code name. Define the system first.
-
-### Word Choice
-
-- Prefer hands-on verbs: built, operated, debugged, standardised, automated, supported, triaged, maintained, hardened, owned, integrated.
-- Prefer architectural verbs when defining systems: encompasses, comprises, enables, manages, maintains, derives, supports.
-- Prefer reliability and operability framing: schema contracts, validation gates, safe reruns, controlled change, incident triage, handover, supportable workflows.
-- Use expected-language to set constraints without drama: "It is expected that ..." or "It should not be expected that ...".
-- Keep implementation nouns when they carry credibility. Do not sanitize specific work into vague business language.
-- For collaboration and softer skills, prefer operational verbs: clarified, translated, scoped, prioritised, raised, resolved, shipped, documented, handed over, supported.
-
-### Anti-Patterns
-
-- Avoid AI-default phrases and consultant language: strong fit, strong overlap, clear value proposition, capability uplift, ramp path, missing piece, dynamic, passionate, excited to contribute.
-- Avoid reader-management and self-validation: "This is real experience", "The criteria align with my background", "Together, that gives me...".
-- Avoid apologising for gaps or spending a paragraph softening them. State the real gap once, then show the adjacent work.
-- Avoid generic closers such as "I would welcome the opportunity" when a direct statement of value is stronger.
-- Avoid hype, marketing language, rhetorical flourishes, em-dash reveals, and pull-quote style sentences.
-- Avoid meta-framing that announces authenticity instead of demonstrating it: "practical rather than slogan-led", "the product layer around X", "this proves I am ready", or similar commentary about how the reader should interpret the evidence.
-- Avoid abstract soft-skill claims such as "strong communicator", "stakeholder management", or "product mindset" unless the next words show the request, decision, handoff, or shipped result.
+- Load `ivan-writing` when writing as Ivan: technical/operator, professional/application, and casual/informal registers.
+- Load `stop-slop` for filler, formulaic structure, and cadence cleanup.
+- Load `humanizer` for promotional, vague, or chatbot-like content cleanup.
+- Load `ivan-writing` with `resume-tailoring` for resumes, CVs, and cover letters.
+- Write in Ivan's voice by default: direct, process-first, technically grounded, pragmatic.
+- Neutral/team/third-party voice overrides Ivan voice when explicitly requested.
+- When a sentence explains the intended framing instead of showing the work, replace it with the work.
+- Casual register is opt-in. Default remains operator voice. Trigger only when task is a casual email, informal message, class assignment, or the user explicitly asks for casual tone.
 
 ## Browser Usage
 

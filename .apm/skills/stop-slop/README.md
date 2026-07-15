@@ -43,20 +43,6 @@ stop-slop/
 
 For a more exhaustive, Wikipedia-derived checklist (promo tone, AI-vocab clusters, vague attributions, chatbot artifacts, formatting tells), see the sibling skill: `../humanizer/`.
 
-## Scoring
-
-Rate 1-10 on each dimension:
-
-| Dimension | Question |
-|-----------|----------|
-| Directness | Statements or announcements? |
-| Rhythm | Varied or metronomic? |
-| Trust | Respects reader intelligence? |
-| Authenticity | Sounds human? |
-| Density | Anything cuttable? |
-
-Below 35/50: revise.
-
 ## Author
 
 [Hardik Pandya](https://hvpandya.com)

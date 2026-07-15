@@ -242,7 +242,7 @@ Do you want the neutral shared profile, the personal-default profile with the au
 Explain the options like this:
 
 - `shared`: the safest team-friendly default
-- `personal-default`: the shared rules plus the author's writing voice and phrase patterns
+- `personal-default`: the shared rules plus the author's writing voice and phrase patterns, driven by the personal `ivan-writing` skill
 - `shared-context-improved`: the shared profile plus strong routing rules for `context-mode`, `ast-grep`, `context7`, and optional `cymbal`
 - `personal-context-improved`: the personal-default profile plus the same context-improved routing rules
 
@@ -416,6 +416,8 @@ Do you also want the separate Cursor prompt-level assets installed for Cursor, o
 
 Before running commands, verify that you are in the repository root, `python3` is available, and `scripts/cursor-assets.sh` exists. Use the default target `${HOME}/.cursor` unless the operator gives `CURSOR_CONFIG_DIR` for one target or `CURSOR_CONFIG_DIRS` for multiple targets. If the operator uses Windows Cursor with WSL projects, recommend dual install to both `$HOME/.cursor` and the Windows config path visible from WSL.
 
+`CURSOR_INSTALL_IVAN_WRITING` accepts only unset/empty (opt-out, no personal skill) or exact `1` (opt-in). Any other value (0, false, 2, etc.) fails before mutation. When opt-in installs `ivan-writing`, a marker file `skills/ivan-writing/.cursor-managed` is written inside the installed skill directory. On later opt-out, the skill is backed up and removed only when that marker exists; otherwise it is left untouched.
+
 If the operator only wants to inspect the assets, run:
 
 ```bash
@@ -438,7 +440,9 @@ Verify the installed layout by checking for:
 
 - six files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/`
 - seven files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/`
-- twelve `SKILL.md` files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/skills/*/`
+- the managed Cursor skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
+- the canonical skills `humanizer` and `stop-slop` under `skills/`
+- `ivan-writing` under `skills/` when installed via `CURSOR_INSTALL_IVAN_WRITING=1`
 
 If `CURSOR_CONFIG_DIRS` was used, check those three layout conditions under every target in the semicolon-separated list.
 

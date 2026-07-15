@@ -90,7 +90,9 @@ Use installed Cursor skills or equivalent written guidance when the trigger appl
 | Adding, moving, or deleting tests | `consolidate-test-suites` |
 | Before claiming work is complete, fixed, or passing | `verification` |
 | Starting isolated work | `using-git-worktrees` |
-| Human-facing docs, reports, PR prose, commit prose | `stop-slop` and `humanizer` |
+| Human-facing prose representing Ivan (technical docs, resumes, reports, PRs, commit messages when voice is Ivan's) | `ivan-writing` (when installed) |
+| Filler phrases, throat-clearing openers, mechanical cadence, binary contrasts, dramatic fragmentation | `stop-slop` |
+| Promotional tone, vague attributions, chatbot artifacts, AI-vocabulary clusters, formatting tells | `humanizer` |
 | Finishing a branch | `finishing-a-development-branch` |
 | Delegating work to subagents | `subagent-delegation` |
 

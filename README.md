@@ -11,7 +11,7 @@ This repo is for installing a ready-to-use Opencode profile. It keeps secrets, l
 - `opencode.json`: base Opencode config with `oc-arkive@latest`
 - `agent_hive.json`: Agent Hive role and model configuration
 - `AGENTS.md`: the selected operating profile for Opencode agents
-- `skills/`: shared markdown skills used by Opencode
+- `skills/`: shared markdown skills used by Opencode, plus personal skills from `profiles/personal/skills/` when the selected AGENTS profile is `personal-default` or `personal-context-improved`
 - `commands/`: non-Hive prompt-backed commands packaged under `.apm/prompts/` (`interview-drill-down`, `planning-prompt`)
 - `agents/`: installed only when this repository packages standalone Opencode agents
 
@@ -38,7 +38,7 @@ Optional features require their own tools:
 - `npx` (Node.js) for the optional `chrome-devtools` browser MCP
 - VS Code if you want the companion extension
 
-Cursor prompt-level assets have a separate setup path. They are validated and installed by `./scripts/cursor-assets.sh` from the repository root, not by the Opencode profile installer. That helper requires `python3`, defaults to `${HOME}/.cursor`, accepts `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom target, and accepts semicolon-separated `CURSOR_CONFIG_DIRS="/path/one;/path/two"` for dual installs.
+Cursor prompt-level assets have a separate setup path. They are validated and installed by `./scripts/cursor-assets.sh` from the repository root, not by the Opencode profile installer. That helper requires `python3`, defaults to `${HOME}/.cursor`, accepts `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom target, and accepts semicolon-separated `CURSOR_CONFIG_DIRS="/path/one;/path/two"` for dual installs. `CURSOR_INSTALL_IVAN_WRITING` accepts only unset/empty (opt-out) or exact `1` (opt-in); the skill is backed up and removed on opt-out only when a helper-owned marker file exists. See `CURSOR.md` for details.
 
 Install Opencode if it is not already present:
 
@@ -143,7 +143,7 @@ The installer uses `profiles/agents/shared.md` by default. Select another profil
 Available profiles:
 
 - `shared`: portable default for shared machines and team use
-- `personal-default`: shared baseline plus the author's operator-writing style
+- `personal-default`: shared baseline plus the author's operator-writing style, loaded from the personal `ivan-writing` skill
 - `shared-context-improved`: shared baseline plus routing rules for the optional context-improved toolchain
 - `personal-context-improved`: personal-default plus the same context-improved routing rules
 

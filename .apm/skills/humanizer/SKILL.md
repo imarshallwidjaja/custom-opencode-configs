@@ -1,15 +1,20 @@
 ---
 name: humanizer
-description: Use when editing or reviewing prose that sounds AI-generated (formulaic, promotional, vague, over-hedged, chatbot-y) and needs a more natural human voice.
+description: Use when prose is promotional, vague, over-hedged, or chatbot-like and needs cleanup without inventing personality or facts.
 ---
 
 # Humanizer
 
-Remove common AI-writing patterns while keeping the meaning and intended tone intact. This skill is based on Wikipedia's "Signs of AI writing" guide (WikiProject AI Cleanup).
+Remove common AI-writing patterns while keeping the meaning, facts, and intended tone intact. Based on Wikipedia's "Signs of AI writing" guide (WikiProject AI Cleanup).
+
+**Hard rules:**
+- Do not invent personality, emotion, anecdotes, uncertainty, or factual errors.
+- Do not add voice that was not present. Remove patterns; do not replace them with fabricated tone.
+- Preserve factual claims, dates, names, and qualifications exactly.
 
 ## When to use
 
-Use this when the text:
+Use when the text:
 
 - Reads like a press release or Wikipedia stub (grand claims, generic positivity)
 - Leans on vague attributions ("experts say", "industry reports") instead of specifics
@@ -17,21 +22,17 @@ Use this when the text:
 - Contains chatbot artifacts ("Of course!", "I hope this helps", "Let me know if you'd like...")
 - Uses mechanical formatting (inline-header lists, title-cased headings, emojis, curly quotes)
 
-If the text is mainly suffering from the classic "Claude slop" cadence (throat-clearing openers, binary pivots, em-dash reveals), start with `stop-slop` first.
+If the text is mainly suffering from filler, throat-clearing openers, or mechanical cadence, start with `stop-slop` first.
 
-## Workflow (tight loop)
+## Workflow
 
 1. Scan for patterns (use `references/patterns.md` as the checklist).
 2. Rewrite the flagged parts with plain, direct constructions (prefer "is/are/has").
-3. Add a pulse where it fits (see `references/voice.md`).
-4. Final polish: remove chatbot meta, fix typography (straight quotes), avoid em-dash reliance.
+3. Remove chatbot meta, fix typography (straight quotes), avoid em-dash reliance.
 
 ## Output
 
-Provide:
-
-1. The rewritten text
-2. (Optional) A short bullet list of the main patterns you removed
+Provide the rewritten text, preserving the original meaning and factual claims exactly.
 
 ## Reference
 

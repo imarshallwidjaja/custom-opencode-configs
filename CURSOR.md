@@ -10,7 +10,9 @@ The selected Cursor asset root contains:
 
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, and `simplicity-reviewer`
 - seven commands: `compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, and `planning-prompt`
-- twelve core skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `humanizer`, `root-cause-finder`, `stop-slop`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
+- ten Cursor-specific skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
+- two canonical skills consumed from `.apm/skills/`: `humanizer` and `stop-slop`
+- optional personal skill `ivan-writing` installed when `CURSOR_INSTALL_IVAN_WRITING=1` is set
 - one default-Agent Rules document at `rules/default-agent.md`
 
 The default source root is `.apm/cursor`. If APM validation rejects unknown `.apm/cursor/**` content and a later task moves the bundle, the helper also supports the fallback root `cursor-assets/`. Do not hardcode only one root in local automation; let `scripts/cursor-assets.sh` select it.
@@ -32,6 +34,11 @@ The target defaults to `~/.cursor`. For inspection, set `CURSOR_CONFIG_DIR` to a
 - Set `CURSOR_CONFIG_DIR=/path/to/cursor-config` to validate, dry-run, or install into one custom target.
 - Set `CURSOR_CONFIG_DIRS="/path/one;/path/two"` to install into multiple Cursor config roots.
 - `railway` CLI plus Railway auth when you want the packaged `use-railway` skill to operate Railway infrastructure.
+- Set `CURSOR_INSTALL_IVAN_WRITING=1` to also install the personal `ivan-writing` skill from `profiles/personal/skills/ivan-writing/`.
+- Accepted values: unset/empty (opt-out, no personal skill) and exact `1` (opt-in). Any other value (0, false, 2, etc.) fails before install or dry-run starts.
+- When opt-in installs `ivan-writing`, the helper writes a hidden marker file `skills/ivan-writing/.cursor-managed` inside the installed skill directory.
+- On later opt-out (CURSOR_INSTALL_IVAN_WRITING unset), the helper backs up and removes `skills/ivan-writing` only when the in-directory `.cursor-managed` marker exists. If no marker exists, an existing `ivan-writing` directory is left untouched. A deleted-then-recreated user-owned directory is preserved.
+- Dry-run accurately describes only the expected managed removal when the in-directory marker exists, and "preserving" when it does not.
 
 ## Windows Cursor With WSL Projects
 
@@ -144,3 +151,13 @@ Then inspect both `$one` and `$two`.
 ## Smoke Testing
 
 No live Cursor behavioral smoke test is required for v1. The acceptance boundary is static validation, installed file layout, and manual Rules paste into Cursor Settings -> Rules.
+
+## Integration Tests
+
+Run the install contract tests from the repository root:
+
+```bash
+bash tests/test-install-contracts.sh
+```
+
+The test builds isolated repository fixtures in a temp directory — it never moves, deletes, or mutates repository source files. The EXIT trap only cleans up temp fixtures.
