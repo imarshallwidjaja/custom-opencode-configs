@@ -34,7 +34,7 @@ Start by understanding the current project context, then ask questions one at a 
 
 ## After the Design
 
-Keep the validated design in the conversation. Do **not** write a design doc or commit one unless the user explicitly asks.
+Keep the validated design in the conversation. Do **not** write a design doc, planning file, or other durable artifact unless the operator explicitly asks to write it somewhere.
 
 **Implementation (if continuing):**
 - Ask: "Ready to set up for implementation?"
@@ -48,4 +48,5 @@ Keep the validated design in the conversation. Do **not** write a design doc or 
 - **YAGNI ruthlessly** - Remove unnecessary features from all designs
 - **Explore alternatives** - Always propose 2-3 approaches before settling
 - **Incremental validation** - Present design in sections, validate each
+- **Conversation-only by default** - Keep the design in chat; write a file only when asked
 - **Be flexible** - Go back and clarify when something doesn't make sense

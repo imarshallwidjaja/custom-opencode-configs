@@ -36,8 +36,8 @@ Start by understanding the current project context. Ask one question at a time, 
 
 ## After The Design
 
-- You may present the validated design or summary in chat.
-- Write persistent design or planning documents, such as `docs/plans/YYYY-MM-DD-<topic>-design.md`, only after the operator explicitly requests or approves a durable file.
+Keep the validated design in the conversation. Do **not** write a design doc, planning file, or other durable artifact unless the operator explicitly asks to write it somewhere.
+
 - Use `using-git-worktrees` when isolated implementation work is appropriate.
 - Create a concrete implementation plan only when the user wants one or the work is large enough to need sequencing.
 
@@ -47,7 +47,7 @@ Brainstorming stops at an approved design or implementation brief. Do not edit p
 
 ## Final Output
 
-Return a compact design summary with:
+Present a compact design summary in the conversation with:
 
 - Goal and user-visible outcome.
 - Constraints and non-goals.
@@ -63,3 +63,4 @@ Return a compact design summary with:
 - Keep scope small enough to verify.
 - Compare alternatives before settling.
 - Validate incrementally instead of dumping a full design at once.
+- Keep the design in conversation by default; write it to a file only when asked.
