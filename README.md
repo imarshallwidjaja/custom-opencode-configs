@@ -8,8 +8,8 @@ This repo is for installing a ready-to-use Opencode profile. It keeps secrets, l
 
 `./scripts/install-profile.sh` installs these files into your Opencode config directory:
 
-- `opencode.json`: base Opencode config with `oc-arkive@latest`
-- `agent_hive.json`: Agent Hive role and model configuration
+- `profiles/base/opencode.json` -> `opencode.json`: base Opencode config with `oc-arkive@latest`
+- `profiles/base/agent_hive.json` -> `agent_hive.json`: Agent Hive role and model configuration
 - `AGENTS.md`: the selected operating profile for Opencode agents
 - `skills/`: shared markdown skills used by Opencode, plus personal skills from `profiles/personal/skills/` when the selected AGENTS profile is `personal-default` or `personal-context-improved`
 - `commands/`: non-Hive prompt-backed commands packaged under `.apm/prompts/` (`interview-drill-down`, `planning-prompt`)
@@ -165,7 +165,7 @@ The two `*-context-improved` profiles require `jq`, `uvx`, and `CONTEXT7_API_KEY
 
 ### Agent Hive config
 
-The installer copies the repository root `agent_hive.json`. It is the sole canonical Hive config and uses OpenAI `gpt-5.6-sol` plus selected `opencode-go` roles. The target Opencode environment must resolve every provider and model it names. The installer does not add provider credentials, local proxy plugins, or provider shims to `opencode.json`. OpenAI roles always use non-fast `openai/gpt-5.6-sol`.
+The installer copies `profiles/base/agent_hive.json`. It is the sole canonical Hive config and uses OpenAI `gpt-5.6-sol` plus selected `opencode-go` roles. The target Opencode environment must resolve every provider and model it names. The installer does not add provider credentials, local proxy plugins, or provider shims to `opencode.json`. OpenAI roles always use non-fast `openai/gpt-5.6-sol`.
 
 ## VS Code companion extension
 

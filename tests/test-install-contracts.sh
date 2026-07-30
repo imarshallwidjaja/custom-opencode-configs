@@ -117,9 +117,12 @@ SKILL
     echo "# ${prof} profile" > "${REPO_FIXTURE}/profiles/agents/${prof}.md"
   done
 
-  # Root files
-  echo '{}' > "${REPO_FIXTURE}/opencode.json"
-  echo '{}' > "${REPO_FIXTURE}/agent_hive.json"
+  # Base install payloads, plus obsolete root-path decoys
+  mkdir -p "${REPO_FIXTURE}/profiles/base"
+  echo '{"source":"profiles/base/opencode.json"}' > "${REPO_FIXTURE}/profiles/base/opencode.json"
+  echo '{"source":"profiles/base/agent_hive.json"}' > "${REPO_FIXTURE}/profiles/base/agent_hive.json"
+  echo '{"source":"obsolete-root/opencode.json"}' > "${REPO_FIXTURE}/opencode.json"
+  echo '{"source":"obsolete-root/agent_hive.json"}' > "${REPO_FIXTURE}/agent_hive.json"
   echo '{}' > "${REPO_FIXTURE}/apm.yml"
   mkdir -p "${REPO_FIXTURE}/scripts"
   printf '#!/bin/true\n' > "${REPO_FIXTURE}/scripts/enable-optional.sh"
@@ -205,6 +208,8 @@ build_fixture
 printf '=== Preflight: helpers exist ===\n'
 if [[ -x "${CURSOR_HELPER}" ]]; then pass "cursor-assets.sh exists and is executable"; else fail "cursor-assets.sh missing or not executable"; fi
 if [[ -x "${INSTALL_HELPER}" ]]; then pass "install-profile.sh exists and is executable"; else fail "install-profile.sh missing or not executable"; fi
+if [[ -f "${BASELINE_PWD}/profiles/base/opencode.json" && -f "${BASELINE_PWD}/profiles/base/agent_hive.json" ]]; then pass "base payloads live under profiles/base"; else fail "base payloads missing from profiles/base"; fi
+if [[ ! -e "${BASELINE_PWD}/opencode.json" && ! -e "${BASELINE_PWD}/agent_hive.json" ]]; then pass "repository root has no auto-discovered config payloads"; else fail "repository root still contains config payloads"; fi
 
 # ---------------------------------------------------------------------------
 # 0. context-improved installs the optional Cymbal hook
@@ -428,7 +433,58 @@ printf '\n=== 12. Shared install independent of personal source ===\n'
 td12="${TMPDIR}/test12"; mkdir -p "${td12}"
 rm -rf "${REPO_FIXTURE}/profiles/personal/skills/ivan-writing"
 OPENCODE_CONFIG_DIR="${td12}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td12}/err" && pass "12a: shared install succeeded" || fail "12b: shared install failed"
-[[ -f "${td12}/opencode.json" ]] && pass "12c: config exists" || fail "12d: config missing"
+cmp -s "${REPO_FIXTURE}/profiles/base/opencode.json" "${td12}/opencode.json" && pass "12c: base opencode payload installed" || fail "12d: installed opencode payload did not come from profiles/base"
+cmp -s "${REPO_FIXTURE}/profiles/base/agent_hive.json" "${td12}/agent_hive.json" && pass "12e: base Agent Hive payload installed" || fail "12f: installed Agent Hive payload did not come from profiles/base"
+build_fixture
+
+# ---------------------------------------------------------------------------
+# 12b. Missing profiles/base/opencode.json fails before mutation (root decoys remain)
+# ---------------------------------------------------------------------------
+printf '\n=== 12b. Missing base opencode.json fails before mutation ===\n'
+td12b="${TMPDIR}/test12b"; mkdir -p "${td12b}"
+printf '{"existing":"opencode"}\n' > "${td12b}/opencode.json"
+printf '{"existing":"agent_hive"}\n' > "${td12b}/agent_hive.json"
+cp "${td12b}/opencode.json" "${td12b}/opencode.json.before"
+cp "${td12b}/agent_hive.json" "${td12b}/agent_hive.json.before"
+rm -f "${REPO_FIXTURE}/profiles/base/opencode.json"
+[[ -f "${REPO_FIXTURE}/opencode.json" && -f "${REPO_FIXTURE}/agent_hive.json" && -f "${REPO_FIXTURE}/profiles/base/agent_hive.json" ]] || fail "12b-setup: root decoys or remaining base payload missing"
+if ! OPENCODE_CONFIG_DIR="${td12b}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td12b}/err"; then
+  grep -q 'ERROR' "${td12b}/err" && pass "12b-a: missing base opencode exits non-zero" || fail "12b-b: wrong error: $(cat "${td12b}/err")"
+  if cmp -s "${td12b}/opencode.json" "${td12b}/opencode.json.before" && cmp -s "${td12b}/agent_hive.json" "${td12b}/agent_hive.json.before"; then
+    pass "12b-c: existing target config unmodified"
+  else
+    fail "12b-d: existing target config mutated"
+  fi
+  [[ ! -e "${td12b}/AGENTS.md" && ! -e "${td12b}/agents" && ! -e "${td12b}/commands" && ! -e "${td12b}/skills" && ! -e "${td12b}/.backup" ]] \
+    && pass "12b-e: no managed paths created" || fail "12b-f: managed paths created despite missing base opencode"
+else
+  fail "12b-g: install should have failed when profiles/base/opencode.json is absent"
+fi
+build_fixture
+
+# ---------------------------------------------------------------------------
+# 12c. Missing profiles/base/agent_hive.json fails before mutation (root decoys remain)
+# ---------------------------------------------------------------------------
+printf '\n=== 12c. Missing base agent_hive.json fails before mutation ===\n'
+td12c="${TMPDIR}/test12c"; mkdir -p "${td12c}"
+printf '{"existing":"opencode"}\n' > "${td12c}/opencode.json"
+printf '{"existing":"agent_hive"}\n' > "${td12c}/agent_hive.json"
+cp "${td12c}/opencode.json" "${td12c}/opencode.json.before"
+cp "${td12c}/agent_hive.json" "${td12c}/agent_hive.json.before"
+rm -f "${REPO_FIXTURE}/profiles/base/agent_hive.json"
+[[ -f "${REPO_FIXTURE}/opencode.json" && -f "${REPO_FIXTURE}/agent_hive.json" && -f "${REPO_FIXTURE}/profiles/base/opencode.json" ]] || fail "12c-setup: root decoys or remaining base payload missing"
+if ! OPENCODE_CONFIG_DIR="${td12c}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td12c}/err"; then
+  grep -q 'ERROR' "${td12c}/err" && pass "12c-a: missing base agent_hive exits non-zero" || fail "12c-b: wrong error: $(cat "${td12c}/err")"
+  if cmp -s "${td12c}/opencode.json" "${td12c}/opencode.json.before" && cmp -s "${td12c}/agent_hive.json" "${td12c}/agent_hive.json.before"; then
+    pass "12c-c: existing target config unmodified"
+  else
+    fail "12c-d: existing target config mutated"
+  fi
+  [[ ! -e "${td12c}/AGENTS.md" && ! -e "${td12c}/agents" && ! -e "${td12c}/commands" && ! -e "${td12c}/skills" && ! -e "${td12c}/.backup" ]] \
+    && pass "12c-e: no managed paths created" || fail "12c-f: managed paths created despite missing base agent_hive"
+else
+  fail "12c-g: install should have failed when profiles/base/agent_hive.json is absent"
+fi
 build_fixture
 
 # ---------------------------------------------------------------------------

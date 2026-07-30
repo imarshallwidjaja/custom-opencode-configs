@@ -253,7 +253,7 @@ Recommendation:
 
 ### 5. Install the base profile
 
-The repository root `agent_hive.json` is the sole Hive config. It uses non-fast `openai/gpt-5.6-sol` plus selected `opencode-go/*` roles. Confirm those providers are available before install.
+`profiles/base/agent_hive.json` is the sole Hive config source. It uses non-fast `openai/gpt-5.6-sol` plus selected `opencode-go/*` roles. Confirm those providers are available before install.
 
 Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, `AGENTS.md`, and `skills/` contents with this repo's versions; installs optional standalone `agents/` or prompt-backed `commands/` only when this repo packages them; removes the old managed Hive command prompt files from `commands/`; and writes timestamped backups under `<target>/.backup/` first when those paths already exist. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `uvx`, and `CONTEXT7_API_KEY`, then auto-applies the matching `context-improved` overlays. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
 

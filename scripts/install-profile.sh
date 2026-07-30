@@ -8,7 +8,9 @@ TARGET_DIR="${OPENCODE_CONFIG_DIR:-${HOME}/.config/opencode}"
 AGENTS_PROFILE="${OPENCODE_AGENTS_PROFILE:-shared}"
 AGENTS_SOURCE="${REPO_ROOT}/profiles/agents/${AGENTS_PROFILE}.md"
 AGENTS_MODE="${OPENCODE_AGENTS_MODE:-install}"
-AGENT_HIVE_SOURCE="${REPO_ROOT}/agent_hive.json"
+BASE_PAYLOAD_DIR="${REPO_ROOT}/profiles/base"
+OPENCODE_SOURCE="${BASE_PAYLOAD_DIR}/opencode.json"
+AGENT_HIVE_SOURCE="${BASE_PAYLOAD_DIR}/agent_hive.json"
 ENABLE_OPTIONAL_SCRIPT="${SCRIPT_DIR}/enable-optional.sh"
 LEGACY_PROMPT_COMMANDS=(
   approve-sync-plan
@@ -343,7 +345,7 @@ esac
 # Pre-mutation source readability check
 preflight_source_readable() {
   local file
-  for file in "${REPO_ROOT}/opencode.json" "${AGENT_HIVE_SOURCE}"; do
+  for file in "${OPENCODE_SOURCE}" "${AGENT_HIVE_SOURCE}"; do
     if [[ ! -r "${file}" ]]; then
       printf 'ERROR: %s is not readable\n' "${file}" >&2
       exit 1
@@ -383,7 +385,7 @@ backup_path "${TARGET_DIR}/commands"
 rm -rf -- "${TARGET_DIR}/skills"
 mkdir -p "${TARGET_DIR}/skills" "${TARGET_DIR}/agents"
 
-install -m 0644 "${REPO_ROOT}/opencode.json" "${TARGET_DIR}/opencode.json"
+install -m 0644 "${OPENCODE_SOURCE}" "${TARGET_DIR}/opencode.json"
 install -m 0644 "${AGENT_HIVE_SOURCE}" "${TARGET_DIR}/agent_hive.json"
 if [[ "${AGENTS_MODE}" == "install" ]]; then
   install -m 0644 "${AGENTS_SOURCE}" "${TARGET_DIR}/AGENTS.md"

@@ -4,7 +4,7 @@ Use this repository as the source of truth for the portable Opencode profile.
 
 ## Scope
 
-- Keep `opencode.json` and `agent_hive.json` portable.
+- Keep `profiles/base/opencode.json` and `profiles/base/agent_hive.json` portable.
 - Keep APM-installable markdown assets under `.apm/`.
 - Exclude secrets, absolute home-directory paths, local proxy URLs, and personal workflows from the base profile.
 
