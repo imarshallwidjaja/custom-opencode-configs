@@ -56,9 +56,9 @@ Some setup facts are not user choices:
 - Worker auto-load uses the canonical Hive skill name `verification-before-completion`. Custom agents use only supported `baseAgent` values from the current Hive contract.
 - The published `oc-arkive@latest` plugin is installed by Opencode on first run.
 - Updating this repository's profile files does not prove Opencode is using the latest cached `oc-arkive@latest` plugin. After a profile update, restart Opencode. If the Agent Hive commands or plugin manifest still match an older release, remove or refresh the cached `oc-arkive` plugin entry according to the local Opencode cache layout before starting Opencode again.
-- The optional context-improved bundle adds `context-mode@latest`, local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay. The base Agent Hive config disables `context7` and `ast_grep` for Hive workers.
+- The optional context-improved bundle adds the native OpenCode plugin `context-mode@latest`, local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay. The plugin registers `ctx_*` tools in-process; no `mcp.context-mode` entry is needed. The base Agent Hive config disables `context7` and `ast_grep` for Hive workers.
 - `context7` is present in the base config but disabled by default.
-- `cymbal` is not configured through `opencode.json`. It is a separate CLI tool that the context-improved AGENTS profiles know how to use when it is installed and available on `PATH`.
+- `cymbal` is a separate optional CLI tool. When it is available on `PATH`, the context-improved bundle attempts to install its supported OpenCode hook into the selected `OPENCODE_CONFIG_DIR`; a hook failure warns without failing the bundle.
 - The packaged `use-railway` skill needs the Railway CLI and Railway auth; without them it is unused.
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
 - This profile ships non-Hive prompt-backed commands `interview-drill-down` and `planning-prompt`. Hive workflow commands still come from the published `oc-arkive` plugin; the installer removes the old managed Hive command files from `commands/` after backing the directory up.
@@ -152,7 +152,7 @@ Before making changes, read these files from this repository:
 - Use the repository scripts instead of manually copying files.
 - If a prerequisite is missing, ask whether the operator wants you to install it or skip the related optional feature.
 - If the operator wants the context-improved workflow, explain that the matching `shared-context-improved` or `personal-context-improved` profile now applies the `context-improved` JSON overlays automatically during install.
-- Make it clear that `cymbal` is an optional CLI dependency, not a bundled config entry. If it is missing, the context-improved profile can still work, but agents will fall back to the other available search tools.
+- Make it clear that `cymbal` is an optional CLI dependency. If present, the context-improved install attempts to wire its OpenCode hook automatically; hook failure does not make the bundle fail.
 - When the operator wants `cymbal`, install it with Homebrew using `brew install 1broseidon/tap/cymbal` if Homebrew is available on the machine.
 - Keep the operator informed about what you are about to run.
 - Treat AGENTS profile choice as an operating-policy choice too, not only a toolchain choice.
@@ -255,7 +255,7 @@ Recommendation:
 
 The repository root `agent_hive.json` is the sole Hive config. It uses non-fast `openai/gpt-5.6-sol` plus selected `opencode-go/*` roles. Confirm those providers are available before install.
 
-Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, `AGENTS.md`, and `skills/` contents with this repo's versions; installs optional standalone `agents/` or prompt-backed `commands/` only when this repo packages them; removes the old managed Hive command prompt files from `commands/`; and writes timestamped backups under `<target>/.backup/` first when those paths already exist. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `context-mode`, `uvx`, and `CONTEXT7_API_KEY`, then auto-applies the matching `context-improved` overlays. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
+Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, `AGENTS.md`, and `skills/` contents with this repo's versions; installs optional standalone `agents/` or prompt-backed `commands/` only when this repo packages them; removes the old managed Hive command prompt files from `commands/`; and writes timestamped backups under `<target>/.backup/` first when those paths already exist. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `uvx`, and `CONTEXT7_API_KEY`, then auto-applies the matching `context-improved` overlays. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
 
 Run one of these:
 
@@ -303,7 +303,6 @@ Only enable it if:
 
 - the operator wants it
 - `jq` is installed
-- `context-mode` is on `PATH`
 - `uvx` is on `PATH`
 - `CONTEXT7_API_KEY` is set
 - the machine can reach `https://mcp.context7.com/mcp`
@@ -320,9 +319,7 @@ brew install 1broseidon/tap/cymbal
 
 Explain this clearly:
 
-- `cymbal` is a CLI tool the AGENTS profile can call when it is installed
-- it is not configured in `opencode.json`
-- if it is missing, the context-improved profile still works, but agents will fall back to the other available search tools
+- `cymbal` is an optional CLI tool; when present, the installer attempts its supported OpenCode hook without making hook success a bundle requirement
 
 If the operator wants the context-improved bundle and the selected AGENTS profile is one of the context-improved variants, let `scripts/install-profile.sh` handle it automatically.
 
@@ -460,7 +457,7 @@ opencode
 
 This allows Opencode to resolve `oc-arkive@latest` from `opencode.json` on first run.
 
-If the context-improved bundle was enabled, this first run also needs to succeed without command-not-found errors for `context-mode` or the local MCP tooling.
+If the context-improved bundle was enabled, this first run also needs to resolve the native `context-mode` plugin and start the local MCP tooling without errors.
 
 Success signal:
 
@@ -482,7 +479,7 @@ If optional snippets were enabled, verify that the relevant entries exist in `op
 Concrete checks:
 
 - if `context-improved` was enabled, verify `plugin` includes both `context-mode@latest` and `opencode-gpt-imagegen`
-- if `context-improved` was enabled, verify `mcp.context-mode`, `mcp.ast_grep`, and `mcp.context7.enabled` exist in `opencode.json`
+- if `context-improved` was enabled, verify there is no explicit `mcp.context-mode`, while `mcp.ast_grep` and `mcp.context7.enabled` exist in `opencode.json`
 - if `context7` was enabled, verify `mcp.context7.enabled` is `true`
 - if `chrome-devtools` was enabled, verify `mcp.chrome-devtools.command` is `["npx", "-y", "chrome-devtools-mcp@latest"]`
 - verify `plugin` includes `opencode-gpt-imagegen`
@@ -521,7 +518,7 @@ Use this as the source of truth for the interview.
 | AGENTS merge strategy | preserve the user's `AGENTS.md` as the base, or replace it only with explicit approval | preserve the user's file | explicit approval required before full replacement or conflict consolidation |
 | AGENTS profile | `shared`, `personal-default`, `shared-context-improved`, `personal-context-improved` | `shared` | none |
 | Config directory | `~/.config/opencode` or custom path | `~/.config/opencode` | none |
-| Context-improved bundle | enable or skip | skip | `jq`, `context-mode`, `uvx`, `CONTEXT7_API_KEY`, network access; `cymbal` optional CLI |
+| Context-improved bundle | enable or skip | skip | `jq`, `uvx`, `CONTEXT7_API_KEY`, network access; `context-mode` native OpenCode plugin; `cymbal` optional CLI |
 | `context7` MCP only | enable or skip | skip | `jq`, `CONTEXT7_API_KEY`, network access |
 | chrome-devtools MCP | enable or skip | skip | `jq`, `npx`, network for first `npx` download |
 | VS Code companion extension | install or skip | skip unless operator uses VS Code | VS Code and usually `code` CLI; latest Agent Hive fork release `.vsix` |

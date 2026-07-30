@@ -89,7 +89,6 @@ merge_json() {
 
 case "${SNIPPET_NAME}" in
   context-improved)
-    check_command context-mode
     check_command uvx
     if [[ -z "${CONTEXT7_API_KEY:-}" ]]; then
       printf 'CONTEXT7_API_KEY is not set.\n' >&2
@@ -107,17 +106,42 @@ case "${SNIPPET_NAME}" in
     ;;
 esac
 
-backup_json "${TARGET_JSON}" "opencode.json"
-merge_json "${TARGET_JSON}" "${SNIPPET_FILE}"
-
 AGENT_HIVE_SNIPPET_FILE="${REPO_ROOT}/profiles/optional/agent_hive.${SNIPPET_NAME}.json"
+if ! jq '.' "${TARGET_JSON}" >/dev/null 2>&1; then
+  printf 'Target config is not valid JSON: %s\n' "${TARGET_JSON}" >&2
+  exit 1
+fi
 if [[ -f "${AGENT_HIVE_SNIPPET_FILE}" ]]; then
   if [[ ! -f "${TARGET_AGENT_HIVE_JSON}" ]]; then
-    printf 'Target config not found: %s\n' "${TARGET_AGENT_HIVE_JSON}" >&2
+    printf 'Agent Hive target not found: %s\n' "${TARGET_AGENT_HIVE_JSON}" >&2
     exit 1
   fi
+  if ! jq '.' "${TARGET_AGENT_HIVE_JSON}" >/dev/null 2>&1; then
+    printf 'Agent Hive target is not valid JSON: %s\n' "${TARGET_AGENT_HIVE_JSON}" >&2
+    exit 1
+  fi
+fi
+
+backup_json "${TARGET_JSON}" "opencode.json"
+merge_json "${TARGET_JSON}" "${SNIPPET_FILE}"
+if [[ "${SNIPPET_NAME}" == "context-improved" ]]; then
+  tmpfile="$(mktemp)"
+  jq 'del(.mcp["context-mode"])' "${TARGET_JSON}" > "${tmpfile}"
+  install -m 0644 "${tmpfile}" "${TARGET_JSON}"
+  rm -f "${tmpfile}"
+fi
+
+if [[ -f "${AGENT_HIVE_SNIPPET_FILE}" ]]; then
   backup_json "${TARGET_AGENT_HIVE_JSON}" "agent_hive.json"
   merge_json "${TARGET_AGENT_HIVE_JSON}" "${AGENT_HIVE_SNIPPET_FILE}"
+fi
+
+if [[ "${SNIPPET_NAME}" == "context-improved" ]]; then
+  if command -v cymbal >/dev/null 2>&1; then
+    if ! OPENCODE_CONFIG_DIR="${TARGET_DIR}" cymbal hook install opencode --scope user; then
+      printf 'Warning: failed to install optional Cymbal OpenCode hook.\n' >&2
+    fi
+  fi
 fi
 
 printf 'Applied %s to %s\n' "${SNIPPET_NAME}" "${TARGET_JSON}"
