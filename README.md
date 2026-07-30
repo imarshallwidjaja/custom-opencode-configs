@@ -34,7 +34,7 @@ Optional features require their own tools:
 
 - `jq` for `scripts/enable-optional.sh`
 - `CONTEXT7_API_KEY` for the optional `context7` MCP entry
-- `context-mode`, `uvx`, and optionally `cymbal` for the context-improved workflow
+- `uvx` and optionally the `cymbal` CLI for the context-improved workflow; `context-mode` runs as a native OpenCode plugin
 - `npx` (Node.js) for the optional `chrome-devtools` browser MCP
 - VS Code if you want the companion extension
 
@@ -161,7 +161,7 @@ CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/i
 CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
 ```
 
-The two `*-context-improved` profiles require `jq`, `context-mode`, `uvx`, and `CONTEXT7_API_KEY`. The installer preflights those dependencies and applies the matching `context-improved` overlay automatically.
+The two `*-context-improved` profiles require `jq`, `uvx`, and `CONTEXT7_API_KEY`. The installer preflights those dependencies and applies the matching `context-improved` overlay automatically.
 
 ### Agent Hive config
 
@@ -234,8 +234,7 @@ The context-improved workflow adds the local context and structural-search toolc
 
 It enables:
 
-- the published `context-mode` plugin alongside `oc-arkive@latest`
-- a local `context-mode` MCP launched from `PATH`
+- the published `context-mode` native OpenCode plugin alongside `oc-arkive@latest`; it registers the `ctx_*` tools in-process
 - a local `ast_grep` MCP launched through `uvx`
 - the bundled remote `context7` MCP entry
 - Scout navigation rules for `cymbal`, `ast-grep`, and `context-mode`
@@ -243,7 +242,6 @@ It enables:
 Prerequisites:
 
 - `jq`
-- `context-mode` available on `PATH`
 - `uvx` available on `PATH`
 - `CONTEXT7_API_KEY` set in the environment
 - `cymbal` on `PATH` if you want that navigation tool available to agents
@@ -261,6 +259,8 @@ Enable the context-improved overlay after a plain install:
 ```
 
 If you select `shared-context-improved` or `personal-context-improved` during install, `scripts/install-profile.sh` applies this overlay automatically after checking the same prerequisites.
+
+`cymbal` remains optional. When it is on `PATH`, the context-improved bundle attempts to install its OpenCode hook into the selected `OPENCODE_CONFIG_DIR`; a hook failure warns without failing the bundle.
 
 ## Optional MCP bundles
 

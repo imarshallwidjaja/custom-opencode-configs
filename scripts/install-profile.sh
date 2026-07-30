@@ -42,7 +42,6 @@ profile_needs_context_improved() {
 
 preflight_context_improved() {
   check_command jq
-  check_command context-mode
   check_command uvx
   if [[ -z "${CONTEXT7_API_KEY:-}" ]]; then
     printf 'CONTEXT7_API_KEY is not set. It is required for %s.\n' "${AGENTS_PROFILE}" >&2
@@ -400,14 +399,14 @@ case "${AGENTS_PROFILE}" in
 esac
 
 shopt -s nullglob
-prompt_files=("${REPO_ROOT}"/.apm/prompts/*.prompt.md)
-if (( ${#prompt_files[@]} > 0 || ${#LEGACY_PROMPT_COMMANDS[@]} > 0 )); then
+if (( ${#LEGACY_PROMPT_COMMANDS[@]} > 0 )); then
   mkdir -p "${TARGET_DIR}/commands"
 fi
 for prompt_name in "${LEGACY_PROMPT_COMMANDS[@]}"; do
   rm -f "${TARGET_DIR}/commands/${prompt_name}.md"
 done
-for prompt_file in "${prompt_files[@]}"; do
+for prompt_file in "${REPO_ROOT}"/.apm/prompts/*.prompt.md; do
+  mkdir -p "${TARGET_DIR}/commands"
   prompt_name="$(basename "${prompt_file}" ".prompt.md")"
   install -m 0644 "${prompt_file}" "${TARGET_DIR}/commands/${prompt_name}.md"
 done

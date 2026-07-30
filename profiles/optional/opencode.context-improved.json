@@ -10,13 +10,9 @@
         "uvx",
         "--from",
         "git+https://github.com/ast-grep/ast-grep-mcp",
+        "--with",
+        "fastmcp",
         "ast-grep-server"
-      ]
-    },
-    "context-mode": {
-      "type": "local",
-      "command": [
-        "context-mode"
       ]
     },
     "context7": {

@@ -207,6 +207,98 @@ if [[ -x "${CURSOR_HELPER}" ]]; then pass "cursor-assets.sh exists and is execut
 if [[ -x "${INSTALL_HELPER}" ]]; then pass "install-profile.sh exists and is executable"; else fail "install-profile.sh missing or not executable"; fi
 
 # ---------------------------------------------------------------------------
+# 0. context-improved installs the optional Cymbal hook
+# ---------------------------------------------------------------------------
+printf '\n=== 0. context-improved Cymbal hook ===\n'
+optional_bin="${TMPDIR}/optional-bin"
+optional_target="${TMPDIR}/optional-target"
+optional_target_failing_cymbal="${TMPDIR}/optional-target-failing-cymbal"
+mkdir -p "${optional_bin}" "${optional_target}" "${optional_target_failing_cymbal}"
+ln -s "$(command -v jq)" "${optional_bin}/jq"
+printf '#!/bin/sh\nexit 0\n' > "${optional_bin}/uvx"
+cat > "${optional_bin}/cymbal" <<'SH'
+#!/bin/sh
+printf '%s\n' "${OPENCODE_CONFIG_DIR}" > "${CYMBAL_HOOK_LOG}"
+printf '%s\n' "$*" >> "${CYMBAL_HOOK_LOG}"
+SH
+chmod +x "${optional_bin}/uvx" "${optional_bin}/cymbal"
+cat > "${optional_target}/opencode.json" <<'JSON'
+{
+  "mcp": {
+    "context-mode": {
+      "type": "local",
+      "command": ["context-mode", "--mcp"]
+    },
+    "unrelated": {
+      "type": "local",
+      "command": ["unrelated-server"]
+    }
+  }
+}
+JSON
+printf '{}\n' > "${optional_target}/agent_hive.json"
+if PATH="${optional_bin}:/usr/bin:/bin" CYMBAL_HOOK_LOG="${TMPDIR}/cymbal-hook.log" CONTEXT7_API_KEY=test OPENCODE_CONFIG_DIR="${optional_target}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null; then
+  if [[ "$(sed -n '1p' "${TMPDIR}/cymbal-hook.log" 2>/dev/null)" == "${optional_target}" && "$(sed -n '2p' "${TMPDIR}/cymbal-hook.log" 2>/dev/null)" == "hook install opencode --scope user" ]]; then
+    pass "0a: context-improved installs Cymbal hook for selected config dir"
+  else
+    fail "0a: context-improved installs Cymbal hook for selected config dir"
+  fi
+else
+  fail "0a: context-improved install with Cymbal should succeed"
+fi
+if jq -e '(.plugin | index("context-mode@latest") != null) and (.mcp["context-mode"] == null) and (.mcp.unrelated.command == ["unrelated-server"]) and (.mcp.ast_grep.command == ["uvx", "--from", "git+https://github.com/ast-grep/ast-grep-mcp", "--with", "fastmcp", "ast-grep-server"]) and (.mcp.context7.enabled == true)' "${optional_target}/opencode.json" >/dev/null; then
+  pass "0b: context-improved removes stale MCP and preserves unrelated MCPs"
+else
+  fail "0b: context-improved removes stale MCP and preserves unrelated MCPs"
+fi
+cat > "${optional_bin}/cymbal" <<'SH'
+#!/bin/sh
+exit 23
+SH
+printf '{}\n' > "${optional_target_failing_cymbal}/opencode.json"
+printf '{}\n' > "${optional_target_failing_cymbal}/agent_hive.json"
+if PATH="${optional_bin}:/usr/bin:/bin" CONTEXT7_API_KEY=test OPENCODE_CONFIG_DIR="${optional_target_failing_cymbal}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null 2>"${TMPDIR}/optional-failing-cymbal.err" && grep -q 'Warning: failed to install optional Cymbal OpenCode hook.' "${TMPDIR}/optional-failing-cymbal.err" && jq -e '(.plugin | index("context-mode@latest") != null) and (.mcp["context-mode"] == null)' "${optional_target_failing_cymbal}/opencode.json" >/dev/null; then
+  pass "0c: failed Cymbal hook warns without failing or rolling back bundle"
+else
+  fail "0c: failed Cymbal hook should warn without failing or rolling back bundle"
+fi
+
+# ---------------------------------------------------------------------------
+# 0d. Missing agent_hive target exits non-zero without mutating opencode.json
+# ---------------------------------------------------------------------------
+printf '\n=== 0d. Missing agent_hive target no-mutation ===\n'
+td_missing_ah="${TMPDIR}/test-missing-ah"; mkdir -p "${td_missing_ah}"
+printf '{"mcp":{}}\n' > "${td_missing_ah}/opencode.json"
+cp "${td_missing_ah}/opencode.json" "${td_missing_ah}/opencode.json.before"
+if ! PATH="${optional_bin}:/usr/bin:/bin" CONTEXT7_API_KEY=test OPENCODE_CONFIG_DIR="${td_missing_ah}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null 2>&1; then
+  if cmp -s "${td_missing_ah}/opencode.json" "${td_missing_ah}/opencode.json.before"; then
+    pass "0d: missing agent_hive target exits non-zero, opencode.json unchanged"
+  else
+    fail "0d: missing agent_hive target mutated opencode.json"
+  fi
+else
+  fail "0d: missing agent_hive target should have exited non-zero"
+fi
+
+# ---------------------------------------------------------------------------
+# 0e. Malformed agent_hive target exits non-zero without mutating opencode.json
+# ---------------------------------------------------------------------------
+printf '\n=== 0e. Malformed agent_hive target no-mutation ===\n'
+td_malformed_ah="${TMPDIR}/test-malformed-ah"; mkdir -p "${td_malformed_ah}"
+printf '{"mcp":{}}\n' > "${td_malformed_ah}/opencode.json"
+cp "${td_malformed_ah}/opencode.json" "${td_malformed_ah}/opencode.json.before"
+printf 'not json\n' > "${td_malformed_ah}/agent_hive.json"
+if ! PATH="${optional_bin}:/usr/bin:/bin" CONTEXT7_API_KEY=test OPENCODE_CONFIG_DIR="${td_malformed_ah}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null 2>&1; then
+  if cmp -s "${td_malformed_ah}/opencode.json" "${td_malformed_ah}/opencode.json.before"; then
+    pass "0e: malformed agent_hive target exits non-zero, opencode.json unchanged"
+  else
+    fail "0e: malformed agent_hive target mutated opencode.json"
+  fi
+else
+  fail "0e: malformed agent_hive target should have exited non-zero"
+fi
+
+# ---------------------------------------------------------------------------
 # 1. Invalid env values table-driven (0, false, 2) must fail dry-run
 # ---------------------------------------------------------------------------
 printf '\n=== 1. Invalid env values (0, false, 2) table-driven ===\n'
