@@ -92,6 +92,7 @@ Some notes:
 
 - the `*-context-improved` AGENTS profiles auto-apply `context-improved` during `./scripts/install-profile.sh`; use `./scripts/enable-optional.sh context-improved` when you want to add the bundle after a plain install
 - the `*-context-improved` install commands require `jq`, `uvx`, and `CONTEXT7_API_KEY` because the installer preflights and auto-applies the matching bundle; `context-mode` is loaded as a native OpenCode plugin and `cymbal` remains optional
+- `cymbal hook install opencode --scope user` also runs during a plain `./scripts/install-profile.sh` when `cymbal` is already on `PATH`
 - the plain `shared` and `personal-default` profiles are the capability-safe defaults for the base install
 - `skip` is the preservation path for an existing `AGENTS.md`; it leaves the file untouched so the agent can fold in the new guidance structurally afterward
 

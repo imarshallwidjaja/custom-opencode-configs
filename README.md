@@ -10,6 +10,7 @@ This repo is for installing a ready-to-use Opencode profile. It keeps secrets, l
 
 - `profiles/base/opencode.json` -> `opencode.json`: base Opencode config with `oc-arkive@latest`
 - `profiles/base/agent_hive.json` -> `agent_hive.json`: Agent Hive role and model configuration
+- `profiles/base/plugins/dcg-guard.js` -> `plugins/dcg-guard.js`: Destructive Command Guard adapter, auto-loaded from the Opencode plugins directory
 - `AGENTS.md`: the selected operating profile for Opencode agents
 - `skills/`: shared markdown skills used by Opencode, plus personal skills from `profiles/personal/skills/` when the selected AGENTS profile is `personal-default` or `personal-context-improved`
 - `commands/`: non-Hive prompt-backed commands packaged under `.apm/prompts/` (`interview-drill-down`, `planning-prompt`)
@@ -24,11 +25,17 @@ Base setup requires:
 - `git`
 - `curl`
 - `opencode`
-- OpenAI access for the non-fast `openai/gpt-5.6-sol` model used by the default `agent_hive.json`
-- OpenAI access for the base `opencode.json` `agent.compaction` override (`openai/gpt-5.5`, `variant: low`)
-- `opencode-go/*` provider access for the base `opencode.json` `explore` override and selected Agent Hive Scout, simple-worker, UI, and capable-research roles
+- OpenAI access for the non-fast `openai/gpt-5.6-sol` and `openai/gpt-5.6-luna` models used by the default `agent_hive.json` and the base `opencode.json` `explore` / `compaction` overrides
 - OpenAI auth also covers the base `opencode-gpt-imagegen` plugin when you want image generation tools
 - `railway` CLI plus Railway auth when you want the packaged `use-railway` skill to operate Railway infrastructure
+
+The installer also copies `plugins/dcg-guard.js`. That plugin stays inactive until the `dcg` CLI is on `PATH`. Install Destructive Command Guard with:
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh?$(date +%s)" | bash -s -- --easy-mode
+```
+
+See the upstream project: [Dicklesworthstone/destructive_command_guard](https://github.com/dicklesworthstone/destructive_command_guard). The plugin does not need extra Node packages; Opencode loads it from `plugins/` at startup.
 
 Optional features require their own tools:
 
@@ -165,7 +172,9 @@ The two `*-context-improved` profiles require `jq`, `uvx`, and `CONTEXT7_API_KEY
 
 ### Agent Hive config
 
-The installer copies `profiles/base/agent_hive.json`. It is the sole canonical Hive config and uses OpenAI `gpt-5.6-sol` plus selected `opencode-go` roles. The target Opencode environment must resolve every provider and model it names. The installer does not add provider credentials, local proxy plugins, or provider shims to `opencode.json`. OpenAI roles always use non-fast `openai/gpt-5.6-sol`.
+The installer copies `profiles/base/agent_hive.json`. It is the sole canonical Hive config and uses only ChatGPT OAuth models a normal OpenAI login can see: non-fast `openai/gpt-5.6-sol` and `openai/gpt-5.6-luna`. Fast variants, `gpt-5.6-terra`, `opencode-go/*`, and personal `xai/*` models are not part of this profile. The target Opencode environment must resolve those two OpenAI models. The installer does not add provider credentials, local proxy plugins, or provider shims to `opencode.json`.
+
+Sol is the default for planning, orchestration, review, UI, and other high-capability seats. Luna is the default for scout, helper, fast/low-risk implementation, task-trace recovery, and other cheaper long-horizon seats. That split follows current [Artificial Analysis Intelligence Index](https://artificialanalysis.ai/#intelligence) and [DeepSWE](https://deepswe.datacurve.ai/) results: Kimi K3 and Grok 4.6 sit with Sol, while DeepSeek V4 Pro/Flash and GLM 5.2 sit with Luna.
 
 ## VS Code companion extension
 
@@ -260,7 +269,7 @@ Enable the context-improved overlay after a plain install:
 
 If you select `shared-context-improved` or `personal-context-improved` during install, `scripts/install-profile.sh` applies this overlay automatically after checking the same prerequisites.
 
-`cymbal` remains optional. When it is on `PATH`, the context-improved bundle attempts to install its OpenCode hook into the selected `OPENCODE_CONFIG_DIR`; a hook failure warns without failing the bundle.
+`cymbal` remains optional. When it is on `PATH`, `scripts/install-profile.sh` and the context-improved bundle both attempt to install its OpenCode hook into the selected `OPENCODE_CONFIG_DIR` with `cymbal hook install opencode --scope user`. That writes `plugins/cymbal-opencode.js`; this repository does not vendor that generated file. A hook failure warns without failing the install.
 
 ## Optional MCP bundles
 
@@ -293,6 +302,8 @@ The base `opencode.json` installs:
 
 - `oc-arkive@latest` for Agent Hive
 - `opencode-gpt-imagegen` for OpenAI image generation tools
+
+The installer also copies `plugins/dcg-guard.js`, which Opencode auto-loads from the config plugins directory. It intercepts `bash` tool calls when `dcg` is on `PATH`, and is a no-op when `dcg` is missing.
 
 `opencode-gpt-imagegen` currently uses ChatGPT Plus or Pro OAuth from Opencode. It does not provide an API-key image path. No credentials are embedded in this repository.
 

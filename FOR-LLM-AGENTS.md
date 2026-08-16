@@ -49,16 +49,16 @@ Do not invent extra setup questions. This repository exposes the following real 
 Some setup facts are not user choices:
 
 - The default full install path is `./scripts/install-profile.sh`.
-- The default repo profile uses non-fast `openai/gpt-5.6-sol` plus selected `opencode-go/*` models in `agent_hive.json`, and an `opencode-go/*` model for the base Opencode `explore` override in `opencode.json`.
-- The base `opencode.json` also sets `agent.compaction` to `openai/gpt-5.5` with `variant: low`, while keeping top-level compaction `auto` and `prune` disabled.
+- The default repo profile uses only non-fast `openai/gpt-5.6-sol` and `openai/gpt-5.6-luna` in `agent_hive.json`. The base Opencode `explore` override is `openai/gpt-5.6-luna` with `variant: max`, and `agent.compaction` is `openai/gpt-5.6-luna` with `variant: medium`. Top-level compaction `auto` and `prune` stay disabled.
+- The installer copies `plugins/dcg-guard.js`. Opencode auto-loads it. The plugin is a no-op until the `dcg` CLI is on `PATH`; install it from [destructive_command_guard](https://github.com/dicklesworthstone/destructive_command_guard) with `curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh?$(date +%s)" | bash -s -- --easy-mode`.
+- OpenAI Hive roles use only `openai/gpt-5.6-sol` or `openai/gpt-5.6-luna`, never a fast variant and never `gpt-5.6-terra`. Portable profiles do not import personal `xai/*`, `crof/*`, or `opencode-go/*` models.
 - The base `opencode.json` also includes the `opencode-gpt-imagegen` plugin. It currently requires ChatGPT Plus or Pro OAuth and does not provide API-key image generation; no credentials are stored in this repository.
-- OpenAI Hive roles always use exactly `openai/gpt-5.6-sol`, never a fast variant. Portable profiles do not import personal `xai/*` or `crof/*` models.
 - Worker auto-load uses the canonical Hive skill name `verification-before-completion`. Custom agents use only supported `baseAgent` values from the current Hive contract.
 - The published `oc-arkive@latest` plugin is installed by Opencode on first run.
 - Updating this repository's profile files does not prove Opencode is using the latest cached `oc-arkive@latest` plugin. After a profile update, restart Opencode. If the Agent Hive commands or plugin manifest still match an older release, remove or refresh the cached `oc-arkive` plugin entry according to the local Opencode cache layout before starting Opencode again.
 - The optional context-improved bundle adds the native OpenCode plugin `context-mode@latest`, local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay. The plugin registers `ctx_*` tools in-process; no `mcp.context-mode` entry is needed. The base Agent Hive config disables `context7` and `ast_grep` for Hive workers.
 - `context7` is present in the base config but disabled by default.
-- `cymbal` is a separate optional CLI tool. When it is available on `PATH`, the context-improved bundle attempts to install its supported OpenCode hook into the selected `OPENCODE_CONFIG_DIR`; a hook failure warns without failing the bundle.
+- `cymbal` is a separate optional CLI tool. When it is available on `PATH`, both the base installer and the context-improved bundle attempt to install its supported OpenCode hook into the selected `OPENCODE_CONFIG_DIR` with `cymbal hook install opencode --scope user`; a hook failure warns without failing the install. Do not copy `cymbal-opencode.js` by hand unless the CLI is unavailable.
 - The packaged `use-railway` skill needs the Railway CLI and Railway auth; without them it is unused.
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
 - This profile ships non-Hive prompt-backed commands `interview-drill-down` and `planning-prompt`. Hive workflow commands still come from the published `oc-arkive` plugin; the installer removes the old managed Hive command files from `commands/` after backing the directory up.
@@ -215,6 +215,14 @@ brew install 1broseidon/tap/cymbal
 
 Only do that when Homebrew is available. If `brew` is missing, explain that `cymbal` stays optional and continue with the base install unless the operator asks you to stop and install Homebrew first.
 
+If `dcg` is missing, offer to install Destructive Command Guard so the bundled `dcg-guard` plugin can intercept destructive shell commands:
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh?$(date +%s)" | bash -s -- --easy-mode
+```
+
+Do not treat a missing `dcg` binary as an install blocker. The plugin is copied either way and stays inactive until `dcg` is on `PATH`.
+
 If the repository is not already cloned, clone it before continuing.
 
 ### 3. Authenticate Opencode
@@ -253,7 +261,7 @@ Recommendation:
 
 ### 5. Install the base profile
 
-`profiles/base/agent_hive.json` is the sole Hive config source. It uses non-fast `openai/gpt-5.6-sol` plus selected `opencode-go/*` roles. Confirm those providers are available before install.
+`profiles/base/agent_hive.json` is the sole Hive config source. It uses only non-fast `openai/gpt-5.6-sol` and `openai/gpt-5.6-luna`. Confirm OpenAI ChatGPT OAuth is available before install.
 
 Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, `AGENTS.md`, and `skills/` contents with this repo's versions; installs optional standalone `agents/` or prompt-backed `commands/` only when this repo packages them; removes the old managed Hive command prompt files from `commands/`; and writes timestamped backups under `<target>/.backup/` first when those paths already exist. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `uvx`, and `CONTEXT7_API_KEY`, then auto-applies the matching `context-improved` overlays. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
 
@@ -470,6 +478,7 @@ Verify that the target config directory now contains:
 - `opencode.json`
 - `agent_hive.json`
 - `AGENTS.md`
+- `plugins/dcg-guard.js`
 - `skills/`
 - `agents/`
 - `commands/` when present, especially legacy managed Hive prompt commands that the installer now removes
@@ -483,12 +492,19 @@ Concrete checks:
 - if `context7` was enabled, verify `mcp.context7.enabled` is `true`
 - if `chrome-devtools` was enabled, verify `mcp.chrome-devtools.command` is `["npx", "-y", "chrome-devtools-mcp@latest"]`
 - verify `plugin` includes `opencode-gpt-imagegen`
-- verify every OpenAI model in `agent_hive.json` is exactly `openai/gpt-5.6-sol` with no `-fast` suffix
+- verify `plugins/dcg-guard.js` exists in the target config directory
+- verify every model in `agent_hive.json` and the base `opencode.json` agent overrides is exactly `openai/gpt-5.6-sol` or `openai/gpt-5.6-luna` with no `-fast` suffix and no `opencode-go/` provider
 
 If the operator wanted `cymbal`, verify that `cymbal` is available on `PATH` with a simple command such as:
 
 ```bash
 which cymbal
+```
+
+If the operator wanted `dcg`, verify it the same way:
+
+```bash
+which dcg
 ```
 
 If `brew` was used to install it, prefer confirming the installed formula too:
@@ -505,6 +521,7 @@ Then report back with:
 - whether `context7` was enabled
 - whether `chrome-devtools` was enabled
 - whether `cymbal` is installed as a CLI on this machine
+- whether `dcg` is installed as a CLI on this machine
 - whether the VS Code extension was installed
 - whether Cursor assets were skipped, inspected only, or installed; if installed, whether Rules were pasted into Cursor Settings -> Rules
 - any skipped options and why
@@ -521,6 +538,7 @@ Use this as the source of truth for the interview.
 | Context-improved bundle | enable or skip | skip | `jq`, `uvx`, `CONTEXT7_API_KEY`, network access; `context-mode` native OpenCode plugin; `cymbal` optional CLI |
 | `context7` MCP only | enable or skip | skip | `jq`, `CONTEXT7_API_KEY`, network access |
 | chrome-devtools MCP | enable or skip | skip | `jq`, `npx`, network for first `npx` download |
+| Destructive Command Guard CLI | install `dcg` or skip | recommend install; not required for profile copy | network for the upstream installer; plugin is inactive without `dcg` on `PATH` |
 | VS Code companion extension | install or skip | skip unless operator uses VS Code | VS Code and usually `code` CLI; latest Agent Hive fork release `.vsix` |
 | Cursor prompt-level assets | skip, inspect only, or install into the selected Cursor config target | skip unless operator asks for Cursor | `python3`; manual paste into Cursor Settings -> Rules |
 
@@ -611,7 +629,7 @@ CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor" ./scripts/
 ## What Not To Do
 
 - Do not ask the operator to choose model IDs from this repo. Those defaults are already encoded.
-- Do not select a mixed-provider Agent Hive profile unless the operator confirms the named providers are available.
+- Do not add `opencode-go/*`, `xai/*`, or other non-OpenAI providers to the portable Hive config.
 - Do not default to direct `apm install -g` for first-time setup.
 - Do not treat AGENTS merge as a blind append.
 - Do not silently overwrite the user's existing `AGENTS.md` during merge.

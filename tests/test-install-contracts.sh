@@ -121,6 +121,8 @@ SKILL
   mkdir -p "${REPO_FIXTURE}/profiles/base"
   echo '{"source":"profiles/base/opencode.json"}' > "${REPO_FIXTURE}/profiles/base/opencode.json"
   echo '{"source":"profiles/base/agent_hive.json"}' > "${REPO_FIXTURE}/profiles/base/agent_hive.json"
+  mkdir -p "${REPO_FIXTURE}/profiles/base/plugins"
+  printf '%s\n' '// fixture dcg-guard' > "${REPO_FIXTURE}/profiles/base/plugins/dcg-guard.js"
   echo '{"source":"obsolete-root/opencode.json"}' > "${REPO_FIXTURE}/opencode.json"
   echo '{"source":"obsolete-root/agent_hive.json"}' > "${REPO_FIXTURE}/agent_hive.json"
   echo '{}' > "${REPO_FIXTURE}/apm.yml"
@@ -991,6 +993,170 @@ run_td_frontmatter_test "59" "OpenCode one-space-indented description" opencode 
   "continuation\|indented\|malformed\|leading whitespace"
 
 build_fixture
+
+# ---------------------------------------------------------------------------
+# 62. Shared install copies dcg-guard plugin without wiping other plugins
+# ---------------------------------------------------------------------------
+printf '\n=== 62. Shared install copies dcg-guard plugin ===\n'
+td62="${TMPDIR}/test62"; mkdir -p "${td62}/plugins"
+printf '%s\n' '// keep me' > "${td62}/plugins/unrelated.js"
+OPENCODE_CONFIG_DIR="${td62}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td62}/err" && pass "62a: shared install succeeded" || fail "62b: shared install failed: $(cat "${td62}/err")"
+cmp -s "${REPO_FIXTURE}/profiles/base/plugins/dcg-guard.js" "${td62}/plugins/dcg-guard.js" && pass "62c: dcg-guard plugin installed" || fail "62d: dcg-guard plugin not copied from profiles/base/plugins"
+[[ -f "${td62}/plugins/unrelated.js" ]] && pass "62e: existing unrelated plugin preserved" || fail "62f: existing plugins directory was wiped"
+build_fixture
+
+# ---------------------------------------------------------------------------
+# 63. Missing dcg-guard plugin source fails before mutation
+# ---------------------------------------------------------------------------
+printf '\n=== 63. Missing dcg-guard plugin source fails before mutation ===\n'
+td63="${TMPDIR}/test63"; mkdir -p "${td63}"
+printf '{"existing":"opencode"}\n' > "${td63}/opencode.json"
+printf '{"existing":"agent_hive"}\n' > "${td63}/agent_hive.json"
+cp "${td63}/opencode.json" "${td63}/opencode.json.before"
+cp "${td63}/agent_hive.json" "${td63}/agent_hive.json.before"
+rm -f "${REPO_FIXTURE}/profiles/base/plugins/dcg-guard.js"
+if ! OPENCODE_CONFIG_DIR="${td63}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td63}/err"; then
+  grep -q 'ERROR' "${td63}/err" && pass "63a: missing dcg-guard plugin exits non-zero" || fail "63b: wrong error: $(cat "${td63}/err")"
+  if cmp -s "${td63}/opencode.json" "${td63}/opencode.json.before" && cmp -s "${td63}/agent_hive.json" "${td63}/agent_hive.json.before"; then
+    pass "63c: existing target config unmodified"
+  else
+    fail "63d: existing target config mutated"
+  fi
+else
+  fail "63e: install should have failed when profiles/base/plugins/dcg-guard.js is absent"
+fi
+build_fixture
+
+# ---------------------------------------------------------------------------
+# 64. Base install wires Cymbal hook when cymbal is on PATH
+# ---------------------------------------------------------------------------
+printf '\n=== 64. Base install Cymbal hook ===\n'
+cymbal_bin="${TMPDIR}/cymbal-bin"
+td64="${TMPDIR}/test64"
+td64_fail="${TMPDIR}/test64-fail"
+mkdir -p "${cymbal_bin}" "${td64}" "${td64_fail}"
+cat > "${cymbal_bin}/cymbal" <<'SH'
+#!/bin/sh
+printf '%s\n' "${OPENCODE_CONFIG_DIR}" > "${CYMBAL_HOOK_LOG}"
+printf '%s\n' "$*" >> "${CYMBAL_HOOK_LOG}"
+SH
+chmod +x "${cymbal_bin}/cymbal"
+if PATH="${cymbal_bin}:/usr/bin:/bin" CYMBAL_HOOK_LOG="${TMPDIR}/install-cymbal-hook.log" OPENCODE_CONFIG_DIR="${td64}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" >/dev/null; then
+  if [[ "$(sed -n '1p' "${TMPDIR}/install-cymbal-hook.log" 2>/dev/null)" == "${td64}" && "$(sed -n '2p' "${TMPDIR}/install-cymbal-hook.log" 2>/dev/null)" == "hook install opencode --scope user" ]]; then
+    pass "64a: base install installs Cymbal hook for selected config dir"
+  else
+    fail "64a: base install installs Cymbal hook for selected config dir"
+  fi
+else
+  fail "64b: base install with Cymbal should succeed"
+fi
+cat > "${cymbal_bin}/cymbal" <<'SH'
+#!/bin/sh
+exit 23
+SH
+if PATH="${cymbal_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td64_fail}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" >/dev/null 2>"${TMPDIR}/install-failing-cymbal.err" && grep -q 'Warning: failed to install optional Cymbal OpenCode hook.' "${TMPDIR}/install-failing-cymbal.err" && [[ -f "${td64_fail}/opencode.json" ]]; then
+  pass "64c: failed Cymbal hook warns without failing base install"
+else
+  fail "64c: failed Cymbal hook should warn without failing base install"
+fi
+build_fixture
+
+# ---------------------------------------------------------------------------
+# 65. Repository payloads are OpenAI gpt-5.6 luna/sol only
+# ---------------------------------------------------------------------------
+printf '\n=== 65. Repository OpenAI-only payload contracts ===\n'
+if python3 - "${BASELINE_PWD}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+hive_path = root / "profiles/base/agent_hive.json"
+open_path = root / "profiles/base/opencode.json"
+plugin_path = root / "profiles/base/plugins/dcg-guard.js"
+errors = []
+
+def walk(value, path="$"):
+    if isinstance(value, dict):
+        for key, child in value.items():
+            yield from walk(child, f"{path}.{key}")
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            yield from walk(child, f"{path}[{index}]")
+    else:
+        yield path, value
+
+try:
+    hive = json.loads(hive_path.read_text(encoding="utf-8"))
+    opencode = json.loads(open_path.read_text(encoding="utf-8"))
+except json.JSONDecodeError as exc:
+    print(f"invalid JSON: {exc}")
+    raise SystemExit(1)
+
+allowed_models = {"openai/gpt-5.6-luna", "openai/gpt-5.6-sol"}
+blocked_substrings = ("opencode-go/", "magic-compact", "opencode-go-multi-auth")
+for path, value in walk(hive):
+    if not isinstance(value, str):
+        continue
+    if path.endswith(".model") and (
+        value not in allowed_models or "-fast" in value or value.startswith("xai/") or "opencode-go/" in value
+    ):
+        errors.append(f"{hive_path.name} {path}={value}")
+
+for path, value in walk(opencode):
+    if not isinstance(value, str):
+        continue
+    if any(part in value for part in blocked_substrings):
+        errors.append(f"{open_path.name} {path}={value}")
+    if path.endswith(".model") and (value not in allowed_models or "-fast" in value):
+        errors.append(f"{open_path.name} {path}={value}")
+
+plugin = opencode.get("plugin") or []
+if "oc-arkive@latest" not in plugin:
+    errors.append("opencode.json missing oc-arkive@latest")
+if "opencode-gpt-imagegen" not in plugin:
+    errors.append("opencode.json missing opencode-gpt-imagegen")
+
+required_custom = {
+    "documentation-reviewer",
+    "adversarial-documentation-reviewer",
+    "scout-researcher-capable",
+    "scout-researcher-code",
+}
+custom = hive.get("customAgents") or {}
+missing = sorted(required_custom - set(custom))
+if missing:
+    errors.append(f"missing customAgents: {missing}")
+if "code-reviewer-documentation" in custom:
+    errors.append("legacy customAgents.code-reviewer-documentation still present")
+
+docs_members = (((hive.get("council") or {}).get("groups") or {}).get("documents") or {}).get("members") or []
+if "documentation-reviewer" not in docs_members:
+    errors.append("council.groups.documents missing documentation-reviewer")
+if "code-reviewer-documentation" in docs_members:
+    errors.append("council.groups.documents still references code-reviewer-documentation")
+
+summarizer = hive.get("taskTraceSummarizer") or {}
+if summarizer.get("model") not in allowed_models:
+    errors.append(f"taskTraceSummarizer.model={summarizer.get('model')}")
+
+if not plugin_path.is_file():
+    errors.append("profiles/base/plugins/dcg-guard.js missing")
+else:
+    text = plugin_path.read_text(encoding="utf-8")
+    if "Bun.which(\"dcg\")" not in text or "tool.execute.before" not in text:
+        errors.append("dcg-guard.js is not the Destructive Command Guard adapter")
+
+if errors:
+    print("\n".join(errors))
+    raise SystemExit(1)
+print("ok")
+PY
+then
+  pass "65a: base payloads are OpenAI gpt-5.6 luna/sol with required Hive seats"
+else
+  fail "65b: base payloads are OpenAI gpt-5.6 luna/sol with required Hive seats"
+fi
 
 # ---------------------------------------------------------------------------
 # Summary

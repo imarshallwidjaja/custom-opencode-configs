@@ -11,6 +11,7 @@ AGENTS_MODE="${OPENCODE_AGENTS_MODE:-install}"
 BASE_PAYLOAD_DIR="${REPO_ROOT}/profiles/base"
 OPENCODE_SOURCE="${BASE_PAYLOAD_DIR}/opencode.json"
 AGENT_HIVE_SOURCE="${BASE_PAYLOAD_DIR}/agent_hive.json"
+PLUGIN_SOURCE="${BASE_PAYLOAD_DIR}/plugins/dcg-guard.js"
 ENABLE_OPTIONAL_SCRIPT="${SCRIPT_DIR}/enable-optional.sh"
 LEGACY_PROMPT_COMMANDS=(
   approve-sync-plan
@@ -345,7 +346,7 @@ esac
 # Pre-mutation source readability check
 preflight_source_readable() {
   local file
-  for file in "${OPENCODE_SOURCE}" "${AGENT_HIVE_SOURCE}"; do
+  for file in "${OPENCODE_SOURCE}" "${AGENT_HIVE_SOURCE}" "${PLUGIN_SOURCE}"; do
     if [[ ! -r "${file}" ]]; then
       printf 'ERROR: %s is not readable\n' "${file}" >&2
       exit 1
@@ -375,6 +376,7 @@ mkdir -p "${TARGET_DIR}"
 
 backup_path "${TARGET_DIR}/opencode.json"
 backup_path "${TARGET_DIR}/agent_hive.json"
+backup_path "${TARGET_DIR}/plugins/dcg-guard.js"
 if [[ "${AGENTS_MODE}" == "install" ]]; then
   backup_path "${TARGET_DIR}/AGENTS.md"
 fi
@@ -387,6 +389,8 @@ mkdir -p "${TARGET_DIR}/skills" "${TARGET_DIR}/agents"
 
 install -m 0644 "${OPENCODE_SOURCE}" "${TARGET_DIR}/opencode.json"
 install -m 0644 "${AGENT_HIVE_SOURCE}" "${TARGET_DIR}/agent_hive.json"
+mkdir -p "${TARGET_DIR}/plugins"
+install -m 0644 "${PLUGIN_SOURCE}" "${TARGET_DIR}/plugins/dcg-guard.js"
 if [[ "${AGENTS_MODE}" == "install" ]]; then
   install -m 0644 "${AGENTS_SOURCE}" "${TARGET_DIR}/AGENTS.md"
 fi
@@ -417,6 +421,17 @@ if profile_needs_context_improved; then
   OPENCODE_CONFIG_DIR="${TARGET_DIR}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 "${ENABLE_OPTIONAL_SCRIPT}" context-improved
 fi
 
+if command -v cymbal >/dev/null 2>&1; then
+  if ! OPENCODE_CONFIG_DIR="${TARGET_DIR}" cymbal hook install opencode --scope user; then
+    printf 'Warning: failed to install optional Cymbal OpenCode hook.\n' >&2
+  fi
+fi
+
+if ! command -v dcg >/dev/null 2>&1; then
+  printf 'Warning: dcg is not on PATH. The installed dcg-guard plugin stays inactive until Destructive Command Guard is installed.\n' >&2
+  printf '%s\n' 'Install: curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh?$(date +%s)" | bash -s -- --easy-mode' >&2
+fi
+
 printf 'Installed Opencode profile into %s\n' "${TARGET_DIR}"
 if [[ "${AGENTS_MODE}" == "install" ]]; then
   printf 'Installed AGENTS profile: %s\n' "${AGENTS_PROFILE}"
@@ -424,6 +439,7 @@ else
   printf 'Skipped AGENTS.md replacement; selected profile for manual merge: %s\n' "${AGENTS_PROFILE}"
 fi
 printf 'Installed canonical Agent Hive config\n'
+printf 'Installed dcg-guard plugin\n'
 if profile_needs_context_improved; then
   printf 'Auto-applied optional bundle: context-improved\n'
 fi
