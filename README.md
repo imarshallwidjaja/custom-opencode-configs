@@ -174,7 +174,7 @@ The two `*-context-improved` profiles require `jq`, `uvx`, and `CONTEXT7_API_KEY
 
 The installer copies `profiles/base/agent_hive.json`. It is the sole canonical Hive config and uses only ChatGPT OAuth models a normal OpenAI login can see: non-fast `openai/gpt-5.6-sol` and `openai/gpt-5.6-luna`. Fast variants, `gpt-5.6-terra`, `opencode-go/*`, and personal `xai/*` models are not part of this profile. The target Opencode environment must resolve those two OpenAI models. The installer does not add provider credentials, local proxy plugins, or provider shims to `opencode.json`.
 
-Sol is the default for planning, orchestration, review, UI, and other high-capability seats. Luna is the default for scout, helper, fast/low-risk implementation, task-trace recovery, and other cheaper long-horizon seats. That split follows current [Artificial Analysis Intelligence Index](https://artificialanalysis.ai/#intelligence) and [DeepSWE](https://deepswe.datacurve.ai/) results: Kimi K3 and Grok 4.6 sit with Sol, while DeepSeek V4 Pro/Flash and GLM 5.2 sit with Luna.
+Sol is the default for planning, orchestration, review, UI, implementation, and other high-capability seats. Luna stays on the original OpenAI scout seats and task-trace recovery. Converted non-OpenAI roles (Kimi, DeepSeek, GLM, Grok) use `openai/gpt-5.6-sol` with `variant: high` instead of copying source `max` onto Sol or Luna; OpenAI `max` is a much higher reasoning effort than those providers' `max`. Seats that were already OpenAI keep their original effort (`high`, `xhigh`, or `max`). That split follows current [Artificial Analysis Intelligence Index](https://artificialanalysis.ai/#intelligence) and [DeepSWE](https://deepswe.datacurve.ai/) results.
 
 ## VS Code companion extension
 

@@ -1140,6 +1140,30 @@ summarizer = hive.get("taskTraceSummarizer") or {}
 if summarizer.get("model") not in allowed_models:
     errors.append(f"taskTraceSummarizer.model={summarizer.get('model')}")
 
+# Converted non-OpenAI seats have no matching GPT-5.6 effort. Default them to Sol high
+# instead of copying source `max` onto Sol/Luna.
+uncertain_sol_high = {
+    "forager-fast",
+    "forager-ui",
+    "forager-documents",
+    "adversarial-plan-reviewer",
+    "adversarial-documentation-reviewer",
+    "adversarial-code-reviewer",
+    "adversarial-simplicity-reviewer",
+    "adversarial-approach-advisor",
+    "ui-design-advisor",
+    "scout-researcher-code",
+    "forager-worker",
+    "hive-helper",
+    "vulnerability-reviewer",
+}
+for name in sorted(uncertain_sol_high):
+    entry = custom.get(name) or (hive.get("agents") or {}).get(name) or {}
+    if entry.get("model") != "openai/gpt-5.6-sol" or entry.get("variant") != "high":
+        errors.append(
+            f"{name} must be openai/gpt-5.6-sol high, got model={entry.get('model')} variant={entry.get('variant')}"
+        )
+
 if not plugin_path.is_file():
     errors.append("profiles/base/plugins/dcg-guard.js missing")
 else:
