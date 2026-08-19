@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Run a bundled drawio-skill script with this skill's uv-managed environment.
+# Works from any cwd; the venv lives next to the skill, not in the user project.
+#
+# Usage:
+#   bin/run autolayout.py graph.json -o diagram.drawio
+#   terraform show -json | bin/run tfstate.py - -o graph.json
+set -euo pipefail
+
+skill_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if ! command -v uv >/dev/null 2>&1; then
+  echo "error: uv is required on PATH (https://docs.astral.sh/uv/). Do not pip install." >&2
+  exit 1
+fi
+
+if [[ $# -lt 1 ]]; then
+  echo "usage: $0 <script.py> [args...]" >&2
+  exit 2
+fi
+
+script="$1"
+shift
+
+if [[ "$script" == /* ]]; then
+  :
+elif [[ -f "$skill_dir/scripts/$script" ]]; then
+  script="$skill_dir/scripts/$script"
+elif [[ -f "$script" ]]; then
+  script="$(cd "$(dirname "$script")" && pwd)/$(basename "$script")"
+else
+  echo "error: script not found: $script (expected under $skill_dir/scripts/)" >&2
+  exit 1
+fi
+
+exec uv run --project "$skill_dir" -- python "$script" "$@"

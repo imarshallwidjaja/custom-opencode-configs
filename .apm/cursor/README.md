@@ -7,10 +7,10 @@ Prompt-level Cursor assets sourced from this repository and installed globally u
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, `simplicity-reviewer`
 - seven commands: `compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`
 - ten Cursor-specific skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, `verification`
-- two canonical skills consumed from `.apm/skills/`: `humanizer` and `stop-slop`
+- five canonical skills consumed from `.apm/skills/`: `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`
 - optional personal skill `ivan-writing` installed when `CURSOR_INSTALL_IVAN_WRITING=1` is set
 
-`use-railway` needs the Railway CLI and Railway auth; without them the skill is unused.
+`use-railway` needs the Railway CLI and Railway auth; without them the skill is unused. `drawio-skill` needs `uv` and the draw.io desktop CLI; Graphviz is optional. `frontend-slides` needs `uv` for PPTX conversion and Node.js for PDF export or Vercel deploy.
 
 ## Source-to-target layout
 
@@ -18,7 +18,7 @@ Prompt-level Cursor assets sourced from this repository and installed globally u
 |--------|--------|-------|
 | `agents/*.md` | `<cursor-config>/agents/*.md` | Cursor user-global subagents |
 | `commands/*.md` | `<cursor-config>/commands/*.md` | Cursor user-global commands |
-| `skills/<name>/` | `<cursor-config>/skills/<name>/` | Cursor user-global skills; each skill requires `SKILL.md` and may include `references/` and `scripts/` |
+| `skills/<name>/` | `<cursor-config>/skills/<name>/` | Cursor user-global skills; Cursor-specific skills require `SKILL.md` and may include `references/` and `scripts/`. Canonical skills copied from `.apm/skills/` may also include packaged files such as `viewport-base.css`, `bin/`, `data/`, `styles/`, `assets/`, and `examples/` |
 | `rules/default-agent.md` | Cursor Settings -> Rules (manual paste) | Cursor exposes user rules via the Settings UI, not a deployable file path |
 
 The install target defaults to `${CURSOR_CONFIG_DIR:-$HOME/.cursor}`. Set `CURSOR_CONFIG_DIR` to one custom target, or set `CURSOR_CONFIG_DIRS` to a semicolon-separated target list for dual installs.
@@ -53,7 +53,9 @@ The `type: hybrid` field in `apm.yml` was left unchanged. External APM docs indi
 
 ## Canonical skill sourcing
 
-`humanizer` and `stop-slop` are consumed from `.apm/skills/` (the canonical source shared with Opencode), not duplicated under `.apm/cursor/skills/`. The Cursor installer copies them from the canonical source.
+`drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, and `stop-slop` are consumed from `.apm/skills/` (the canonical source shared with Opencode), not duplicated under `.apm/cursor/skills/`. The Cursor installer copies them from the canonical source.
+
+`drawio-skill` needs `uv` and the draw.io desktop CLI; Graphviz is optional for auto-layout. `frontend-slides` needs `uv` for PPTX conversion and Node.js for PDF export or Vercel deploy. Without those tools the skills remain unused.
 
 The personal `ivan-writing` skill is installed from `profiles/personal/skills/ivan-writing/` only when `CURSOR_INSTALL_IVAN_WRITING=1` is set. This is an opt-in because the skill contains the author's personal voice preferences. Only unset/empty and exact `1` are accepted; other values (0, false, 2) fail before any target mutation.
 

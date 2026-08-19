@@ -28,6 +28,8 @@ Base setup requires:
 - OpenAI access for the non-fast `openai/gpt-5.6-sol` and `openai/gpt-5.6-luna` models used by the default `agent_hive.json` and the base `opencode.json` `explore` / `compaction` overrides
 - OpenAI auth also covers the base `opencode-gpt-imagegen` plugin when you want image generation tools
 - `railway` CLI plus Railway auth when you want the packaged `use-railway` skill to operate Railway infrastructure
+- `uv` plus the draw.io desktop CLI when you want the packaged `drawio-skill` to generate or export diagrams; Graphviz (`dot`) is optional for auto-layout
+- Node.js when you want `frontend-slides` PDF export or Vercel deploy helpers; `uv` when converting PPTX
 
 The installer also copies `plugins/dcg-guard.js`. That plugin stays inactive until the `dcg` CLI is on `PATH`. Install Destructive Command Guard with:
 
@@ -208,6 +210,8 @@ Prerequisites:
 - executable `scripts/cursor-assets.sh`
 - default target `${HOME}/.cursor`, `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom target, or `CURSOR_CONFIG_DIRS="/path/one;/path/two"` for multiple targets
 - `railway` CLI plus Railway auth when using the packaged `use-railway` skill
+- `uv` plus the draw.io desktop CLI when using `drawio-skill`; Graphviz (`dot`) is optional for auto-layout
+- Node.js when using `frontend-slides` PDF export or Vercel deploy; `uv` when converting PPTX
 
 Quick inspection flow:
 
@@ -327,7 +331,7 @@ During install, `scripts/install-profile.sh` copies `.apm/prompts/*.prompt.md` i
 - `interview`
 - `start-execution`
 
-Reusable non-Hive behavior also remains packaged as skills under `.apm/skills/`. Skills that overlap with `oc-arkive` are kept here only when this profile intentionally forks them (`brainstorming`, `systematic-debugging`, `test-driven-development`). Near-duplicate plugin skills such as `ast-grep` are not packaged here. The `use-railway` skill is included by explicit request; it needs the Railway CLI and auth, and is otherwise inert.
+Reusable non-Hive behavior also remains packaged as skills under `.apm/skills/`. Skills that overlap with `oc-arkive` are kept here only when this profile intentionally forks them (`brainstorming`, `systematic-debugging`, `test-driven-development`). Near-duplicate plugin skills such as `ast-grep` are not packaged here. The `use-railway` skill is included by explicit request; it needs the Railway CLI and auth, and is otherwise inert. `drawio-skill`, `frontend-slides`, and `stop-design-slop` are shared canonical skills installed for both Opencode and Cursor. `drawio-skill` needs `uv` plus draw.io, and `frontend-slides` needs Node.js/`uv` for export helpers; both are otherwise inert.
 
 ## Assisted setup
 

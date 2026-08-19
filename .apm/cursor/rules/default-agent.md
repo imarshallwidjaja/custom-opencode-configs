@@ -93,6 +93,9 @@ Use installed Cursor skills or equivalent written guidance when the trigger appl
 | Human-facing prose representing Ivan (technical docs, resumes, reports, PRs, commit messages when voice is Ivan's) | `ivan-writing` (when installed) |
 | Filler phrases, throat-clearing openers, mechanical cadence, binary contrasts, dramatic fragmentation | `stop-slop` |
 | Promotional tone, vague attributions, chatbot artifacts, AI-vocabulary clusters, formatting tells | `humanizer` |
+| Generic, template-like, or AI-convergent UI | `stop-design-slop` |
+| HTML slide decks, briefings, PPT-to-web conversions | `frontend-slides` |
+| Draw.io diagrams, flowcharts, architecture, ER, or UML figures | `drawio-skill` |
 | Finishing a branch | `finishing-a-development-branch` |
 | Delegating work to subagents | `subagent-delegation` |
 

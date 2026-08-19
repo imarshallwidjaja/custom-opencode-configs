@@ -41,6 +41,9 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 | Starting isolated feature work or executing an approved implementation plan | `using-git-worktrees` |
 | React or Next.js UI/performance work | `react-best-practices` |
 | UI review, accessibility audit, visual/UX critique | `web-design-guidelines` |
+| Generic, template-like, or AI-convergent UI | `stop-design-slop` |
+| HTML slide decks, briefings, PPT-to-web conversions | `frontend-slides` |
+| Draw.io diagrams, flowcharts, architecture, ER, or UML figures | `drawio-skill` |
 | Prose written as Ivan (first-person ownership, personal voice) | `ivan-writing` |
 | Filler phrases, throat-clearing openers, mechanical cadence, rhetorical setups | `stop-slop` |
 | Promotional tone, vague attributions, chatbot artifacts, AI vocabulary clusters | `humanizer` |

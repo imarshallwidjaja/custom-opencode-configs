@@ -11,7 +11,7 @@ The selected Cursor asset root contains:
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, and `simplicity-reviewer`
 - seven commands: `compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, and `planning-prompt`
 - ten Cursor-specific skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
-- two canonical skills consumed from `.apm/skills/`: `humanizer` and `stop-slop`
+- five canonical skills consumed from `.apm/skills/`: `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, and `stop-slop`
 - optional personal skill `ivan-writing` installed when `CURSOR_INSTALL_IVAN_WRITING=1` is set
 - one default-Agent Rules document at `rules/default-agent.md`
 
@@ -34,6 +34,8 @@ The target defaults to `~/.cursor`. For inspection, set `CURSOR_CONFIG_DIR` to a
 - Set `CURSOR_CONFIG_DIR=/path/to/cursor-config` to validate, dry-run, or install into one custom target.
 - Set `CURSOR_CONFIG_DIRS="/path/one;/path/two"` to install into multiple Cursor config roots.
 - `railway` CLI plus Railway auth when you want the packaged `use-railway` skill to operate Railway infrastructure.
+- `uv` plus the draw.io desktop CLI when you want the packaged `drawio-skill` to generate or export diagrams. Graphviz (`dot`) is optional for auto-layout.
+- Node.js when you want `frontend-slides` PDF export or Vercel deploy helpers; `uv` when converting PPTX.
 - Set `CURSOR_INSTALL_IVAN_WRITING=1` to also install the personal `ivan-writing` skill from `profiles/personal/skills/ivan-writing/`.
 - Accepted values: unset/empty (opt-out, no personal skill) and exact `1` (opt-in). Any other value (0, false, 2, etc.) fails before install or dry-run starts.
 - When opt-in installs `ivan-writing`, the helper writes a hidden marker file `skills/ivan-writing/.cursor-managed` inside the installed skill directory.

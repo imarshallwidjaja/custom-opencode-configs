@@ -19,6 +19,40 @@ TMPDIR="$(mktemp -d)"
 
 REPO_FIXTURE="${TMPDIR}/reporoot"
 
+stub_canonical_skill_tree() {
+  local skill_name="$1"
+  python3 - "$BASELINE_PWD" "$REPO_FIXTURE" "$skill_name" <<'PY'
+import sys
+from pathlib import Path
+
+repo = Path(sys.argv[1])
+fixture = Path(sys.argv[2])
+name = sys.argv[3]
+src = repo / '.apm' / 'skills' / name
+dest = fixture / '.apm' / 'skills' / name
+if not src.is_dir():
+    raise SystemExit(f'missing real skill source for fixture stub: {src}')
+for path in sorted(src.rglob('*')):
+    rel = path.relative_to(src)
+    if any(part in {'.venv', '__pycache__'} for part in rel.parts):
+        continue
+    target = dest / rel
+    if path.is_dir():
+        target.mkdir(parents=True, exist_ok=True)
+        continue
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if path.name == 'SKILL.md':
+        target.write_text(
+            f'---\nname: {name}\ndescription: Use when testing fixture canonical skill {name}.\n---\nOK\n',
+            encoding='utf-8',
+        )
+    elif path.suffix.lower() == '.gz':
+        target.write_bytes(b'\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\x03\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+    else:
+        target.write_text('stub\n', encoding='utf-8')
+PY
+}
+
 build_fixture() {
   rm -rf "${REPO_FIXTURE}"
   mkdir -p "${REPO_FIXTURE}"
@@ -46,6 +80,10 @@ SKILL
   echo "# Structures" > "${REPO_FIXTURE}/.apm/skills/stop-slop/references/structures.md"
   echo "# README" > "${REPO_FIXTURE}/.apm/skills/stop-slop/README.md"
   echo "MIT License" > "${REPO_FIXTURE}/.apm/skills/stop-slop/LICENSE"
+
+  stub_canonical_skill_tree frontend-slides
+  stub_canonical_skill_tree drawio-skill
+  stub_canonical_skill_tree stop-design-slop
 
   # Cursor asset root (.apm/cursor/)
   mkdir -p "${REPO_FIXTURE}/.apm/cursor/agents" "${REPO_FIXTURE}/.apm/cursor/commands" "${REPO_FIXTURE}/.apm/cursor/skills" "${REPO_FIXTURE}/.apm/cursor/rules"
@@ -335,6 +373,13 @@ CURSOR_CONFIG_DIR="${td3}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}"
 [[ -f "${td3}/skills/ivan-writing/references/examples.md" ]] && pass "3g: examples.md" || fail "3h: examples.md not found"
 [[ -f "${td3}/skills/stop-slop/SKILL.md" ]] && pass "3i: stop-slop installed" || fail "3j: canonical skill not installed"
 [[ -f "${td3}/skills/humanizer/SKILL.md" ]] && pass "3k: humanizer installed" || fail "3l: canonical skill not installed"
+[[ -f "${td3}/skills/frontend-slides/SKILL.md" ]] && pass "3o: frontend-slides installed" || fail "3p: frontend-slides canonical skill not installed"
+[[ -f "${td3}/skills/frontend-slides/viewport-base.css" ]] && pass "3q: frontend-slides viewport-base.css" || fail "3r: frontend-slides extra file not copied"
+[[ -f "${td3}/skills/drawio-skill/SKILL.md" ]] && pass "3s: drawio-skill installed" || fail "3t: drawio-skill canonical skill not installed"
+[[ -f "${td3}/skills/drawio-skill/bin/run" ]] && pass "3u: drawio-skill bin/run" || fail "3v: drawio-skill extra file not copied"
+[[ -f "${td3}/skills/drawio-skill/data/shape-index.json.gz" ]] && pass "3w: drawio-skill gzip index" || fail "3x: drawio-skill gzip index not copied"
+[[ -f "${td3}/skills/stop-design-slop/SKILL.md" ]] && pass "3y: stop-design-slop installed" || fail "3z: stop-design-slop canonical skill not installed"
+[[ -f "${td3}/skills/stop-design-slop/references/review-rubric.md" ]] && pass "3aa: stop-design-slop rubric" || fail "3ab: stop-design-slop extra file not copied"
 [[ -f "${td3}/skills/ivan-writing/.cursor-managed" ]] && pass "3m: marker inside ivan-writing" || fail "3n: marker not inside ivan-writing"
 
 # ---------------------------------------------------------------------------
@@ -437,6 +482,9 @@ rm -rf "${REPO_FIXTURE}/profiles/personal/skills/ivan-writing"
 OPENCODE_CONFIG_DIR="${td12}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td12}/err" && pass "12a: shared install succeeded" || fail "12b: shared install failed"
 cmp -s "${REPO_FIXTURE}/profiles/base/opencode.json" "${td12}/opencode.json" && pass "12c: base opencode payload installed" || fail "12d: installed opencode payload did not come from profiles/base"
 cmp -s "${REPO_FIXTURE}/profiles/base/agent_hive.json" "${td12}/agent_hive.json" && pass "12e: base Agent Hive payload installed" || fail "12f: installed Agent Hive payload did not come from profiles/base"
+[[ -f "${td12}/skills/frontend-slides/SKILL.md" ]] && pass "12g: OpenCode frontend-slides installed" || fail "12h: OpenCode frontend-slides missing"
+[[ -f "${td12}/skills/drawio-skill/SKILL.md" ]] && pass "12i: OpenCode drawio-skill installed" || fail "12j: OpenCode drawio-skill missing"
+[[ -f "${td12}/skills/stop-design-slop/SKILL.md" ]] && pass "12k: OpenCode stop-design-slop installed" || fail "12l: OpenCode stop-design-slop missing"
 build_fixture
 
 # ---------------------------------------------------------------------------
@@ -497,9 +545,12 @@ td13="${TMPDIR}/test13"; mkdir -p "${td13}"
 echo "keep" > "${td13}/should_stay.txt"
 build_fixture
 before13="$(snapshot_tree "${td13}")"
-CURSOR_CONFIG_DIR="${td13}" bash "${CURSOR_HELPER}" install --dry-run 2>"${TMPDIR}/test13-dryrun.log" && pass "13a: dry-run succeeded" || fail "13b: dry-run failed"
+CURSOR_CONFIG_DIR="${td13}" bash "${CURSOR_HELPER}" install --dry-run >"${TMPDIR}/test13-dryrun.log" 2>&1 && pass "13a: dry-run succeeded" || fail "13b: dry-run failed"
 after13="$(snapshot_tree "${td13}")"
 [[ "${before13}" == "${after13}" ]] && pass "13c: dry-run target tree unchanged" || fail "13d: dry-run mutated target tree"
+grep -q 'canonical .apm/skills/frontend-slides' "${TMPDIR}/test13-dryrun.log" && pass "13e: dry-run plans frontend-slides" || fail "13f: dry-run omitted frontend-slides"
+grep -q 'canonical .apm/skills/drawio-skill' "${TMPDIR}/test13-dryrun.log" && pass "13g: dry-run plans drawio-skill" || fail "13h: dry-run omitted drawio-skill"
+grep -q 'canonical .apm/skills/stop-design-slop' "${TMPDIR}/test13-dryrun.log" && pass "13i: dry-run plans stop-design-slop" || fail "13j: dry-run omitted stop-design-slop"
 
 # ---------------------------------------------------------------------------
 # 14. CURSOR_CONFIG_DIRS=';;' must fail
@@ -522,6 +573,9 @@ build_fixture
 CURSOR_CONFIG_DIRS="${td15a};${td15b}" bash "${CURSOR_HELPER}" install 2>"${TMPDIR}/multi.log" && pass "15a: multi-root succeeded" || fail "15b: multi-root failed"
 [[ -f "${td15a}/skills/stop-slop/SKILL.md" ]] && pass "15c: first target canonical" || fail "15d: first target missing canonical"
 [[ -f "${td15b}/skills/stop-slop/SKILL.md" ]] && pass "15e: second target canonical" || fail "15f: second target missing canonical"
+[[ -f "${td15a}/skills/frontend-slides/SKILL.md" && -f "${td15b}/skills/frontend-slides/SKILL.md" ]] && pass "15k: both targets frontend-slides" || fail "15l: multi-root missing frontend-slides"
+[[ -f "${td15a}/skills/drawio-skill/SKILL.md" && -f "${td15b}/skills/drawio-skill/SKILL.md" ]] && pass "15m: both targets drawio-skill" || fail "15n: multi-root missing drawio-skill"
+[[ -f "${td15a}/skills/stop-design-slop/SKILL.md" && -f "${td15b}/skills/stop-design-slop/SKILL.md" ]] && pass "15o: both targets stop-design-slop" || fail "15p: multi-root missing stop-design-slop"
 [[ -f "${td15a}/agents/forager.md" ]] && pass "15g: first target agent" || fail "15h: first target missing agent"
 [[ -f "${td15b}/agents/forager.md" ]] && pass "15i: second target agent" || fail "15j: second target missing agent"
 
@@ -1181,6 +1235,19 @@ then
 else
   fail "65b: base payloads are OpenAI gpt-5.6 luna/sol with required Hive seats"
 fi
+
+# ---------------------------------------------------------------------------
+# 66. Extra drawio-skill files, including a local venv, fail Cursor validation
+# ---------------------------------------------------------------------------
+printf '\n=== 66. Extra drawio-skill source entries rejected ===\n'
+td66="${TMPDIR}/test66"; mkdir -p "${td66}"
+build_fixture
+mkdir -p "${REPO_FIXTURE}/.apm/skills/drawio-skill/.venv"
+printf 'stub\n' > "${REPO_FIXTURE}/.apm/skills/drawio-skill/.venv/pyvenv.cfg"
+! CURSOR_CONFIG_DIR="${td66}" bash "${CURSOR_HELPER}" install --dry-run 2>"${td66}/err" || fail "66a: should have failed"
+grep -q 'drawio-skill/.venv' "${td66}/err" && pass "66b: extra drawio-skill venv rejected" || fail "66c: wrong error: $(cat ${td66}/err)"
+cursor_target_unmodified "${td66}" && pass "66d: no managed paths created" || fail "66e: target mutated"
+build_fixture
 
 # ---------------------------------------------------------------------------
 # Summary

@@ -37,7 +37,10 @@ SKILLS=(
 )
 
 CANONICAL_SKILLS=(
+  drawio-skill
+  frontend-slides
   humanizer
+  stop-design-slop
   stop-slop
 )
 
@@ -301,6 +304,8 @@ def check_exact_names(directory, suffix, expected, label):
 def check_forbidden_content(path):
     if path.is_symlink() or not path.is_file():
         return
+    if path.suffix.lower() in {'.gz'}:
+        return
     text = read_text(path)
     for pattern, label in forbidden_patterns:
         match = pattern.search(text)
@@ -374,10 +379,133 @@ for _, asset, kind in cursor_entries:
 WRITING_ALLOWED_KEYS = frozenset({'name', 'description'})
 source_manifests = (
     (
+        repo_root / '.apm' / 'skills' / 'drawio-skill',
+        'drawio-skill',
+        (
+            '.gitignore',
+            'SKILL.md',
+            'bin',
+            'bin/run',
+            'data',
+            'data/SHAPE-INDEX-NOTICE.md',
+            'data/lobe-icons.json',
+            'data/shape-index.json.gz',
+            'pyproject.toml',
+            'references',
+            'references/autolayout.md',
+            'references/derasterize.md',
+            'references/diagram-types.md',
+            'references/live-infra.md',
+            'references/mermaid-authoring.md',
+            'references/pr-bot.md',
+            'references/shapes.md',
+            'references/style-extraction.md',
+            'references/style-presets.md',
+            'references/toolbox.md',
+            'references/troubleshooting.md',
+            'references/tubemap.md',
+            'references/xml-authoring.md',
+            'scripts',
+            'scripts/aiicons.py',
+            'scripts/autolayout.py',
+            'scripts/buildup.py',
+            'scripts/c4.py',
+            'scripts/ciimports.py',
+            'scripts/composeimports.py',
+            'scripts/compress.py',
+            'scripts/dockerimports.py',
+            'scripts/drawio2mermaid.py',
+            'scripts/drawio2pptx.py',
+            'scripts/drawiodiff.py',
+            'scripts/drawiohtml.py',
+            'scripts/edgeports.py',
+            'scripts/encode_drawio_url.py',
+            'scripts/explain.py',
+            'scripts/goimports.py',
+            'scripts/heatmap.py',
+            'scripts/jsimports.py',
+            'scripts/k8simports.py',
+            'scripts/openapiimports.py',
+            'scripts/prdiff.py',
+            'scripts/pyclasses.py',
+            'scripts/pyimports.py',
+            'scripts/raster2drawio.py',
+            'scripts/relabel.py',
+            'scripts/repair_png.py',
+            'scripts/restyle.py',
+            'scripts/runbook.py',
+            'scripts/rustimports.py',
+            'scripts/seqlayout.py',
+            'scripts/shapesearch.py',
+            'scripts/sqlerd.py',
+            'scripts/svgflow.py',
+            'scripts/tfimports.py',
+            'scripts/tfstate.py',
+            'scripts/timelapse.py',
+            'scripts/tubemap.py',
+            'scripts/validate.py',
+            'styles',
+            'styles/built-in',
+            'styles/built-in/colorblind-safe.json',
+            'styles/built-in/corporate.json',
+            'styles/built-in/dark.json',
+            'styles/built-in/default.json',
+            'styles/built-in/handdrawn.json',
+            'styles/schema.json',
+            'uv.lock',
+        ),
+        None,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'frontend-slides',
+        'frontend-slides',
+        (
+            'SKILL.md',
+            'references',
+            'references/briefing.css',
+            'references/html-template.md',
+            'references/visual-system.md',
+            'scripts',
+            'scripts/deploy.sh',
+            'scripts/export-pdf.sh',
+            'scripts/extract-pptx.py',
+            'viewport-base.css',
+        ),
+        WRITING_ALLOWED_KEYS,
+    ),
+    (
         repo_root / '.apm' / 'skills' / 'humanizer',
         'humanizer',
         ('SKILL.md', 'references', 'references/patterns.md'),
         WRITING_ALLOWED_KEYS,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'stop-design-slop',
+        'stop-design-slop',
+        (
+            'SKILL.md',
+            'assets',
+            'assets/anti-slop-principles.svg',
+            'assets/card-soup-vs-structure.svg',
+            'assets/salience-hierarchy.svg',
+            'examples',
+            'examples/README.md',
+            'examples/card-soup-before.html',
+            'examples/dashboard-after.html',
+            'examples/dashboard-before.html',
+            'examples/generic-hero-before.html',
+            'examples/product-led-hero-after.html',
+            'examples/structural-hierarchy-after.html',
+            'references',
+            'references/pattern-catalog.md',
+            'references/research-basis.md',
+            'references/review-rubric.md',
+            'references/source-index.md',
+            'references/terminology.md',
+            'scripts',
+            'scripts/audit_ui.py',
+        ),
+        None,
     ),
     (
         repo_root / '.apm' / 'skills' / 'stop-slop',

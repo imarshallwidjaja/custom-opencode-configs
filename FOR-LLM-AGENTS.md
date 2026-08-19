@@ -60,6 +60,8 @@ Some setup facts are not user choices:
 - `context7` is present in the base config but disabled by default.
 - `cymbal` is a separate optional CLI tool. When it is available on `PATH`, both the base installer and the context-improved bundle attempt to install its supported OpenCode hook into the selected `OPENCODE_CONFIG_DIR` with `cymbal hook install opencode --scope user`; a hook failure warns without failing the install. Do not copy `cymbal-opencode.js` by hand unless the CLI is unavailable.
 - The packaged `use-railway` skill needs the Railway CLI and Railway auth; without them it is unused.
+- The packaged `drawio-skill` needs `uv` and the draw.io desktop CLI; Graphviz (`dot`) is optional for auto-layout. Without those tools it is unused.
+- The packaged `frontend-slides` skill needs `uv` for PPTX conversion and Node.js for PDF export or Vercel deploy. Without those tools the authoring guidance still applies.
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
 - This profile ships non-Hive prompt-backed commands `interview-drill-down` and `planning-prompt`. Hive workflow commands still come from the published `oc-arkive` plugin; the installer removes the old managed Hive command files from `commands/` after backing the directory up.
 - Cursor setup is separate from Opencode setup. It does not install `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, or `oc-arkive`.
@@ -446,7 +448,7 @@ Verify the installed layout by checking for:
 - six files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/`
 - seven files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/`
 - the managed Cursor skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
-- the canonical skills `humanizer` and `stop-slop` under `skills/`
+- the canonical skills `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, and `stop-slop` under `skills/`
 - `ivan-writing` under `skills/` when installed via `CURSOR_INSTALL_IVAN_WRITING=1`
 
 If `CURSOR_CONFIG_DIRS` was used, check those three layout conditions under every target in the semicolon-separated list.
