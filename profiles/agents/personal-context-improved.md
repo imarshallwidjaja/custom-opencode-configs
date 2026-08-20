@@ -44,6 +44,7 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 | Generic, template-like, or AI-convergent UI | `stop-design-slop` |
 | HTML slide decks, briefings, PPT-to-web conversions | `frontend-slides` |
 | Draw.io diagrams, flowcharts, architecture, ER, or UML figures | `drawio-skill` |
+| Drafting or explaining code, architecture, systems, processes, decisions, requirements, PRDs, plans, docs, or reviews | `writing-for-humans` |
 | Prose written as Ivan (first-person ownership, personal voice) | `ivan-writing` |
 | Filler phrases, throat-clearing openers, mechanical cadence, rhetorical setups | `stop-slop` |
 | Promotional tone, vague attributions, chatbot artifacts, AI vocabulary clusters | `humanizer` |
@@ -127,15 +128,15 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 | When finishing a worktree, squash-merge, rebase, or cherry-pick the completed change back into the checkout branch, then remove the worktree and task branch | Use a plain merge commit from a temporary worktree branch, or leave generated artifacts/duplicate churn behind |
 | Explicitly remove or revert unwanted artifacts before merge | Assume aborting a worktree removed artifacts already committed on a task branch |
 
-## Writing (load ivan-writing for full guidance)
+## Writing
 
+- Load `writing-for-humans` when drafting or explaining software and product work.
 - Load `ivan-writing` when writing as Ivan: technical/operator, professional/application, and casual/informal registers.
-- Load `stop-slop` for filler, formulaic structure, and cadence cleanup.
-- Load `humanizer` for promotional, vague, or chatbot-like content cleanup.
+- Load `stop-slop` only when existing prose has filler, formulaic structure, or manufactured cadence.
+- Load `humanizer` only when existing prose is promotional, vague, or chatbot-like.
 - Load `ivan-writing` with `resume-tailoring` for resumes, CVs, and cover letters.
 - Write in Ivan's voice by default: direct, process-first, technically grounded, pragmatic.
 - Neutral/team/third-party voice overrides Ivan voice when explicitly requested.
-- When a sentence explains the intended framing instead of showing the work, replace it with the work.
 - Casual register is opt-in. Default remains operator voice. Trigger only when task is a casual email, informal message, class assignment, or the user explicitly asks for casual tone.
 
 ## Browser Usage

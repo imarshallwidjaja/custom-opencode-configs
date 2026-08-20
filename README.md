@@ -331,7 +331,7 @@ During install, `scripts/install-profile.sh` copies `.apm/prompts/*.prompt.md` i
 - `interview`
 - `start-execution`
 
-Reusable non-Hive behavior also remains packaged as skills under `.apm/skills/`. Skills that overlap with `oc-arkive` are kept here only when this profile intentionally forks them (`brainstorming`, `systematic-debugging`, `test-driven-development`). Near-duplicate plugin skills such as `ast-grep` are not packaged here. The `use-railway` skill is included by explicit request; it needs the Railway CLI and auth, and is otherwise inert. `drawio-skill`, `frontend-slides`, and `stop-design-slop` are shared canonical skills installed for both Opencode and Cursor. `drawio-skill` needs `uv` plus draw.io, and `frontend-slides` needs Node.js/`uv` for export helpers; both are otherwise inert.
+Reusable non-Hive behavior also remains packaged as skills under `.apm/skills/`. Skills that overlap with `oc-arkive` are kept here only when this profile intentionally forks them (`brainstorming`, `systematic-debugging`, `test-driven-development`). Near-duplicate plugin skills such as `ast-grep` are not packaged here. The `use-railway` skill is included by explicit request; it needs the Railway CLI and auth, and is otherwise inert. `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, and `writing-for-humans` are shared canonical skills installed for both Opencode and Cursor. `drawio-skill` needs `uv` plus draw.io, and `frontend-slides` needs Node.js/`uv` for export helpers; both are otherwise inert.
 
 ## Assisted setup
 

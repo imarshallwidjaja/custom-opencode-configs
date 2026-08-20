@@ -42,6 +42,7 @@ CANONICAL_SKILLS=(
   humanizer
   stop-design-slop
   stop-slop
+  writing-for-humans
 )
 
 usage() {
@@ -518,6 +519,17 @@ source_manifests = (
             'references/examples.md',
             'references/phrases.md',
             'references/structures.md',
+        ),
+        WRITING_ALLOWED_KEYS,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'writing-for-humans',
+        'writing-for-humans',
+        (
+            'SKILL.md',
+            'references',
+            'references/examples.md',
+            'references/sources.md',
         ),
         WRITING_ALLOWED_KEYS,
     ),

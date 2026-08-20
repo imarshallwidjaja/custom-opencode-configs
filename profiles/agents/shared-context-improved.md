@@ -42,6 +42,7 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 | Generic, template-like, or AI-convergent UI | `stop-design-slop` |
 | HTML slide decks, briefings, PPT-to-web conversions | `frontend-slides` |
 | Draw.io diagrams, flowcharts, architecture, ER, or UML figures | `drawio-skill` |
+| Drafting or explaining code, architecture, systems, processes, decisions, requirements, PRDs, plans, docs, or reviews | `writing-for-humans` |
 | Filler phrases, throat-clearing openers, mechanical cadence, rhetorical setups | `stop-slop` |
 | Promotional tone, vague attributions, chatbot artifacts, AI vocabulary clusters | `humanizer` |
 | Resumes, CVs, cover letters | `resume-tailoring` |
@@ -126,17 +127,9 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 
 ## Writing
 
-- Load `stop-slop` for filler, formulaic structure, and cadence cleanup.
-- Load `humanizer` for promotional, vague, or chatbot-like content cleanup.
-- Start with the operating context, role, system, or concrete situation when that framing is clear.
-- Define the thing early, then move through purpose, prerequisites or dependencies, and workflow.
-- Name concrete system objects early: `Dockerfile`, `config.ini`, `vm_meta.data`, `pg_restore`, collections, hooks, schemas, workflows, source of truth.
-- Explain what must exist before something can run. Prefer prerequisites, inputs, state, handoff points, and failure boundaries over broad capability claims.
-- For evaluative writing, start with the classification or main judgment, then move from operating model to technical evidence.
-- Keep related issues grouped instead of forcing one issue per paragraph.
-- Write for a technical peer. Prefer plain statements, concrete evidence, clear reasoning.
-- Use concrete nouns over vague abstractions. Prefer hands-on verbs.
-- When a sentence explains the intended framing instead of showing the work, replace it with the work.
+- Load `writing-for-humans` when drafting or explaining software and product work.
+- Load `stop-slop` only when existing prose has filler, formulaic structure, or manufactured cadence.
+- Load `humanizer` only when existing prose is promotional, vague, or chatbot-like.
 
 ## Browser Usage
 

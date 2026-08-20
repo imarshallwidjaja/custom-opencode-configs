@@ -58,7 +58,7 @@ build_fixture() {
   mkdir -p "${REPO_FIXTURE}"
 
   # Canonical skills (.apm/skills/)
-  for skill in humanizer stop-slop context-mode cymbal hard-cut web-design-guidelines writing-skills; do
+  for skill in humanizer stop-slop writing-for-humans context-mode cymbal hard-cut web-design-guidelines writing-skills; do
     mkdir -p "${REPO_FIXTURE}/.apm/skills/${skill}"
     cat > "${REPO_FIXTURE}/.apm/skills/${skill}/SKILL.md" <<SKILL
 ---
@@ -80,6 +80,11 @@ SKILL
   echo "# Structures" > "${REPO_FIXTURE}/.apm/skills/stop-slop/references/structures.md"
   echo "# README" > "${REPO_FIXTURE}/.apm/skills/stop-slop/README.md"
   echo "MIT License" > "${REPO_FIXTURE}/.apm/skills/stop-slop/LICENSE"
+
+  # writing-for-humans references
+  mkdir -p "${REPO_FIXTURE}/.apm/skills/writing-for-humans/references"
+  echo "# Examples" > "${REPO_FIXTURE}/.apm/skills/writing-for-humans/references/examples.md"
+  echo "# Sources" > "${REPO_FIXTURE}/.apm/skills/writing-for-humans/references/sources.md"
 
   stub_canonical_skill_tree frontend-slides
   stub_canonical_skill_tree drawio-skill
@@ -373,6 +378,8 @@ CURSOR_CONFIG_DIR="${td3}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}"
 [[ -f "${td3}/skills/ivan-writing/references/examples.md" ]] && pass "3g: examples.md" || fail "3h: examples.md not found"
 [[ -f "${td3}/skills/stop-slop/SKILL.md" ]] && pass "3i: stop-slop installed" || fail "3j: canonical skill not installed"
 [[ -f "${td3}/skills/humanizer/SKILL.md" ]] && pass "3k: humanizer installed" || fail "3l: canonical skill not installed"
+[[ -f "${td3}/skills/writing-for-humans/SKILL.md" ]] && pass "3ac: writing-for-humans installed" || fail "3ad: writing-for-humans canonical skill not installed"
+[[ -f "${td3}/skills/writing-for-humans/references/sources.md" ]] && pass "3ae: writing-for-humans sources" || fail "3af: writing-for-humans extra file not copied"
 [[ -f "${td3}/skills/frontend-slides/SKILL.md" ]] && pass "3o: frontend-slides installed" || fail "3p: frontend-slides canonical skill not installed"
 [[ -f "${td3}/skills/frontend-slides/viewport-base.css" ]] && pass "3q: frontend-slides viewport-base.css" || fail "3r: frontend-slides extra file not copied"
 [[ -f "${td3}/skills/drawio-skill/SKILL.md" ]] && pass "3s: drawio-skill installed" || fail "3t: drawio-skill canonical skill not installed"
@@ -485,6 +492,7 @@ cmp -s "${REPO_FIXTURE}/profiles/base/agent_hive.json" "${td12}/agent_hive.json"
 [[ -f "${td12}/skills/frontend-slides/SKILL.md" ]] && pass "12g: OpenCode frontend-slides installed" || fail "12h: OpenCode frontend-slides missing"
 [[ -f "${td12}/skills/drawio-skill/SKILL.md" ]] && pass "12i: OpenCode drawio-skill installed" || fail "12j: OpenCode drawio-skill missing"
 [[ -f "${td12}/skills/stop-design-slop/SKILL.md" ]] && pass "12k: OpenCode stop-design-slop installed" || fail "12l: OpenCode stop-design-slop missing"
+[[ -f "${td12}/skills/writing-for-humans/SKILL.md" ]] && pass "12m: OpenCode writing-for-humans installed" || fail "12n: OpenCode writing-for-humans missing"
 build_fixture
 
 # ---------------------------------------------------------------------------
@@ -551,6 +559,7 @@ after13="$(snapshot_tree "${td13}")"
 grep -q 'canonical .apm/skills/frontend-slides' "${TMPDIR}/test13-dryrun.log" && pass "13e: dry-run plans frontend-slides" || fail "13f: dry-run omitted frontend-slides"
 grep -q 'canonical .apm/skills/drawio-skill' "${TMPDIR}/test13-dryrun.log" && pass "13g: dry-run plans drawio-skill" || fail "13h: dry-run omitted drawio-skill"
 grep -q 'canonical .apm/skills/stop-design-slop' "${TMPDIR}/test13-dryrun.log" && pass "13i: dry-run plans stop-design-slop" || fail "13j: dry-run omitted stop-design-slop"
+grep -q 'canonical .apm/skills/writing-for-humans' "${TMPDIR}/test13-dryrun.log" && pass "13k: dry-run plans writing-for-humans" || fail "13l: dry-run omitted writing-for-humans"
 
 # ---------------------------------------------------------------------------
 # 14. CURSOR_CONFIG_DIRS=';;' must fail
@@ -576,6 +585,7 @@ CURSOR_CONFIG_DIRS="${td15a};${td15b}" bash "${CURSOR_HELPER}" install 2>"${TMPD
 [[ -f "${td15a}/skills/frontend-slides/SKILL.md" && -f "${td15b}/skills/frontend-slides/SKILL.md" ]] && pass "15k: both targets frontend-slides" || fail "15l: multi-root missing frontend-slides"
 [[ -f "${td15a}/skills/drawio-skill/SKILL.md" && -f "${td15b}/skills/drawio-skill/SKILL.md" ]] && pass "15m: both targets drawio-skill" || fail "15n: multi-root missing drawio-skill"
 [[ -f "${td15a}/skills/stop-design-slop/SKILL.md" && -f "${td15b}/skills/stop-design-slop/SKILL.md" ]] && pass "15o: both targets stop-design-slop" || fail "15p: multi-root missing stop-design-slop"
+[[ -f "${td15a}/skills/writing-for-humans/SKILL.md" && -f "${td15b}/skills/writing-for-humans/SKILL.md" ]] && pass "15q: both targets writing-for-humans" || fail "15r: multi-root missing writing-for-humans"
 [[ -f "${td15a}/agents/forager.md" ]] && pass "15g: first target agent" || fail "15h: first target missing agent"
 [[ -f "${td15b}/agents/forager.md" ]] && pass "15i: second target agent" || fail "15j: second target missing agent"
 
@@ -1183,6 +1193,17 @@ if missing:
     errors.append(f"missing customAgents: {missing}")
 if "code-reviewer-documentation" in custom:
     errors.append("legacy customAgents.code-reviewer-documentation still present")
+
+docs_autoload = {
+    "forager-documents": ("writing-for-humans",),
+    "documentation-reviewer": ("writing-for-humans",),
+    "adversarial-documentation-reviewer": ("adversarial-review", "writing-for-humans"),
+}
+for name, prefix in docs_autoload.items():
+    agent = custom.get(name) or {}
+    skills = tuple(agent.get("autoLoadSkills") or [])
+    if skills[: len(prefix)] != prefix:
+        errors.append(f"{name} autoLoadSkills={list(skills)!r} does not start with {list(prefix)!r}")
 
 docs_members = (((hive.get("council") or {}).get("groups") or {}).get("documents") or {}).get("members") or []
 if "documentation-reviewer" not in docs_members:

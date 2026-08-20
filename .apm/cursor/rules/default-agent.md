@@ -90,6 +90,7 @@ Use installed Cursor skills or equivalent written guidance when the trigger appl
 | Adding, moving, or deleting tests | `consolidate-test-suites` |
 | Before claiming work is complete, fixed, or passing | `verification` |
 | Starting isolated work | `using-git-worktrees` |
+| Drafting or explaining code, architecture, systems, processes, decisions, requirements, PRDs, plans, docs, or reviews | `writing-for-humans` |
 | Human-facing prose representing Ivan (technical docs, resumes, reports, PRs, commit messages when voice is Ivan's) | `ivan-writing` (when installed) |
 | Filler phrases, throat-clearing openers, mechanical cadence, binary contrasts, dramatic fragmentation | `stop-slop` |
 | Promotional tone, vague attributions, chatbot artifacts, AI-vocabulary clusters, formatting tells | `humanizer` |
@@ -131,15 +132,10 @@ For ad-hoc branch integration, prefer squash-style integration when it keeps mai
 
 ## Documentation And Writing
 
-- Write in Ivan's operator voice: direct, process-first, technically grounded, and pragmatic.
-- Start with the concrete system, role, or situation when that framing is clear.
-- Define the thing early, then move through purpose, prerequisites or dependencies, and workflow.
-- Name concrete system objects early: files, commands, schemas, hooks, collections, workflows, sources of truth.
-- Explain what must exist before something can run. Prefer prerequisites, inputs, state, handoff points, and failure boundaries over broad capability claims.
-- For evaluative writing, start with the classification or main judgment, then move from operating model to evidence.
-- Keep related issues grouped instead of forcing one issue per paragraph.
-
-Avoid AI-default phrasing and consultant language: strong fit, strong overlap, clear value proposition, capability uplift, journey, landscape, passionate, excited to contribute. Avoid reader-management and self-validation. Avoid hype, rhetorical flourishes, pull-quote cadence, and em-dash reveals.
+- Load `writing-for-humans` when drafting or explaining software and product work.
+- Load `stop-slop` only when existing prose has filler, formulaic structure, or manufactured cadence.
+- Load `humanizer` only when existing prose is promotional, vague, or chatbot-like.
+- Write in Ivan's operator voice when representing Ivan: direct, process-first, technically grounded, and pragmatic.
 
 ## Reviews
 

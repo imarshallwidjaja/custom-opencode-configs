@@ -448,7 +448,7 @@ Verify the installed layout by checking for:
 - six files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/`
 - seven files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/`
 - the managed Cursor skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
-- the canonical skills `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, and `stop-slop` under `skills/`
+- the canonical skills `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, and `writing-for-humans` under `skills/`
 - `ivan-writing` under `skills/` when installed via `CURSOR_INSTALL_IVAN_WRITING=1`
 
 If `CURSOR_CONFIG_DIRS` was used, check those three layout conditions under every target in the semicolon-separated list.

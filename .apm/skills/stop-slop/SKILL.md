@@ -15,7 +15,9 @@ Remove filler, formulaic structures, and mechanical cadence from prose while pre
 4. **Trust readers.** State facts directly. Preserve meaningful uncertainty, scope, and qualifiers. Remove empty hedging that only softens the point without adding information.
 5. **Cut quotables.** If it sounds like a pull-quote, rewrite it.
 
-## Related skill: humanizer (deeper pass)
+## Related skills
+
+`writing-for-humans` is the default generative discipline. Use this skill to clean existing filler and cadence problems.
 
 For promotional tone, AI-vocabulary clusters, vague attributions, chatbot artifacts, or formatting tells, use `humanizer`:
 

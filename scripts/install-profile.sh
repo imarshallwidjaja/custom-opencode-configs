@@ -337,6 +337,7 @@ validate_skill_source() {
 
 validate_skill_source "${REPO_ROOT}/.apm/skills/humanizer" humanizer ".apm/skills/humanizer" "SKILL.md" "patterns.md" || exit 1
 validate_skill_source "${REPO_ROOT}/.apm/skills/stop-slop" stop-slop ".apm/skills/stop-slop" "SKILL.md README.md LICENSE" "examples.md phrases.md structures.md" || exit 1
+validate_skill_source "${REPO_ROOT}/.apm/skills/writing-for-humans" writing-for-humans ".apm/skills/writing-for-humans" "SKILL.md" "examples.md sources.md" || exit 1
 case "${AGENTS_PROFILE}" in
   personal-default|personal-context-improved)
     validate_skill_source "${REPO_ROOT}/profiles/personal/skills/ivan-writing" ivan-writing "profiles/personal/skills/ivan-writing" "SKILL.md" "registers.md examples.md" || exit 1

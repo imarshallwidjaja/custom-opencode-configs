@@ -7,6 +7,8 @@ description: Use when human-facing prose needs Ivan's voice across technical/pro
 
 Ivan's writing rules. Precedence: facts/meaning/ownership/claim strength/uncertainty > explicit task/audience/register/format > Ivan profile > generic cleanup.
 
+Portable clarity is `writing-for-humans`. This skill is the personal voice overlay.
+
 Trigger when task involves documentation, reports, PR/commit prose, resumes, or user-facing explanations. Override with neutral/team/third-party voice when explicitly requested.
 
 ## Source claims before writing

@@ -2,7 +2,7 @@
 
 This directory contains installable `AGENTS.md` profiles for Opencode.
 
-All four profiles share the same baseline quality, delegation, verification, search, browser, handoff, worktree, and document-conversion rules. Interactive browser work routes to `chrome-devtools`. The `personal-*` profiles add the author's operator-writing style via the `ivan-writing` personal skill (loaded from `profiles/personal/skills/ivan-writing/`); the `shared*` profiles intentionally omit that voice layer. The `*-context-improved` profiles add strong explicit routing rules for the optional context-improved toolchain; the plain profiles use the baseline routing without those explicit assumptions.
+All four profiles share the same baseline quality, delegation, verification, search, browser, handoff, worktree, and document-conversion rules. Interactive browser work routes to `chrome-devtools`. Portable writing clarity is handled by `writing-for-humans`. The `personal-*` profiles add the author's operator-writing style via the `ivan-writing` personal skill (loaded from `profiles/personal/skills/ivan-writing/`); the `shared*` profiles intentionally omit that voice layer. The `*-context-improved` profiles add strong explicit routing rules for the optional context-improved toolchain; the plain profiles use the baseline routing without those explicit assumptions.
 
 ## Why this exists
 

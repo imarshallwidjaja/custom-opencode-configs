@@ -22,7 +22,7 @@ Use when the text:
 - Contains chatbot artifacts ("Of course!", "I hope this helps", "Let me know if you'd like...")
 - Uses mechanical formatting (inline-header lists, title-cased headings, emojis, curly quotes)
 
-If the text is mainly suffering from filler, throat-clearing openers, or mechanical cadence, start with `stop-slop` first.
+If the text is mainly suffering from filler, throat-clearing openers, or mechanical cadence, start with `stop-slop` first. For ordinary drafting, use `writing-for-humans` rather than treating this skill as the default voice.
 
 ## Workflow
 
