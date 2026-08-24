@@ -5,8 +5,8 @@ Prompt-level Cursor assets sourced from this repository and installed globally u
 ## Inventory
 
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, `simplicity-reviewer`
-- eight commands: `compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`, `reflect`
-- ten Cursor-specific skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, `verification`
+- eight installed commands: seven Cursor-specific commands (`compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`) plus the shared canonical `reflect`
+- eleven Cursor-specific skills: `agents-md-mastery`, `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, `verification`
 - six canonical skills consumed from `.apm/skills/`: `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, `writing-for-humans`
 - optional personal skill `ivan-writing` installed when `CURSOR_INSTALL_IVAN_WRITING=1` is set
 
@@ -17,11 +17,14 @@ Prompt-level Cursor assets sourced from this repository and installed globally u
 | Source | Target | Notes |
 |--------|--------|-------|
 | `agents/*.md` | `<cursor-config>/agents/*.md` | Cursor user-global subagents |
-| `commands/*.md` | `<cursor-config>/commands/*.md` | Cursor user-global commands |
+| `.apm/cursor/commands/*.md` | `<cursor-config>/commands/*.md` | Seven genuinely Cursor-specific user-global commands |
+| `.apm/prompts/reflect.prompt.md` | `<cursor-config>/commands/reflect.md` | Shared `/reflect` policy, installed byte-for-byte by the helper |
 | `skills/<name>/` | `<cursor-config>/skills/<name>/` | Cursor user-global skills; Cursor-specific skills require `SKILL.md` and may include `references/` and `scripts/`. Canonical skills copied from `.apm/skills/` may also include packaged files such as `viewport-base.css`, `bin/`, `data/`, `styles/`, `assets/`, and `examples/` |
 | `rules/default-agent.md` | Cursor Settings -> Rules (manual paste) | Cursor exposes user rules via the Settings UI, not a deployable file path |
 
 The install target defaults to `${CURSOR_CONFIG_DIR:-$HOME/.cursor}`. Set `CURSOR_CONFIG_DIR` to one custom target, or set `CURSOR_CONFIG_DIRS` to a semicolon-separated target list for dual installs.
+
+`.apm/prompts/reflect.prompt.md` is the only tracked `/reflect` command source. Validation rejects `.apm/cursor/commands/reflect.md` as a stale duplicate. APM routes the canonical prompt to project-local Opencode and Cursor command targets; it may normalize frontmatter or newlines, but both targets retain the same command metadata and body semantics.
 
 Windows Cursor can read different global asset roots depending on whether the active workspace is a normal Windows folder or a WSL folder. For Windows Cursor used with WSL projects, install into both roots, for example:
 
@@ -57,7 +60,9 @@ For package-layout verification, work from a disposable copy because `apm instal
 uvx --from apm-cli apm install --target opencode,cursor
 ```
 
-## Canonical skill sourcing
+## Canonical shared sourcing
+
+Other Cursor commands continue to come from `.apm/cursor/commands/`.
 
 `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, and `writing-for-humans` are consumed from `.apm/skills/` (the canonical source shared with Opencode), not duplicated under `.apm/cursor/skills/`. The Cursor installer copies them from the canonical source.
 
@@ -69,6 +74,6 @@ When opt-in installs `ivan-writing`, the helper writes a marker file `skills/iva
 
 ## Opencode install isolation
 
-`scripts/install-profile.sh` copies from `.apm/skills/`, `.apm/agents/`, and `.apm/prompts/*.prompt.md` into the Opencode config directory. It does not copy `.apm/cursor/**`. Cursor assets under `.apm/cursor/` do not appear in the Opencode install path. Opencode prompt-backed commands come only from `.apm/prompts/`, currently `interview-drill-down`, `planning-prompt`, and `reflect`.
+`scripts/install-profile.sh` copies from `.apm/skills/`, `.apm/agents/`, and `.apm/prompts/*.prompt.md` into the Opencode config directory. It does not copy `.apm/cursor/**`, including the Cursor-specific `agents-md-mastery` adaptation. Opencode prompt-backed commands come only from `.apm/prompts/`, currently `interview-drill-down`, `planning-prompt`, and `reflect`.
 
 For personal profiles (`personal-default`, `personal-context-improved`), `scripts/install-profile.sh` also copies from `profiles/personal/skills/` into the Opencode config directory.

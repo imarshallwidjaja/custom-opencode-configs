@@ -5,6 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 DEFAULT_TARGET_DIR="${CURSOR_CONFIG_DIR:-${HOME}/.cursor}"
+REFLECT_SOURCE="${REPO_ROOT}/.apm/prompts/reflect.prompt.md"
 
 AGENTS=(
   approach-advisor
@@ -22,9 +23,9 @@ COMMANDS=(
   interview
   interview-drill-down
   planning-prompt
-  reflect
 )
 SKILLS=(
+  agents-md-mastery
   brainstorming
   consolidate-test-suites
   finishing-a-development-branch
@@ -325,7 +326,19 @@ if not rules_file.is_file():
     fail('missing required file: rules/default-agent.md')
 
 check_exact_names(root / 'agents', '.md', expected_agents, 'agents')
+stale_reflect = root / 'commands' / 'reflect.md'
+if stale_reflect.exists() or stale_reflect.is_symlink():
+    fail('stale duplicate commands/reflect.md is present; use canonical .apm/prompts/reflect.prompt.md')
 check_exact_names(root / 'commands', '.md', expected_commands, 'commands')
+
+reflect_source = repo_root / '.apm' / 'prompts' / 'reflect.prompt.md'
+if reflect_source.is_symlink() or not reflect_source.is_file():
+    fail('missing canonical reflect source: .apm/prompts/reflect.prompt.md')
+else:
+    reflect_frontmatter = parse_frontmatter(reflect_source, allowed_keys={'description'})
+    if not reflect_frontmatter.get('description'):
+        fail('.apm/prompts/reflect.prompt.md frontmatter has empty description')
+    check_forbidden_content(reflect_source)
 
 commands_dir = root / 'commands'
 if commands_dir.is_dir():
@@ -598,6 +611,7 @@ print_copy_plan() {
     source="${root}/commands/${name}.md"
     printf 'Would copy %s -> %s\n' "${source#"${root}/"}" "${target_dir}/commands/${name}.md"
   done
+  printf 'Would copy canonical .apm/prompts/reflect.prompt.md -> %s\n' "${target_dir}/commands/reflect.md"
   for name in "${SKILLS[@]}"; do
     source="${root}/skills/${name}"
     printf 'Would copy %s -> %s\n' "${source#"${root}/"}" "${target_dir}/skills/${name}"
@@ -683,6 +697,10 @@ install_assets_into() {
     install -m 0644 "${root}/commands/${name}.md" "${target_dir}/commands/${name}.md"
     printf 'Copied commands/%s.md -> %s\n' "${name}" "${target_dir}/commands/${name}.md"
   done
+  backup_path "${target_dir}" "${target_dir}/commands/reflect.md"
+  rm -rf "${target_dir}/commands/reflect.md"
+  install -m 0644 "${REFLECT_SOURCE}" "${target_dir}/commands/reflect.md"
+  printf 'Copied canonical .apm/prompts/reflect.prompt.md -> %s\n' "${target_dir}/commands/reflect.md"
   for name in "${SKILLS[@]}"; do
     backup_path "${target_dir}" "${target_dir}/skills/${name}"
     rm -rf "${target_dir}/skills/${name}"
@@ -766,7 +784,7 @@ check_target_readability() {
   fi
 
   if [[ -d "${target}/commands" ]]; then
-    for name in "${COMMANDS[@]}"; do
+    for name in "${COMMANDS[@]}" reflect; do
       entry_path="${target}/commands/${name}.md"
       if [[ -e "${entry_path}" || -L "${entry_path}" ]]; then
         if [[ -d "${entry_path}" ]]; then

@@ -9,19 +9,21 @@ Use this when you want Cursor to have similar reusable guidance, subagents, comm
 The selected Cursor asset root contains:
 
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, and `simplicity-reviewer`
-- eight commands: `compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`, and `reflect`
-- ten Cursor-specific skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
+- eight installed commands: seven Cursor-specific commands (`compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`) plus the shared canonical `reflect`
+- eleven Cursor-specific skills: `agents-md-mastery`, `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
 - six canonical skills consumed from `.apm/skills/`: `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, and `writing-for-humans`
 - optional personal skill `ivan-writing` installed when `CURSOR_INSTALL_IVAN_WRITING=1` is set
 - one default-Agent Rules document at `rules/default-agent.md`
 
-The default source root is `.apm/cursor`. If APM validation rejects unknown `.apm/cursor/**` content and a later task moves the bundle, the helper also supports the fallback root `cursor-assets/`. Do not hardcode only one root in local automation; let `scripts/cursor-assets.sh` select it.
+The default Cursor-specific source root is `.apm/cursor`. If APM validation rejects unknown `.apm/cursor/**` content and a later task moves the bundle, the helper also supports the fallback root `cursor-assets/`. The shared `/reflect` source remains `.apm/prompts/reflect.prompt.md` in either layout. Do not hardcode only one Cursor-specific root in local automation; let `scripts/cursor-assets.sh` select it.
 
 ## Why A Helper Installs The Assets
 
 Current APM documentation shows project-local Cursor deployment under a repository `.cursor/` directory. It does not prove that pure `apm install -g` deploys agents, commands, skills, and Rules into global `~/.cursor`.
 
-For v1, `scripts/cursor-assets.sh` is the installer boundary. It validates the selected asset root, copies supported assets into one or more target Cursor config directories, and prints the Rules text for manual paste. When install replaces existing Cursor files or directories, it writes backups under the helper's backup directory before replacement.
+For v1, `scripts/cursor-assets.sh` is the installer boundary. It validates the selected Cursor-specific asset root, rejects a competing `.apm/cursor/commands/reflect.md`, copies `/reflect` from `.apm/prompts/reflect.prompt.md`, installs the other supported assets into one or more target Cursor config directories, and prints the Rules text for manual paste. When install replaces existing Cursor files or directories, it writes backups under the helper's backup directory before replacement.
+
+APM also routes `.apm/prompts/reflect.prompt.md` to project-local Opencode and Cursor command targets. APM may normalize frontmatter or newlines, so semantic metadata/body parity is the contract there; helper installs remain byte-identical to the canonical source.
 
 The target defaults to `~/.cursor`. For inspection, set `CURSOR_CONFIG_DIR` to a temporary directory. For dual installs, set `CURSOR_CONFIG_DIRS` to a semicolon-separated list.
 
@@ -102,7 +104,7 @@ Excluded examples include:
 
 The Cursor assets can describe workflows and review expectations, but they cannot create Agent Hive features, update Hive task state, call Hive tools, or guarantee the same runtime behavior as Opencode.
 
-The Cursor-native `/reflect` command uses only the conversation and files available to the current Cursor session. It waits for operator approval before editing accessible instruction files; when a scratchpad or global target is unavailable, it returns the approved exact change without claiming to apply it. Cursor User Rules uses the explicit `cursor-user-rules:manual` target: the current Rules text must be supplied or visible for conflict analysis, and an approved change is returned with exact manual-paste instructions rather than a claim that Cursor Settings was read or edited.
+The shared `/reflect` command uses only evidence and targets available to the current harness. In Cursor, it waits for operator approval before editing accessible instruction files; when a scratchpad or global target is unavailable, it returns the approved exact change and manual destination without claiming to apply it. Cursor User Rules uses the explicit `cursor-user-rules:manual` target: the current Rules text must be supplied or visible for conflict analysis, and an approved change is returned with exact manual-paste instructions rather than a claim that Cursor Settings was read or edited.
 
 ## Verify The Installed Layout
 
@@ -132,6 +134,7 @@ Expected high-level layout:
 ~/.cursor/commands/interview-drill-down.md
 ~/.cursor/commands/planning-prompt.md
 ~/.cursor/commands/reflect.md
+~/.cursor/skills/agents-md-mastery/SKILL.md
 ~/.cursor/skills/<skill-name>/SKILL.md
 ```
 

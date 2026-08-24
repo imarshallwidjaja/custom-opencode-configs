@@ -47,7 +47,7 @@ Optional features require their own tools:
 - `npx` (Node.js) for the optional `chrome-devtools` browser MCP
 - VS Code if you want the companion extension
 
-Cursor prompt-level assets have a separate setup path. They are validated and installed by `./scripts/cursor-assets.sh` from the repository root, not by the Opencode profile installer. That helper requires `python3`, defaults to `${HOME}/.cursor`, accepts `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom target, and accepts semicolon-separated `CURSOR_CONFIG_DIRS="/path/one;/path/two"` for dual installs. `CURSOR_INSTALL_IVAN_WRITING` accepts only unset/empty (opt-out) or exact `1` (opt-in); the skill is backed up and removed on opt-out only when a helper-owned marker file exists. See `CURSOR.md` for details.
+Cursor prompt-level assets have a separate setup path. They are validated and installed by `./scripts/cursor-assets.sh` from the repository root, not by the Opencode profile installer. It requires `python3`, defaults to `${HOME}/.cursor`, accepts `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom target, and accepts semicolon-separated `CURSOR_CONFIG_DIRS="/path/one;/path/two"` for dual installs. `CURSOR_INSTALL_IVAN_WRITING` accepts only unset/empty (opt-out) or exact `1` (opt-in); the skill is backed up and removed on opt-out only when a helper-owned marker file exists. See `CURSOR.md` for details.
 
 Install Opencode if it is not already present:
 
@@ -199,7 +199,7 @@ Use the extension for:
 
 ## Cursor prompt-level assets
 
-This repository also ships a Cursor v1 asset bundle for prompt-level behavior. It installs reusable Cursor subagents, commands, and skills under the selected Cursor config directory, then prints default-Agent Rules that you paste into Cursor Settings -> Rules.
+This repository also ships a Cursor v1 asset bundle for prompt-level behavior. It installs reusable Cursor subagents, seven Cursor-specific commands, the shared canonical `/reflect` command, eleven Cursor-specific skills including `agents-md-mastery`, and shared canonical skills under the selected Cursor config directory, then prints default-Agent Rules that you paste into Cursor Settings -> Rules.
 
 Cursor v1 is not Agent Hive runtime parity. It does not install `oc-arkive`, Hive tools, `opencode.json`, `agent_hive.json`, or an Opencode `AGENTS.md` profile.
 
@@ -319,7 +319,7 @@ This profile ships three non-Hive prompt-backed commands from `.apm/prompts/`:
 - `planning-prompt`
 - `reflect`
 
-`/reflect` reviews the current session for durable learnings, keeps provisional cross-project workflow and personification preferences in the user's existing scratchpad, and promotes them to global instructions only after repeated evidence and explicit operator approval. The Cursor command can also return an approved `cursor-user-rules:manual` change for manual paste when the current User Rules text was supplied or visible; it never claims to read or edit Cursor Settings. The prompts contain no user-specific paths or fixed personal preferences.
+`.apm/prompts/reflect.prompt.md` is the only tracked `/reflect` source for both Opencode and Cursor. It reviews the current session for durable learnings, keeps provisional cross-project workflow and personification preferences in the user's existing scratchpad, and promotes them to global instructions only after repeated evidence and explicit operator approval. In Cursor, it can also return an approved `cursor-user-rules:manual` change for manual paste when the current User Rules text was supplied or visible; it never claims to read or edit Cursor Settings. The prompt contains no user-specific paths or fixed personal preferences.
 
 Hive workflow commands still come from the published `oc-arkive` plugin, including `/interview`, `/implementation-brief`, `/hive-plan`, `/approve-sync-plan`, `/start-execution`, `/council-directive`, `/council`, and `/compact-summary`. Do not keep local copies of those Hive-owned command files in the Opencode config directory.
 
@@ -334,7 +334,7 @@ During install, `scripts/install-profile.sh` copies `.apm/prompts/*.prompt.md` i
 - `interview`
 - `start-execution`
 
-Reusable non-Hive behavior also remains packaged as skills under `.apm/skills/`. Skills that overlap with `oc-arkive` are kept here only when this profile intentionally forks them (`brainstorming`, `systematic-debugging`, `test-driven-development`). Near-duplicate plugin skills such as `ast-grep` are not packaged here. The `use-railway` skill is included by explicit request; it needs the Railway CLI and auth, and is otherwise inert. `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, and `writing-for-humans` are shared canonical skills installed for both Opencode and Cursor. `drawio-skill` needs `uv` plus draw.io, and `frontend-slides` needs Node.js/`uv` for export helpers; both are otherwise inert.
+Reusable non-Hive behavior also remains packaged as skills under `.apm/skills/`. Skills that overlap with `oc-arkive` are kept here only when this profile intentionally forks them (`brainstorming`, `systematic-debugging`, `test-driven-development`). Near-duplicate plugin skills such as `ast-grep` are not packaged here. The Cursor-specific `agents-md-mastery` adaptation stays under `.apm/cursor/skills/` so it does not shadow Agent Hive's generated OpenCode skill. The `use-railway` skill is included by explicit request; it needs the Railway CLI and auth, and is otherwise inert. `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, and `writing-for-humans` are shared canonical skills installed for both Opencode and Cursor. `drawio-skill` needs `uv` plus draw.io, and `frontend-slides` needs Node.js/`uv` for export helpers; both are otherwise inert.
 
 ## Assisted setup
 

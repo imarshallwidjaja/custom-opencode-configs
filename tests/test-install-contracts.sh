@@ -107,7 +107,7 @@ AGENT
   done
 
   # Cursor commands
-  for cmd in compact-summary council-directive council implementation-brief interview interview-drill-down planning-prompt reflect; do
+  for cmd in compact-summary council-directive council implementation-brief interview interview-drill-down planning-prompt; do
     echo "# ${cmd}" > "${REPO_FIXTURE}/.apm/cursor/commands/${cmd}.md"
   done
 
@@ -128,7 +128,7 @@ Be helpful. Use plain language. Avoid Hive tools.
 RULES
 
   # Cursor skills
-  for skill in brainstorming consolidate-test-suites finishing-a-development-branch root-cause-finder subagent-delegation systematic-debugging test-driven-development use-railway using-git-worktrees verification; do
+  for skill in agents-md-mastery brainstorming consolidate-test-suites finishing-a-development-branch root-cause-finder subagent-delegation systematic-debugging test-driven-development use-railway using-git-worktrees verification; do
     mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/${skill}"
     cat > "${REPO_FIXTURE}/.apm/cursor/skills/${skill}/SKILL.md" <<SKILL
 ---
@@ -182,7 +182,7 @@ SKILL
   printf '#!/bin/true\n' > "${REPO_FIXTURE}/scripts/enable-optional.sh"
   chmod +x "${REPO_FIXTURE}/scripts/enable-optional.sh"
 
-  # Copy real scripts, patching REPO_ROOT
+  # Copy real scripts so BASH_SOURCE resolves the fixture root.
   cp "${BASELINE_PWD}/scripts/cursor-assets.sh" "${REPO_FIXTURE}/scripts/cursor-assets.sh"
   cp "${BASELINE_PWD}/scripts/install-profile.sh" "${REPO_FIXTURE}/scripts/install-profile.sh"
   chmod +x "${REPO_FIXTURE}/scripts/cursor-assets.sh" "${REPO_FIXTURE}/scripts/install-profile.sh"
@@ -264,8 +264,9 @@ if [[ -x "${CURSOR_HELPER}" ]]; then pass "cursor-assets.sh exists and is execut
 if [[ -x "${INSTALL_HELPER}" ]]; then pass "install-profile.sh exists and is executable"; else fail "install-profile.sh missing or not executable"; fi
 if [[ -f "${BASELINE_PWD}/profiles/base/opencode.json" && -f "${BASELINE_PWD}/profiles/base/agent_hive.json" ]]; then pass "base payloads live under profiles/base"; else fail "base payloads missing from profiles/base"; fi
 if [[ ! -e "${BASELINE_PWD}/opencode.json" && ! -e "${BASELINE_PWD}/agent_hive.json" ]]; then pass "repository root has no auto-discovered config payloads"; else fail "repository root still contains config payloads"; fi
-if [[ -f "${BASELINE_PWD}/.apm/prompts/reflect.prompt.md" ]]; then pass "portable OpenCode reflect prompt exists"; else fail "portable OpenCode reflect prompt missing"; fi
-if [[ -f "${BASELINE_PWD}/.apm/cursor/commands/reflect.md" ]]; then pass "Cursor-native reflect command exists"; else fail "Cursor-native reflect command missing"; fi
+if [[ -f "${BASELINE_PWD}/.apm/prompts/reflect.prompt.md" ]]; then pass "canonical shared reflect prompt exists"; else fail "canonical shared reflect prompt missing"; fi
+if [[ ! -e "${BASELINE_PWD}/.apm/cursor/commands/reflect.md" ]]; then pass "stale Cursor reflect duplicate is absent"; else fail "stale Cursor reflect duplicate still exists"; fi
+if [[ -f "${BASELINE_PWD}/.apm/cursor/skills/agents-md-mastery/SKILL.md" ]]; then pass "Cursor agents-md-mastery skill exists"; else fail "Cursor agents-md-mastery skill missing"; fi
 
 if python3 - "${BASELINE_PWD}" <<'PY'
 import re
@@ -273,12 +274,12 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-prompts = {
-    "OpenCode": root / ".apm/prompts/reflect.prompt.md",
-    "Cursor": root / ".apm/cursor/commands/reflect.md",
-}
+prompt = root / ".apm/prompts/reflect.prompt.md"
 errors = []
 shared_markers = (
+    "$arguments",
+    "optional focus",
+    "if `agents-md-mastery` is available",
     "operator accepts",
     "provisional cross-project operator preferences",
     "voice",
@@ -286,31 +287,28 @@ shared_markers = (
     "personification",
     "scratchpad",
     "global instructions",
-)
-
-for label, path in prompts.items():
-    text = path.read_text(encoding="utf-8")
-    lowered = text.lower()
-    if "do not edit" not in lowered:
-        errors.append(f"{label} reflect prompt is missing its pre-write approval gate")
-    for marker in shared_markers:
-        if marker not in lowered:
-            errors.append(f"{label} reflect prompt is missing contract text: {marker}")
-    if "ivan" in lowered:
-        errors.append(f"{label} reflect prompt contains Ivan-specific content")
-    if re.search(r"/(?:home|users)/[^/\s]+", lowered):
-        errors.append(f"{label} reflect prompt contains an absolute home path")
-
-cursor = prompts["Cursor"].read_text(encoding="utf-8").lower()
-for marker in (
     "cursor-user-rules:manual",
     "current rules text",
     "supplied or visible",
     "manual paste",
     "never claim to read or edit cursor settings",
-):
-    if marker not in cursor:
-        errors.append(f"Cursor reflect prompt is missing manual User Rules contract text: {marker}")
+    "not applied",
+)
+
+text = prompt.read_text(encoding="utf-8")
+lowered = text.lower()
+description = next((line.removeprefix("description: ") for line in text.splitlines() if line.startswith("description: ")), "")
+if len(description) > 70:
+    errors.append(f"canonical reflect description exceeds APM's 70-character semantic limit: {len(description)}")
+if "do not edit" not in lowered:
+    errors.append("canonical reflect prompt is missing its pre-write approval gate")
+for marker in shared_markers:
+    if marker not in lowered:
+        errors.append(f"canonical reflect prompt is missing contract text: {marker}")
+if "ivan" in lowered:
+    errors.append("canonical reflect prompt contains Ivan-specific content")
+if re.search(r"/(?:home|users)/[^/\s]+", lowered):
+    errors.append("canonical reflect prompt contains an absolute home path")
 
 if errors:
     print("\n".join(errors))
@@ -318,10 +316,72 @@ if errors:
 print("ok")
 PY
 then
-  pass "reflect prompts preserve approval, provisional personification, portability, and manual Cursor Rules contracts"
+  pass "canonical reflect prompt preserves shared approval, personification, portability, and manual Cursor Rules contracts"
 else
-  fail "reflect prompts preserve approval, provisional personification, portability, and manual Cursor Rules contracts"
+  fail "canonical reflect prompt preserves shared approval, personification, portability, and manual Cursor Rules contracts"
 fi
+
+if python3 - "${BASELINE_PWD}/.apm/cursor/skills/agents-md-mastery/SKILL.md" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+if not path.is_file():
+    raise SystemExit("Cursor agents-md-mastery skill is missing")
+text = path.read_text(encoding="utf-8")
+lowered = text.lower()
+contracts = (
+    "evidence before durable instructions",
+    "signal",
+    "noise",
+    "hard-won safety",
+    "item-level approval",
+    "scratchpad",
+    "cursor user rules",
+    "paste-ready",
+    "manual instructions",
+    "nested agents.md",
+    "observable behavior",
+    "generic best practices",
+    "bootstrap",
+    "prune",
+)
+missing = [contract for contract in contracts if contract not in lowered]
+if missing:
+    raise SystemExit(f"skill is missing behavioral contracts: {missing}")
+if not re.search(r"one-off preferences.{0,120}(?:may|can).{0,120}(?:provisional|provisionally).{0,120}scratchpad", lowered, re.DOTALL):
+    raise SystemExit("skill must allow one-off preferences to be captured provisionally in scratchpad")
+if not re.search(r"(?:must not|do not).{0,160}(?:project instructions|project agents\.md).{0,160}global instructions.{0,160}cursor user rules.{0,200}(?:repeated|mature).{0,80}evidence", lowered, re.DOTALL):
+    raise SystemExit("skill must reserve promotion beyond scratchpad for repeated or mature evidence")
+if not re.search(r"only after.{0,80}(?:exact )?proposal.{0,80}item-level approval", lowered, re.DOTALL):
+    raise SystemExit("skill must require proposal and item-level approval before any accepted scratchpad write")
+for pattern, label in (
+    (r"\.(?:hive)(?:/|\b)", ".hive path"),
+    (r"\b(?:agent hive|opencode)\b", "non-Cursor harness assumption"),
+):
+    match = re.search(pattern, lowered)
+    if match:
+        raise SystemExit(f"skill contains {label}: {match.group(0)}")
+print("ok")
+PY
+then
+  pass "Cursor agents-md-mastery durable-memory and harness-isolation contracts"
+else
+  fail "Cursor agents-md-mastery durable-memory and harness-isolation contracts"
+fi
+
+# ---------------------------------------------------------------------------
+# Preflight contract: validation rejects a stale Cursor reflect duplicate
+# ---------------------------------------------------------------------------
+printf '\n=== Preflight: stale Cursor reflect duplicate rejection ===\n'
+printf '%s\n' '# stale duplicate' > "${REPO_FIXTURE}/.apm/cursor/commands/reflect.md"
+if ! bash "${CURSOR_HELPER}" validate >"${TMPDIR}/stale-reflect.out" 2>"${TMPDIR}/stale-reflect.err"; then
+  grep -q 'stale duplicate.*commands/reflect.md' "${TMPDIR}/stale-reflect.err" && pass "stale Cursor reflect duplicate rejected" || fail "stale Cursor reflect duplicate produced wrong error"
+else
+  fail "stale Cursor reflect duplicate was accepted"
+fi
+rm -f "${REPO_FIXTURE}/.apm/cursor/commands/reflect.md"
 
 # ---------------------------------------------------------------------------
 # 0. context-improved installs the optional Cymbal hook
@@ -455,7 +515,8 @@ CURSOR_CONFIG_DIR="${td3}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}"
 [[ -f "${td3}/skills/stop-design-slop/SKILL.md" ]] && pass "3y: stop-design-slop installed" || fail "3z: stop-design-slop canonical skill not installed"
 [[ -f "${td3}/skills/stop-design-slop/references/review-rubric.md" ]] && pass "3aa: stop-design-slop rubric" || fail "3ab: stop-design-slop extra file not copied"
 [[ -f "${td3}/skills/ivan-writing/.cursor-managed" ]] && pass "3m: marker inside ivan-writing" || fail "3n: marker not inside ivan-writing"
-cmp -s "${REPO_FIXTURE}/.apm/cursor/commands/reflect.md" "${td3}/commands/reflect.md" && pass "3ag: Cursor reflect content installed byte-for-byte" || fail "3ah: Cursor reflect content changed during install"
+cmp -s "${REPO_FIXTURE}/.apm/prompts/reflect.prompt.md" "${td3}/commands/reflect.md" && pass "3ag: canonical reflect content installed byte-for-byte" || fail "3ah: canonical reflect content changed during Cursor install"
+cmp -s "${REPO_FIXTURE}/.apm/cursor/skills/agents-md-mastery/SKILL.md" "${td3}/skills/agents-md-mastery/SKILL.md" && pass "3ai: Cursor agents-md-mastery installed byte-for-byte" || fail "3aj: Cursor agents-md-mastery content changed during install"
 
 # ---------------------------------------------------------------------------
 # 4. Opt-out removes only helper-managed ivan-writing (in-directory marker)
@@ -563,6 +624,7 @@ cmp -s "${REPO_FIXTURE}/profiles/base/agent_hive.json" "${td12}/agent_hive.json"
 [[ -f "${td12}/skills/writing-for-humans/SKILL.md" ]] && pass "12m: OpenCode writing-for-humans installed" || fail "12n: OpenCode writing-for-humans missing"
 [[ -f "${td12}/commands/reflect.md" ]] && pass "12o: OpenCode reflect command installed" || fail "12p: OpenCode reflect command missing"
 cmp -s "${REPO_FIXTURE}/.apm/prompts/reflect.prompt.md" "${td12}/commands/reflect.md" && pass "12q: OpenCode reflect content installed byte-for-byte" || fail "12r: OpenCode reflect content changed during install"
+[[ ! -e "${td12}/skills/agents-md-mastery" ]] && pass "12s: OpenCode installer excludes Cursor agents-md-mastery" || fail "12t: OpenCode installer leaked Cursor agents-md-mastery"
 build_fixture
 
 # ---------------------------------------------------------------------------
@@ -630,6 +692,8 @@ grep -q 'canonical .apm/skills/frontend-slides' "${TMPDIR}/test13-dryrun.log" &&
 grep -q 'canonical .apm/skills/drawio-skill' "${TMPDIR}/test13-dryrun.log" && pass "13g: dry-run plans drawio-skill" || fail "13h: dry-run omitted drawio-skill"
 grep -q 'canonical .apm/skills/stop-design-slop' "${TMPDIR}/test13-dryrun.log" && pass "13i: dry-run plans stop-design-slop" || fail "13j: dry-run omitted stop-design-slop"
 grep -q 'canonical .apm/skills/writing-for-humans' "${TMPDIR}/test13-dryrun.log" && pass "13k: dry-run plans writing-for-humans" || fail "13l: dry-run omitted writing-for-humans"
+grep -q '\.apm/prompts/reflect\.prompt\.md.*commands/reflect\.md' "${TMPDIR}/test13-dryrun.log" && pass "13m: dry-run sources reflect from canonical prompt" || fail "13n: dry-run omitted canonical reflect source"
+grep -q 'skills/agents-md-mastery.*skills/agents-md-mastery' "${TMPDIR}/test13-dryrun.log" && pass "13o: dry-run plans Cursor agents-md-mastery" || fail "13p: dry-run omitted Cursor agents-md-mastery"
 
 # ---------------------------------------------------------------------------
 # 14. CURSOR_CONFIG_DIRS=';;' must fail
@@ -659,10 +723,15 @@ CURSOR_CONFIG_DIRS="${td15a};${td15b}" bash "${CURSOR_HELPER}" install 2>"${TMPD
 [[ -f "${td15a}/agents/forager.md" ]] && pass "15g: first target agent" || fail "15h: first target missing agent"
 [[ -f "${td15b}/agents/forager.md" ]] && pass "15i: second target agent" || fail "15j: second target missing agent"
 [[ -f "${td15a}/commands/reflect.md" && -f "${td15b}/commands/reflect.md" ]] && pass "15s: both targets reflect command" || fail "15t: multi-root missing reflect command"
-if cmp -s "${REPO_FIXTURE}/.apm/cursor/commands/reflect.md" "${td15a}/commands/reflect.md" && cmp -s "${REPO_FIXTURE}/.apm/cursor/commands/reflect.md" "${td15b}/commands/reflect.md"; then
-  pass "15u: both targets preserve Cursor reflect content byte-for-byte"
+if cmp -s "${REPO_FIXTURE}/.apm/prompts/reflect.prompt.md" "${td15a}/commands/reflect.md" && cmp -s "${REPO_FIXTURE}/.apm/prompts/reflect.prompt.md" "${td15b}/commands/reflect.md"; then
+  pass "15u: both targets preserve canonical reflect content byte-for-byte"
 else
-  fail "15v: multi-root Cursor reflect content changed during install"
+  fail "15v: multi-root canonical reflect content changed during install"
+fi
+if cmp -s "${REPO_FIXTURE}/.apm/cursor/skills/agents-md-mastery/SKILL.md" "${td15a}/skills/agents-md-mastery/SKILL.md" && cmp -s "${REPO_FIXTURE}/.apm/cursor/skills/agents-md-mastery/SKILL.md" "${td15b}/skills/agents-md-mastery/SKILL.md"; then
+  pass "15w: both targets preserve Cursor agents-md-mastery byte-for-byte"
+else
+  fail "15x: multi-root Cursor agents-md-mastery content changed during install"
 fi
 
 # ---------------------------------------------------------------------------

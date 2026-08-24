@@ -63,9 +63,9 @@ Some setup facts are not user choices:
 - The packaged `drawio-skill` needs `uv` and the draw.io desktop CLI; Graphviz (`dot`) is optional for auto-layout. Without those tools it is unused.
 - The packaged `frontend-slides` skill needs `uv` for PPTX conversion and Node.js for PDF export or Vercel deploy. Without those tools the authoring guidance still applies.
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
-- This profile ships non-Hive prompt-backed commands `interview-drill-down`, `planning-prompt`, and `reflect`. `/reflect` proposes scratchpad, project, or global instruction learnings and waits for explicit approval before durable edits. Hive workflow commands still come from the published `oc-arkive` plugin; the installer removes the old managed Hive command files from `commands/` after backing the directory up.
+- This profile ships non-Hive prompt-backed commands `interview-drill-down`, `planning-prompt`, and `reflect`. `.apm/prompts/reflect.prompt.md` is the only tracked `/reflect` source for both Opencode and Cursor. It proposes scratchpad, project, global, or manual Cursor User Rules learnings and waits for explicit approval before durable edits. Hive workflow commands still come from the published `oc-arkive` plugin; the installer removes the old managed Hive command files from `commands/` after backing the directory up.
 - Cursor setup is separate from Opencode setup. It does not install `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, or `oc-arkive`.
-- Cursor v1 is prompt-level behavior only. It installs Cursor assets under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` or every target in semicolon-separated `CURSOR_CONFIG_DIRS`, and requires manual paste into Cursor Settings -> Rules; it does not provide Agent Hive runtime/tool parity.
+- Cursor v1 is prompt-level behavior only. It installs Cursor assets under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` or every target in semicolon-separated `CURSOR_CONFIG_DIRS`, sources `commands/reflect.md` from `.apm/prompts/reflect.prompt.md`, and requires manual paste into Cursor Settings -> Rules; it does not provide Agent Hive runtime/tool parity.
 - Cursor asset setup must run from the repository root with `python3` and `scripts/cursor-assets.sh` available. Use `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom Cursor target, or `CURSOR_CONFIG_DIRS="/path/one;/path/two"` when Cursor needs multiple global config roots.
 - Windows Cursor with WSL projects should normally install into both the WSL config root and the Windows config root, for example `CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor"` from WSL.
 - If the operator asks only for Cursor assets, skip Opencode install, Opencode startup, and final Opencode verification. Stop after Cursor validation, optional install, Rules paste or paste instructions, and target-layout verification.
@@ -446,8 +446,8 @@ Then paste the printed Rules text into Cursor Settings -> Rules, or tell the ope
 Verify the installed layout by checking for:
 
 - six files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/`
-- eight files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/`, including the Cursor-native `reflect.md`
-- the managed Cursor skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
+- eight files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/`, including `reflect.md` sourced from the shared canonical prompt
+- the managed Cursor skills: `agents-md-mastery`, `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
 - the canonical skills `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, and `writing-for-humans` under `skills/`
 - `ivan-writing` under `skills/` when installed via `CURSOR_INSTALL_IVAN_WRITING=1`
 

@@ -90,6 +90,7 @@ Use installed Cursor skills or equivalent written guidance when the trigger appl
 | Adding, moving, or deleting tests | `consolidate-test-suites` |
 | Before claiming work is complete, fixed, or passing | `verification` |
 | Starting isolated work | `using-git-worktrees` |
+| Bootstrapping, reviewing, or pruning AGENTS.md and other durable instructions | `agents-md-mastery` |
 | Drafting or explaining code, architecture, systems, processes, decisions, requirements, PRDs, plans, docs, or reviews | `writing-for-humans` |
 | Human-facing prose representing Ivan (technical docs, resumes, reports, PRs, commit messages when voice is Ivan's) | `ivan-writing` (when installed) |
 | Filler phrases, throat-clearing openers, mechanical cadence, binary contrasts, dramatic fragmentation | `stop-slop` |
