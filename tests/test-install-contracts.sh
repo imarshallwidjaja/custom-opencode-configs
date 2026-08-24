@@ -107,9 +107,18 @@ AGENT
   done
 
   # Cursor commands
-  for cmd in compact-summary council-directive council implementation-brief interview interview-drill-down planning-prompt; do
+  for cmd in compact-summary council-directive council implementation-brief interview interview-drill-down planning-prompt reflect; do
     echo "# ${cmd}" > "${REPO_FIXTURE}/.apm/cursor/commands/${cmd}.md"
   done
+
+  # OpenCode prompt-backed commands
+  mkdir -p "${REPO_FIXTURE}/.apm/prompts"
+  cat > "${REPO_FIXTURE}/.apm/prompts/reflect.prompt.md" <<'PROMPT'
+---
+description: Review this session and propose durable agent-memory learnings
+---
+Propose durable learnings and wait for operator approval before editing memory files.
+PROMPT
 
   # Cursor rules
   mkdir -p "${REPO_FIXTURE}/.apm/cursor/rules"
@@ -255,6 +264,64 @@ if [[ -x "${CURSOR_HELPER}" ]]; then pass "cursor-assets.sh exists and is execut
 if [[ -x "${INSTALL_HELPER}" ]]; then pass "install-profile.sh exists and is executable"; else fail "install-profile.sh missing or not executable"; fi
 if [[ -f "${BASELINE_PWD}/profiles/base/opencode.json" && -f "${BASELINE_PWD}/profiles/base/agent_hive.json" ]]; then pass "base payloads live under profiles/base"; else fail "base payloads missing from profiles/base"; fi
 if [[ ! -e "${BASELINE_PWD}/opencode.json" && ! -e "${BASELINE_PWD}/agent_hive.json" ]]; then pass "repository root has no auto-discovered config payloads"; else fail "repository root still contains config payloads"; fi
+if [[ -f "${BASELINE_PWD}/.apm/prompts/reflect.prompt.md" ]]; then pass "portable OpenCode reflect prompt exists"; else fail "portable OpenCode reflect prompt missing"; fi
+if [[ -f "${BASELINE_PWD}/.apm/cursor/commands/reflect.md" ]]; then pass "Cursor-native reflect command exists"; else fail "Cursor-native reflect command missing"; fi
+
+if python3 - "${BASELINE_PWD}" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+prompts = {
+    "OpenCode": root / ".apm/prompts/reflect.prompt.md",
+    "Cursor": root / ".apm/cursor/commands/reflect.md",
+}
+errors = []
+shared_markers = (
+    "operator accepts",
+    "provisional cross-project operator preferences",
+    "voice",
+    "interaction style",
+    "personification",
+    "scratchpad",
+    "global instructions",
+)
+
+for label, path in prompts.items():
+    text = path.read_text(encoding="utf-8")
+    lowered = text.lower()
+    if "do not edit" not in lowered:
+        errors.append(f"{label} reflect prompt is missing its pre-write approval gate")
+    for marker in shared_markers:
+        if marker not in lowered:
+            errors.append(f"{label} reflect prompt is missing contract text: {marker}")
+    if "ivan" in lowered:
+        errors.append(f"{label} reflect prompt contains Ivan-specific content")
+    if re.search(r"/(?:home|users)/[^/\s]+", lowered):
+        errors.append(f"{label} reflect prompt contains an absolute home path")
+
+cursor = prompts["Cursor"].read_text(encoding="utf-8").lower()
+for marker in (
+    "cursor-user-rules:manual",
+    "current rules text",
+    "supplied or visible",
+    "manual paste",
+    "never claim to read or edit cursor settings",
+):
+    if marker not in cursor:
+        errors.append(f"Cursor reflect prompt is missing manual User Rules contract text: {marker}")
+
+if errors:
+    print("\n".join(errors))
+    raise SystemExit(1)
+print("ok")
+PY
+then
+  pass "reflect prompts preserve approval, provisional personification, portability, and manual Cursor Rules contracts"
+else
+  fail "reflect prompts preserve approval, provisional personification, portability, and manual Cursor Rules contracts"
+fi
 
 # ---------------------------------------------------------------------------
 # 0. context-improved installs the optional Cymbal hook
@@ -388,6 +455,7 @@ CURSOR_CONFIG_DIR="${td3}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}"
 [[ -f "${td3}/skills/stop-design-slop/SKILL.md" ]] && pass "3y: stop-design-slop installed" || fail "3z: stop-design-slop canonical skill not installed"
 [[ -f "${td3}/skills/stop-design-slop/references/review-rubric.md" ]] && pass "3aa: stop-design-slop rubric" || fail "3ab: stop-design-slop extra file not copied"
 [[ -f "${td3}/skills/ivan-writing/.cursor-managed" ]] && pass "3m: marker inside ivan-writing" || fail "3n: marker not inside ivan-writing"
+cmp -s "${REPO_FIXTURE}/.apm/cursor/commands/reflect.md" "${td3}/commands/reflect.md" && pass "3ag: Cursor reflect content installed byte-for-byte" || fail "3ah: Cursor reflect content changed during install"
 
 # ---------------------------------------------------------------------------
 # 4. Opt-out removes only helper-managed ivan-writing (in-directory marker)
@@ -493,6 +561,8 @@ cmp -s "${REPO_FIXTURE}/profiles/base/agent_hive.json" "${td12}/agent_hive.json"
 [[ -f "${td12}/skills/drawio-skill/SKILL.md" ]] && pass "12i: OpenCode drawio-skill installed" || fail "12j: OpenCode drawio-skill missing"
 [[ -f "${td12}/skills/stop-design-slop/SKILL.md" ]] && pass "12k: OpenCode stop-design-slop installed" || fail "12l: OpenCode stop-design-slop missing"
 [[ -f "${td12}/skills/writing-for-humans/SKILL.md" ]] && pass "12m: OpenCode writing-for-humans installed" || fail "12n: OpenCode writing-for-humans missing"
+[[ -f "${td12}/commands/reflect.md" ]] && pass "12o: OpenCode reflect command installed" || fail "12p: OpenCode reflect command missing"
+cmp -s "${REPO_FIXTURE}/.apm/prompts/reflect.prompt.md" "${td12}/commands/reflect.md" && pass "12q: OpenCode reflect content installed byte-for-byte" || fail "12r: OpenCode reflect content changed during install"
 build_fixture
 
 # ---------------------------------------------------------------------------
@@ -588,6 +658,12 @@ CURSOR_CONFIG_DIRS="${td15a};${td15b}" bash "${CURSOR_HELPER}" install 2>"${TMPD
 [[ -f "${td15a}/skills/writing-for-humans/SKILL.md" && -f "${td15b}/skills/writing-for-humans/SKILL.md" ]] && pass "15q: both targets writing-for-humans" || fail "15r: multi-root missing writing-for-humans"
 [[ -f "${td15a}/agents/forager.md" ]] && pass "15g: first target agent" || fail "15h: first target missing agent"
 [[ -f "${td15b}/agents/forager.md" ]] && pass "15i: second target agent" || fail "15j: second target missing agent"
+[[ -f "${td15a}/commands/reflect.md" && -f "${td15b}/commands/reflect.md" ]] && pass "15s: both targets reflect command" || fail "15t: multi-root missing reflect command"
+if cmp -s "${REPO_FIXTURE}/.apm/cursor/commands/reflect.md" "${td15a}/commands/reflect.md" && cmp -s "${REPO_FIXTURE}/.apm/cursor/commands/reflect.md" "${td15b}/commands/reflect.md"; then
+  pass "15u: both targets preserve Cursor reflect content byte-for-byte"
+else
+  fail "15v: multi-root Cursor reflect content changed during install"
+fi
 
 # ---------------------------------------------------------------------------
 # 16. Opt-in multi-root copies ivan-writing to both
@@ -1186,6 +1262,7 @@ required_custom = {
     "adversarial-documentation-reviewer",
     "scout-researcher-capable",
     "scout-researcher-code",
+    "ui-reviewer",
 }
 custom = hive.get("customAgents") or {}
 missing = sorted(required_custom - set(custom))
@@ -1193,6 +1270,8 @@ if missing:
     errors.append(f"missing customAgents: {missing}")
 if "code-reviewer-documentation" in custom:
     errors.append("legacy customAgents.code-reviewer-documentation still present")
+if "code-reviewer-ui" in custom:
+    errors.append("legacy customAgents.code-reviewer-ui still present")
 
 docs_autoload = {
     "forager-documents": ("writing-for-humans",),
@@ -1211,33 +1290,72 @@ if "documentation-reviewer" not in docs_members:
 if "code-reviewer-documentation" in docs_members:
     errors.append("council.groups.documents still references code-reviewer-documentation")
 
+groups = ((hive.get("council") or {}).get("groups") or {})
+design = groups.get("design") or {}
+if design.get("maxMembers") != 5:
+    errors.append(f"council.groups.design.maxMembers={design.get('maxMembers')!r}, expected 5")
+for group_name in ("design", "ui"):
+    members = (groups.get(group_name) or {}).get("members") or []
+    if "ui-reviewer" not in members:
+        errors.append(f"council.groups.{group_name} missing ui-reviewer")
+    if "code-reviewer-ui" in members:
+        errors.append(f"council.groups.{group_name} still references code-reviewer-ui")
+
 summarizer = hive.get("taskTraceSummarizer") or {}
 if summarizer.get("model") not in allowed_models:
     errors.append(f"taskTraceSummarizer.model={summarizer.get('model')}")
 
-# Converted non-OpenAI seats have no matching GPT-5.6 effort. Default them to Sol high
-# instead of copying source `max` onto Sol/Luna.
-uncertain_sol_high = {
-    "forager-fast",
-    "forager-ui",
-    "forager-documents",
-    "adversarial-plan-reviewer",
-    "adversarial-documentation-reviewer",
-    "adversarial-code-reviewer",
-    "adversarial-simplicity-reviewer",
-    "adversarial-approach-advisor",
-    "ui-design-advisor",
-    "scout-researcher-code",
-    "forager-worker",
-    "hive-helper",
-    "vulnerability-reviewer",
+exact_seats = {
+    "forager-capable": ("openai/gpt-5.6-sol", "high"),
+    "forager-documents": ("openai/gpt-5.6-sol", "high"),
+    "forager-fast": ("openai/gpt-5.6-luna", "xhigh"),
+    "forager-ui": ("openai/gpt-5.6-sol", "max"),
+    "adversarial-plan-reviewer": ("openai/gpt-5.6-sol", "max"),
+    "adversarial-documentation-reviewer": ("openai/gpt-5.6-sol", "max"),
+    "adversarial-code-reviewer": ("openai/gpt-5.6-sol", "max"),
+    "adversarial-simplicity-reviewer": ("openai/gpt-5.6-sol", "max"),
+    "adversarial-approach-advisor": ("openai/gpt-5.6-sol", "max"),
+    "ui-design-advisor": ("openai/gpt-5.6-sol", "max"),
+    "scout-researcher-capable": ("openai/gpt-5.6-luna", "xhigh"),
+    "scout-researcher-code": ("openai/gpt-5.6-sol", "max"),
+    "forager-worker": ("openai/gpt-5.6-sol", "medium"),
+    "hive-helper": ("openai/gpt-5.6-sol", "max"),
+    "ui-reviewer": ("openai/gpt-5.6-sol", "xhigh"),
+    "vulnerability-reviewer": ("openai/gpt-5.6-sol", "max"),
 }
-for name in sorted(uncertain_sol_high):
+for name, expected in exact_seats.items():
     entry = custom.get(name) or (hive.get("agents") or {}).get(name) or {}
-    if entry.get("model") != "openai/gpt-5.6-sol" or entry.get("variant") != "high":
-        errors.append(
-            f"{name} must be openai/gpt-5.6-sol high, got model={entry.get('model')} variant={entry.get('variant')}"
-        )
+    actual = (entry.get("model"), entry.get("variant"))
+    if actual != expected:
+        errors.append(f"{name} model/variant={actual!r}, expected {expected!r}")
+
+agents = hive.get("agents") or {}
+if (agents.get("forager-worker") or {}).get("autoLoadSkills") != ["verification"]:
+    errors.append("forager-worker must autoload canonical verification")
+builder_skills = (agents.get("hive-builder") or {}).get("autoLoadSkills") or []
+if not builder_skills or builder_skills[0] != "verification":
+    errors.append(f"hive-builder autoLoadSkills={builder_skills!r} must start with canonical verification")
+
+for path, value in walk(hive):
+    if value == "verification-before-completion":
+        errors.append(f"deprecated verification-before-completion at {path}")
+    if value in {"ivan-writing", "impeccable"}:
+        errors.append(f"shared Agent Hive config contains personal-only skill {value} at {path}")
+
+ui_skills = {
+    "forager-ui": ("web-design-guidelines", "stop-design-slop"),
+    "ui-reviewer": ("web-design-guidelines", "stop-design-slop"),
+    "ui-design-advisor": ("web-design-guidelines", "stop-design-slop"),
+}
+for name, expected in ui_skills.items():
+    skills = tuple((custom.get(name) or {}).get("autoLoadSkills") or [])
+    if skills != expected:
+        errors.append(f"{name} autoLoadSkills={list(skills)!r}, expected {list(expected)!r}")
+
+for profile_path in sorted((root / "profiles/agents").glob("*.md")):
+    text = profile_path.read_text(encoding="utf-8")
+    if "verification-before-completion" in text:
+        errors.append(f"{profile_path.relative_to(root)} still references verification-before-completion")
 
 if not plugin_path.is_file():
     errors.append("profiles/base/plugins/dcg-guard.js missing")

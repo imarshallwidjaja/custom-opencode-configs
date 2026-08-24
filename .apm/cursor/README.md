@@ -5,7 +5,7 @@ Prompt-level Cursor assets sourced from this repository and installed globally u
 ## Inventory
 
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, `simplicity-reviewer`
-- seven commands: `compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`
+- eight commands: `compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`, `reflect`
 - ten Cursor-specific skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, `verification`
 - six canonical skills consumed from `.apm/skills/`: `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, `writing-for-humans`
 - optional personal skill `ivan-writing` installed when `CURSOR_INSTALL_IVAN_WRITING=1` is set
@@ -45,11 +45,17 @@ The thin helper `scripts/cursor-assets.sh` handles validation, temp/global copy,
 
 APM organizes package primitives by type under `.apm/` (`.apm/skills/`, `.apm/agents/`, `.apm/prompts/`, `.apm/instructions/`), not by target harness. `.apm/cursor/` is a non-standard directory that APM does not route. It is used here as a source bundle for the helper, not as an APM primitive path.
 
-If APM validation rejects unknown `.apm/cursor/**` content rather than ignoring it, move the entire Cursor source bundle to a neutral top-level path (`cursor-assets/` at the repository root) and update the helper and docs to match. APM CLI was not available during initial implementation to confirm whether APM rejects or ignores this directory.
+The currently resolved APM CLI accepts this package and ignores `.apm/cursor/**` during normal primitive routing. If a future APM release rejects that directory, move the entire Cursor source bundle to the supported fallback path (`cursor-assets/` at the repository root) and update the helper and docs together.
 
 ## `type: hybrid` in `apm.yml`
 
-The `type: hybrid` field in `apm.yml` was left unchanged. External APM docs indicate `type` is advisory, but the APM CLI was not available to confirm whether `hybrid` is correct or incorrect for this package layout. Changing it without CLI validation risks breaking APM metadata expectations. If a later APM CLI check confirms the field is advisory and `hybrid` is semantically wrong for an `.apm/` primitive package, correct it in the same change that adds APM CLI validation evidence.
+The currently resolved APM CLI accepts the existing `type: hybrid` manifest and routes the canonical `.apm/prompts/` and `.apm/skills/` primitives to Opencode and Cursor targets. Keep the field unchanged unless a later APM schema requires a different package type.
+
+For package-layout verification, work from a disposable copy because `apm install` writes a lockfile and target directories, then run:
+
+```bash
+uvx --from apm-cli apm install --target opencode,cursor
+```
 
 ## Canonical skill sourcing
 
@@ -63,6 +69,6 @@ When opt-in installs `ivan-writing`, the helper writes a marker file `skills/iva
 
 ## Opencode install isolation
 
-`scripts/install-profile.sh` copies from `.apm/skills/`, `.apm/agents/`, and `.apm/prompts/*.prompt.md` into the Opencode config directory. It does not copy `.apm/cursor/**`. Cursor assets under `.apm/cursor/` do not appear in the Opencode install path. Opencode prompt-backed commands come only from `.apm/prompts/`, currently `interview-drill-down` and `planning-prompt`.
+`scripts/install-profile.sh` copies from `.apm/skills/`, `.apm/agents/`, and `.apm/prompts/*.prompt.md` into the Opencode config directory. It does not copy `.apm/cursor/**`. Cursor assets under `.apm/cursor/` do not appear in the Opencode install path. Opencode prompt-backed commands come only from `.apm/prompts/`, currently `interview-drill-down`, `planning-prompt`, and `reflect`.
 
 For personal profiles (`personal-default`, `personal-context-improved`), `scripts/install-profile.sh` also copies from `profiles/personal/skills/` into the Opencode config directory.

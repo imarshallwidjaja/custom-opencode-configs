@@ -22,6 +22,7 @@ COMMANDS=(
   interview
   interview-drill-down
   planning-prompt
+  reflect
 )
 SKILLS=(
   brainstorming

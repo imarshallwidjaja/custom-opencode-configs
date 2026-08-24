@@ -9,7 +9,7 @@ Use this when you want Cursor to have similar reusable guidance, subagents, comm
 The selected Cursor asset root contains:
 
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, and `simplicity-reviewer`
-- seven commands: `compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, and `planning-prompt`
+- eight commands: `compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`, and `reflect`
 - ten Cursor-specific skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
 - six canonical skills consumed from `.apm/skills/`: `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, and `writing-for-humans`
 - optional personal skill `ivan-writing` installed when `CURSOR_INSTALL_IVAN_WRITING=1` is set
@@ -102,6 +102,8 @@ Excluded examples include:
 
 The Cursor assets can describe workflows and review expectations, but they cannot create Agent Hive features, update Hive task state, call Hive tools, or guarantee the same runtime behavior as Opencode.
 
+The Cursor-native `/reflect` command uses only the conversation and files available to the current Cursor session. It waits for operator approval before editing accessible instruction files; when a scratchpad or global target is unavailable, it returns the approved exact change without claiming to apply it. Cursor User Rules uses the explicit `cursor-user-rules:manual` target: the current Rules text must be supplied or visible for conflict analysis, and an approved change is returned with exact manual-paste instructions rather than a claim that Cursor Settings was read or edited.
+
 ## Verify The Installed Layout
 
 After installing, check every target config directory. If you used a custom target, inspect `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` instead of the literal `~/.cursor` examples below. If you used `CURSOR_CONFIG_DIRS`, inspect each semicolon-separated target.
@@ -129,6 +131,7 @@ Expected high-level layout:
 ~/.cursor/commands/interview.md
 ~/.cursor/commands/interview-drill-down.md
 ~/.cursor/commands/planning-prompt.md
+~/.cursor/commands/reflect.md
 ~/.cursor/skills/<skill-name>/SKILL.md
 ```
 

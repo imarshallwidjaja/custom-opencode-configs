@@ -13,7 +13,7 @@ This repo is for installing a ready-to-use Opencode profile. It keeps secrets, l
 - `profiles/base/plugins/dcg-guard.js` -> `plugins/dcg-guard.js`: Destructive Command Guard adapter, auto-loaded from the Opencode plugins directory
 - `AGENTS.md`: the selected operating profile for Opencode agents
 - `skills/`: shared markdown skills used by Opencode, plus personal skills from `profiles/personal/skills/` when the selected AGENTS profile is `personal-default` or `personal-context-improved`
-- `commands/`: non-Hive prompt-backed commands packaged under `.apm/prompts/` (`interview-drill-down`, `planning-prompt`)
+- `commands/`: non-Hive prompt-backed commands packaged under `.apm/prompts/` (`interview-drill-down`, `planning-prompt`, `reflect`)
 - `agents/`: installed only when this repository packages standalone Opencode agents
 
 If the target config directory already contains files with those names, the installer writes a timestamped backup under `<target>/.backup/` before replacing them. Set `OPENCODE_AGENTS_MODE=skip` when you want to update the profile files but keep an existing `AGENTS.md` in place for a manual merge.
@@ -176,7 +176,7 @@ The two `*-context-improved` profiles require `jq`, `uvx`, and `CONTEXT7_API_KEY
 
 The installer copies `profiles/base/agent_hive.json`. It is the sole canonical Hive config and uses only ChatGPT OAuth models a normal OpenAI login can see: non-fast `openai/gpt-5.6-sol` and `openai/gpt-5.6-luna`. Fast variants, `gpt-5.6-terra`, `opencode-go/*`, and personal `xai/*` models are not part of this profile. The target Opencode environment must resolve those two OpenAI models. The installer does not add provider credentials, local proxy plugins, or provider shims to `opencode.json`.
 
-Sol is the default for planning, orchestration, review, UI, implementation, and other high-capability seats. Luna stays on the original OpenAI scout seats and task-trace recovery. Converted non-OpenAI roles (Kimi, DeepSeek, GLM, Grok) use `openai/gpt-5.6-sol` with `variant: high` instead of copying source `max` onto Sol or Luna; OpenAI `max` is a much higher reasoning effort than those providers' `max`. Seats that were already OpenAI keep their original effort (`high`, `xhigh`, or `max`). That split follows current [Artificial Analysis Intelligence Index](https://artificialanalysis.ai/#intelligence) and [DeepSWE](https://deepswe.datacurve.ai/) results.
+Sol is the default for planning, orchestration, review, UI, implementation, and other high-capability seats. Luna is reserved for scout, recovery, and explicitly fast mechanical work. Current routing uses Sol `medium` for `forager-worker`, Sol `high` for `forager-capable`, Luna `xhigh` for `forager-fast`, and Luna `xhigh` for `scout-researcher-capable`. Remapped seats preserve the live variant when Sol or Luna supports it: `forager-documents` remains Sol `high`, while `forager-ui`, `adversarial-plan-reviewer`, `adversarial-documentation-reviewer`, `adversarial-code-reviewer`, `adversarial-simplicity-reviewer`, `adversarial-approach-advisor`, `ui-design-advisor`, `scout-researcher-code`, `hive-helper`, and `vulnerability-reviewer` use Sol `max`. Other native OpenAI seats retain their intentional `high`, `xhigh`, or `max` effort. That split follows current [Artificial Analysis Intelligence Index](https://artificialanalysis.ai/#intelligence) and [DeepSWE](https://deepswe.datacurve.ai/) results.
 
 ## VS Code companion extension
 
@@ -313,10 +313,13 @@ The installer also copies `plugins/dcg-guard.js`, which Opencode auto-loads from
 
 ## Prompt-backed commands
 
-This profile ships two non-Hive prompt-backed commands from `.apm/prompts/`:
+This profile ships three non-Hive prompt-backed commands from `.apm/prompts/`:
 
 - `interview-drill-down`
 - `planning-prompt`
+- `reflect`
+
+`/reflect` reviews the current session for durable learnings, keeps provisional cross-project workflow and personification preferences in the user's existing scratchpad, and promotes them to global instructions only after repeated evidence and explicit operator approval. The Cursor command can also return an approved `cursor-user-rules:manual` change for manual paste when the current User Rules text was supplied or visible; it never claims to read or edit Cursor Settings. The prompts contain no user-specific paths or fixed personal preferences.
 
 Hive workflow commands still come from the published `oc-arkive` plugin, including `/interview`, `/implementation-brief`, `/hive-plan`, `/approve-sync-plan`, `/start-execution`, `/council-directive`, `/council`, and `/compact-summary`. Do not keep local copies of those Hive-owned command files in the Opencode config directory.
 

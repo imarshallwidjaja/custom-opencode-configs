@@ -51,9 +51,9 @@ Some setup facts are not user choices:
 - The default full install path is `./scripts/install-profile.sh`.
 - The default repo profile uses only non-fast `openai/gpt-5.6-sol` and `openai/gpt-5.6-luna` in `agent_hive.json`. The base Opencode `explore` override is `openai/gpt-5.6-luna` with `variant: max`, and `agent.compaction` is `openai/gpt-5.6-luna` with `variant: medium`. Top-level compaction `auto` and `prune` stay disabled.
 - The installer copies `plugins/dcg-guard.js`. Opencode auto-loads it. The plugin is a no-op until the `dcg` CLI is on `PATH`; install it from [destructive_command_guard](https://github.com/dicklesworthstone/destructive_command_guard) with `curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh?$(date +%s)" | bash -s -- --easy-mode`.
-- OpenAI Hive roles use only `openai/gpt-5.6-sol` or `openai/gpt-5.6-luna`, never a fast variant and never `gpt-5.6-terra`. Portable profiles do not import personal `xai/*`, `crof/*`, or `opencode-go/*` models.
+- OpenAI Hive roles use only `openai/gpt-5.6-sol` or `openai/gpt-5.6-luna`, never a fast model ID and never `gpt-5.6-terra`. `forager-worker` uses Sol `medium`, `forager-capable` uses Sol `high`, and the explicitly fast/mechanical `forager-fast` plus `scout-researcher-capable` use Luna `xhigh`. Converted non-portable provider seats map to `openai/gpt-5.6-sol` or `openai/gpt-5.6-luna` while preserving each live seat's variant, including `max`. Portable profiles do not import `xai/*`, `crof/*`, or `opencode-go/*` models.
 - The base `opencode.json` also includes the `opencode-gpt-imagegen` plugin. It currently requires ChatGPT Plus or Pro OAuth and does not provide API-key image generation; no credentials are stored in this repository.
-- Worker auto-load uses the canonical Hive skill name `verification-before-completion`. Custom agents use only supported `baseAgent` values from the current Hive contract.
+- Worker auto-load uses the canonical Hive skill name `verification`. Custom agents use only supported `baseAgent` values from the current Hive contract.
 - The published `oc-arkive@latest` plugin is installed by Opencode on first run.
 - Updating this repository's profile files does not prove Opencode is using the latest cached `oc-arkive@latest` plugin. After a profile update, restart Opencode. If the Agent Hive commands or plugin manifest still match an older release, remove or refresh the cached `oc-arkive` plugin entry according to the local Opencode cache layout before starting Opencode again.
 - The optional context-improved bundle adds the native OpenCode plugin `context-mode@latest`, local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay. The plugin registers `ctx_*` tools in-process; no `mcp.context-mode` entry is needed. The base Agent Hive config disables `context7` and `ast_grep` for Hive workers.
@@ -63,7 +63,7 @@ Some setup facts are not user choices:
 - The packaged `drawio-skill` needs `uv` and the draw.io desktop CLI; Graphviz (`dot`) is optional for auto-layout. Without those tools it is unused.
 - The packaged `frontend-slides` skill needs `uv` for PPTX conversion and Node.js for PDF export or Vercel deploy. Without those tools the authoring guidance still applies.
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
-- This profile ships non-Hive prompt-backed commands `interview-drill-down` and `planning-prompt`. Hive workflow commands still come from the published `oc-arkive` plugin; the installer removes the old managed Hive command files from `commands/` after backing the directory up.
+- This profile ships non-Hive prompt-backed commands `interview-drill-down`, `planning-prompt`, and `reflect`. `/reflect` proposes scratchpad, project, or global instruction learnings and waits for explicit approval before durable edits. Hive workflow commands still come from the published `oc-arkive` plugin; the installer removes the old managed Hive command files from `commands/` after backing the directory up.
 - Cursor setup is separate from Opencode setup. It does not install `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, or `oc-arkive`.
 - Cursor v1 is prompt-level behavior only. It installs Cursor assets under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` or every target in semicolon-separated `CURSOR_CONFIG_DIRS`, and requires manual paste into Cursor Settings -> Rules; it does not provide Agent Hive runtime/tool parity.
 - Cursor asset setup must run from the repository root with `python3` and `scripts/cursor-assets.sh` available. Use `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom Cursor target, or `CURSOR_CONFIG_DIRS="/path/one;/path/two"` when Cursor needs multiple global config roots.
@@ -446,7 +446,7 @@ Then paste the printed Rules text into Cursor Settings -> Rules, or tell the ope
 Verify the installed layout by checking for:
 
 - six files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/`
-- seven files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/`
+- eight files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/`, including the Cursor-native `reflect.md`
 - the managed Cursor skills: `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
 - the canonical skills `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, and `writing-for-humans` under `skills/`
 - `ivan-writing` under `skills/` when installed via `CURSOR_INSTALL_IVAN_WRITING=1`

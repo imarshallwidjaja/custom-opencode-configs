@@ -20,17 +20,18 @@
     ],
     "groups": {
       "design": {
-        "description": "Architecture and implementation-shape advice",
+        "description": "Architecture and what shape a correct implementation should take",
         "members": [
           "scout-researcher",
           "approach-advisor-xhigh-reasoning",
           "plan-reviewer",
           "code-reviewer",
-          "code-reviewer-ui"
-        ]
+          "ui-reviewer"
+        ],
+        "maxMembers": 5
       },
       "decision": {
-        "description": "Hard tradeoff decision support",
+        "description": "Unresolved tradeoffs that would change persistence, deployment, integration, or an irreversible route",
         "members": [
           "scout-researcher",
           "approach-advisor-xhigh-reasoning",
@@ -39,7 +40,7 @@
         ]
       },
       "minimal-change": {
-        "description": "Smallest correct change and cleanup lens",
+        "description": "Whether the smallest correct change is enough, and whether extra complexity can be deleted",
         "members": [
           "scout-researcher",
           "simplicity-reviewer",
@@ -48,7 +49,7 @@
         ]
       },
       "documents": {
-        "description": "Documentation and prose-oriented review",
+        "description": "Review of documentation, operator guidance, and other human-facing prose",
         "members": [
           "scout-researcher",
           "documentation-reviewer",
@@ -56,16 +57,16 @@
         ]
       },
       "ui": {
-        "description": "UI, accessibility, responsive layout, and design-system review",
+        "description": "UI, accessibility, responsive layout, and design-system fit",
         "members": [
           "scout-researcher",
-          "code-reviewer-ui",
+          "ui-reviewer",
           "approach-advisor-xhigh-reasoning",
           "ui-design-advisor"
         ]
       },
       "adversarial": {
-        "description": "Explicit stress-test review for plans, approaches, diffs, or unnecessary complexity",
+        "description": "Work that is irreversible, internally conflicting, or likely to fail when executed, and needs a review that tries to break it",
         "members": [
           "adversarial-approach-advisor",
           "adversarial-plan-reviewer",
@@ -78,19 +79,19 @@
   "customAgents": {
     "forager-smart": {
       "baseAgent": "forager-worker",
-      "description": "Escalation-only route for implementation where the base worker is likely to make a design mistake. Use only for ambiguous behavior, cross-file state changes, subtle edge cases, or choices between competing implementations. Default to forager-fast or forager-worker for normal edits, straightforward fixes, and bounded feature work.",
+      "description": "Use only for implementation involving state ownership or invariants spanning multiple subsystems, or an explicitly unresolved design choice. It implements the selected solution. Do not dispatch for review or research.",
       "model": "openai/gpt-5.6-sol",
       "variant": "max"
     },
     "forager-capable": {
       "baseAgent": "forager-worker",
-      "description": "Exception route for implementation that depends on heavy local execution. Use only when the task requires broad edits plus running or debugging checks, generated artifacts, or multi-step tool workflows. Default to forager-worker when the files and verification path are already clear. Do not use for strategy, review, or research.",
+      "description": "Use only when acceptance depends on generated artifacts, live probes, or a reproduce-diagnose-verify loop. Also use for standalone verification that requires live command execution. Do not dispatch for strategy, review, research, or ordinary implementation.",
       "model": "openai/gpt-5.6-sol",
-      "variant": "xhigh"
+      "variant": "high"
     },
     "forager-documents": {
       "baseAgent": "forager-worker",
-      "description": "Exception route for prose-dominant work. Use only when the main deliverable is documentation, operator guidance, specs, reports, or substantial human-facing text. Default to forager-worker when documentation is incidental to code changes. Do not use for code review.",
+      "description": "Use when the main deliverable is documentation, operator guidance, specs, reports, or other substantial human-facing text. forager-worker still owns code changes where documentation is incidental. Do not dispatch for code review.",
       "model": "openai/gpt-5.6-sol",
       "variant": "high",
       "autoLoadSkills": [
@@ -101,46 +102,48 @@
     },
     "forager-fast": {
       "baseAgent": "forager-worker",
-      "description": "Exception route for low-risk implementation where the change shape is clear and verification is straightforward. Use for bounded edits, local refactors, simple test fixes, and implementation tasks with known files and acceptance criteria. Default to forager-worker for normal implementation, and use forager-smart or forager-capable for ambiguous, high-risk, or multi-system work.",
-      "model": "openai/gpt-5.6-sol",
-      "variant": "high"
+      "description": "Use only for mechanical, behavior-preserving edits such as formatting, renames, import cleanup, or generated snapshots. Do not dispatch for behavior changes, review, research, or UI-primary work.",
+      "model": "openai/gpt-5.6-luna",
+      "variant": "xhigh"
     },
     "forager-ui": {
       "baseAgent": "forager-worker",
-      "description": "Exception route for UI implementation. Use only when the main change affects user-visible interface behavior, layout, styling, accessibility, React/component state, or UX polish. Default to forager-worker for backend work or incidental UI text edits. Do not use for review-only tasks.",
+      "description": "Use when the main change is user-visible interface behavior, layout, styling, accessibility, React or component state, or UX polish. forager-worker still owns backend work and incidental UI text. Do not dispatch for review-only tasks.",
       "model": "openai/gpt-5.6-sol",
-      "variant": "high",
+      "variant": "max",
       "autoLoadSkills": [
-        "web-design-guidelines"
+        "web-design-guidelines",
+        "stop-design-slop"
       ]
     },
     "plan-reviewer-xhigh-reasoning": {
       "baseAgent": "plan-reviewer",
-      "description": "Escalation-only xhigh-reasoning plan reviewer. Use only when the default plan-reviewer cannot resolve a concrete blocker involving cross-system sequencing, irreversible migration risk, conflicting requirements, or worker handoff likely to fail. Default to plan-reviewer for routine plan review, missing detail, and general quality checks. Returns plan blockers, not architecture advice or code review.",
+      "description": "Use when a plan has cross-system sequencing, irreversible migration risk, conflicting requirements, or a worker handoff that is likely to fail. It returns plan blockers; it does not give architecture advice or review code. plan-reviewer still owns routine completeness, missing detail, and general quality checks.",
       "model": "openai/gpt-5.6-sol",
       "variant": "max"
     },
     "adversarial-plan-reviewer": {
       "baseAgent": "plan-reviewer",
-      "description": "Adversarial plan-readiness reviewer. Use only when explicitly asked to stress-test a Hive plan, worker handoff, task sequencing, references, assumptions, or executable verification. Preserve plan-reviewer OKAY/REJECT semantics; reject only for real worker blockers.",
+      "description": "Use when a Hive plan has irreversible steps, conflicting requirements, dependency races, or a worker is likely to execute the wrong thing. It reviews the plan as a worker handoff and looks for evidence that sequencing, references, assumptions, acceptance criteria, or verification cannot be executed as written. Return OKAY or REJECT; reject only for real worker blockers. plan-reviewer still owns ordinary completeness review.",
       "model": "openai/gpt-5.6-sol",
-      "variant": "high",
+      "variant": "max",
       "autoLoadSkills": [
         "adversarial-review"
       ]
     },
-    "code-reviewer-ui": {
+    "ui-reviewer": {
       "baseAgent": "code-reviewer",
-      "description": "Exception route for UI-facing implementation review. Use only when the primary risk is user-visible behavior, accessibility, responsive layout, frontend state, visual regression, or design-system fit. Default to code-reviewer for general implementation correctness and backend review.",
+      "description": "Use when the primary review risk is user-visible behavior, accessibility, responsive layout, frontend state, visual regression, or design-system fit. code-reviewer still owns general correctness and backend review, including diffs where UI is incidental.",
       "model": "openai/gpt-5.6-sol",
       "variant": "xhigh",
       "autoLoadSkills": [
-        "web-design-guidelines"
+        "web-design-guidelines",
+        "stop-design-slop"
       ]
     },
     "documentation-reviewer": {
       "baseAgent": "code-reviewer",
-      "description": "Exception route for documentation review. Use only when the diff is mostly prose, setup flow, operator guidance, terminology, or human-facing documentation. Default to code-reviewer when code correctness is the primary risk, even if docs changed too.",
+      "description": "Use when the diff is mostly prose: setup flow, operator guidance, terminology, or human-facing documentation. code-reviewer still owns diffs whose primary risk is code correctness, even if docs changed too.",
       "model": "openai/gpt-5.6-sol",
       "variant": "high",
       "autoLoadSkills": [
@@ -151,9 +154,9 @@
     },
     "adversarial-documentation-reviewer": {
       "baseAgent": "code-reviewer",
-      "description": "Adversarial documentation reviewer. Use only when explicitly asked to stress-test a documentation diff, operator guidance, terminology, or human-facing documentation. Preserve documentation-reviewer scope and focus on evidence-backed findings.",
+      "description": "Use when operators will treat the docs as the contract for install, deploy, or recovery. It checks guidance, terminology, and human-facing docs against evidence, looking for missing prerequisites, unrun commands, false claims, and misleading workflow. documentation-reviewer still owns ordinary prose and terminology review.",
       "model": "openai/gpt-5.6-sol",
-      "variant": "high",
+      "variant": "max",
       "autoLoadSkills": [
         "adversarial-review",
         "writing-for-humans",
@@ -163,57 +166,58 @@
     },
     "code-reviewer-xhigh-reasoning": {
       "baseAgent": "code-reviewer",
-      "description": "Escalation-only xhigh-reasoning code reviewer. Use only after default code-reviewer when there is a named high-risk concern: security boundary, data loss, concurrency race, migration correctness, or public API breakage. Default to code-reviewer for routine diffs, style, tests, docs, UI, and general correctness review. Reviews the diff against the task; does not redesign the approach.",
+      "description": "Use when the diff has a concrete high-risk concern: security boundary, data loss, concurrency race, migration correctness, or public API breakage. It reviews the diff against the task and does not redesign the approach. code-reviewer still owns routine diffs, style, tests, docs, UI, and general correctness.",
       "model": "openai/gpt-5.6-sol",
       "variant": "max"
     },
     "adversarial-code-reviewer": {
       "baseAgent": "code-reviewer",
-      "description": "Adversarial implementation reviewer. Use only when explicitly asked to stress-test a diff, code-vs-plan implementation, risky edge cases, verification gaps, or failure modes. Preserve code-reviewer scope and focus on evidence-backed findings.",
+      "description": "Use only when the diff can lose data, persist invalid state, or break a public contract. Probe adversarial cases within that concrete risk boundary.",
       "model": "openai/gpt-5.6-sol",
-      "variant": "high",
+      "variant": "max",
       "autoLoadSkills": [
         "adversarial-review"
       ]
     },
     "adversarial-simplicity-reviewer": {
       "baseAgent": "simplicity-reviewer",
-      "description": "Adversarial deletion-biased simplicity reviewer. Use only when explicitly asked to stress-test completed implementation complexity, YAGNI, dead code, duplicate logic, speculative abstractions, fallback branches, or unnecessary compatibility paths. Preserve simplicity-reviewer cleanup scope.",
+      "description": "Use when a completed change added layers, flags, adapters, or defensive branches beyond the accepted task. It looks for YAGNI, dead code, duplicate logic, speculative abstractions, fallback branches, and unnecessary compatibility paths, and recommends deletions that preserve behavior. It does not redesign the approach or review correctness beyond unnecessary complexity. simplicity-reviewer still owns ordinary cleanup.",
       "model": "openai/gpt-5.6-sol",
-      "variant": "high",
+      "variant": "max",
       "autoLoadSkills": [
         "adversarial-review"
       ]
     },
     "approach-advisor-xhigh-reasoning": {
       "baseAgent": "approach-advisor",
-      "description": "Escalation-only xhigh-reasoning approach advisor. Use only when the operator or planner has a named strategic decision that would materially change architecture, persistence, deployment, or integration boundaries. Do not use for normal planning, implementation review, code review, or vague uncertainty. Advisory only; does not approve plans, review diffs, or implement.",
+      "description": "Use when a concrete decision would change architecture, persistence, deployment, or integration boundaries. It advises; it does not approve plans, review diffs, or implement. approach-advisor still owns ordinary planning advice and local tradeoffs. If no concrete boundary-changing decision is on the table, stay with approach-advisor.",
       "model": "openai/gpt-5.6-sol",
       "variant": "max"
     },
     "adversarial-approach-advisor": {
       "baseAgent": "approach-advisor",
-      "description": "Adversarial strategic advisor. Use only when explicitly asked to stress-test an approach, architecture route, migration, persistence boundary, deployment path, integration design, or hard tradeoff. Preserve approach-advisor advisory scope; do not approve plans or review diffs.",
+      "description": "Use when the chosen route is costly to reverse, or competing routes remain plausible. It challenges an architecture route, migration, persistence boundary, deployment path, integration design, or hard tradeoff. It does not approve plans or review diffs. approach-advisor still owns ordinary advisory work.",
       "model": "openai/gpt-5.6-sol",
-      "variant": "high",
+      "variant": "max",
       "autoLoadSkills": [
         "adversarial-review"
       ]
     },
     "ui-design-advisor": {
       "baseAgent": "approach-advisor",
-      "description": "Read-only UI and UX direction advisor. Use before planning when audience, information hierarchy, surface structure, interaction model, visual authority, or design-system direction remains unresolved. Produces a concrete design brief and does not implement or review code.",
+      "description": "Use before planning when audience, information hierarchy, surface structure, interaction model, what the screen should emphasize, or design-system direction is still unresolved. It produces a design brief. It does not implement or review code. approach-advisor still owns questions that are not UI or UX direction.",
       "model": "openai/gpt-5.6-sol",
-      "variant": "high",
+      "variant": "max",
       "autoLoadSkills": [
-        "web-design-guidelines"
+        "web-design-guidelines",
+        "stop-design-slop"
       ]
     },
     "scout-researcher-capable": {
       "baseAgent": "scout-researcher",
-      "description": "Advanced scout researcher capable of deciphering complex systems and executing multi-step investigations, potentially spanning both local and external sources. Use only when the task requires multi-stage tracing, reconciling ambiguous information, correlating disparate evidence, or following intricate technical flows with multiple investigative steps. Default to scout-researcher for simple or well-bounded research tasks.",
+      "description": "Use when one research question needs multi-stage tracing, reconciling conflicting evidence, or correlating sources that do not fit one bounded lookup. scout-researcher still owns simple or well-bounded research. Independent questions should still be fanned out rather than folded into this agent.",
       "model": "openai/gpt-5.6-luna",
-      "variant": "max",
+      "variant": "xhigh",
       "autoLoadSkills": [
         "cymbal",
         "ast-grep",
@@ -222,9 +226,9 @@
     },
     "scout-researcher-code": {
       "baseAgent": "scout-researcher",
-      "description": "Specialized scout researcher to analyze and investigate only the local codebase. Use exclusively for tasks requiring in-depth research of code within the project, such as code exploration, local implementation analysis, or gathering information about project structure.",
+      "description": "Use only for local codebase investigations that require multi-hop symbol or call tracing across multiple modules, or architecture mapping across component boundaries. Do not dispatch for bounded lookups, implementation, or review.",
       "model": "openai/gpt-5.6-sol",
-      "variant": "high",
+      "variant": "max",
       "autoLoadSkills": [
         "cymbal",
         "ast-grep",
@@ -264,6 +268,7 @@
     },
     "scout-researcher": {
       "model": "openai/gpt-5.6-luna",
+      "description": "Default for bounded routine research, local code lookup, codebase exploration, and external docs or data retrieval.",
       "autoLoadSkills": [
         "cymbal",
         "ast-grep",
@@ -273,45 +278,51 @@
     },
     "forager-worker": {
       "model": "openai/gpt-5.6-sol",
+      "description": "Default for ordinary implementation, bug fixes, and refactoring in an isolated worktree.",
       "autoLoadSkills": [
-        "verification-before-completion"
+        "verification"
       ],
-      "variant": "high"
+      "variant": "medium"
     },
     "hive-helper": {
       "model": "openai/gpt-5.6-sol",
       "autoLoadSkills": [],
-      "variant": "high"
+      "variant": "max"
     },
     "plan-reviewer": {
       "model": "openai/gpt-5.6-sol",
+      "description": "Default for ordinary plan review covering worker readiness, references, dependencies, and executable verification.",
       "autoLoadSkills": [],
       "variant": "high"
     },
     "code-reviewer": {
       "model": "openai/gpt-5.6-sol",
+      "description": "Default for ordinary implementation review covering correctness, tests, risk, scope creep, YAGNI, and dead code.",
       "autoLoadSkills": [],
       "variant": "high"
     },
     "simplicity-reviewer": {
       "model": "openai/gpt-5.6-sol",
+      "description": "Default for ordinary post-implementation simplicity review covering unnecessary abstractions, duplication, dead code, and safe deletion.",
       "autoLoadSkills": [],
       "variant": "high"
     },
     "approach-advisor": {
       "model": "openai/gpt-5.6-sol",
+      "description": "Default for ordinary read-only approach advice on technical direction, architecture, debugging, and tradeoffs.",
       "autoLoadSkills": [],
       "variant": "xhigh"
     },
     "vulnerability-reviewer": {
       "model": "openai/gpt-5.6-sol",
+      "description": "Default for application-security review focused on evidenced attacker-to-impact paths and root-cause triage.",
       "autoLoadSkills": [],
-      "variant": "high"
+      "variant": "max"
     },
     "hive-builder": {
       "model": "openai/gpt-5.6-sol",
       "autoLoadSkills": [
-        "verification-before-completion",
+        "verification",
         "dispatching-parallel-agents",
         "parallel-exploration"
       ],

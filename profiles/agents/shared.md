@@ -34,7 +34,7 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 | Bug, test failure, unexpected behavior, protocol/state/hydration issue | `systematic-debugging` |
 | Implementing a feature or bugfix in code | `test-driven-development` and `consolidate-test-suites` |
 | Adding, moving, or deleting tests after a fix or architecture change | `consolidate-test-suites` |
-| Before claiming work is complete, fixed, or passing | Hive skill `verification-before-completion` |
+| Before claiming work is complete, fixed, or passing | Hive skill `verification` |
 | Starting isolated feature work or executing an approved implementation plan | `using-git-worktrees` |
 | React or Next.js UI/performance work | `react-best-practices` |
 | UI review, accessibility audit, visual/UX critique | `web-design-guidelines` |
@@ -53,7 +53,7 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 - Run relevant checks before submitting changes: lint, format, type-check, build, tests, or the smallest meaningful subset for the touched area.
 - Never claim a check passed unless it was actually run and produced passing output.
 - If a check cannot run, state why and name the command that should be run.
-- Before claiming completion, load `verification-before-completion` and verify with command output or explicit evidence.
+- Before claiming completion, load `verification` and verify with command output or explicit evidence.
 - When discussing parity or readiness, separate expected parity from validated parity.
 - When changes affect install flow, setup choices, profile selection, optional components, or dependency expectations, update the operator-facing docs and agent instructions for that workflow in the same change.
 - Use descriptive names for durable or git-tracked artifacts. Do not name them after phases or steps.
