@@ -18,7 +18,7 @@ This skill borrows useful principles from public writing guidance. It does not c
 
 **arc42, C4, and ADR/MADR.** Explain context, responsibilities, relationships, runtime behavior, constraints, and why a decision was made. Put rejected alternatives in those decision artifacts. Leave them out of current-state operator docs. See [arc42](https://arc42.org/overview), [C4](https://c4model.com/), and [MADR](https://adr.github.io/madr/).
 
-**Wikipedia: Signs of AI writing.** Use it as a field guide to current LLM tells (antithesis, stacked negation, association weasel, placeholder residue, markdown chrome), not as Wikipedia policy. Cadence cleanup still belongs in `stop-slop`. See [WP:AISIGNS](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing).
+**Wikipedia: Signs of AI writing.** Use it as a field guide to current LLM tells (antithesis, stacked negation, association weasel, placeholder residue, markdown chrome), not as Wikipedia policy. Cadence cleanup still belongs in `stop-slop`. Planning labels in durable names (Phase 1, Option B, workstream) are the same family of process leakage; they belong in this skill's Durable names rule. See [WP:AISIGNS](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing).
 
 **wait-what.** If an explanation would not land, re-pitch it with a little context and the project's own terms. See [mattpocock/wait-what](https://github.com/mattpocock/skills/tree/main/skills/productivity/wait-what).
 

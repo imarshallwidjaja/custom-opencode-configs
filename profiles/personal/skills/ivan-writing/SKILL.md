@@ -53,6 +53,8 @@ Avoid AI-default and consultant language. The items below are operational, not v
 
 **Rejected-alternative leakage.** Do not narrate discarded options to an audience that was not choosing among them. Same audience gate as `writing-for-humans`.
 
+**Planning-name leakage.** Do not name durable files, types, docs, or concepts after phases, options, workstreams, tickets, or this conversation. Same isolation test as `writing-for-humans`.
+
 ## Voice And Cadence
 
 Write for a technical peer. Plain statements, concrete evidence. Calm confidence from evidence, not emphatic prose. Mix short and medium sentences. Use first person for personal or application work. Match confidence to evidence. Use `Where:` for mappings, `Some notes:` for constraints.

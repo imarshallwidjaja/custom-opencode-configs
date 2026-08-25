@@ -59,7 +59,7 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 - Before claiming completion, load `verification` and verify with command output or explicit evidence.
 - When discussing parity or readiness, separate expected parity from validated parity.
 - When changes affect install flow, setup choices, profile selection, optional components, or dependency expectations, update the operator-facing docs and agent instructions for that workflow in the same change.
-- Use descriptive names for durable or git-tracked artifacts. Do not name them after phases or steps.
+- Name durable artifacts by purpose or domain meaning, not by Phase 1, Option B, workstream, ticket, or other planning context. A name should still make sense in isolation. See `writing-for-humans`.
 
 ## Editing Rules
 

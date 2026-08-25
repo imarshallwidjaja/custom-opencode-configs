@@ -48,7 +48,7 @@ Ad-hoc is the default. If the work genuinely needs a formal plan, propose that e
 - If a check cannot run, state why and name the command that should be run.
 - Separate expected behavior from validated behavior. Do not claim live Cursor, runtime, or integration parity when only static validation was run.
 - When changes affect install flow, setup choices, profile selection, optional components, dependency expectations, or Cursor Rules guidance, update the operator-facing docs and agent instructions in the same change.
-- Use descriptive names for durable or git-tracked artifacts. Do not name them after phases or steps.
+- Name durable artifacts by purpose or domain meaning, not by Phase 1, Option B, workstream, ticket, or other planning context. A name should still make sense in isolation. See `writing-for-humans`.
 
 ## Editing Rules
 

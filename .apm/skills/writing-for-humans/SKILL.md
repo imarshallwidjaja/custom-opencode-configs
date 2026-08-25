@@ -13,7 +13,7 @@ This is the default generative discipline for software and product writing. Appl
 
 1. **Start from the reader.** Give them what they need in order to act or decide. Make that information findable, understandable, and usable. Leave out decoration. Do not omit a condition, exception, or uncertainty the reader needs.
 
-2. **Name things stably.** Pick one term for each thing and keep it. Preserve necessary technical vocabulary. If the likely reader may not know a term, define it once in context.
+2. **Name things stably.** Pick one term for each thing and keep it. Preserve necessary technical vocabulary. If the likely reader may not know a term, define it once in context. A name should still make sense when encountered in isolation.
 
 3. **Keep subjects, verbs, and relationships explicit.** Name the actor when the actor matters. Say what depends on what, what runs when, and who owns which responsibility. Prefer verbs for actions.
 
@@ -45,9 +45,19 @@ Drop them from README current-state sections, commit messages, PR summaries, and
 
 Architecture writing still states trade-offs the operator has to live with. It does not recap the menu of options you personally discarded.
 
+## Durable names
+
+Name code, files, docs, components, branches that become the thing's identity, and concepts by purpose, responsibility, domain meaning, or outcome. Do not encode temporary planning context.
+
+Do not use Phase 1, Option B, Workstream 2, ticket-only labels, "final"/"new" versioning from this conversation, or other deliberation vocabulary as the durable name. Prefer `coverage-processing` over `phase-1`, and `scene-ingestion` over `workstream-2`. "Option B" as a filename is the naming form of rejected-alternative leakage.
+
+Keep a planning identifier only when it is a first-class concept whose meaning is defined alongside the artifact: an RFC number, a CVE, a public protocol version, a tracker ID in a commit subject when that is the repo contract. Do not put that identifier in the type, module, or heading if the reader would have to open an external doc or this chat to know what the thing does.
+
+Scratch paths that will be deleted can be messy. Git-tracked and exported names cannot.
+
 ## Artifact instincts
 
-**Code and systems.** Name the concrete objects. Say what must exist before something can run. Prefer inputs, outputs, state, handoff points, and failure boundaries over capability claims.
+**Code and systems.** Name the concrete objects by what they do. Say what must exist before something can run. Prefer inputs, outputs, state, handoff points, and failure boundaries over capability claims.
 
 **Architecture.** Make responsibilities, relationships, runtime behavior, assumptions, trade-offs, constraints, and reasons understandable. Start from context and the problem being solved. State the trade-off an operator must live with. Do not list discarded options the reader was not considering. Boxes, layers, and "components" are not a substitute for those facts.
 

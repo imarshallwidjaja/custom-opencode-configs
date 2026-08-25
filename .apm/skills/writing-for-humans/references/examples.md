@@ -50,6 +50,18 @@ The live constraint (writes, invalidation) stays. The discarded menu, the "I did
 
 If the artifact is an ADR, keep the discarded options and the reason they lost.
 
+## Durable names, not planning slots
+
+The work was sequenced as Phase 1 in a planning chat. The durable artifact is a coverage processor.
+
+**Before:**
+> Add `phase-1-processor.ts` and `docs/workstream-2-ingest.md`. Option B lives in `option-b-cache/`. Ticket ABC-1847 is the module name.
+
+**After:**
+> Add `coverage-processing.ts` and `docs/scene-ingestion.md`. The write-through cache lives in `write-through-cache/`. Mention ABC-1847 in the commit subject if that is the tracker contract; do not name the module after the ticket.
+
+A later reader can open the file without the planning thread. The ticket remains a pointer, not the identity of the code.
+
 ## Re-pitch with context
 
 **Before:**

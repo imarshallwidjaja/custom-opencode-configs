@@ -17,7 +17,7 @@ Remove filler, formulaic structures, and mechanical cadence from prose while pre
 
 ## Related skills
 
-`writing-for-humans` is the default generative discipline. Use this skill to clean existing filler and cadence problems. For discarded options leaking into the wrong artifact, that skill owns the audience gate.
+`writing-for-humans` is the default generative discipline. Use this skill to clean existing filler and cadence problems. That skill also owns discarded-option narration and planning labels leaking into durable names (`phase-1`, `option-b`, `workstream-2`).
 
 For promotional tone, AI-vocabulary clusters, vague attributions, chatbot artifacts, or formatting tells, use `humanizer`:
 
