@@ -31,3 +31,13 @@ These are constructed transformations, not corpus samples. Each after-text prese
 > "I think event sourcing improves auditability. I'm not convinced it's worth the extra operational complexity for this service."
 
 **Preserved:** The view that event sourcing improves auditability and the uncertainty about whether it is worth the extra operational complexity for this service.
+
+## Reader-management and rejected alternatives
+
+**Before:**
+> "As you'll see, this is a comprehensive ingestion pipeline. I considered Kafka, Kinesis, and a homegrown HTTP fan-in. I didn't use Kinesis because we had no account for it. Rest assured the team owns operations."
+
+**After (operator voice):**
+> "The service receives webhook events, validates each payload against the order schema, stores valid events, and returns HTTP 400 for invalid payloads. The operations team owns it."
+
+**Preserved:** Webhook receipt, validation, storage, HTTP 400, operations-team ownership. The praise, the discarded-menu narration, and the reassurance are dropped. If this were an ADR, keep the store comparison and the reason Kinesis lost.

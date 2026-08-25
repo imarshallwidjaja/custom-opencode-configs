@@ -76,7 +76,9 @@ Scan for these patterns, then rewrite the flagged text to be specific, direct, a
 
 ## 7) Overused "AI vocabulary" words
 
-**High-frequency AI words:** Additionally, align with, crucial, delve, emphasizing, enduring, enhance, fostering, garner, highlight (verb), interplay, intricate/intricacies, key (adjective), landscape (abstract noun), pivotal, showcase, tapestry (abstract noun), testament, underscore (verb), valuable, vibrant
+**High-frequency AI words:** Additionally, align with, crucial, delve, emphasizing, enduring, enhance, fostering, garner, highlight (verb), highlighting, interplay, intricate/intricacies, key (adjective), landscape (abstract noun), meticulous, pivotal, robust (figurative), showcase, showcasing, tapestry (abstract noun), testament, underscore (verb), valuable, vibrant
+
+**Later-model extras:** GPT-5-era text still clusters emphasizing / enhance / highlighting / showcasing. Grok-heavy text overuses superficially scientific words (causal, empirical, correlate) and still leans on underscore. Keep those words when they are the accurate technical term.
 
 **Problem:** These words cluster together and instantly date the writing as post-2023 LLM-ish.
 
@@ -88,7 +90,7 @@ Scan for these patterns, then rewrite the flagged text to be specific, direct, a
 
 ## 8) Avoidance of "is"/"are" (copula avoidance)
 
-**Words to watch:** serves as/stands as/marks/represents [a], boasts/features/offers [a]
+**Words to watch:** serves as/stands as/marks/represents/functions as/operates as [a], boasts/features/offers [a], refers to (when the sentence is about the thing, not the term)
 
 **Problem:** Swapping simple statements for performative ones.
 
@@ -100,13 +102,22 @@ Scan for these patterns, then rewrite the flagged text to be specific, direct, a
 
 ## 9) Negative parallelisms
 
-**Problem:** "Not only...but..." / "It's not just about..., it's..." spam.
+**Problem:** Contrast used as the default explanation. Two-part and three-part forms are the same tell. Cadence cleanup lives in `stop-slop`; flag these here when they appear in encyclopedic or promotional prose.
+
+**Forms:**
+- "Not only X, but Y" / "It's not just about X, it's Y"
+- "It's not X, it's Y"
+- "It's not X, and it's not Y, but it is Z"
+- "No X, no Y, just Z"
+- "X rather than Y" as a rhetorical punch (common in Grok output)
 
 **Before:**
-> It's not just about the beat ... it's part of the aggression ... It's not merely a song, it's a statement.
+> It's not just about the beat ... it's part of the aggression ... It's not merely a song, it's a statement. It's not a protest, and it's not a joke, but it is a warning.
 
 **After:**
 > The heavy beat adds to the aggressive tone.
+
+If the reader was already choosing among those names, keep the denials as facts, not as a reveal.
 
 ## 10) Rule-of-three overuse
 
@@ -182,13 +193,13 @@ Scan for these patterns, then rewrite the flagged text to be specific, direct, a
 
 **Fix:** Remove and jump straight into the actual material.
 
-## 20) Knowledge-cutoff disclaimers
+## 20) Knowledge-cutoff disclaimers and source-gap speculation
 
-**Words to watch:** as of [date], Up to my last training update, based on available information...
+**Words to watch:** as of [date], Up to my last training update, based on available information, not widely documented/available, While specific details are limited, the [subject] likely...
 
-**Problem:** Model meta leaking into the text.
+**Problem:** Model meta leaking into the text, or inventing absence and then filling it with guesses ("maintains a low profile", "likely supports a diverse ecosystem").
 
-**Fix:** Replace with facts + source, or remove.
+**Fix:** Replace with facts + source, or remove. Do not speculate into a gap you just declared.
 
 ## 21) Sycophantic / servile tone
 
@@ -215,3 +226,51 @@ Scan for these patterns, then rewrite the flagged text to be specific, direct, a
 **Problem:** "The future looks bright... exciting times..."
 
 **Fix:** End with a concrete next step, metric, or specific claim.
+
+## 25) Vague expression of connection or association
+
+**Words to watch:** associated with, in association with, in connection with/to, connected with/to, particularly/widely associated
+
+**Problem:** Naming a relationship without saying what the relationship is (worked on, caused, cited, used in).
+
+**Before:**
+> The system has been associated with residential water management. The inventor is referenced in connection with award recognition.
+
+**After:**
+> The method is used for swimming-pool backwash and sump-pump discharge. The New Jersey DEP named the inventor in a 2019 environmental-excellence award list.
+
+## 26) Phrasal templates and placeholder residue
+
+**Words to watch:** [Your Name], [Specific Topic], INSERT_SOURCE_URL, 2025-XX-XX, _(Add your URL here)_, TODO: fill in
+
+**Problem:** Mad Libs slots left in the output, including fake citation dates.
+
+**Fix:** Fill from evidence or delete the slot. Do not ship brackets, underscores-as-blanks, or XX dates.
+
+## 27) LLM citation markup leaks
+
+**Words to watch:** contentReference, oaicite, turn0search0, grok_card, grok_render_citation_card_json, [cite: 1], [span_1], attached_file, ppl-ai-file-upload, :::writing
+
+**Problem:** Chat UI citation chips pasted into the document.
+
+**Fix:** Replace with a real citation or drop the claim. Do not leave the markup.
+
+## 28) Markdown section chrome
+
+**Problem:** `---` / `***` thematic breaks between every section; skipped heading levels; a dump of H1s; a heading whose only children are more headings.
+
+**Fix:** Ordinary heading hierarchy. No horizontal rules as section glue. Put a sentence under a heading or remove the heading.
+
+## 29) Tiny comparison tables used as layout
+
+**Problem:** A two- or three-row "Feature / Value" table that would be clearer as two sentences.
+
+**Fix:** Write the comparison as prose unless the reader must scan many aligned fields.
+
+## 30) Section restatements
+
+**Words to watch:** In this section we will, In summary, In conclusion, Overall, To conclude
+
+**Problem:** The paragraph repeats itself as a closer.
+
+**Fix:** End on the last new fact. Do not recap the heading.

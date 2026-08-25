@@ -37,7 +37,21 @@ Fix every mismatch before output. If a claim cannot be sourced to the input, rem
 
 ## Anti-Patterns
 
-Avoid AI-default and consultant language, reader-management/self-validation, meta-framing about authenticity, apologetic gap-filling, generic closers, abstract soft-skill claims without observable handoffs.
+Avoid AI-default and consultant language. The items below are operational, not vibes.
+
+**Reader-management.** Telling the reader how to feel or that the text is already clear. Cut "as you'll see", "it's important to understand", "don't worry", "simply put", "to be clear for the reader".
+
+**Self-validation.** Praising the work inside the work. Cut "this robust approach", "a comprehensive solution", "carefully designed".
+
+**Meta-framing about authenticity.** Announcing honesty instead of making the claim. Cut "to be authentic", "in my genuine experience", "I'm not going to sugarcoat this".
+
+**Apologetic gap-filling.** Softening missing evidence with atmosphere. Cut "while I don't have exact numbers, the impact was significant." Name the gap or drop the claim.
+
+**Generic closers.** Cut "happy to discuss further", "I hope this helps", "exciting times ahead", "please don't hesitate".
+
+**Abstract soft-skill claims.** "Strong communicator" with no handoff. Prove the skill through who brought the request, what was clarified, what shipped, and who could operate it afterwards.
+
+**Rejected-alternative leakage.** Do not narrate discarded options to an audience that was not choosing among them. Same audience gate as `writing-for-humans`.
 
 ## Voice And Cadence
 
@@ -45,7 +59,7 @@ Write for a technical peer. Plain statements, concrete evidence. Calm confidence
 
 ## Word Choice
 
-Prefer hands-on verbs (built, operated, debugged). Prefer architectural verbs (encompasses, manages). Use reliability framing (schema contracts, validation gates, safe reruns). Prefer operational verbs for collaboration (scoped, shipped, documented). Keep implementation nouns. Use expected-language for constraints without drama.
+Prefer hands-on verbs (built, operated, debugged). Prefer architectural verbs that name a real relationship (manages, maintains, derives, supports). Prefer is/has/contains/covers/runs over encompasses/comprises/serves as; those last three are copula dodges. Use reliability framing (schema contracts, validation gates, safe reruns). Prefer operational verbs for collaboration (scoped, shipped, documented). Keep implementation nouns. Use expected-language for constraints without drama.
 
 ## Examples
 

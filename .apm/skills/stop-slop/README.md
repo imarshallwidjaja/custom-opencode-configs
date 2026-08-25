@@ -35,7 +35,7 @@ stop-slop/
 
 **Banned phrases** — Throat-clearing openers, emphasis crutches, business jargon. See `references/phrases.md`.
 
-**Structural clichés** — Binary contrasts, dramatic fragmentation, rhetorical setups. See `references/structures.md`.
+**Structural clichés** — LinkedIn cadence, antithesis, stacked negation, dramatic fragmentation, rhetorical setups. See `references/structures.md`.
 
 **Stylistic habits** — Tripling, immediate question-answers, metronomic endings.
 

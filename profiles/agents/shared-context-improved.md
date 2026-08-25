@@ -43,8 +43,8 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 | HTML slide decks, briefings, PPT-to-web conversions | `frontend-slides` |
 | Draw.io diagrams, flowcharts, architecture, ER, or UML figures | `drawio-skill` |
 | Drafting or explaining code, architecture, systems, processes, decisions, requirements, PRDs, plans, docs, or reviews | `writing-for-humans` |
-| Filler phrases, throat-clearing openers, mechanical cadence, rhetorical setups | `stop-slop` |
-| Promotional tone, vague attributions, chatbot artifacts, AI vocabulary clusters | `humanizer` |
+| Filler phrases, LinkedIn cadence, antithesis, stacked negation, dramatic fragments | `stop-slop` |
+| Promotional tone, vague attributions, chatbot artifacts, AI vocabulary, association weasel, placeholder or citation markup | `humanizer` |
 | Resumes, CVs, cover letters | `resume-tailoring` |
 | AGENTS.md bootstrap, review, pruning, or update | Hive skill `agents-md-mastery` |
 
@@ -127,9 +127,9 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 
 ## Writing
 
-- Load `writing-for-humans` when drafting or explaining software and product work.
-- Load `stop-slop` only when existing prose has filler, formulaic structure, or manufactured cadence.
-- Load `humanizer` only when existing prose is promotional, vague, or chatbot-like.
+- Load `writing-for-humans` when drafting or explaining software and product work. Name discarded options only when the reader would otherwise reopen them.
+- Load `stop-slop` only when existing prose has filler, LinkedIn cadence, antithesis, stacked negation, or manufactured fragments.
+- Load `humanizer` only when existing prose is promotional, vague, chatbot-like, or padded with association weasel, placeholder residue, or citation markup.
 
 ## Browser Usage
 

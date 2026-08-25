@@ -36,6 +36,20 @@ Do not promote a hypothesis into a cause in order to make the paragraph cleaner.
 **After:**
 > `billing/capture.ts:88` swallows `CardDeclined` and returns HTTP 200. A declined card then looks paid to the client, and the webhook path never retries. Return the processor decline to the caller, and add a test for that branch.
 
+## Rejected alternatives belong in the ADR, not the status note
+
+The reader asked what changed in production. They did not ask which stores were considered.
+
+**Before:**
+> I considered Redis, Memcached, and an in-process hashmap. I didn't use Memcached because we have no ops experience with it, and I avoided a full rewrite of the catalogue service. We added Redis in front of Postgres. This does not affect writes.
+
+**After:**
+> Catalogue reads now go through Redis. Writes still go to Postgres first; Redis is invalidated on publish.
+
+The live constraint (writes, invalidation) stays. The discarded menu, the "I didn't use", and the "this does not affect" narration go.
+
+If the artifact is an ADR, keep the discarded options and the reason they lost.
+
 ## Re-pitch with context
 
 **Before:**

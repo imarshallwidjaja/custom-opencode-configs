@@ -93,8 +93,8 @@ Use installed Cursor skills or equivalent written guidance when the trigger appl
 | Bootstrapping, reviewing, or pruning AGENTS.md and other durable instructions | `agents-md-mastery` |
 | Drafting or explaining code, architecture, systems, processes, decisions, requirements, PRDs, plans, docs, or reviews | `writing-for-humans` |
 | Human-facing prose representing Ivan (technical docs, resumes, reports, PRs, commit messages when voice is Ivan's) | `ivan-writing` (when installed) |
-| Filler phrases, throat-clearing openers, mechanical cadence, binary contrasts, dramatic fragmentation | `stop-slop` |
-| Promotional tone, vague attributions, chatbot artifacts, AI-vocabulary clusters, formatting tells | `humanizer` |
+| Filler phrases, LinkedIn cadence, antithesis, stacked negation, dramatic fragmentation | `stop-slop` |
+| Promotional tone, vague attributions, chatbot artifacts, AI vocabulary, association weasel, placeholder or citation markup | `humanizer` |
 | Generic, template-like, or AI-convergent UI | `stop-design-slop` |
 | HTML slide decks, briefings, PPT-to-web conversions | `frontend-slides` |
 | Draw.io diagrams, flowcharts, architecture, ER, or UML figures | `drawio-skill` |
@@ -133,9 +133,9 @@ For ad-hoc branch integration, prefer squash-style integration when it keeps mai
 
 ## Documentation And Writing
 
-- Load `writing-for-humans` when drafting or explaining software and product work.
-- Load `stop-slop` only when existing prose has filler, formulaic structure, or manufactured cadence.
-- Load `humanizer` only when existing prose is promotional, vague, or chatbot-like.
+- Load `writing-for-humans` when drafting or explaining software and product work. Name discarded options only when the reader would otherwise reopen them.
+- Load `stop-slop` only when existing prose has filler, LinkedIn cadence, antithesis, stacked negation, or manufactured fragments.
+- Load `humanizer` only when existing prose is promotional, vague, chatbot-like, or padded with association weasel, placeholder residue, or citation markup.
 - Write in Ivan's operator voice when representing Ivan: direct, process-first, technically grounded, and pragmatic.
 
 ## Reviews

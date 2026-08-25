@@ -46,8 +46,8 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 | Draw.io diagrams, flowcharts, architecture, ER, or UML figures | `drawio-skill` |
 | Drafting or explaining code, architecture, systems, processes, decisions, requirements, PRDs, plans, docs, or reviews | `writing-for-humans` |
 | Prose written as Ivan (first-person ownership, personal voice) | `ivan-writing` |
-| Filler phrases, throat-clearing openers, mechanical cadence, rhetorical setups | `stop-slop` |
-| Promotional tone, vague attributions, chatbot artifacts, AI vocabulary clusters | `humanizer` |
+| Filler phrases, LinkedIn cadence, antithesis, stacked negation, dramatic fragments | `stop-slop` |
+| Promotional tone, vague attributions, chatbot artifacts, AI vocabulary, association weasel, placeholder or citation markup | `humanizer` |
 | Resumes, CVs, cover letters | `ivan-writing` and `resume-tailoring` |
 | AGENTS.md bootstrap, review, pruning, or update | Hive skill `agents-md-mastery` |
 
@@ -130,10 +130,10 @@ Load skills on these triggers, not mechanically for unrelated trivial requests.
 
 ## Writing
 
-- Load `writing-for-humans` when drafting or explaining software and product work.
+- Load `writing-for-humans` when drafting or explaining software and product work. Name discarded options only when the reader would otherwise reopen them.
 - Load `ivan-writing` when writing as Ivan: technical/operator, professional/application, and casual/informal registers.
-- Load `stop-slop` only when existing prose has filler, formulaic structure, or manufactured cadence.
-- Load `humanizer` only when existing prose is promotional, vague, or chatbot-like.
+- Load `stop-slop` only when existing prose has filler, LinkedIn cadence, antithesis, stacked negation, or manufactured fragments.
+- Load `humanizer` only when existing prose is promotional, vague, chatbot-like, or padded with association weasel, placeholder residue, or citation markup.
 - Load `ivan-writing` with `resume-tailoring` for resumes, CVs, and cover letters.
 - Write in Ivan's voice by default: direct, process-first, technically grounded, pragmatic.
 - Neutral/team/third-party voice overrides Ivan voice when explicitly requested.

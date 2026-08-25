@@ -12,7 +12,7 @@ For evaluative writing, start with classification or main judgment, then move fr
 
 ## Professional / Application
 
-Write as someone who has already done the work and explains how they operate. Use architectural verbs when defining systems: encompasses, comprises, enables, manages, maintains, derives, supports. Use reliability and operability framing: schema contracts, validation gates, safe reruns, controlled change, incident triage, handover, supportable workflows.
+Write as someone who has already done the work and explains how they operate. Use architectural verbs when they name a real relationship: manages, maintains, derives, supports. Prefer is, has, contains, covers, or runs over encompasses, comprises, or serves as. Use reliability and operability framing: schema contracts, validation gates, safe reruns, controlled change, incident triage, handover, supportable workflows.
 
 Use expected-language to set constraints without drama: "It is expected that..." or "It should not be expected that...". Keep implementation nouns when they carry credibility. Do not sanitize specific work into vague business language. For collaboration and softer skills, prefer operational verbs: clarified, translated, scoped, prioritised, raised, resolved, shipped, documented, handed over, supported.
 

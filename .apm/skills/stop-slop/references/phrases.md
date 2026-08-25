@@ -13,6 +13,10 @@ Remove these announcement phrases. State the content directly.
 - "I'll say it again:"
 - "I'm going to be honest"
 - "Can we talk about"
+- "Here's what nobody tells you"
+- "Unpopular opinion:"
+- "After [N] years, here's"
+- "I used to think"
 
 ## Emphasis Crutches
 
@@ -56,6 +60,11 @@ Cut or replace:
 - "When it comes to"
 - "In a world where"
 - "The reality is"
+- "It's important to note"
+- "It's important to remember"
+- "In summary,"
+- "In conclusion,"
+- "Overall,"
 
 ## Meta-Commentary
 
@@ -67,3 +76,5 @@ Remove self-referential asides:
 - "But that's another post"
 - "X is a feature, not a bug"
 - "Dressed up as"
+- "That's the whole playbook"
+- "Let me tell you why"

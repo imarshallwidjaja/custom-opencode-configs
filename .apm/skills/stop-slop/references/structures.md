@@ -1,8 +1,23 @@
 # Structures to Avoid
 
-## Binary Contrasts
+## LinkedIn cadence
 
-These create false drama. State the point directly.
+A thought-leadership register that uses line breaks and reversals as the argument. Common even after filler phrases are gone.
+
+| Pattern | Problem |
+|---------|---------|
+| One sentence per paragraph | White space standing in for emphasis |
+| "I used to think X. Then I learned Y." | Anecdote as setup for a generic lesson |
+| "Stop X. Start Y." | Couplet instead of the action |
+| "The best X don't Y. They Z." | Authority contrast |
+| Numbered "lessons" with no operational content | Listicle profundity |
+| "That's it. That's the whole [playbook/secret]." | Performative simplicity |
+
+**Instead:** Write continuous prose. State the claim. Keep a personal anecdote only when it supplies a fact the reader needs.
+
+## Antithesis and stacked negation
+
+These create false drama. Two-part pivots and three-part denials are the same move. Flattening the fragments into one "not X but Y" sentence is not a fix.
 
 | Pattern | Problem |
 |---------|---------|
@@ -11,8 +26,15 @@ These create false drama. State the point directly.
 | "The answer isn't X. It's Y." | Predictable pivot |
 | "It feels like X. It's actually Y." | Setup/reveal cliche |
 | "The question isn't X. It's Y." | Rhetorical misdirection |
+| "This isn't about X. It's about Y." | Antithesis frame |
+| "It's not X, and it's not Y, but it is Z." | Stacked negation |
+| "Not X. Not Y. Z." | Stacked negation as fragments |
+| "No X, no Y, just Z." | Tricolon denial |
+| "X rather than Y" used as a punch | Contrast standing in for the fact |
 
-**Instead:** State Y directly. "The problem is Y." "Y matters here."
+**Instead:** State Z (or Y) directly. Keep the denied item only when this reader was already considering it, or when the denial is a live operational constraint. "The problem is Y." "It is a write-ahead log."
+
+Joining fragments into "not because X, but because Y" still leaves the antithesis. Rewrite the frame.
 
 ## Dramatic Fragmentation
 

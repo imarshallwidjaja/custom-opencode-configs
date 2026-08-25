@@ -31,15 +31,25 @@ Write prose that can be read continuously. Paragraphs may contain several relate
 
 Brevity is useful when it improves understanding. Cutting words is not the goal.
 
-Do not manufacture importance or tension. Avoid antithesis frames such as "This isn't about X. It's about Y." and the related cadence: dramatic sentence fragments, chains of one-line paragraphs, rhetorical setup and payoff, repeated three-part slogans, and phrases written mainly to sound quotable. Do not reach for "this changes everything", "the real problem is", or "here's the thing" when an ordinary explanation would do.
+Do not manufacture importance or tension. Avoid antithesis frames such as "This isn't about X. It's about Y." Avoid stacked negation such as "It's not X, and it's not Y, but it is Z." Avoid the related cadence: dramatic sentence fragments, chains of one-line paragraphs, Stop/Start couplets, "I used to / then I learned" setups, rhetorical setup and payoff, repeated three-part slogans, and phrases written mainly to sound quotable. That register is LinkedIn cadence. Do not reach for "this changes everything", "the real problem is", or "here's the thing" when an ordinary explanation would do.
 
 If existing prose already has that cadence, load `stop-slop`. If it is promotional, chatbot-like, or padded with vague AI vocabulary, load `humanizer`. If the user wants Ivan's personal voice, load `ivan-writing`.
+
+## Rejected alternatives
+
+Name a discarded option only when this reader would otherwise reopen it or misread the current state.
+
+Keep them in ADRs, design reviews, and answers to "why not X?" Keep a live operational contrast that the reader must handle, such as "writes still go to Postgres."
+
+Drop them from README current-state sections, commit messages, PR summaries, and status replies unless the ask was to justify the approach. "I didn't use X because", "rather than rewriting", "I considered A, B, and C", "this does not affect Y", and "while preserving Z" are process narration when the reader never held those alternatives.
+
+Architecture writing still states trade-offs the operator has to live with. It does not recap the menu of options you personally discarded.
 
 ## Artifact instincts
 
 **Code and systems.** Name the concrete objects. Say what must exist before something can run. Prefer inputs, outputs, state, handoff points, and failure boundaries over capability claims.
 
-**Architecture.** Make responsibilities, relationships, runtime behavior, assumptions, trade-offs, constraints, and reasons understandable. Start from context and the problem being solved. Boxes, layers, and "components" are not a substitute for those facts.
+**Architecture.** Make responsibilities, relationships, runtime behavior, assumptions, trade-offs, constraints, and reasons understandable. Start from context and the problem being solved. State the trade-off an operator must live with. Do not list discarded options the reader was not considering. Boxes, layers, and "components" are not a substitute for those facts.
 
 **Product writing.** Keep the underlying problem, desired outcome, evidence, constraints, success criteria, and proposed capability conceptually distinct. An observation is not a requirement. A capability is not a success criterion.
 
@@ -69,7 +79,7 @@ Constructed. They show the intended voice, not a required house style.
 
 ## Related skills
 
-- `stop-slop` for filler, formulaic structure, and cadence cleanup of existing text
+- `stop-slop` for filler, LinkedIn cadence, antithesis, stacked negation, and other cadence cleanup of existing text
 - `humanizer` for promotional tone, vague attributions, chatbot artifacts, and AI-vocabulary clusters
 - `ivan-writing` when the prose should represent Ivan's personal voice
 
