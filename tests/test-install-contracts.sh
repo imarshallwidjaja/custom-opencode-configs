@@ -262,6 +262,35 @@ for path in [root, *sorted(root.rglob('*'), key=lambda item: str(item.relative_t
 PY
 }
 
+tracked_markdown_uses_canonical_cursor_destination() {
+  python3 - "$1" <<'PY'
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+obsolete = 'Cursor Settings -> Rules'
+tracked = subprocess.run(
+    ['git', '-C', str(root), 'ls-files', '-z'],
+    check=True,
+    stdout=subprocess.PIPE,
+).stdout.split(b'\0')
+errors = []
+for raw_relative in tracked:
+    if not raw_relative:
+        continue
+    relative = Path(os.fsdecode(raw_relative))
+    if relative.suffix != '.md':
+        continue
+    path = root / relative
+    if path.is_file() and obsolete in path.read_text(encoding='utf-8', errors='ignore'):
+        errors.append(str(relative))
+if errors:
+    raise SystemExit(f'obsolete Cursor Rules destination found in: {", ".join(errors)}')
+PY
+}
+
 cursor_target_unmodified() {
   local dir="$1"
   [[ ! -e "${dir}/agents" && ! -e "${dir}/commands" && ! -e "${dir}/skills" && ! -e "${dir}/.backup" ]]
@@ -1927,24 +1956,28 @@ else
   fail "67q: Engineering Judgment leaked into an OpenCode delivery surface"
 fi
 
-if python3 - "${BASELINE_PWD}" <<'PY'
-import sys
-from pathlib import Path
+tracked_markdown67="${TMPDIR}/tracked-markdown67"
+mkdir -p "${tracked_markdown67}"
+git -C "${tracked_markdown67}" init -q
+printf '%s\n' '*.ignored.md' > "${tracked_markdown67}/.gitignore"
+printf '%s\n' '# Canonical Cursor destination' > "${tracked_markdown67}/guide.md"
+printf '%s\n' 'Cursor Settings -> Rules' > "${tracked_markdown67}/stale.ignored.md"
+git -C "${tracked_markdown67}" add .gitignore guide.md
+if tracked_markdown_uses_canonical_cursor_destination "${tracked_markdown67}" >"${TMPDIR}/ignored67r.out" 2>"${TMPDIR}/ignored67r.err"; then
+  pass "67r1: ignored untracked stale Markdown is not treated as shipped"
+else
+  fail "67r1: ignored untracked stale Markdown was treated as shipped"
+fi
 
-root = Path(sys.argv[1])
-obsolete = 'Cursor Settings -> Rules'
-excluded_roots = {'.git', 'node_modules', 'vendor'}
-errors = []
-for path in sorted(root.rglob('*.md')):
-    relative = path.relative_to(root)
-    if any(part in excluded_roots for part in relative.parts):
-        continue
-    if obsolete in path.read_text(encoding='utf-8', errors='ignore'):
-        errors.append(str(relative))
-if errors:
-    raise SystemExit(f'obsolete Cursor Rules destination found in: {", ".join(errors)}')
-PY
-then
+git -C "${tracked_markdown67}" add -f stale.ignored.md
+if ! tracked_markdown_uses_canonical_cursor_destination "${tracked_markdown67}" >"${TMPDIR}/tracked67r.out" 2>"${TMPDIR}/tracked67r.err" &&
+  grep -q 'stale.ignored.md' "${TMPDIR}/tracked67r.err"; then
+  pass "67r2: tracked stale Markdown is rejected"
+else
+  fail "67r2: tracked stale Markdown was not rejected"
+fi
+
+if tracked_markdown_uses_canonical_cursor_destination "${BASELINE_PWD}"; then
   pass "67r: shipped Markdown uses the canonical Cursor Customize Rules destination"
 else
   fail "67r: shipped Markdown contains the obsolete Cursor Settings Rules destination"
