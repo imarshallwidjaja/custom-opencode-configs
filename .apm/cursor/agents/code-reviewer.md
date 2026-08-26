@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Use when implementation diffs need read-only review against a task or plan for correctness, tests, risk, scope, and dead code.
+description: Use when completed non-trivial implementation needs read-only review for correctness, tests, risk, scope, and regressions.
 model: inherit
 readonly: true
 ---

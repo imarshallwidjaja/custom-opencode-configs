@@ -1,6 +1,8 @@
 # Cursor Assets
 
-Prompt-level Cursor assets sourced from this repository and installed globally under Cursor config directories by `scripts/cursor-assets.sh`.
+Prompt-level Cursor assets sourced from this repository and installed globally under Cursor config directories by `scripts/cursor-assets.sh`. The default parent Agent uses Hive-Builder-like delegation-first orchestration with Cursor-native named subagents; it is not Agent Hive runtime parity and has no Hive tools, state, task DAG, board, or worktree lifecycle.
+
+Delegation is a strong prompt policy, but Cursor routing is heuristic and not runtime-guaranteed. The bounded direct-work exception covers coordination, setup, trivial conversation, and at most one bounded read, one bounded write or patch, and one cheap focused check. Separate context does not isolate files in a shared checkout. Overlapping writers require explicit worktrees or isolated project copies; otherwise children must own disjoint paths or run serially.
 
 ## Inventory
 
@@ -34,6 +36,8 @@ CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor" ./scripts/
 ```
 
 ## Subagent readonly choices
+
+The parent coordinates non-trivial work instead of acting as the default implementation worker. It routes ordinary bounded implementation, bug fixes, refactoring, tests, and documentation to `forager`, read-only discovery to `scout`, uncertain or costly-to-reverse direction to `approach-advisor`, plan readiness to `plan-reviewer` only when a plan is requested, completed-change correctness review to `code-reviewer`, and final proportional cleanup to `simplicity-reviewer`. Cursor children share the checkout unless an isolated project copy or worktree is explicitly used, so parent handoffs assign non-overlapping path ownership and carry critical instructions that User Rules may not propagate to children.
 
 The Cursor subagent files use `model: inherit` so they follow the caller's selected model. Read-only roles set `readonly: true`: `scout`, `plan-reviewer`, `code-reviewer`, `simplicity-reviewer`, and `approach-advisor`.
 

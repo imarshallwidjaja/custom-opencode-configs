@@ -1,8 +1,10 @@
 # Cursor Setup
 
-This repository ships a first-pass Cursor asset bundle for prompt-level behavior. It does not provide Agent Hive runtime parity in Cursor, and it does not install `oc-arkive`, Hive tools, Opencode commands, `opencode.json`, `agent_hive.json`, or an Opencode `AGENTS.md` profile.
+This repository ships a Cursor asset bundle whose default parent Agent uses Hive-Builder-like ad-hoc orchestration through Cursor-native named subagents. Delegation is the baseline for non-trivial work; the parent classifies and coordinates lanes, inspects results and diffs, runs combined verification and review, and owns synthesis and integration.
 
-Use this when you want Cursor to have similar reusable guidance, subagents, commands, and skills, while keeping execution inside Cursor's own feature set.
+This is a strong prompt policy, but Cursor routing is heuristic and not runtime-guaranteed. The bounded direct-work exception covers coordination, setup, trivial conversation, and at most one bounded read, one bounded write or patch, and one cheap focused check. Separate context does not isolate files in a shared checkout. Overlapping writers require explicit worktrees or isolated project copies; otherwise children must own disjoint paths or run serially.
+
+This is prompt-level behavior, not Agent Hive runtime parity. It has no Hive tools, state, task DAG, board, or worktree lifecycle, and it does not install `oc-arkive`, OpenCode commands, `opencode.json`, `agent_hive.json`, or an OpenCode `AGENTS.md` profile. Execution stays inside Cursor's own subagent, editor, terminal, project-copy, and Rules features.
 
 ## What Cursor v1 Includes
 
@@ -94,7 +96,7 @@ Paste that output into Cursor Customize -> Rules -> User Rules. The helper does 
 
 OpenCode delivery remains owned by an `oc-arkive` release that contains Engineering Judgment; this repository does not duplicate it in OpenCode AGENTS profiles, config, agents, commands, or skills. The current npm `oc-arkive@latest` is 2.3.4 and does not contain Engineering Judgment, because the vendored source commit `60fba5b` postdates tag `v2.3.4`. Cursor receives the philosophy through the provenance-pinned vendored snapshot because Cursor User Rules cannot load the plugin prompt directly.
 
-Cursor User Rules apply to Agent Chat, not Inline Edit. Project `.cursor/rules/*.mdc` files are a separate opt-in mechanism for workspace-specific propagation; this helper does not create or install project rules automatically.
+Cursor User Rules apply to the parent Agent Chat, not Inline Edit, and Cursor does not document guaranteed propagation into every child subagent. The installed agent definitions and parent handoff packets therefore carry critical child instructions. Project `.cursor/rules/*.mdc` files are a separate opt-in mechanism for workspace-specific propagation; this helper does not create or install project rules automatically.
 
 ## Maintainer Sync
 

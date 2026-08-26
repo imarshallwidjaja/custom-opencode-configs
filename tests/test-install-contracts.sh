@@ -434,6 +434,220 @@ else
   fail "Cursor agents-md-mastery durable-memory and harness-isolation contracts"
 fi
 
+if python3 - "${BASELINE_PWD}" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+
+def load(path):
+    return (root / path).read_text(encoding="utf-8")
+
+def section(markdown, title):
+    lines = markdown.splitlines()
+    wanted = title.casefold()
+    start = None
+    level = None
+    for index, line in enumerate(lines):
+        match = re.match(r"^(#{1,6})\s+(.+?)\s*$", line)
+        if match and match.group(2).strip().casefold() == wanted:
+            start = index + 1
+            level = len(match.group(1))
+            break
+    if start is None:
+        return ""
+    end = len(lines)
+    for index in range(start, len(lines)):
+        match = re.match(r"^(#{1,6})\s+", lines[index])
+        if match and len(match.group(1)) <= level:
+            end = index
+            break
+    return "\n".join(lines[start:end]).casefold()
+
+def route(section_text, name):
+    for line in section_text.splitlines():
+        if re.search(rf"(?<![\w-])`?{re.escape(name)}`?(?![\w-])\s*:", line):
+            return line
+    return ""
+
+def require_terms(errors, label, text, groups):
+    missing = []
+    for group in groups:
+        choices = (group,) if isinstance(group, str) else group
+        if not any(choice in text for choice in choices):
+            missing.append("/".join(choices))
+    if missing:
+        errors.append(f"{label} is missing: {missing}")
+
+def frontmatter_description(markdown):
+    match = re.search(r"^description:\s*(.+)$", markdown, re.MULTILINE)
+    return match.group(1).casefold() if match else ""
+
+def validate(rule, skill, agents, docs):
+    errors = []
+    lowered_rule = rule.casefold()
+    lowered_skill = skill.casefold()
+    direct = section(rule, "Direct-Work Boundary")
+    lifecycle = section(rule, "Default Lifecycle")
+    routing = section(rule, "Cursor Subagents")
+    scheduling = section(skill, "Scheduling Rules")
+    lane_prompt = section(skill, "Lane Prompt Requirements")
+    execution_models = section(skill, "Cursor Execution Models")
+    failure = section(skill, "Failure Handling")
+    integration = section(skill, "Integration")
+
+    require_terms(errors, "direct-work boundary", direct, (
+        ("up to one bounded read", "at most one bounded read"),
+        ("one bounded write or patch", "one bounded write/patch"),
+        ("one cheap focused check", "one cheap, focused check"),
+        ("coordination", "setup"),
+        ("trivial conversation", "trivial conversational"),
+    ))
+    for pattern, label in (
+        (r"(?:two|2)(?:\s+or more|\+)\s+reads", "2+ reads"),
+        (r"(?:two|2)(?:\s+or more|\+)\s+(?:writes|patches)", "2+ patches"),
+        (r"tests?.{0,30}(?:debug|loop)|(?:debug|test).{0,30}loops?", "test or debug loops"),
+        (r"material uncertainty", "material uncertainty"),
+        (r"multi-file", "multi-file work"),
+        (r"behavio(?:u)?r.{0,20}public[- ]contract", "behavior or public-contract changes"),
+        (r"implementation-level.{0,30}non-trivial verification", "implementation-level non-trivial verification"),
+    ):
+        if not re.search(pattern, direct, re.DOTALL):
+            errors.append(f"direct-work boundary is missing {label}")
+    if not re.search(r"classification thresholds?.{0,100}(?:do not|don't).{0,80}(?:prevent|stop).{0,80}parent", direct, re.DOTALL):
+        errors.append("direct-work boundary does not separate classification from parent integration duties")
+    require_terms(errors, "direct-work parent integration duty", direct, (
+        ("status and diff", "status/diff"), "combined integration verification",
+    ))
+
+    route_contracts = {
+        "scout": (("read-only",), ("code",), ("docs", "documentation"), ("research", "context retrieval")),
+        "forager": (("ordinary", "bounded"), ("implementation",), ("bug fix",), ("refactor",), ("tests", "testing"), ("documentation", "docs")),
+        "approach-advisor": (("read-only",), ("direction", "approach"), ("uncertain", "costly to reverse", "costly-to-reverse")),
+        "plan-reviewer": (("read-only",), ("plan",), ("readiness", "ready"), ("requested", "artifact")),
+        "code-reviewer": (("read-only",), ("completed",), ("correctness",), ("risk", "regression")),
+        "simplicity-reviewer": (("read-only",), ("final", "completed"), ("yagni", "unnecessary complexity"), ("dead code",), ("proportional",)),
+    }
+    for name, groups in route_contracts.items():
+        require_terms(errors, f"{name} route", route(routing, name), groups)
+
+    isolation_text = f"{routing}\n{scheduling}\n{execution_models}"
+    if not re.search(r"separate (?:assistant )?(?:session|context).{0,100}(?:does not|doesn't|is not).{0,50}(?:isolate|isolation)", isolation_text, re.DOTALL):
+        errors.append("delegation policy does not state that separate context/session is not file isolation")
+    require_terms(errors, "true write isolation", isolation_text, (
+        "true write isolation", "worktree", ("isolated project copy", "separate project copy"),
+        ("cloud environment", "separate working directory"),
+    ))
+    if not re.search(r"shared checkout.{0,160}(?:disjoint|non-overlapping).{0,100}(?:serial|one writing lane)", isolation_text, re.DOTALL):
+        errors.append("shared-checkout writers are not constrained to disjoint ownership or serial execution")
+    if re.search(r"(?:git )?branch (?:isolates? files|provides? (?:file isolation|true write isolation))", isolation_text, re.DOTALL):
+        errors.append("a Git branch is incorrectly described as file isolation")
+
+    require_terms(errors, "default-rule handoff", routing, (
+        "self-contained", ("objective", "primary goal"), ("constraints", "scope"),
+        "file ownership", ("done criteria", "acceptance criteria"), "verification",
+    ))
+    require_terms(errors, "skill handoff procedure", lane_prompt, (
+        "objective", "expected output", "in scope", "out of scope", "evidence",
+        "prior failures", "dependencies", "file ownership", "verification", "blockers", "final summary",
+    ))
+    if not re.search(r"fresh (?:named )?(?:subagent|child|session).{0,120}(?:failed|failure)", f"{routing}\n{failure}", re.DOTALL):
+        errors.append("failed child recovery does not require a fresh child")
+    require_terms(errors, "default-rule integration gates", routing, (
+        ("actual diff", "inspect every returned result and the actual diff"), "combined verification",
+        "code-reviewer", "simplicity-reviewer",
+    ))
+
+    lifecycle_terms = ("integration workspace", "combined verification", "diff", "code-review", "simplicity-review", "commit", "cleanup")
+    positions = [integration.find(term) for term in lifecycle_terms]
+    if any(position < 0 for position in positions) or positions != sorted(positions):
+        errors.append("delegation skill does not order integration workspace, combined verification, diff/reviews, commit, and cleanup")
+    if not re.search(r"(?:materialize|integrate).{0,100}isolated results?.{0,100}integration workspace", integration, re.DOTALL):
+        errors.append("isolated results are not materialized into an integration workspace")
+    require_terms(errors, "default lifecycle", lifecycle, (
+        ("classify", "direct vs delegated"), "delegate", ("integration workspace", "integrate isolated results"),
+        "combined verification", ("status and diff", "status/diff"), "commit", "cleanup",
+    ))
+
+    description = frontmatter_description(agents["forager"])
+    require_terms(errors, "forager description", description, (
+        ("ordinary", "bounded"), "implementation", "bug fix", "refactor", "tests", ("documentation", "docs"),
+    ))
+    if "isolated" in description or "isolation" in description:
+        errors.append("forager role identity incorrectly depends on isolation")
+    require_terms(errors, "forager execution guidance", agents["forager"].casefold(), (
+        ("isolated copy when needed", "isolated working copy when needed", "worktree when needed"),
+        "do not delegate implementation", "no recursive delegation",
+    ))
+
+    direct_first = re.compile(r"(?:handle|work|implement).{0,50}(?:directly|itself).{0,40}(?:first|by default)|subagents?.{0,30}(?:optional|only when useful)", re.DOTALL)
+    if direct_first.search(lowered_rule):
+        errors.append("default Agent Rules contain direct-first policy wording")
+    if "delegation-first" not in lowered_rule or "parent coordinates" not in lowered_rule:
+        errors.append("default Agent Rules no longer establish delegation-first parent coordination")
+    combined = f"{lowered_rule}\n{lowered_skill}"
+    if re.search(r"\b(?:hive_[a-z0-9_]+|task)\s*\(", combined) or re.search(r"\bsubagent_type\s*:", combined):
+        errors.append("Cursor delegation assets contain Hive/OpenCode tool-call syntax")
+
+    for name, text in docs.items():
+        relevant = section(text, "Cursor prompt-level assets") if name == "README.md" else text.casefold()
+        if name == "FOR-LLM-AGENTS.md":
+            relevant = section(text, "What This Repo Actually Supports")
+        require_terms(errors, f"{name} Cursor contract", relevant, (
+            ("strong prompt policy", "strong prompting policy"),
+            ("heuristic",), ("not runtime-guaranteed", "not runtime guaranteed", "cannot guarantee routing"),
+            ("bounded direct exception", "bounded direct-work exception", "bounded direct work exception"),
+            ("separate context", "separate assistant session"), "shared checkout", ("does not isolate", "not file isolation"),
+            "worktree", ("project copy", "project copies", "isolated project copy"), ("overlapping writers", "overlap"),
+        ))
+    return errors
+
+rule = load(".apm/cursor/rules/default-agent.md")
+skill = load(".apm/cursor/skills/subagent-delegation/SKILL.md")
+agents = {name: load(f".apm/cursor/agents/{name}.md") for name in (
+    "scout", "forager", "approach-advisor", "plan-reviewer", "code-reviewer", "simplicity-reviewer",
+)}
+docs = {name: load(name) for name in ("README.md", "CURSOR.md", "FOR-LLM-AGENTS.md", ".apm/cursor/README.md")}
+
+errors = validate(rule, skill, agents, docs)
+if errors:
+    raise SystemExit("\n".join(errors))
+
+negative_cases = {
+    "direct-first synonym": rule.replace(
+        "a retrieval-led, delegation-first ad-hoc orchestrator",
+        "an orchestrator that handles work directly first and uses subagents only when useful",
+    ),
+    "removed scout mapping": rule.replace("- `scout`:", "- `removed-scout`:", 1),
+    "removed forager mapping": rule.replace("- `forager`:", "- `removed-forager`:", 1),
+    "branch as isolation": rule.replace(
+        "Separate context is not filesystem isolation.",
+        "A Git branch isolates files for each child.",
+        1,
+    ),
+    "missing parent integration duty": re.sub(
+        r"^.*classification thresholds.*combined integration verification.*\n?",
+        "",
+        rule,
+        count=1,
+        flags=re.MULTILINE | re.IGNORECASE,
+    ),
+}
+for label, mutated_rule in negative_cases.items():
+    if mutated_rule == rule:
+        raise SystemExit(f"negative fixture did not mutate the rule: {label}")
+    if not validate(mutated_rule, skill, agents, docs):
+        raise SystemExit(f"semantic validator accepted negative case: {label}")
+
+print("ok")
+PY
+then
+  pass "Cursor delegation policy and documentation semantic contracts"
+else
+  fail "Cursor delegation policy and documentation semantic contracts"
+fi
+
 # ---------------------------------------------------------------------------
 # Preflight contract: validation rejects a stale Cursor reflect duplicate
 # ---------------------------------------------------------------------------
