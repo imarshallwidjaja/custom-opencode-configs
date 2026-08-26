@@ -65,7 +65,7 @@ Some setup facts are not user choices:
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
 - This profile ships non-Hive prompt-backed commands `interview-drill-down`, `planning-prompt`, and `reflect`. `.apm/prompts/reflect.prompt.md` is the only tracked `/reflect` source for both Opencode and Cursor. It proposes scratchpad, project, global, or manual Cursor User Rules learnings and waits for explicit approval before durable edits. Hive workflow commands still come from the published `oc-arkive` plugin; the installer removes the old managed Hive command files from `commands/` after backing the directory up.
 - Cursor setup is separate from Opencode setup. It does not install `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, or `oc-arkive`.
-- Cursor v1 is prompt-level behavior only. It installs Cursor assets under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` or every target in semicolon-separated `CURSOR_CONFIG_DIRS`, sources `commands/reflect.md` from `.apm/prompts/reflect.prompt.md`, and requires manual paste into Cursor Settings -> Rules; it does not provide Agent Hive runtime/tool parity.
+- Cursor v1 is prompt-level behavior only. It installs Cursor assets under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` or every target in semicolon-separated `CURSOR_CONFIG_DIRS`, sources `commands/reflect.md` from `.apm/prompts/reflect.prompt.md`, and requires manual paste into Cursor Customize -> Rules -> User Rules; it does not provide Agent Hive runtime/tool parity.
 - Cursor asset setup must run from the repository root with `python3` and `scripts/cursor-assets.sh` available. Use `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom Cursor target, or `CURSOR_CONFIG_DIRS="/path/one;/path/two"` when Cursor needs multiple global config roots.
 - Windows Cursor with WSL projects should normally install into both the WSL config root and the Windows config root, for example `CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor"` from WSL.
 - If the operator asks only for Cursor assets, skip Opencode install, Opencode startup, and final Opencode verification. Stop after Cursor validation, optional install, Rules paste or paste instructions, and target-layout verification.
@@ -429,7 +429,8 @@ If the operator only wants to inspect the assets, run:
 
 ```bash
 ./scripts/cursor-assets.sh validate
-CURSOR_CONFIG_DIR=/path/to/temp ./scripts/cursor-assets.sh install --dry-run
+cursor_temp="$(mktemp -d)"
+CURSOR_CONFIG_DIR="$cursor_temp" ./scripts/cursor-assets.sh install --dry-run
 ./scripts/cursor-assets.sh print-rules
 ```
 
@@ -441,7 +442,9 @@ If the operator approves installation into the selected Cursor config target, ru
 ./scripts/cursor-assets.sh print-rules
 ```
 
-Then paste the printed Rules text into Cursor Settings -> Rules, or tell the operator exactly where to paste it if they prefer to do that part themselves.
+Then paste the complete printed Rules text into Cursor Customize -> Rules -> User Rules, or tell the operator exactly where to paste it if they prefer to do that part themselves. The output combines the default Agent rules with the provenance-pinned oc-arkive Engineering Judgment snapshot. If the recorded vendor hash changes, rerun `print-rules` and repaste the complete output.
+
+OpenCode delivery remains owned by an `oc-arkive` release that contains Engineering Judgment; do not copy the vendored body into OpenCode AGENTS profiles, `profiles/base/agent_hive.json`, OpenCode agent definitions, commands, or skills. The current npm `oc-arkive@latest` is 2.3.4 and does not contain Engineering Judgment because source commit `60fba5b` postdates tag `v2.3.4`. Provenance `packageVersion` records source-checkout metadata, not publication. Cursor User Rules apply to Agent Chat, not Inline Edit. Project `.cursor/rules/*.mdc` is a separate opt-in path and this helper must not install it automatically.
 
 Verify the installed layout by checking for:
 
@@ -455,7 +458,7 @@ If `CURSOR_CONFIG_DIRS` was used, check those three layout conditions under ever
 
 Do not ask the operator to install `oc-arkive` for Cursor v1. Do not use direct `apm install -g` as proof that global Cursor assets were installed.
 
-If the operator asked only for Cursor assets, stop here and report the Cursor target, validation result, install or dry-run result, and whether Rules were pasted into Cursor Settings -> Rules or handed off for manual paste.
+If the operator asked only for Cursor assets, stop here and report the Cursor target, validation result, install or dry-run result, and whether Rules were pasted into Cursor Customize -> Rules -> User Rules or handed off for manual paste.
 
 ### 11. Start Opencode once
 
@@ -525,7 +528,7 @@ Then report back with:
 - whether `cymbal` is installed as a CLI on this machine
 - whether `dcg` is installed as a CLI on this machine
 - whether the VS Code extension was installed
-- whether Cursor assets were skipped, inspected only, or installed; if installed, whether Rules were pasted into Cursor Settings -> Rules
+- whether Cursor assets were skipped, inspected only, or installed; if installed, whether Rules were pasted into Cursor Customize -> Rules -> User Rules
 - any skipped options and why
 
 ## Decision Inventory From The Repo Audit
@@ -542,7 +545,7 @@ Use this as the source of truth for the interview.
 | chrome-devtools MCP | enable or skip | skip | `jq`, `npx`, network for first `npx` download |
 | Destructive Command Guard CLI | install `dcg` or skip | recommend install; not required for profile copy | network for the upstream installer; plugin is inactive without `dcg` on `PATH` |
 | VS Code companion extension | install or skip | skip unless operator uses VS Code | VS Code and usually `code` CLI; latest Agent Hive fork release `.vsix` |
-| Cursor prompt-level assets | skip, inspect only, or install into the selected Cursor config target | skip unless operator asks for Cursor | `python3`; manual paste into Cursor Settings -> Rules |
+| Cursor prompt-level assets | skip, inspect only, or install into the selected Cursor config target | skip unless operator asks for Cursor | `python3`; manual paste into Cursor Customize -> Rules -> User Rules |
 
 ## Commands The Agent Will Usually Need
 
@@ -607,7 +610,8 @@ Validate and inspect Cursor assets:
 
 ```bash
 ./scripts/cursor-assets.sh validate
-CURSOR_CONFIG_DIR=/path/to/temp ./scripts/cursor-assets.sh install --dry-run
+cursor_temp="$(mktemp -d)"
+CURSOR_CONFIG_DIR="$cursor_temp" ./scripts/cursor-assets.sh install --dry-run
 ./scripts/cursor-assets.sh print-rules
 ```
 
@@ -642,5 +646,5 @@ CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor" ./scripts/
 - Do not describe `cymbal` as a bundled MCP or JSON config entry. It is a separate CLI dependency.
 - Do not treat Cursor setup as Opencode setup; it does not install `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, or `oc-arkive`.
 - Do not claim Cursor v1 has Agent Hive runtime/tool parity.
-- Do not document undocumented Cursor settings-file writes; use Cursor Settings -> Rules for the printed Rules text.
+- Do not document undocumented Cursor settings-file writes; use Cursor Customize -> Rules -> User Rules for the printed Rules text.
 - Do not overwhelm the operator with all questions at once.

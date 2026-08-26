@@ -72,6 +72,6 @@ List rejected candidates in one short **Not encoded** section so the filter is v
 
 Then wait for the operator. Accept, reject, or rewrite each item independently. Apply only accepted edits and only to the agreed file and section.
 
-For an accepted inaccessible scratchpad or global target, return the exact approved text, identify the manual destination, give manual paste instructions, and state that it was not applied. For an accepted `cursor-user-rules:manual` item, return the exact approved text followed by: "Open Cursor Settings -> Rules, reconcile this text with the supplied current Rules, and paste the resulting Rules text manually." State that it was not applied, and never claim to read or edit Cursor Settings.
+For an accepted inaccessible scratchpad or global target, return the exact approved text, identify the manual destination, give manual paste instructions, and state that it was not applied. For an accepted `cursor-user-rules:manual` item, return the exact approved text followed by: "Open Cursor Customize -> Rules -> User Rules, reconcile this text with the supplied current Rules, and paste the resulting Rules text manually." State that it was not applied, and never claim to read or edit Cursor Settings.
 
 After applying accepted items, show diffs for edited files and summarize what was applied, returned for manual paste, rejected, or left unchanged. Do not broaden the accepted edits into a general instructions rewrite.

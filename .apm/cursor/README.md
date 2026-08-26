@@ -20,7 +20,8 @@ Prompt-level Cursor assets sourced from this repository and installed globally u
 | `.apm/cursor/commands/*.md` | `<cursor-config>/commands/*.md` | Seven genuinely Cursor-specific user-global commands |
 | `.apm/prompts/reflect.prompt.md` | `<cursor-config>/commands/reflect.md` | Shared `/reflect` policy, installed byte-for-byte by the helper |
 | `skills/<name>/` | `<cursor-config>/skills/<name>/` | Cursor user-global skills; Cursor-specific skills require `SKILL.md` and may include `references/` and `scripts/`. Canonical skills copied from `.apm/skills/` may also include packaged files such as `viewport-base.css`, `bin/`, `data/`, `styles/`, `assets/`, and `examples/` |
-| `rules/default-agent.md` | Cursor Settings -> Rules (manual paste) | Cursor exposes user rules via the Settings UI, not a deployable file path |
+| `rules/default-agent.md` | Cursor Customize -> Rules -> User Rules (manual paste) | Cursor exposes user rules via the Customize UI, not a deployable file path |
+| `vendor/oc-arkive/engineering-judgment/engineering-judgment.md` | Cursor Customize -> Rules -> User Rules (composed by `print-rules`) | Provenance-pinned generated snapshot; it is validated but not copied by `install` |
 
 The install target defaults to `${CURSOR_CONFIG_DIR:-$HOME/.cursor}`. Set `CURSOR_CONFIG_DIR` to one custom target, or set `CURSOR_CONFIG_DIRS` to a semicolon-separated target list for dual installs.
 
@@ -42,7 +43,9 @@ The Cursor subagent files use `model: inherit` so they follow the caller's selec
 
 APM (Microsoft Agent Package Manager) deploys primitives to **project-local** harness directories (`.cursor/` in the project root), not to the user-global `~/.cursor/` directory. Current APM docs do not show `apm install -g` deploying global agents, commands, and skills into `~/.cursor`.
 
-The thin helper `scripts/cursor-assets.sh` handles validation, temp/global copy, and manual Rules printing because no reliable pure-APM path exists for user-global Cursor assets.
+The thin helper `scripts/cursor-assets.sh` handles validation, temp/global copy, and manual Rules printing because no reliable pure-APM path exists for user-global Cursor assets. The printed Rules append the vendored Engineering Judgment snapshot; when its provenance hash changes, regenerate and repaste the complete Rules output. User Rules apply to Agent Chat, not Inline Edit, and project `.cursor/rules/*.mdc` remains a separate opt-in mechanism rather than an automatic install target.
+
+OpenCode delivery remains owned by an `oc-arkive` release that contains Engineering Judgment. The current npm `oc-arkive@latest` is 2.3.4 and does not contain it; source commit `60fba5b` postdates tag `v2.3.4`. Provenance `packageVersion` is metadata from the selected source checkout, not evidence of npm publication. Maintainer sync requires Git, Python 3, and a local Agent Hive checkout containing the selected ref.
 
 ## APM layout note
 

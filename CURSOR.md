@@ -13,7 +13,7 @@ The selected Cursor asset root contains:
 - eleven Cursor-specific skills: `agents-md-mastery`, `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
 - six canonical skills consumed from `.apm/skills/`: `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, and `writing-for-humans`
 - optional personal skill `ivan-writing` installed when `CURSOR_INSTALL_IVAN_WRITING=1` is set
-- one default-Agent Rules document at `rules/default-agent.md`
+- one composed default-Agent Rules payload: `rules/default-agent.md`, one separator, and the provenance-pinned Engineering Judgment snapshot under `vendor/oc-arkive/engineering-judgment/`
 
 The default Cursor-specific source root is `.apm/cursor`. If APM validation rejects unknown `.apm/cursor/**` content and a later task moves the bundle, the helper also supports the fallback root `cursor-assets/`. The shared `/reflect` source remains `.apm/prompts/reflect.prompt.md` in either layout. Do not hardcode only one Cursor-specific root in local automation; let `scripts/cursor-assets.sh` select it.
 
@@ -21,7 +21,7 @@ The default Cursor-specific source root is `.apm/cursor`. If APM validation reje
 
 Current APM documentation shows project-local Cursor deployment under a repository `.cursor/` directory. It does not prove that pure `apm install -g` deploys agents, commands, skills, and Rules into global `~/.cursor`.
 
-For v1, `scripts/cursor-assets.sh` is the installer boundary. It validates the selected Cursor-specific asset root, rejects a competing `.apm/cursor/commands/reflect.md`, copies `/reflect` from `.apm/prompts/reflect.prompt.md`, installs the other supported assets into one or more target Cursor config directories, and prints the Rules text for manual paste. When install replaces existing Cursor files or directories, it writes backups under the helper's backup directory before replacement.
+For v1, `scripts/cursor-assets.sh` is the installer boundary. It validates the selected Cursor-specific asset root and the pinned Engineering Judgment provenance, rejects a competing `.apm/cursor/commands/reflect.md`, copies `/reflect` from `.apm/prompts/reflect.prompt.md`, installs the other supported assets into one or more target Cursor config directories, and prints the composed Rules text for manual paste. When install replaces existing Cursor files or directories, it writes backups under the helper's backup directory before replacement.
 
 APM also routes `.apm/prompts/reflect.prompt.md` to project-local Opencode and Cursor command targets. APM may normalize frontmatter or newlines, so semantic metadata/body parity is the contract there; helper installs remain byte-identical to the canonical source.
 
@@ -68,7 +68,8 @@ Validate the asset bundle first:
 Inspect the copy plan against a temporary target:
 
 ```bash
-CURSOR_CONFIG_DIR=/path/to/temp ./scripts/cursor-assets.sh install --dry-run
+cursor_temp="$(mktemp -d)"
+CURSOR_CONFIG_DIR="$cursor_temp" ./scripts/cursor-assets.sh install --dry-run
 ```
 
 Install into the target Cursor config directory:
@@ -89,7 +90,24 @@ Print the default-Agent Rules text:
 ./scripts/cursor-assets.sh print-rules
 ```
 
-Paste that output into Cursor Settings -> Rules. The helper does not write undocumented Cursor settings files.
+Paste that output into Cursor Customize -> Rules -> User Rules. The helper does not write undocumented Cursor settings files. If `vendor/oc-arkive/engineering-judgment/provenance.json` records a new `sha256`, rerun `print-rules` and replace the previously pasted Rules text.
+
+OpenCode delivery remains owned by an `oc-arkive` release that contains Engineering Judgment; this repository does not duplicate it in OpenCode AGENTS profiles, config, agents, commands, or skills. The current npm `oc-arkive@latest` is 2.3.4 and does not contain Engineering Judgment, because the vendored source commit `60fba5b` postdates tag `v2.3.4`. Cursor receives the philosophy through the provenance-pinned vendored snapshot because Cursor User Rules cannot load the plugin prompt directly.
+
+Cursor User Rules apply to Agent Chat, not Inline Edit. Project `.cursor/rules/*.mdc` files are a separate opt-in mechanism for workspace-specific propagation; this helper does not create or install project rules automatically.
+
+## Maintainer Sync
+
+Maintainer sync requires Git, Python 3, and a local Agent Hive checkout containing the selected ref. The script resolves that ref to a full commit and reads the prompt plus package metadata from committed Git objects, so dirty checkout files are ignored and no network access is required:
+
+```bash
+./scripts/sync-engineering-judgment.py \
+  --source-repo /path/to/agent-hive \
+  --ref <commit-or-ref>
+./scripts/cursor-assets.sh validate
+```
+
+Review the Markdown and provenance diff. `packageVersion` records package metadata from the selected source checkout; it does not prove that version was published. A changed hash requires a fresh `print-rules` run and manual repaste in Cursor Customize -> Rules -> User Rules.
 
 ## What Is Deliberately Excluded
 
@@ -141,10 +159,10 @@ Expected high-level layout:
 For a non-destructive verification run, install into a temp directory and inspect that directory instead:
 
 ```bash
-CURSOR_CONFIG_DIR=/path/to/temp ./scripts/cursor-assets.sh install
+cursor_temp="$(mktemp -d)"
+CURSOR_CONFIG_DIR="$cursor_temp" ./scripts/cursor-assets.sh install
+ls "$cursor_temp/agents" "$cursor_temp/commands" "$cursor_temp/skills"
 ```
-
-Then inspect `/path/to/temp/agents`, `/path/to/temp/commands`, and `/path/to/temp/skills`.
 
 For dual-target verification, install into two temp directories:
 
@@ -158,7 +176,7 @@ Then inspect both `$one` and `$two`.
 
 ## Smoke Testing
 
-No live Cursor behavioral smoke test is required for v1. The acceptance boundary is static validation, installed file layout, and manual Rules paste into Cursor Settings -> Rules.
+No live Cursor behavioral smoke test is required for v1. The acceptance boundary is static validation, installed file layout, and manual Rules paste into Cursor Customize -> Rules -> User Rules.
 
 ## Integration Tests
 

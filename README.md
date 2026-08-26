@@ -199,7 +199,7 @@ Use the extension for:
 
 ## Cursor prompt-level assets
 
-This repository also ships a Cursor v1 asset bundle for prompt-level behavior. It installs reusable Cursor subagents, seven Cursor-specific commands, the shared canonical `/reflect` command, eleven Cursor-specific skills including `agents-md-mastery`, and shared canonical skills under the selected Cursor config directory, then prints default-Agent Rules that you paste into Cursor Settings -> Rules.
+This repository also ships a Cursor v1 asset bundle for prompt-level behavior. It installs reusable Cursor subagents, seven Cursor-specific commands, the shared canonical `/reflect` command, eleven Cursor-specific skills including `agents-md-mastery`, and shared canonical skills under the selected Cursor config directory, then prints default-Agent Rules that you paste into Cursor Customize -> Rules -> User Rules. The printed payload appends a provenance-pinned vendored snapshot of oc-arkive Engineering Judgment. OpenCode delivery remains owned by an `oc-arkive` release that contains Engineering Judgment, without a second local copy in this repository's profiles or config surfaces. The current npm `oc-arkive@latest` is 2.3.4 and does not contain it; the vendored source commit `60fba5b` postdates tag `v2.3.4`.
 
 Cursor v1 is not Agent Hive runtime parity. It does not install `oc-arkive`, Hive tools, `opencode.json`, `agent_hive.json`, or an Opencode `AGENTS.md` profile.
 
@@ -207,6 +207,7 @@ Prerequisites:
 
 - run commands from this repository root
 - `python3`
+- Git and a local Agent Hive checkout containing the selected ref are required only for maintainer sync
 - executable `scripts/cursor-assets.sh`
 - default target `${HOME}/.cursor`, `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom target, or `CURSOR_CONFIG_DIRS="/path/one;/path/two"` for multiple targets
 - `railway` CLI plus Railway auth when using the packaged `use-railway` skill
@@ -217,7 +218,8 @@ Quick inspection flow:
 
 ```bash
 ./scripts/cursor-assets.sh validate
-CURSOR_CONFIG_DIR=/path/to/temp ./scripts/cursor-assets.sh install --dry-run
+cursor_temp="$(mktemp -d)"
+CURSOR_CONFIG_DIR="$cursor_temp" ./scripts/cursor-assets.sh install --dry-run
 ./scripts/cursor-assets.sh print-rules
 ```
 
@@ -237,7 +239,7 @@ CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor" ./scripts/
 ./scripts/cursor-assets.sh print-rules
 ```
 
-After install, paste the printed Rules text into Cursor Settings -> Rules.
+After install, paste the printed Rules text into Cursor Customize -> Rules -> User Rules. When the vendored snapshot hash changes, rerun `print-rules` and repaste the complete output. User Rules apply to Agent Chat, not Inline Edit. Project `.cursor/rules/*.mdc` remains a separate opt-in mechanism and is not installed by this helper.
 
 See `CURSOR.md` for the asset list, exclusions, verification steps, and the reason this repo uses a thin helper instead of claiming direct APM global Cursor deployment.
 

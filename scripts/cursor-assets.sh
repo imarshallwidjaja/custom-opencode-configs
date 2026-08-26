@@ -569,17 +569,129 @@ PY
 validate_rules() {
   local root="$1"
   check_python
-  python3 - "$root" <<'PY'
+  python3 - "$root" "${REPO_ROOT}" <<'PY'
+import hashlib
+import json
 import re
 import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
+repo_root = Path(sys.argv[2])
 rules = root / 'rules' / 'default-agent.md'
-if not rules.is_file():
-    print('Cursor rules validation failed: missing rules/default-agent.md', file=sys.stderr)
-    sys.exit(1)
-text = rules.read_text(encoding='utf-8')
+vendor = repo_root / 'vendor' / 'oc-arkive' / 'engineering-judgment' / 'engineering-judgment.md'
+provenance_path = vendor.parent / 'provenance.json'
+
+def require_regular_file(path, label, expected_root):
+    try:
+        relative = path.relative_to(repo_root)
+    except ValueError:
+        print(f'Cursor rules validation failed: {label} is outside the repository root', file=sys.stderr)
+        raise SystemExit(1)
+    current = repo_root
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            print(f'Cursor rules validation failed: {label} contains symlink path component {current}', file=sys.stderr)
+            raise SystemExit(1)
+    try:
+        path.resolve(strict=False).relative_to(repo_root.resolve(strict=True))
+    except (OSError, ValueError):
+        print(f'Cursor rules validation failed: {label} resolves outside the repository root', file=sys.stderr)
+        raise SystemExit(1)
+    try:
+        path.resolve(strict=False).relative_to(expected_root.resolve(strict=True))
+    except (OSError, ValueError):
+        print(f'Cursor rules validation failed: {label} resolves outside its expected root', file=sys.stderr)
+        raise SystemExit(1)
+    if not path.is_file():
+        print(f'Cursor rules validation failed: missing regular file: {label}', file=sys.stderr)
+        raise SystemExit(1)
+
+require_regular_file(rules, 'rules/default-agent.md', root)
+require_regular_file(vendor, 'vendor/oc-arkive/engineering-judgment/engineering-judgment.md', vendor.parent)
+require_regular_file(provenance_path, 'vendor/oc-arkive/engineering-judgment/provenance.json', vendor.parent)
+
+try:
+    rules_bytes = rules.read_bytes()
+    vendor_bytes = vendor.read_bytes()
+    provenance_bytes = provenance_path.read_bytes()
+    text = rules_bytes.decode('utf-8')
+    vendor_text = vendor_bytes.decode('utf-8')
+    provenance_text = provenance_bytes.decode('utf-8')
+except UnicodeDecodeError as error:
+    print(f'Cursor rules validation failed: content is not valid UTF-8: {error}', file=sys.stderr)
+    raise SystemExit(1)
+
+for label, content in (
+    ('rules/default-agent.md', rules_bytes),
+    ('engineering-judgment.md', vendor_bytes),
+    ('provenance.json', provenance_bytes),
+):
+    if b'\r' in content or not content.endswith(b'\n'):
+        print(f'Cursor rules validation failed: {label} must use normalized LF text with a trailing newline', file=sys.stderr)
+        raise SystemExit(1)
+
+try:
+    provenance = json.loads(provenance_text)
+except json.JSONDecodeError as error:
+    print(f'Cursor rules validation failed: provenance.json is invalid JSON: {error}', file=sys.stderr)
+    raise SystemExit(1)
+
+if not isinstance(provenance, dict):
+    print('Cursor rules validation failed: provenance root must be an object', file=sys.stderr)
+    raise SystemExit(1)
+
+expected_keys = {
+    'schemaVersion',
+    'upstreamRepository',
+    'commit',
+    'sourcePath',
+    'packageVersion',
+    'sha256',
+}
+if set(provenance) != expected_keys:
+    print(f'Cursor rules validation failed: provenance keys must be exactly {sorted(expected_keys)}', file=sys.stderr)
+    raise SystemExit(1)
+if type(provenance['schemaVersion']) is not int or provenance['schemaVersion'] != 1:
+    print('Cursor rules validation failed: provenance schemaVersion must be integer 1', file=sys.stderr)
+    raise SystemExit(1)
+if not isinstance(provenance['upstreamRepository'], str) or not provenance['upstreamRepository']:
+    print('Cursor rules validation failed: provenance upstreamRepository must be a non-empty string', file=sys.stderr)
+    raise SystemExit(1)
+if not isinstance(provenance['commit'], str) or not re.fullmatch(r'[0-9a-f]{40}', provenance['commit']):
+    print('Cursor rules validation failed: provenance commit must be an immutable full lowercase Git commit', file=sys.stderr)
+    raise SystemExit(1)
+if not isinstance(provenance['sourcePath'], str) or provenance['sourcePath'] != 'packages/opencode-hive/src/agents/engineering-judgment.ts':
+    print('Cursor rules validation failed: provenance sourcePath is not the oc-arkive authority', file=sys.stderr)
+    raise SystemExit(1)
+if not isinstance(provenance['packageVersion'], str) or not provenance['packageVersion']:
+    print('Cursor rules validation failed: provenance packageVersion must be a non-empty string', file=sys.stderr)
+    raise SystemExit(1)
+if not isinstance(provenance['sha256'], str) or not re.fullmatch(r'[0-9a-f]{64}', provenance['sha256']):
+    print('Cursor rules validation failed: provenance sha256 must be a lowercase SHA-256', file=sys.stderr)
+    raise SystemExit(1)
+actual_hash = hashlib.sha256(vendor_bytes).hexdigest()
+if provenance['sha256'] != actual_hash:
+    print(
+        f'Cursor rules validation failed: engineering-judgment.md SHA-256 is {actual_hash}, expected {provenance["sha256"]}',
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+if not vendor_text.startswith('## Engineering Judgment\n'):
+    print('Cursor rules validation failed: engineering-judgment.md is missing its expected heading', file=sys.stderr)
+    raise SystemExit(1)
+
+separator = b'\n---\n\n'
+composed = rules_bytes + separator + vendor_bytes
+if composed.count(separator) != 1 or composed.count(vendor_bytes) != 1:
+    print('Cursor rules validation failed: composed Rules must contain one separator and one vendored philosophy', file=sys.stderr)
+    raise SystemExit(1)
+if composed.count(b'## Engineering Judgment') != 1:
+    print('Cursor rules validation failed: composed Rules must contain Engineering Judgment exactly once', file=sys.stderr)
+    raise SystemExit(1)
+composed_text = composed.decode('utf-8')
+
 patterns = [
     (re.compile(r'\bhive_[A-Za-z0-9_]+\b'), 'Hive tool name'),
     (re.compile(r'\b(?:task|question|todowrite)\s*\('), 'OpenCode-only tool call'),
@@ -591,9 +703,9 @@ patterns = [
     (re.compile(r'-----BEGIN (?:RSA |OPENSSH |EC |DSA )?PRIVATE KEY-----'), 'private key'),
 ]
 for pattern, label in patterns:
-    match = pattern.search(text)
+    match = pattern.search(composed_text)
     if match:
-        print(f'Cursor rules validation failed: rules/default-agent.md contains {label}: {match.group(0)}', file=sys.stderr)
+        print(f'Cursor rules validation failed: composed Rules contain {label}: {match.group(0)}', file=sys.stderr)
         sys.exit(1)
 PY
 }
@@ -900,7 +1012,7 @@ install_assets() {
     install_assets_into "${root}" "${target_dir}"
   done
 
-  printf 'Manual next step: paste the output of ./scripts/cursor-assets.sh print-rules into Cursor Settings -> Rules.\n'
+  printf 'Manual next step: paste the output of ./scripts/cursor-assets.sh print-rules into Cursor Customize -> Rules -> User Rules.\n'
 }
 
 print_all_copy_plans() {
@@ -924,6 +1036,7 @@ main() {
       preflight_env
       root="$(source_root)"
       validate_assets "${root}"
+      validate_rules "${root}"
       printf 'Cursor asset validation passed\n'
       ;;
     install)
@@ -932,10 +1045,12 @@ main() {
       case "${2:-}" in
         '')
           validate_assets "${root}"
+          validate_rules "${root}"
           install_assets "${root}"
           ;;
         --dry-run)
           validate_assets "${root}"
+          validate_rules "${root}"
           print_all_copy_plans "${root}"
           ;;
         *)
@@ -948,6 +1063,8 @@ main() {
       root="$(source_root)"
       validate_rules "${root}"
       cat "${root}/rules/default-agent.md"
+      printf '\n---\n\n'
+      cat "${REPO_ROOT}/vendor/oc-arkive/engineering-judgment/engineering-judgment.md"
       ;;
     *)
       usage

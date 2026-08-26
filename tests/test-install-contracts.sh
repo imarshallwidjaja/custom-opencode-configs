@@ -127,6 +127,36 @@ PROMPT
 Be helpful. Use plain language. Avoid Hive tools.
 RULES
 
+  # Provenance-pinned Engineering Judgment vendor
+  mkdir -p "${REPO_FIXTURE}/vendor/oc-arkive/engineering-judgment"
+  cat > "${REPO_FIXTURE}/vendor/oc-arkive/engineering-judgment/engineering-judgment.md" <<'JUDGMENT'
+## Engineering Judgment
+
+Fixture guidance.
+JUDGMENT
+  python3 - "${REPO_FIXTURE}/vendor/oc-arkive/engineering-judgment" <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+directory = Path(sys.argv[1])
+content = (directory / 'engineering-judgment.md').read_bytes()
+provenance = {
+    'schemaVersion': 1,
+    'upstreamRepository': 'https://example.test/agent-hive.git',
+    'commit': '0123456789abcdef0123456789abcdef01234567',
+    'sourcePath': 'packages/opencode-hive/src/agents/engineering-judgment.ts',
+    'packageVersion': '9.8.7',
+    'sha256': hashlib.sha256(content).hexdigest(),
+}
+(directory / 'provenance.json').write_text(
+    json.dumps(provenance, indent=2) + '\n',
+    encoding='utf-8',
+    newline='\n',
+)
+PY
+
   # Cursor skills
   for skill in agents-md-mastery brainstorming consolidate-test-suites finishing-a-development-branch root-cause-finder subagent-delegation systematic-debugging test-driven-development use-railway using-git-worktrees verification; do
     mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/${skill}"
@@ -185,7 +215,11 @@ SKILL
   # Copy real scripts so BASH_SOURCE resolves the fixture root.
   cp "${BASELINE_PWD}/scripts/cursor-assets.sh" "${REPO_FIXTURE}/scripts/cursor-assets.sh"
   cp "${BASELINE_PWD}/scripts/install-profile.sh" "${REPO_FIXTURE}/scripts/install-profile.sh"
+  if [[ -f "${BASELINE_PWD}/scripts/sync-engineering-judgment.py" ]]; then
+    cp "${BASELINE_PWD}/scripts/sync-engineering-judgment.py" "${REPO_FIXTURE}/scripts/sync-engineering-judgment.py"
+  fi
   chmod +x "${REPO_FIXTURE}/scripts/cursor-assets.sh" "${REPO_FIXTURE}/scripts/install-profile.sh"
+  [[ ! -f "${REPO_FIXTURE}/scripts/sync-engineering-judgment.py" ]] || chmod +x "${REPO_FIXTURE}/scripts/sync-engineering-judgment.py"
 }
 
 CURSOR_HELPER="${REPO_FIXTURE}/scripts/cursor-assets.sh"
@@ -1456,6 +1490,465 @@ printf 'stub\n' > "${REPO_FIXTURE}/.apm/skills/drawio-skill/.venv/pyvenv.cfg"
 grep -q 'drawio-skill/.venv' "${td66}/err" && pass "66b: extra drawio-skill venv rejected" || fail "66c: wrong error: $(cat ${td66}/err)"
 cursor_target_unmodified "${td66}" && pass "66d: no managed paths created" || fail "66e: target mutated"
 build_fixture
+
+# ---------------------------------------------------------------------------
+# 67. Cursor Engineering Judgment portability contracts
+# ---------------------------------------------------------------------------
+printf '\n=== 67. Cursor Engineering Judgment portability contracts ===\n'
+vendor_rel='vendor/oc-arkive/engineering-judgment/engineering-judgment.md'
+provenance_rel='vendor/oc-arkive/engineering-judgment/provenance.json'
+sync_rel='scripts/sync-engineering-judgment.py'
+anchor='Apply Engineering Judgment from active Cursor Rules within this role'"'"'s current scope and finding bar.'
+
+if [[ -f "${BASELINE_PWD}/${vendor_rel}" && ! -L "${BASELINE_PWD}/${vendor_rel}" && -f "${BASELINE_PWD}/${provenance_rel}" && ! -L "${BASELINE_PWD}/${provenance_rel}" ]]; then
+  pass "67a: vendored Engineering Judgment and provenance are regular files"
+else
+  fail "67a: vendored Engineering Judgment and provenance must be regular non-symlinked files"
+fi
+
+if [[ -x "${BASELINE_PWD}/${sync_rel}" ]]; then
+  pass "67b: Engineering Judgment sync script exists and is executable"
+else
+  fail "67b: Engineering Judgment sync script missing or not executable"
+fi
+
+upstream67="${TMPDIR}/upstream67"
+mkdir -p "${upstream67}/packages/opencode-hive/src/agents"
+cat > "${upstream67}/packages/opencode-hive/src/agents/engineering-judgment.ts" <<'TS'
+export const ENGINEERING_JUDGMENT_PROMPT = `## Engineering Judgment
+
+Committed fixture guidance.`;
+TS
+cat > "${upstream67}/packages/opencode-hive/package.json" <<'JSON'
+{
+  "name": "oc-arkive",
+  "version": "9.8.7",
+  "repository": {
+    "type": "git",
+    "url": "https://example.test/agent-hive.git",
+    "directory": "packages/opencode-hive"
+  }
+}
+JSON
+git -C "${upstream67}" init -q
+git -C "${upstream67}" add .
+git -C "${upstream67}" -c user.name=Fixture -c user.email=fixture@example.test commit -qm fixture
+commit67="$(git -C "${upstream67}" rev-parse HEAD)"
+printf '%s\n' 'export const ENGINEERING_JUDGMENT_PROMPT = `dirty checkout must not be read`;' > "${upstream67}/packages/opencode-hive/src/agents/engineering-judgment.ts"
+
+if [[ -x "${REPO_FIXTURE}/${sync_rel}" ]]; then
+  if "${REPO_FIXTURE}/${sync_rel}" --source-repo "${upstream67}" --ref HEAD >"${TMPDIR}/sync67.out" 2>"${TMPDIR}/sync67.err"; then
+    if python3 - "${REPO_FIXTURE}" "${commit67}" <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+commit = sys.argv[2]
+directory = root / 'vendor/oc-arkive/engineering-judgment'
+markdown = directory / 'engineering-judgment.md'
+provenance = json.loads((directory / 'provenance.json').read_text(encoding='utf-8'))
+expected_markdown = b'## Engineering Judgment\n\nCommitted fixture guidance.\n'
+expected_provenance = {
+    'schemaVersion': 1,
+    'upstreamRepository': 'https://example.test/agent-hive.git',
+    'commit': commit,
+    'sourcePath': 'packages/opencode-hive/src/agents/engineering-judgment.ts',
+    'packageVersion': '9.8.7',
+    'sha256': hashlib.sha256(expected_markdown).hexdigest(),
+}
+if markdown.read_bytes() != expected_markdown:
+    raise SystemExit('sync did not extract normalized committed prompt body')
+if provenance != expected_provenance:
+    raise SystemExit(f'wrong provenance: {provenance!r}')
+PY
+    then
+      pass "67c: sync reads committed Git objects and writes normalized content with deterministic provenance"
+    else
+      fail "67c: sync output or provenance was incorrect"
+    fi
+    snapshot67a="$(sha256sum "${REPO_FIXTURE}/${vendor_rel}" "${REPO_FIXTURE}/${provenance_rel}")"
+    "${REPO_FIXTURE}/${sync_rel}" --source-repo "${upstream67}" --ref HEAD >"${TMPDIR}/sync67-second.out" 2>"${TMPDIR}/sync67-second.err"
+    snapshot67b="$(sha256sum "${REPO_FIXTURE}/${vendor_rel}" "${REPO_FIXTURE}/${provenance_rel}")"
+    [[ "${snapshot67a}" == "${snapshot67b}" ]] && pass "67d: repeated sync is byte deterministic" || fail "67d: repeated sync changed vendor output"
+
+    git -C "${upstream67}" checkout -q -- packages/opencode-hive/src/agents/engineering-judgment.ts
+    replace_fixture_text "${upstream67}/packages/opencode-hive/src/agents/engineering-judgment.ts" 'Committed fixture guidance.' 'Replacement object guidance.'
+    git -C "${upstream67}" add .
+    git -C "${upstream67}" -c user.name=Fixture -c user.email=fixture@example.test commit -qm replacement
+    replacement67="$(git -C "${upstream67}" rev-parse HEAD)"
+    git -C "${upstream67}" replace "${commit67}" "${replacement67}"
+    if "${REPO_FIXTURE}/${sync_rel}" --source-repo "${upstream67}" --ref "${commit67}" >"${TMPDIR}/sync67-replace.out" 2>"${TMPDIR}/sync67-replace.err" &&
+      grep -q 'Committed fixture guidance' "${REPO_FIXTURE}/${vendor_rel}" &&
+      ! grep -q 'Replacement object guidance' "${REPO_FIXTURE}/${vendor_rel}" &&
+      grep -q "${commit67}" "${REPO_FIXTURE}/${provenance_rel}"; then
+      pass "67e: sync ignores Git replacement objects for commit and tree identity"
+    else
+      fail "67e: Git replacement object changed synced content or provenance"
+    fi
+    git -C "${upstream67}" replace -d "${commit67}" >/dev/null
+    git -C "${upstream67}" reset -q --hard "${commit67}"
+
+    redirected67="${TMPDIR}/redirected67"
+    mkdir -p "${redirected67}/packages/opencode-hive/src/agents"
+    cat > "${redirected67}/packages/opencode-hive/src/agents/engineering-judgment.ts" <<'TS'
+export const ENGINEERING_JUDGMENT_PROMPT = `## Engineering Judgment
+
+Ambient GIT_DIR content must not be synced.`;
+TS
+    cat > "${redirected67}/packages/opencode-hive/package.json" <<'JSON'
+{
+  "name": "oc-arkive",
+  "version": "0.0.1",
+  "repository": "https://wrong.example.test/redirected.git"
+}
+JSON
+    git -C "${redirected67}" init -q
+    git -C "${redirected67}" add .
+    git -C "${redirected67}" -c user.name=Fixture -c user.email=fixture@example.test commit -qm redirected
+    if GIT_DIR="${redirected67}/.git" "${REPO_FIXTURE}/${sync_rel}" --source-repo "${upstream67}" --ref HEAD >"${TMPDIR}/sync67-git-dir.out" 2>"${TMPDIR}/sync67-git-dir.err" &&
+      grep -q 'Committed fixture guidance' "${REPO_FIXTURE}/${vendor_rel}" &&
+      ! grep -q 'Ambient GIT_DIR content' "${REPO_FIXTURE}/${vendor_rel}" &&
+      grep -q "${commit67}" "${REPO_FIXTURE}/${provenance_rel}" &&
+      grep -q 'https://example.test/agent-hive.git' "${REPO_FIXTURE}/${provenance_rel}"; then
+      pass "67e2: sync ignores ambient GIT_DIR repository redirection"
+    else
+      fail "67e2: ambient GIT_DIR redirected synced content or provenance"
+    fi
+
+    if python3 - "${REPO_FIXTURE}/${sync_rel}" "${REPO_FIXTURE}" <<'PY'
+import importlib.util
+import sys
+from pathlib import Path
+
+script = Path(sys.argv[1])
+root = Path(sys.argv[2])
+spec = importlib.util.spec_from_file_location('sync_engineering_judgment', script)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+output_directory = root / 'vendor/oc-arkive/engineering-judgment'
+destination = output_directory / 'write-failure.md'
+before = set(output_directory.glob(f'.{destination.name}.*'))
+real_named_temporary_file = module.tempfile.NamedTemporaryFile
+
+class FailingWrite:
+    def __init__(self, temporary):
+        self.temporary = temporary
+
+    def __enter__(self):
+        self.temporary.__enter__()
+        return self
+
+    def __exit__(self, *args):
+        return self.temporary.__exit__(*args)
+
+    @property
+    def name(self):
+        return self.temporary.name
+
+    def write(self, content):
+        self.temporary.write(content[:1])
+        self.temporary.flush()
+        raise OSError('injected write failure')
+
+def failing_named_temporary_file(*args, **kwargs):
+    return FailingWrite(real_named_temporary_file(*args, **kwargs))
+
+module.tempfile.NamedTemporaryFile = failing_named_temporary_file
+try:
+    module.atomic_write(root, output_directory, destination, b'partial content')
+except OSError as error:
+    if str(error) != 'injected write failure':
+        raise
+else:
+    raise SystemExit('atomic_write unexpectedly accepted the injected failure')
+
+after = set(output_directory.glob(f'.{destination.name}.*'))
+if after != before:
+    raise SystemExit(f'partial temporary file leaked: {sorted(after - before)}')
+if destination.exists():
+    raise SystemExit('failed write created the destination')
+PY
+    then
+      pass "67e3: sync removes partial temporary files after write failure"
+    else
+      fail "67e3: sync leaked a partial temporary file after write failure"
+    fi
+  else
+    fail "67c: sync failed: $(cat "${TMPDIR}/sync67.err")"
+    fail "67d: repeated sync could not be checked"
+  fi
+
+  git -C "${upstream67}" checkout -q -- packages/opencode-hive/src/agents/engineering-judgment.ts
+  python3 - "${upstream67}/packages/opencode-hive/src/agents/engineering-judgment.ts" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+path.write_text(
+    'export const ENGINEERING_JUDGMENT_PROMPT = `unsupported ${interpolation}`;\n',
+    encoding='utf-8',
+)
+PY
+  git -C "${upstream67}" add .
+  git -C "${upstream67}" -c user.name=Fixture -c user.email=fixture@example.test commit -qm interpolation
+  if ! "${REPO_FIXTURE}/${sync_rel}" --source-repo "${upstream67}" --ref HEAD >"${TMPDIR}/sync67-bad.out" 2>"${TMPDIR}/sync67-bad.err" && grep -qi 'interpolation\|unsupported' "${TMPDIR}/sync67-bad.err"; then
+    pass "67f: sync rejects interpolated upstream prompt bodies"
+  else
+    fail "67f: sync accepted interpolation or returned the wrong error"
+  fi
+else
+  fail "67c: sync behavior unavailable"
+  fail "67d: repeated sync behavior unavailable"
+  fail "67e: Git replacement behavior unavailable"
+  fail "67f: interpolation rejection unavailable"
+fi
+
+for target67 in "${vendor_rel}" "${provenance_rel}"; do
+  build_fixture
+  sentinel67="${TMPDIR}/${target67##*/}.sentinel"
+  printf 'external sentinel\n' > "${sentinel67}"
+  rm "${REPO_FIXTURE}/${target67}"
+  ln -s "${sentinel67}" "${REPO_FIXTURE}/${target67}"
+  if ! "${REPO_FIXTURE}/${sync_rel}" --source-repo "${upstream67}" --ref "${commit67}" >"${TMPDIR}/sync67-leaf.out" 2>"${TMPDIR}/sync67-leaf.err" &&
+    grep -qi 'symlink\|safe path' "${TMPDIR}/sync67-leaf.err" &&
+    [[ "$(cat "${sentinel67}")" == 'external sentinel' ]]; then
+    pass "67g: sync rejects ${target67##*/} leaf symlink without overwriting its target"
+  else
+    fail "67g: sync followed ${target67##*/} leaf symlink or returned the wrong error"
+  fi
+done
+
+build_fixture
+external67="${TMPDIR}/external-vendor67"
+mkdir -p "${external67}"
+printf 'external sentinel\n' > "${external67}/sentinel"
+rm -rf "${REPO_FIXTURE}/vendor/oc-arkive"
+ln -s "${external67}" "${REPO_FIXTURE}/vendor/oc-arkive"
+if ! "${REPO_FIXTURE}/${sync_rel}" --source-repo "${upstream67}" --ref "${commit67}" >"${TMPDIR}/sync67-ancestor.out" 2>"${TMPDIR}/sync67-ancestor.err" &&
+  grep -qi 'symlink\|safe path' "${TMPDIR}/sync67-ancestor.err" &&
+  [[ "$(cat "${external67}/sentinel")" == 'external sentinel' ]] &&
+  [[ ! -e "${external67}/engineering-judgment" ]]; then
+  pass "67h: sync rejects ancestor symlink without writing outside the repository"
+else
+  fail "67h: sync followed an ancestor symlink or returned the wrong error"
+fi
+
+build_fixture
+if "${CURSOR_HELPER}" validate >"${TMPDIR}/validate67.out" 2>"${TMPDIR}/validate67.err"; then
+  pass "67i: valid vendored Engineering Judgment passes Cursor validation"
+else
+  fail "67i: valid vendor failed validation: $(cat "${TMPDIR}/validate67.err")"
+fi
+
+printf '\nTampered.\n' >> "${REPO_FIXTURE}/${vendor_rel}"
+if ! "${CURSOR_HELPER}" validate >"${TMPDIR}/tamper67.out" 2>"${TMPDIR}/tamper67.err" && grep -Eqi 'hash|sha-?256' "${TMPDIR}/tamper67.err"; then
+  pass "67j: content hash tampering is rejected"
+else
+  fail "67j: content hash tampering was accepted or returned the wrong error"
+fi
+
+build_fixture
+replace_fixture_text "${REPO_FIXTURE}/${provenance_rel}" '0123456789abcdef0123456789abcdef01234567' 'HEAD'
+if ! "${CURSOR_HELPER}" validate >"${TMPDIR}/mutable67.out" 2>"${TMPDIR}/mutable67.err" && grep -qi 'commit\|immutable' "${TMPDIR}/mutable67.err"; then
+  pass "67k: mutable provenance refs are rejected"
+else
+  fail "67k: mutable provenance ref was accepted or returned the wrong error"
+fi
+
+build_fixture
+printf 'null\n' > "${REPO_FIXTURE}/${provenance_rel}"
+if ! "${CURSOR_HELPER}" validate >"${TMPDIR}/root67.out" 2>"${TMPDIR}/root67.err" &&
+  grep -qi 'provenance.*object\|object.*provenance' "${TMPDIR}/root67.err" &&
+  ! grep -q 'Traceback' "${TMPDIR}/root67.err"; then
+  pass "67k2: malformed provenance root is rejected without a traceback"
+else
+  fail "67k2: malformed provenance root did not produce a controlled validation failure"
+fi
+
+for malformed67 in \
+  'schemaVersion|true|schemaVersion.*integer.*1' \
+  'upstreamRepository|[]|upstreamRepository.*non-empty string' \
+  'commit|123|commit.*immutable.*commit' \
+  'sourcePath|123|sourcePath.*oc-arkive authority' \
+  'packageVersion|[]|packageVersion.*non-empty string' \
+  'sha256|123|sha256.*lowercase SHA-256'; do
+  IFS='|' read -r field67 value67 error67 <<< "${malformed67}"
+  build_fixture
+  python3 - "${REPO_FIXTURE}/${provenance_rel}" "${field67}" "${value67}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+field = sys.argv[2]
+value = json.loads(sys.argv[3])
+provenance = json.loads(path.read_text(encoding='utf-8'))
+provenance[field] = value
+path.write_text(json.dumps(provenance, indent=2) + '\n', encoding='utf-8', newline='\n')
+PY
+  if ! "${CURSOR_HELPER}" validate >"${TMPDIR}/${field67}67.out" 2>"${TMPDIR}/${field67}67.err" &&
+    grep -Eqi "${error67}" "${TMPDIR}/${field67}67.err" &&
+    ! grep -q 'Traceback' "${TMPDIR}/${field67}67.err"; then
+    pass "67k3: malformed provenance ${field67} is rejected without a traceback"
+  else
+    fail "67k3: malformed provenance ${field67} did not produce a controlled validation failure"
+  fi
+done
+
+for target67 in "${vendor_rel}" "${provenance_rel}"; do
+  build_fixture
+  rm "${REPO_FIXTURE}/${target67}"
+  ln -s /dev/null "${REPO_FIXTURE}/${target67}"
+  if ! "${CURSOR_HELPER}" validate >"${TMPDIR}/symlink67.out" 2>"${TMPDIR}/symlink67.err" && grep -qi 'symlink\|regular file' "${TMPDIR}/symlink67.err"; then
+    pass "67l: validation rejects ${target67##*/} leaf symlink"
+  else
+    fail "67l: validation accepted ${target67##*/} leaf symlink or returned the wrong error"
+  fi
+done
+
+build_fixture
+external_validate67="${TMPDIR}/external-validate67"
+mkdir -p "${external_validate67}/engineering-judgment"
+cp "${REPO_FIXTURE}/${vendor_rel}" "${external_validate67}/engineering-judgment/engineering-judgment.md"
+cp "${REPO_FIXTURE}/${provenance_rel}" "${external_validate67}/engineering-judgment/provenance.json"
+rm -rf "${REPO_FIXTURE}/vendor/oc-arkive"
+ln -s "${external_validate67}" "${REPO_FIXTURE}/vendor/oc-arkive"
+if ! "${CURSOR_HELPER}" validate >"${TMPDIR}/ancestor67.out" 2>"${TMPDIR}/ancestor67.err" && grep -qi 'symlink\|outside' "${TMPDIR}/ancestor67.err"; then
+  pass "67m: validation rejects a vendored ancestor symlink"
+else
+  fail "67m: validation accepted a vendored ancestor symlink or returned the wrong error"
+fi
+
+build_fixture
+printf '\nhive_forbidden_vendor_token\n' >> "${REPO_FIXTURE}/${vendor_rel}"
+python3 - "${REPO_FIXTURE}/${vendor_rel}" "${REPO_FIXTURE}/${provenance_rel}" <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+vendor = Path(sys.argv[1])
+provenance_path = Path(sys.argv[2])
+provenance = json.loads(provenance_path.read_text(encoding='utf-8'))
+provenance['sha256'] = hashlib.sha256(vendor.read_bytes()).hexdigest()
+provenance_path.write_text(json.dumps(provenance, indent=2) + '\n', encoding='utf-8', newline='\n')
+PY
+if ! "${CURSOR_HELPER}" validate >"${TMPDIR}/portable67.out" 2>"${TMPDIR}/portable67.err" && grep -qi 'Hive tool name\|composed Rules' "${TMPDIR}/portable67.err"; then
+  pass "67n: complete composed Rules reject forbidden vendored tokens after valid reprovenance"
+else
+  fail "67n: forbidden vendored token passed composed Rules validation or returned the wrong error"
+fi
+
+build_fixture
+if "${CURSOR_HELPER}" print-rules >"${TMPDIR}/rules67.out" 2>"${TMPDIR}/rules67.err" && python3 - "${REPO_FIXTURE}" "${TMPDIR}/rules67.out" "${TMPDIR}/rules67.err" <<'PY'
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+actual = Path(sys.argv[2]).read_bytes()
+stderr = Path(sys.argv[3]).read_bytes()
+rules = (root / '.apm/cursor/rules/default-agent.md').read_bytes()
+judgment = (root / 'vendor/oc-arkive/engineering-judgment/engineering-judgment.md').read_bytes()
+expected = rules + b'\n---\n\n' + judgment
+if actual != expected:
+    raise SystemExit('print-rules output does not match rules + one separator + vendor')
+if actual.count(judgment) != 1 or actual.count(b'\n---\n') != 1:
+    raise SystemExit('vendor body or separator was not included exactly once')
+if stderr:
+    raise SystemExit(f'print-rules emitted status chatter: {stderr!r}')
+if b'provenance' in actual.lower() or b'0123456789abcdef0123456789abcdef01234567' in actual:
+    raise SystemExit('print-rules leaked provenance chatter')
+PY
+then
+  pass "67o: print-rules emits paste-ready ordered composition exactly once"
+else
+  fail "67o: print-rules composition or stdout contract is wrong"
+fi
+
+if python3 - "${BASELINE_PWD}" "${anchor}" <<'PY'
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+anchor = sys.argv[2]
+selected = {'forager', 'plan-reviewer', 'code-reviewer', 'simplicity-reviewer'}
+excluded = {'scout', 'approach-advisor'}
+errors = []
+for name in selected:
+    text = (root / f'.apm/cursor/agents/{name}.md').read_text(encoding='utf-8')
+    if text.count(anchor) != 1:
+        errors.append(f'{name} anchor count is {text.count(anchor)}')
+for name in excluded:
+    text = (root / f'.apm/cursor/agents/{name}.md').read_text(encoding='utf-8')
+    if 'Engineering Judgment' in text:
+        errors.append(f'{name} must remain unchanged')
+if errors:
+    raise SystemExit('\n'.join(errors))
+PY
+then
+  pass "67p: selected Cursor roles have one scoped anchor and excluded roles remain unchanged"
+else
+  fail "67p: Cursor role anchor contract is not satisfied"
+fi
+
+if python3 - "${BASELINE_PWD}" <<'PY'
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+paths = [
+    root / 'profiles/base/agent_hive.json',
+    root / 'profiles/base/opencode.json',
+    *sorted((root / 'profiles/base/plugins').rglob('*')),
+    *sorted((root / 'profiles/optional').glob('*.json')),
+    *sorted((root / 'profiles/agents').glob('*.md')),
+]
+for directory in (
+    root / '.apm/prompts',
+    root / '.apm/skills',
+    root / '.apm/agents',
+    root / 'profiles/personal/skills',
+):
+    if not directory.is_dir():
+        continue
+    paths.extend(path for path in sorted(directory.rglob('*')) if path.is_file())
+for path in paths:
+    if not path.is_file():
+        continue
+    text = path.read_text(encoding='utf-8', errors='ignore')
+    if '## Engineering Judgment' in text or 'ENGINEERING_JUDGMENT_PROMPT' in text:
+        raise SystemExit(f'Engineering Judgment copy leaked into {path.relative_to(root)}')
+PY
+then
+  pass "67q: every installer-owned OpenCode source contains no Engineering Judgment copy"
+else
+  fail "67q: Engineering Judgment leaked into an OpenCode delivery surface"
+fi
+
+if python3 - "${BASELINE_PWD}" <<'PY'
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+obsolete = 'Cursor Settings -> Rules'
+excluded_roots = {'.git', 'node_modules', 'vendor'}
+errors = []
+for path in sorted(root.rglob('*.md')):
+    relative = path.relative_to(root)
+    if any(part in excluded_roots for part in relative.parts):
+        continue
+    if obsolete in path.read_text(encoding='utf-8', errors='ignore'):
+        errors.append(str(relative))
+if errors:
+    raise SystemExit(f'obsolete Cursor Rules destination found in: {", ".join(errors)}')
+PY
+then
+  pass "67r: shipped Markdown uses the canonical Cursor Customize Rules destination"
+else
+  fail "67r: shipped Markdown contains the obsolete Cursor Settings Rules destination"
+fi
 
 # ---------------------------------------------------------------------------
 # Summary
