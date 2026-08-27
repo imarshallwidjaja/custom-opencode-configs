@@ -94,7 +94,7 @@ Print the default-Agent Rules text:
 
 Paste that output into Cursor Customize -> Rules -> User Rules. The helper does not write undocumented Cursor settings files. If `vendor/oc-arkive/engineering-judgment/provenance.json` records a new `sha256`, rerun `print-rules` and replace the previously pasted Rules text.
 
-OpenCode delivery remains owned by an `oc-arkive` release that contains Engineering Judgment; this repository does not duplicate it in OpenCode AGENTS profiles, config, agents, commands, or skills. The current npm `oc-arkive@latest` is 2.3.4 and does not contain Engineering Judgment, because the vendored source commit `60fba5b` postdates tag `v2.3.4`. Cursor receives the philosophy through the provenance-pinned vendored snapshot because Cursor User Rules cannot load the plugin prompt directly.
+The current npm `oc-arkive@latest` is 2.3.5 and includes Engineering Judgment. OpenCode receives Engineering Judgment from the installed plugin; this repository does not duplicate it in OpenCode AGENTS profiles, config, agents, commands, or skills. Cursor continues to use the provenance-pinned vendored snapshot because Cursor cannot load the plugin prompt directly.
 
 Cursor User Rules apply to the parent Agent Chat, not Inline Edit, and Cursor does not document guaranteed propagation into every child subagent. The installed agent definitions and parent handoff packets therefore carry critical child instructions. Project `.cursor/rules/*.mdc` files are a separate opt-in mechanism for workspace-specific propagation; this helper does not create or install project rules automatically.
 

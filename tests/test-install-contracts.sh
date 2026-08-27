@@ -2197,6 +2197,54 @@ else
   fail "67r: shipped Markdown contains the obsolete Cursor Settings Rules destination"
 fi
 
+if python3 - "${BASELINE_PWD}" <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+docs = ('README.md', 'CURSOR.md', 'FOR-LLM-AGENTS.md', '.apm/cursor/README.md')
+errors = []
+for relative in docs:
+    text = (root / relative).read_text(encoding='utf-8')
+    lowered = text.casefold()
+    required = (
+        ('current npm `oc-arkive@latest` is 2.3.5', 'published npm version'),
+        ('includes engineering judgment', 'published plugin contents'),
+        ('opencode receives engineering judgment from the installed plugin', 'OpenCode delivery'),
+        ('provenance-pinned vendored snapshot', 'Cursor delivery'),
+        ('cursor cannot load the plugin prompt directly', 'Cursor plugin limitation'),
+    )
+    for phrase, label in required:
+        if phrase.casefold() not in lowered:
+            errors.append(f'{relative} is missing {label}: {phrase}')
+    for obsolete in ('2.3.4', 'postdates tag', 'does not contain engineering judgment', 'does not contain it'):
+        if obsolete in lowered:
+            errors.append(f'{relative} retains obsolete unpublished-release wording: {obsolete}')
+
+vendor = root / 'vendor/oc-arkive/engineering-judgment/engineering-judgment.md'
+provenance = json.loads((vendor.parent / 'provenance.json').read_text(encoding='utf-8'))
+expected_release = {
+    'commit': '60d55b91f7a5cc4180d7667ed211ee39e77f4333',
+    'packageVersion': '2.3.5',
+}
+for field, expected in expected_release.items():
+    if provenance.get(field) != expected:
+        errors.append(f'provenance {field} is {provenance.get(field)!r}, expected {expected!r}')
+actual_hash = hashlib.sha256(vendor.read_bytes()).hexdigest()
+if provenance.get('sha256') != actual_hash:
+    errors.append(f'provenance sha256 is {provenance.get("sha256")!r}, expected {actual_hash!r}')
+
+if errors:
+    raise SystemExit('\n'.join(errors))
+PY
+then
+  pass "67s: published oc-arkive 2.3.5 documentation and provenance boundary"
+else
+  fail "67s: published oc-arkive 2.3.5 documentation and provenance boundary"
+fi
+
 # ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
