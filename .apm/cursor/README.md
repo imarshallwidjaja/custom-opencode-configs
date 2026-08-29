@@ -8,7 +8,7 @@ Delegation is a strong prompt policy, but Cursor routing is heuristic and not ru
 
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, `simplicity-reviewer`
 - eight installed commands: seven Cursor-specific commands (`compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`) plus the shared canonical `reflect`
-- eleven Cursor-specific skills: `agents-md-mastery`, `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, `verification`
+- eleven managed Cursor skills: `agents-md-mastery`, `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, `verification`
 - six canonical skills consumed from `.apm/skills/`: `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, `writing-for-humans`
 - optional personal skill `ivan-writing` installed when `CURSOR_INSTALL_IVAN_WRITING=1` is set
 
@@ -50,6 +50,8 @@ APM (Microsoft Agent Package Manager) deploys primitives to **project-local** ha
 The thin helper `scripts/cursor-assets.sh` handles validation, temp/global copy, and manual Rules printing because no reliable pure-APM path exists for user-global Cursor assets. The printed Rules append the vendored Engineering Judgment snapshot; when its provenance hash changes, regenerate and repaste the complete Rules output. User Rules apply to Agent Chat, not Inline Edit, and project `.cursor/rules/*.mdc` remains a separate opt-in mechanism rather than an automatic install target.
 
 The current npm `oc-arkive@latest` is 2.3.5 and includes Engineering Judgment. OpenCode receives Engineering Judgment from the installed plugin. Cursor continues to use the provenance-pinned vendored snapshot because Cursor cannot load the plugin prompt directly. Provenance `packageVersion` is metadata from the selected source checkout, not evidence of npm publication. Maintainer sync requires Git, Python 3, and a local Agent Hive checkout containing the selected ref.
+
+Hive-overlapping skill packaging is in README.md. Maintainer sync for the four Hive-pinned Cursor skills is in CURSOR.md.
 
 ## APM layout note
 

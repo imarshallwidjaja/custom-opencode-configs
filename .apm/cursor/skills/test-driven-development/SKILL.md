@@ -1,62 +1,61 @@
 ---
 name: test-driven-development
-description: Use when implementing features, bug fixes, or behavior changes; write a failing test first, make it pass with the smallest change, then refactor safely.
+description: Use when TDD has been selected by the operator, plan, repository policy, or as a useful design technique for behavior examples
 ---
 
 # Test-Driven Development
 
-## Core Rule
+## Scope
 
-No behavior-changing production code without a failing check first.
+Use strict red-green-refactor when TDD has been selected by the operator, plan, or repository policy, or when executable examples are the useful design technique for discovering a behavior or API. Loading this skill means that selection has been made; follow the mechanics below rather than silently switching strategies.
 
-If the change is text-only, configuration-only, or otherwise has no executable behavior, use the narrowest file-specific validation instead and state why an automated test does not apply.
+TDD is one testing strategy, not a universal completion contract. Follow the active plan and repository policy.
 
-## Red, Green, Refactor
+## Red-Green-Refactor
 
-### Red
+### RED: Describe One Behavior
 
-- Write one minimal test that describes the desired behavior.
-- Run it and confirm it fails for the expected reason.
-- If it passes immediately, the test is not proving new behavior.
+Write one focused test through the public contract or intended call site. Prefer real behavior over mock interactions. Name the observable outcome and include meaningful boundary or error cases.
 
-### Green
+### Verify RED
 
-- Implement the smallest change that makes the test pass.
-- Do not add adjacent cleanup, extra options, or speculative abstractions.
-- Run the same test and confirm it passes.
+Run the narrow test and confirm:
+- it fails rather than errors
+- the failure is the expected missing or incorrect behavior
+- it would pass only when the intended contract exists
 
-### Refactor
+If it passes immediately, determine whether behavior already exists, the assertion is too weak, or a characterization test is the correct strategy.
 
-- Improve names or remove duplication only after the test passes.
-- Keep the test green throughout.
-- Run the nearest relevant regression checks before finishing.
+### GREEN: Implement the Behavior
 
-## Good Tests
+Make the smallest coherent change that satisfies the example. Do not add speculative variation. Bounded preparatory refactoring may precede the behavior change when it preserves behavior, lowers implementation risk, and stays green under existing coverage.
 
-- Test one behavior.
-- Name the externally visible rule.
-- Prefer real code paths over mocks.
-- Mock only when the dependency is slow, nondeterministic, external, or not owned by this codebase.
-- Include edge cases only when they affect the behavior being changed.
+### Verify GREEN
 
-## Bug Fixes
+Run the narrow test, then the owning suite. Confirm the selected behavior passes and no covered public contract regressed.
 
-1. Reproduce the bug.
-2. Add a failing test that captures the broken rule.
-3. Fix the root cause.
-4. Confirm the new test fails before the fix and passes after it.
-5. Run the owning suite or nearest regression target.
+### REFACTOR: Improve Structure
 
-## Test Placement
+Improve names, contracts, ownership, duplication, or dependency clarity while tests remain green. Keep refactoring intent distinct from behavior-change intent.
 
-Use `consolidate-test-suites` when choosing where durable bug-fix coverage belongs. Prefer the lowest layer that owns the invariant and an existing canonical suite.
+## Test Quality
 
-## Completion Evidence
+- Test public contracts and observable behavior so tests survive internal refactoring.
+- Use implementation-detail assertions only when that implementation unit owns the contract.
+- Prefer one canonical owning suite; avoid duplicate coverage at several layers unless each proves a different failure mode.
+- Mock only boundaries that cannot be exercised directly; do not test the mock's script instead of product behavior.
+- Do not require one test per function. Coverage follows behavior, risk, and contract ownership.
 
-Report:
+## Legacy and Refactor Work
 
-- Test added or validation used
-- Red result, if applicable
-- Green result
-- Broader regression command, if run
-- Any reason a normal test was not applicable
+For uncertain legacy behavior, first add characterization tests around the behavior that must remain stable, then perform preparatory refactoring under that coverage before changing behavior. For a pure refactor with trustworthy existing public-contract coverage, keep that coverage green; a new failing test is neither possible nor required.
+
+If the plan selected tests alongside or after implementation, do not relabel that work as TDD. Write tests against the requested contract and record the verification actually performed. If no new automated test is justified, run proportionate non-test verification and explain what established confidence.
+
+## Completion Check
+
+- The RED failure was observed and matched the intended missing behavior.
+- GREEN passed in the owning suite.
+- Refactoring remained green and did not broaden behavior.
+- Tests express public contracts rather than incidental structure.
+- Final verification matches the plan and repository policy.

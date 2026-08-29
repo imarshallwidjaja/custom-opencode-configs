@@ -26,14 +26,14 @@ AGENTS.md is behavioral memory, not documentation. Every rule should change agen
 
 ## Skill Triggers
 
-Load skills on these triggers, not mechanically for unrelated trivial requests.
+Load skills on these triggers, not mechanically for unrelated trivial requests. Loading `test-driven-development` means TDD was selected.
 
 | Trigger | Required skill |
 | --- | --- |
 | Finding and reading code, tests or documentation in a codebase you are unfamiliar with | `cymbal` |
 | Creative work: features, components, behavior changes, UX changes | `brainstorming` |
 | Bug, test failure, unexpected behavior, protocol/state/hydration issue | `systematic-debugging` |
-| Implementing a feature or bugfix in code | `test-driven-development` and `consolidate-test-suites` |
+| Implementing a feature or bugfix in code | `consolidate-test-suites`; load `test-driven-development` only when TDD is selected by operator, plan, repository policy, or design need |
 | Adding, moving, or deleting tests after a fix or architecture change | `consolidate-test-suites` |
 | Before claiming work is complete, fixed, or passing | Hive skill `verification` |
 | Starting isolated feature work or executing an approved implementation plan | `using-git-worktrees` |

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "upstreamRepository": "https://github.com/imarshallwidjaja/agent-hive.git",
+  "commit": "6effc2033a0086c8f4fa7f3ab9bb062af173ff9e",
+  "packageVersion": "2.3.5",
+  "skills": {
+    "brainstorming": {
+      "sourcePath": "packages/opencode-hive/skills/brainstorming/SKILL.md",
+      "sourceSha256": "de2afa2ae9a629923f31cae39bb67f31bf2e7ef4b3752bc524333c7da939d506",
+      "installedSha256": "2f6492bbf2f7161626aa2c41b69ae8397ac9f3f0c204ddd6b3cb58256e9f165c"
+    },
+    "systematic-debugging": {
+      "sourcePath": "packages/opencode-hive/skills/systematic-debugging/SKILL.md",
+      "sourceSha256": "821e405a4bf4ff775a50660d0a034ede3a835cd4686f58b82371cec4082034dc",
+      "installedSha256": "55ba9def78d2501603f3e775a7b4a7cf855cef7fac23c8593cca06efbf1020d4"
+    },
+    "test-driven-development": {
+      "sourcePath": "packages/opencode-hive/skills/test-driven-development/SKILL.md",
+      "sourceSha256": "9dc9131dd9927aae1d90b955abff9ec89f35b99fcbc0eef8cafab6885fce6dfb",
+      "installedSha256": "9dc9131dd9927aae1d90b955abff9ec89f35b99fcbc0eef8cafab6885fce6dfb"
+    },
+    "verification": {
+      "sourcePath": "packages/opencode-hive/skills/verification/SKILL.md",
+      "sourceSha256": "4c0920e0ea4e9208714529b41b0a68ecefca8e7286dfe4ac3870dba9e5d2fe7e",
+      "installedSha256": "4c0920e0ea4e9208714529b41b0a68ecefca8e7286dfe4ac3870dba9e5d2fe7e"
+    }
+  }
+}

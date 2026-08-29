@@ -448,6 +448,8 @@ Then paste the complete printed Rules text into Cursor Customize -> Rules -> Use
 
 The current npm `oc-arkive@latest` is 2.3.5 and includes Engineering Judgment. OpenCode receives Engineering Judgment from the installed plugin; do not copy the vendored body into OpenCode AGENTS profiles, `profiles/base/agent_hive.json`, OpenCode agent definitions, commands, or skills. Cursor continues to use the provenance-pinned vendored snapshot because Cursor cannot load the plugin prompt directly. Provenance `packageVersion` records source-checkout metadata, not publication. Cursor User Rules apply to Agent Chat, not Inline Edit. Project `.cursor/rules/*.mdc` is a separate opt-in path and this helper must not install it automatically.
 
+Hive-overlapping skill packaging is in README.md. Maintainer sync for the four Hive-pinned Cursor skills is in CURSOR.md.
+
 Verify the installed layout by checking for:
 
 - six files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/`

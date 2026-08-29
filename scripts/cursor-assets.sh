@@ -710,6 +710,131 @@ for pattern, label in patterns:
 PY
 }
 
+validate_cursor_hive_skills() {
+  check_python
+  python3 - "${REPO_ROOT}" <<'PY'
+import hashlib
+import json
+import re
+import sys
+from pathlib import Path
+
+repo_root = Path(sys.argv[1])
+provenance_path = repo_root / 'vendor' / 'oc-arkive' / 'cursor-skills' / 'provenance.json'
+expected_names = (
+    'brainstorming',
+    'systematic-debugging',
+    'test-driven-development',
+    'verification',
+)
+expected_skill_keys = {'sourcePath', 'sourceSha256', 'installedSha256'}
+expected_root_keys = {
+    'schemaVersion',
+    'upstreamRepository',
+    'commit',
+    'packageVersion',
+    'skills',
+}
+
+def fail(message):
+    print(f'Cursor Hive skills validation failed: {message}', file=sys.stderr)
+    raise SystemExit(1)
+
+def require_regular_file(path, label, expected_root):
+    try:
+        relative = path.relative_to(repo_root)
+    except ValueError:
+        fail(f'{label} is outside the repository root')
+    current = repo_root
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            fail(f'{label} contains symlink path component {current}')
+    try:
+        path.resolve(strict=False).relative_to(repo_root.resolve(strict=True))
+    except (OSError, ValueError):
+        fail(f'{label} resolves outside the repository root')
+    try:
+        path.resolve(strict=False).relative_to(expected_root.resolve(strict=True))
+    except (OSError, ValueError):
+        fail(f'{label} resolves outside its expected root')
+    if not path.is_file():
+        fail(f'missing regular file: {label}')
+
+if provenance_path.is_symlink():
+    fail('vendor/oc-arkive/cursor-skills/provenance.json is a symlink')
+if not provenance_path.exists():
+    raise SystemExit(0)
+
+require_regular_file(
+    provenance_path,
+    'vendor/oc-arkive/cursor-skills/provenance.json',
+    provenance_path.parent,
+)
+
+try:
+    provenance_bytes = provenance_path.read_bytes()
+    provenance_text = provenance_bytes.decode('utf-8')
+except UnicodeDecodeError as error:
+    fail(f'provenance.json is not valid UTF-8: {error}')
+
+if b'\r' in provenance_bytes or not provenance_bytes.endswith(b'\n'):
+    fail('provenance.json must use normalized LF text with a trailing newline')
+
+try:
+    provenance = json.loads(provenance_text)
+except json.JSONDecodeError as error:
+    fail(f'provenance.json is invalid JSON: {error}')
+
+if not isinstance(provenance, dict):
+    fail('provenance root must be an object')
+if set(provenance) != expected_root_keys:
+    fail(f'provenance keys must be exactly {sorted(expected_root_keys)}')
+if type(provenance['schemaVersion']) is not int or provenance['schemaVersion'] != 1:
+    fail('provenance schemaVersion must be integer 1')
+if not isinstance(provenance['upstreamRepository'], str) or not provenance['upstreamRepository']:
+    fail('provenance upstreamRepository must be a non-empty string')
+if not isinstance(provenance['commit'], str) or not re.fullmatch(r'[0-9a-f]{40}', provenance['commit']):
+    fail('provenance commit must be an immutable full lowercase Git commit')
+if not isinstance(provenance['packageVersion'], str) or not provenance['packageVersion']:
+    fail('provenance packageVersion must be a non-empty string')
+skills = provenance['skills']
+if not isinstance(skills, dict) or set(skills) != set(expected_names):
+    fail(f'provenance skills must be exactly {list(expected_names)}')
+
+for name in expected_names:
+    entry = skills[name]
+    label = f'provenance skills.{name}'
+    if not isinstance(entry, dict) or set(entry) != expected_skill_keys:
+        fail(f'{label} keys must be exactly {sorted(expected_skill_keys)}')
+    source_path = entry['sourcePath']
+    expected_source = f'packages/opencode-hive/skills/{name}/SKILL.md'
+    if not isinstance(source_path, str) or source_path != expected_source:
+        fail(f'{label} sourcePath must be {expected_source}')
+    for field in ('sourceSha256', 'installedSha256'):
+        value = entry[field]
+        if not isinstance(value, str) or not re.fullmatch(r'[0-9a-f]{64}', value):
+            fail(f'{label} {field} must be a lowercase SHA-256')
+    skill_path = repo_root / '.apm' / 'cursor' / 'skills' / name / 'SKILL.md'
+    require_regular_file(skill_path, f'.apm/cursor/skills/{name}/SKILL.md', skill_path.parent)
+    skill_bytes = skill_path.read_bytes()
+    actual_hash = hashlib.sha256(skill_bytes).hexdigest()
+    expected_hash = entry['installedSha256']
+    if actual_hash != expected_hash:
+        fail(
+            f'.apm/cursor/skills/{name}/SKILL.md SHA-256 is {actual_hash}, expected {expected_hash}'
+        )
+    try:
+        skill_text = skill_bytes.decode('utf-8')
+    except UnicodeDecodeError as error:
+        fail(f'.apm/cursor/skills/{name}/SKILL.md is not valid UTF-8: {error}')
+    if 'skill(' in skill_text:
+        fail(f'.apm/cursor/skills/{name}/SKILL.md contains skill(')
+    if 'writing-plans' in skill_text:
+        fail(f'.apm/cursor/skills/{name}/SKILL.md contains writing-plans as a skill-call target')
+PY
+}
+
 print_copy_plan() {
   local root="$1"
   local target_dir="$2"
@@ -1037,6 +1162,7 @@ main() {
       root="$(source_root)"
       validate_assets "${root}"
       validate_rules "${root}"
+      validate_cursor_hive_skills
       printf 'Cursor asset validation passed\n'
       ;;
     install)
@@ -1046,11 +1172,13 @@ main() {
         '')
           validate_assets "${root}"
           validate_rules "${root}"
+          validate_cursor_hive_skills
           install_assets "${root}"
           ;;
         --dry-run)
           validate_assets "${root}"
           validate_rules "${root}"
+          validate_cursor_hive_skills
           print_all_copy_plans "${root}"
           ;;
         *)

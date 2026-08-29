@@ -12,7 +12,7 @@ The selected Cursor asset root contains:
 
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, and `simplicity-reviewer`
 - eight installed commands: seven Cursor-specific commands (`compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`) plus the shared canonical `reflect`
-- eleven Cursor-specific skills: `agents-md-mastery`, `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
+- eleven managed Cursor skills: `agents-md-mastery`, `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
 - six canonical skills consumed from `.apm/skills/`: `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, and `writing-for-humans`
 - optional personal skill `ivan-writing` installed when `CURSOR_INSTALL_IVAN_WRITING=1` is set
 - one composed default-Agent Rules payload: `rules/default-agent.md`, one separator, and the provenance-pinned Engineering Judgment snapshot under `vendor/oc-arkive/engineering-judgment/`
@@ -100,7 +100,9 @@ Cursor User Rules apply to the parent Agent Chat, not Inline Edit, and Cursor do
 
 ## Maintainer Sync
 
-Maintainer sync requires Git, Python 3, and a local Agent Hive checkout containing the selected ref. The script resolves that ref to a full commit and reads the prompt plus package metadata from committed Git objects, so dirty checkout files are ignored and no network access is required:
+Maintainer sync requires Git, Python 3, and a local Agent Hive checkout containing the selected ref. The scripts resolve that ref to a full commit and read committed Git objects, so dirty checkout files are ignored and no network access is required.
+
+Engineering Judgment:
 
 ```bash
 ./scripts/sync-engineering-judgment.py \
@@ -109,7 +111,16 @@ Maintainer sync requires Git, Python 3, and a local Agent Hive checkout containi
 ./scripts/cursor-assets.sh validate
 ```
 
-Review the Markdown and provenance diff. `packageVersion` records package metadata from the selected source checkout; it does not prove that version was published. A changed hash requires a fresh `print-rules` run and manual repaste in Cursor Customize -> Rules -> User Rules.
+Shared Cursor copies of `brainstorming`, `systematic-debugging`, `test-driven-development`, and `verification` are provenance-pinned from Agent Hive with a Cursor-runtime rewrite. `agents-md-mastery` remains the Cursor-specific adaptation and is not overwritten from Hive.
+
+```bash
+./scripts/sync-cursor-hive-skills.py \
+  --source-repo /path/to/agent-hive \
+  --ref <commit-or-ref>
+./scripts/cursor-assets.sh validate
+```
+
+Review the Markdown and provenance diff. `packageVersion` records package metadata from the selected source checkout; it does not prove that version was published. A changed Engineering Judgment hash requires a fresh `print-rules` run and manual repaste in Cursor Customize -> Rules -> User Rules. A changed Hive skill pin requires a Cursor asset reinstall so the user-global skills match the tracked copies.
 
 ## What Is Deliberately Excluded
 

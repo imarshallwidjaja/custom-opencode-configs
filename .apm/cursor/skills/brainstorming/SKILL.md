@@ -1,66 +1,69 @@
 ---
 name: brainstorming
-description: Use before creative implementation work to turn rough ideas into scoped, testable designs through focused questions and tradeoff analysis.
+description: "Use before creative work such as creating features, building components, adding functionality, or modifying behavior."
 ---
 
 # Brainstorming Ideas Into Designs
 
 ## Overview
 
-Turn ideas into workable designs through short, collaborative dialogue.
+Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
 
-Start by understanding the current project context. Ask one question at a time, then present a small design when the goal, constraints, and success criteria are clear enough.
+For ordinary creative work, start by understanding the current project context, then ask questions one at a time to refine the idea. Once you understand what you're building, present the design in small sections (200-300 words), checking after each section whether it looks right so far.
 
-## Process
+## Corrective Feedback Fast Path
 
-### Understand The Idea
+Use this fast path only when operator corrective feedback concretely identifies all four:
+- The wrong behavior
+- The desired behavior
+- The affected artifact
+- The correction direction
 
-- Inspect the current project state first: files, docs, and recent commits when available.
-- Ask one question per message.
-- Prefer multiple-choice questions when they reduce ambiguity.
-- Focus on purpose, constraints, users, success criteria, and what is out of scope.
+Bare bug reports and vague feature requests do not qualify. If the operator explicitly asks to explore alternatives, discuss the change, or design it, keep the work exploratory even when the feedback is concrete.
 
-### Explore Approaches
+For qualifying corrective feedback:
+- Skip only the brainstorming dialogue and readiness prompt: do not ask ordinary refinement questions, propose 2-3 approaches, or present and validate incremental design sections
+- Retain applicable project-context review, planning, isolation, testing, and verification requirements; if planning is required, enter that workflow without a readiness prompt
+- Ask exactly one targeted question only when a material ambiguity affects correctness, safety, data scope, persistence, UX, or a public contract
+- If the question is unanswered, or material ambiguity remains after the answer, stop rather than guess or enter the ordinary brainstorming process
 
-- Offer 2 or 3 viable approaches.
-- Name the tradeoffs directly.
-- Lead with the recommended option and explain why.
-- Remove speculative features before implementation begins.
+## The Process
 
-### Present The Design
+**Understanding the idea:**
+- Check out the current project state first (files, docs, recent commits)
+- Ask questions one at a time to refine the idea
+- Prefer multiple choice questions when possible, but open-ended is fine too
+- Only one question per message - if a topic needs more exploration, break it into multiple questions
+- Focus on understanding: purpose, constraints, success criteria
 
-- Break the design into short sections.
-- Cover architecture, components, data flow, failure handling, and verification.
-- Check whether each section is right before moving on.
-- Revise when the user corrects the intent or constraints.
+**Exploring approaches:**
+- Propose 2-3 different approaches with trade-offs
+- Present options conversationally with your recommendation and reasoning
+- Lead with your recommended option and explain why
 
-## After The Design
+**Presenting the design:**
+- Once you believe you understand what you're building, present the design
+- Break it into sections of 200-300 words
+- Ask after each section whether it looks right so far
+- Cover: architecture, components, data flow, error handling, testing
+- Be ready to go back and clarify if something doesn't make sense
 
-Keep the validated design in the conversation. Do **not** write a design doc, planning file, or other durable artifact unless the operator explicitly asks to write it somewhere.
+## After the Design
 
-- Use `using-git-worktrees` when isolated implementation work is appropriate.
-- Create a concrete implementation plan only when the user wants one or the work is large enough to need sequencing.
+**Documentation:**
+- Keep the validated design in-session in the conversation unless the user explicitly asks for a tracked artifact
+- Write a tracked design document only when the user explicitly requests one or the repository workflow explicitly requires one (for example an approved Hive plan or another named project artifact)
 
-## Stop Before Implementation
+**Implementation (if continuing):**
+- After ordinary brainstorming, ask: "Ready to set up for implementation?"
+- Use `the planning-prompt or implementation-brief command` to create detailed implementation plan
 
-Brainstorming stops at an approved design or implementation brief. Do not edit product files, create branches, run broad test suites, or start implementation while this skill is active unless the user explicitly moves from design to implementation.
+## Key Principles
 
-## Final Output
-
-Present a compact design summary in the conversation with:
-
-- Goal and user-visible outcome.
-- Constraints and non-goals.
-- Selected approach and why it beats the alternatives.
-- Acceptance criteria.
-- Files or areas likely to change.
-- Risks, open questions, and verification plan.
-
-## Principles
-
-- One question at a time.
-- Multiple choice when useful, open-ended when necessary.
-- Keep scope small enough to verify.
-- Compare alternatives before settling.
-- Validate incrementally instead of dumping a full design at once.
-- Keep the design in conversation by default; write it to a file only when asked.
+- **One question at a time** - Don't overwhelm with multiple questions during ordinary brainstorming
+- **Multiple choice preferred** - Easier to answer than open-ended when possible
+- **YAGNI ruthlessly** - Remove unnecessary features from all designs
+- **Explore alternatives** - Propose 2-3 approaches during ordinary brainstorming or when the operator explicitly requests alternatives
+- **Incremental validation** - Present ordinary brainstorming designs in sections and validate each
+- **Be flexible** - During ordinary brainstorming, go back and clarify when something does not make sense
+- **Challenge assumptions** - During ordinary brainstorming, surface fragile assumptions, ask what changes if they fail, and offer lean fallback options

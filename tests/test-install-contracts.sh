@@ -218,8 +218,12 @@ SKILL
   if [[ -f "${BASELINE_PWD}/scripts/sync-engineering-judgment.py" ]]; then
     cp "${BASELINE_PWD}/scripts/sync-engineering-judgment.py" "${REPO_FIXTURE}/scripts/sync-engineering-judgment.py"
   fi
+  if [[ -f "${BASELINE_PWD}/scripts/sync-cursor-hive-skills.py" ]]; then
+    cp "${BASELINE_PWD}/scripts/sync-cursor-hive-skills.py" "${REPO_FIXTURE}/scripts/sync-cursor-hive-skills.py"
+  fi
   chmod +x "${REPO_FIXTURE}/scripts/cursor-assets.sh" "${REPO_FIXTURE}/scripts/install-profile.sh"
   [[ ! -f "${REPO_FIXTURE}/scripts/sync-engineering-judgment.py" ]] || chmod +x "${REPO_FIXTURE}/scripts/sync-engineering-judgment.py"
+  [[ ! -f "${REPO_FIXTURE}/scripts/sync-cursor-hive-skills.py" ]] || chmod +x "${REPO_FIXTURE}/scripts/sync-cursor-hive-skills.py"
 }
 
 CURSOR_HELPER="${REPO_FIXTURE}/scripts/cursor-assets.sh"
@@ -2243,6 +2247,423 @@ then
   pass "67s: published oc-arkive 2.3.5 documentation and provenance boundary"
 else
   fail "67s: published oc-arkive 2.3.5 documentation and provenance boundary"
+fi
+
+# ---------------------------------------------------------------------------
+# 68. Cursor Hive-shared skill vendoring and OpenCode unshadow
+# ---------------------------------------------------------------------------
+printf '\n=== 68. Cursor Hive-shared skill vendoring and OpenCode unshadow ===\n'
+build_fixture
+hive_skill_sync_rel='scripts/sync-cursor-hive-skills.py'
+hive_skill_provenance_rel='vendor/oc-arkive/cursor-skills/provenance.json'
+
+if python3 - "${BASELINE_PWD}" <<'PY'
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+skills = root / '.apm' / 'skills'
+missing = []
+for name in ('brainstorming', 'systematic-debugging', 'test-driven-development'):
+    path = skills / name
+    if path.exists() or path.is_symlink():
+        missing.append(str(path.relative_to(root)))
+if missing:
+    raise SystemExit('OpenCode fork directories still present: ' + ', '.join(missing))
+if (skills / 'ast-grep').exists():
+    raise SystemExit('ast-grep must remain unpackaged')
+PY
+then
+  pass "68a: OpenCode does not package Hive-overlapping brainstorming, systematic-debugging, or TDD forks"
+else
+  fail "68a: OpenCode still packages Hive-overlapping skill forks"
+fi
+
+td68b="${TMPDIR}/opencode68b"
+mkdir -p "${td68b}"
+if OPENCODE_CONFIG_DIR="${td68b}" OPENCODE_AGENTS_PROFILE=shared bash "${BASELINE_PWD}/scripts/install-profile.sh" >"${TMPDIR}/install68b.out" 2>"${TMPDIR}/install68b.err"; then
+  if python3 - "${td68b}" <<'PY'
+import sys
+from pathlib import Path
+
+target = Path(sys.argv[1])
+skills = target / 'skills'
+errors = []
+for name in ('brainstorming', 'systematic-debugging', 'test-driven-development', 'ast-grep'):
+    if (skills / name).exists():
+        errors.append(f'installed OpenCode skill {name}')
+if not (skills / 'writing-for-humans' / 'SKILL.md').is_file():
+    errors.append('missing remaining OpenCode skill writing-for-humans')
+if errors:
+    raise SystemExit('\n'.join(errors))
+PY
+  then
+    pass "68b: temp OpenCode install omits the three Hive-overlapping forks and keeps remaining skills"
+  else
+    fail "68b: temp OpenCode install leaked Hive-overlapping forks or dropped remaining skills"
+  fi
+else
+  fail "68b: temp OpenCode install failed: $(cat "${TMPDIR}/install68b.err")"
+fi
+
+if python3 - "${BASELINE_PWD}" <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+provenance_path = root / 'vendor/oc-arkive/cursor-skills/provenance.json'
+if provenance_path.is_symlink() or not provenance_path.is_file():
+    raise SystemExit('cursor-skills provenance.json must be a regular file')
+provenance = json.loads(provenance_path.read_text(encoding='utf-8'))
+expected_names = (
+    'brainstorming',
+    'systematic-debugging',
+    'test-driven-development',
+    'verification',
+)
+if provenance.get('commit') != '6effc2033a0086c8f4fa7f3ab9bb062af173ff9e':
+    raise SystemExit(f'unexpected Hive skill pin: {provenance.get("commit")!r}')
+skills = provenance.get('skills')
+if not isinstance(skills, dict) or set(skills) != set(expected_names):
+    raise SystemExit(f'provenance skills must be exactly {list(expected_names)}')
+errors = []
+for name in expected_names:
+    path = root / '.apm/cursor/skills' / name / 'SKILL.md'
+    if path.is_symlink() or not path.is_file():
+        errors.append(f'{name} SKILL.md must be a regular file')
+        continue
+    content = path.read_bytes()
+    actual = hashlib.sha256(content).hexdigest()
+    expected = skills[name].get('installedSha256')
+    if actual != expected:
+        errors.append(f'{name} installedSha256 is {actual}, expected {expected}')
+    text = content.decode('utf-8')
+    if 'skill(' in text:
+        errors.append(f'{name} still contains skill(')
+    if 'writing-plans' in text:
+        errors.append(f'{name} still contains writing-plans')
+    if name == 'systematic-debugging':
+        for forbidden in (
+            'available in this directory',
+            'in this directory',
+            'root-cause-tracing.md',
+            'defense-in-depth.md',
+            'condition-based-waiting.md',
+        ):
+            if forbidden in text:
+                errors.append(f'{name} still contains {forbidden!r}')
+        if 'root-cause-finder' not in text:
+            errors.append(f'{name} must point related tracing at root-cause-finder')
+if errors:
+    raise SystemExit('\n'.join(errors))
+PY
+then
+  pass "68e: vendored Cursor Hive skills match provenance hashes and have no skill() or companion-file leftovers"
+else
+  fail "68e: vendored Cursor Hive skills do not match provenance or still contain OpenCode skill calls"
+fi
+
+if "${BASELINE_PWD}/scripts/cursor-assets.sh" validate >"${TMPDIR}/validate68f.out" 2>"${TMPDIR}/validate68f.err"; then
+  pass "68f: real worktree Cursor validation passes with Hive skill provenance present"
+else
+  fail "68f: real worktree Cursor validation failed: $(cat "${TMPDIR}/validate68f.err")"
+fi
+
+if [[ ! -e "${REPO_FIXTURE}/${hive_skill_provenance_rel}" ]] && "${CURSOR_HELPER}" validate >"${TMPDIR}/validate68g.out" 2>"${TMPDIR}/validate68g.err"; then
+  pass "68g: fixture without cursor-skills provenance still validates"
+else
+  fail "68g: fixture without cursor-skills provenance failed validation or unexpectedly shipped provenance"
+fi
+
+upstream68="${TMPDIR}/upstream68"
+mkdir -p "${upstream68}/packages/opencode-hive/skills"
+for skill68 in brainstorming systematic-debugging test-driven-development verification; do
+  mkdir -p "${upstream68}/packages/opencode-hive/skills/${skill68}"
+done
+cat > "${upstream68}/packages/opencode-hive/skills/brainstorming/SKILL.md" <<'SKILL'
+---
+name: brainstorming
+description: Use when testing fixture Hive brainstorming.
+---
+Use \`skill({ name: "writing-plans" })\` after design.
+SKILL
+cat > "${upstream68}/packages/opencode-hive/skills/systematic-debugging/SKILL.md" <<'SKILL'
+---
+name: systematic-debugging
+description: Use when testing fixture Hive systematic debugging.
+---
+Load \`test-driven-development\` then **skill({ name: "verification" })**.
+SKILL
+cat > "${upstream68}/packages/opencode-hive/skills/test-driven-development/SKILL.md" <<'SKILL'
+---
+name: test-driven-development
+description: Use when testing fixture Hive TDD.
+---
+TDD body.
+SKILL
+cat > "${upstream68}/packages/opencode-hive/skills/verification/SKILL.md" <<'SKILL'
+---
+name: verification
+description: Use when testing fixture Hive verification.
+---
+Verify claims.
+SKILL
+cat > "${upstream68}/packages/opencode-hive/package.json" <<'JSON'
+{
+  "name": "oc-arkive",
+  "version": "9.8.7",
+  "repository": {
+    "type": "git",
+    "url": "https://example.test/agent-hive.git",
+    "directory": "packages/opencode-hive"
+  }
+}
+JSON
+git -C "${upstream68}" init -q
+git -C "${upstream68}" add .
+git -C "${upstream68}" -c user.name=Fixture -c user.email=fixture@example.test commit -qm fixture
+commit68="$(git -C "${upstream68}" rev-parse HEAD)"
+printf '%s\n' 'dirty checkout must not be read' > "${upstream68}/packages/opencode-hive/skills/brainstorming/SKILL.md"
+
+if [[ -x "${REPO_FIXTURE}/${hive_skill_sync_rel}" ]]; then
+  if "${REPO_FIXTURE}/${hive_skill_sync_rel}" --source-repo "${upstream68}" --ref HEAD >"${TMPDIR}/sync68.out" 2>"${TMPDIR}/sync68.err"; then
+    if python3 - "${REPO_FIXTURE}" "${commit68}" <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+commit = sys.argv[2]
+
+def normalize(text):
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    if not text.endswith('\n'):
+        text += '\n'
+    return text
+
+sources = {
+    'brainstorming': normalize(
+        '---\nname: brainstorming\ndescription: Use when testing fixture Hive brainstorming.\n---\n'
+        'Use \\`skill({ name: "writing-plans" })\\` after design.\n'
+    ),
+    'systematic-debugging': normalize(
+        '---\nname: systematic-debugging\ndescription: Use when testing fixture Hive systematic debugging.\n---\n'
+        'Load \\`test-driven-development\\` then **skill({ name: "verification" })**.\n'
+    ),
+    'test-driven-development': normalize(
+        '---\nname: test-driven-development\ndescription: Use when testing fixture Hive TDD.\n---\n'
+        'TDD body.\n'
+    ),
+    'verification': normalize(
+        '---\nname: verification\ndescription: Use when testing fixture Hive verification.\n---\n'
+        'Verify claims.\n'
+    ),
+}
+installed = {
+    'brainstorming': normalize(
+        '---\nname: brainstorming\ndescription: Use when testing fixture Hive brainstorming.\n---\n'
+        'Use `the planning-prompt or implementation-brief command` after design.\n'
+    ),
+    'systematic-debugging': normalize(
+        '---\nname: systematic-debugging\ndescription: Use when testing fixture Hive systematic debugging.\n---\n'
+        'Load `test-driven-development` then **the verification skill**.\n'
+    ),
+    'test-driven-development': sources['test-driven-development'],
+    'verification': sources['verification'],
+}
+expected_skills = {}
+for name in (
+    'brainstorming',
+    'systematic-debugging',
+    'test-driven-development',
+    'verification',
+):
+    path = root / '.apm/cursor/skills' / name / 'SKILL.md'
+    expected = installed[name].encode('utf-8')
+    if path.read_bytes() != expected:
+        raise SystemExit(f'{name} installed bytes did not match transformed committed source')
+    expected_skills[name] = {
+        'sourcePath': f'packages/opencode-hive/skills/{name}/SKILL.md',
+        'sourceSha256': hashlib.sha256(sources[name].encode('utf-8')).hexdigest(),
+        'installedSha256': hashlib.sha256(expected).hexdigest(),
+    }
+mastery = (root / '.apm/cursor/skills/agents-md-mastery/SKILL.md').read_text(encoding='utf-8')
+if 'fixture Cursor skill agents-md-mastery' not in mastery:
+    raise SystemExit('sync overwrote Cursor agents-md-mastery')
+provenance = json.loads((root / 'vendor/oc-arkive/cursor-skills/provenance.json').read_text(encoding='utf-8'))
+expected_provenance = {
+    'schemaVersion': 1,
+    'upstreamRepository': 'https://example.test/agent-hive.git',
+    'commit': commit,
+    'packageVersion': '9.8.7',
+    'skills': expected_skills,
+}
+if provenance != expected_provenance:
+    raise SystemExit(f'wrong provenance: {provenance!r}')
+PY
+    then
+      pass "68i: sync reads committed Git objects, ignores dirty checkout, and writes transformed skills with deterministic provenance"
+    else
+      fail "68i: sync output or provenance was incorrect"
+    fi
+
+    git -C "${upstream68}" checkout -q -- packages/opencode-hive/skills/brainstorming/SKILL.md
+    replace_fixture_text "${upstream68}/packages/opencode-hive/skills/brainstorming/SKILL.md" 'after design.' 'Replacement object guidance.'
+    git -C "${upstream68}" add .
+    git -C "${upstream68}" -c user.name=Fixture -c user.email=fixture@example.test commit -qm replacement
+    replacement68="$(git -C "${upstream68}" rev-parse HEAD)"
+    git -C "${upstream68}" replace "${commit68}" "${replacement68}"
+    if "${REPO_FIXTURE}/${hive_skill_sync_rel}" --source-repo "${upstream68}" --ref "${commit68}" >"${TMPDIR}/sync68-replace.out" 2>"${TMPDIR}/sync68-replace.err" &&
+      grep -q 'after design.' "${REPO_FIXTURE}/.apm/cursor/skills/brainstorming/SKILL.md" &&
+      ! grep -q 'Replacement object guidance' "${REPO_FIXTURE}/.apm/cursor/skills/brainstorming/SKILL.md" &&
+      grep -q "${commit68}" "${REPO_FIXTURE}/${hive_skill_provenance_rel}"; then
+      pass "68k: skill sync ignores Git replacement objects for commit and tree identity"
+    else
+      fail "68k: Git replacement object changed synced skill content or provenance"
+    fi
+    git -C "${upstream68}" replace -d "${commit68}" >/dev/null
+    git -C "${upstream68}" reset -q --hard "${commit68}"
+
+    redirected68="${TMPDIR}/redirected68"
+    mkdir -p "${redirected68}/packages/opencode-hive/skills/brainstorming"
+    printf '%s\n' 'Ambient GIT_DIR content must not be synced.' > "${redirected68}/packages/opencode-hive/skills/brainstorming/SKILL.md"
+    cat > "${redirected68}/packages/opencode-hive/package.json" <<'JSON'
+{
+  "name": "oc-arkive",
+  "version": "0.0.1",
+  "repository": "https://wrong.example.test/redirected.git"
+}
+JSON
+    git -C "${redirected68}" init -q
+    git -C "${redirected68}" add .
+    git -C "${redirected68}" -c user.name=Fixture -c user.email=fixture@example.test commit -qm redirected
+    if GIT_DIR="${redirected68}/.git" "${REPO_FIXTURE}/${hive_skill_sync_rel}" --source-repo "${upstream68}" --ref HEAD >"${TMPDIR}/sync68-git-dir.out" 2>"${TMPDIR}/sync68-git-dir.err" &&
+      grep -q 'after design.' "${REPO_FIXTURE}/.apm/cursor/skills/brainstorming/SKILL.md" &&
+      ! grep -q 'Ambient GIT_DIR content' "${REPO_FIXTURE}/.apm/cursor/skills/brainstorming/SKILL.md" &&
+      grep -q "${commit68}" "${REPO_FIXTURE}/${hive_skill_provenance_rel}" &&
+      grep -q 'https://example.test/agent-hive.git' "${REPO_FIXTURE}/${hive_skill_provenance_rel}"; then
+      pass "68l: skill sync ignores ambient GIT_DIR repository redirection"
+    else
+      fail "68l: ambient GIT_DIR redirected synced skill content or provenance"
+    fi
+
+    printf '\nTampered.\n' >> "${REPO_FIXTURE}/.apm/cursor/skills/brainstorming/SKILL.md"
+    if ! "${CURSOR_HELPER}" validate >"${TMPDIR}/tamper68.out" 2>"${TMPDIR}/tamper68.err" &&
+      grep -Eqi 'hash|sha-?256' "${TMPDIR}/tamper68.err"; then
+      pass "68m: cursor-skills installed hash tampering is rejected when provenance is present"
+    else
+      fail "68m: cursor-skills hash tampering was accepted or returned the wrong error"
+    fi
+  else
+    fail "68i: skill sync failed: $(cat "${TMPDIR}/sync68.err")"
+    fail "68k: Git replacement behavior unavailable"
+    fail "68l: ambient GIT_DIR behavior unavailable"
+    fail "68m: provenance tamper check unavailable"
+  fi
+else
+  fail "68i: skill sync behavior unavailable"
+  fail "68k: Git replacement behavior unavailable"
+  fail "68l: ambient GIT_DIR behavior unavailable"
+  fail "68m: provenance tamper check unavailable"
+fi
+
+if python3 - "${BASELINE_PWD}" <<'PY'
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+old_cursor = '| Implementing a feature or bugfix | `test-driven-development` and `consolidate-test-suites` |'
+old_profile = '| Implementing a feature or bugfix in code | `test-driven-development` and `consolidate-test-suites` |'
+errors = []
+cursor_rules = (root / '.apm/cursor/rules/default-agent.md').read_text(encoding='utf-8')
+if old_cursor in cursor_rules:
+    errors.append('default-agent.md still auto-loads TDD on every feature/bugfix')
+if 'consolidate-test-suites' not in cursor_rules:
+    errors.append('default-agent.md dropped consolidate-test-suites')
+if 'test-driven-development' not in cursor_rules or 'TDD is selected' not in cursor_rules:
+    errors.append('default-agent.md must load TDD only when TDD is selected')
+for relative in (
+    'profiles/agents/shared.md',
+    'profiles/agents/shared-context-improved.md',
+    'profiles/agents/personal-default.md',
+    'profiles/agents/personal-context-improved.md',
+):
+    text = (root / relative).read_text(encoding='utf-8')
+    if old_profile in text:
+        errors.append(f'{relative} still auto-loads TDD on every feature/bugfix')
+    if 'consolidate-test-suites' not in text:
+        errors.append(f'{relative} dropped consolidate-test-suites')
+    if 'test-driven-development' not in text or 'TDD is selected' not in text:
+        errors.append(f'{relative} must load TDD only when TDD is selected')
+tdd = (root / '.apm/cursor/skills/test-driven-development/SKILL.md').read_text(encoding='utf-8')
+if not tdd.startswith('---\n'):
+    errors.append('TDD skill missing YAML frontmatter')
+else:
+    closing = tdd.find('\n---\n', 4)
+    if closing < 0:
+        errors.append('TDD skill frontmatter is not closed')
+    else:
+        description = None
+        for line in tdd[4:closing].splitlines():
+            if line.startswith('description:'):
+                description = line.split(':', 1)[1].strip()
+                break
+        if not description:
+            errors.append('TDD skill frontmatter has no description')
+        else:
+            if 'TDD has been selected' not in description:
+                errors.append('TDD skill description must say TDD has been selected')
+            if 'Use when implementing features' in description:
+                errors.append('TDD skill description still uses feature auto-load wording')
+if errors:
+    raise SystemExit('\n'.join(errors))
+PY
+then
+  pass "68o: TDD is loaded only when selected; skill description is not auto-load wording"
+else
+  fail "68o: TDD auto-trigger wording was not updated"
+fi
+
+td68p="${TMPDIR}/cursor68p"
+mkdir -p "${td68p}"
+if env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td68p}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install >"${TMPDIR}/install68p.out" 2>"${TMPDIR}/install68p.err"; then
+  if python3 - "${BASELINE_PWD}" "${td68p}" <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+installed = Path(sys.argv[2])
+provenance = json.loads((root / 'vendor/oc-arkive/cursor-skills/provenance.json').read_text(encoding='utf-8'))
+errors = []
+for name in (
+    'brainstorming',
+    'systematic-debugging',
+    'test-driven-development',
+    'verification',
+):
+    path = installed / 'skills' / name / 'SKILL.md'
+    if path.is_symlink() or not path.is_file():
+        errors.append(f'installed {name} SKILL.md must be a regular file')
+        continue
+    actual = hashlib.sha256(path.read_bytes()).hexdigest()
+    expected = provenance['skills'][name]['installedSha256']
+    if actual != expected:
+        errors.append(f'installed {name} sha256 is {actual}, expected {expected}')
+if errors:
+    raise SystemExit('\n'.join(errors))
+PY
+  then
+    pass "68p: temp Cursor install of vendored Hive skills matches provenance installedSha256"
+  else
+    fail "68p: temp Cursor install did not match provenance installedSha256"
+  fi
+else
+  fail "68p: temp Cursor install from real worktree helper failed: $(cat "${TMPDIR}/install68p.err")"
 fi
 
 # ---------------------------------------------------------------------------

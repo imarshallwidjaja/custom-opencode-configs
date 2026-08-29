@@ -94,13 +94,13 @@ The parent inspects every returned result and the actual diff, runs combined ver
 
 ## Skill Guidance
 
-Use installed Cursor skills or equivalent written guidance when the trigger applies:
+Use installed Cursor skills or equivalent written guidance when the trigger applies. Loading `test-driven-development` means TDD was selected.
 
 | Trigger | Skill or guidance |
 | --- | --- |
 | Creative work, features, components, UX, or behavior changes | `brainstorming` |
 | Bug, test failure, unexpected behavior, protocol/state/hydration issue | `systematic-debugging` or `root-cause-finder` |
-| Implementing a feature or bugfix | `test-driven-development` and `consolidate-test-suites` |
+| Implementing a feature or bugfix | `consolidate-test-suites`; load `test-driven-development` only when TDD is selected by operator, plan, repository policy, or design need |
 | Adding, moving, or deleting tests | `consolidate-test-suites` |
 | Before claiming work is complete, fixed, or passing | `verification` |
 | Starting isolated work | `using-git-worktrees` |
