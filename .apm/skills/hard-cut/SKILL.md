@@ -79,5 +79,5 @@ If such a boundary exists:
 
 ## Related Skills
 
-- **using-git-worktrees** - Use to create isolated workspace for safe refactoring
+- When oc-arkive is present, use Hive worktree tools for isolated refactoring. On Cursor, `using-git-worktrees` remains available because Cursor has no Hive runtime.
 - **verification-before-completion** - Use for verifying changes before claiming work complete

@@ -24,7 +24,7 @@ SKILL_CALL_PATTERN = re.compile(r'skill\(\{\s*name:\s*"([^"]+)"\s*\}\)')
 COMPANION_FILE_REWRITES = (
     (
         'See `root-cause-tracing.md` in this directory for the complete backward tracing technique.',
-        'See the installed Cursor skill `root-cause-finder` for the complete backward tracing technique.',
+        'Do not stop at the first contract, parsing, type, null, or schema error. Treat it as a possible downstream symptom. Find the first unintended side effect or hidden write. Identify the canonical source of truth and competing sources. Audit hidden writers: lifecycle hooks, observers, restore, retries, and background work. Fix at the first unintended write, not only the final error.',
     ),
     (
         'These techniques are part of systematic debugging and available in this directory:\n'
@@ -34,7 +34,6 @@ COMPANION_FILE_REWRITES = (
         '- **`condition-based-waiting.md`** - Replace arbitrary timeouts with condition polling',
         'These techniques are part of systematic debugging:\n'
         '\n'
-        '- **Root-cause tracing** - Trace bugs backward through the call stack to find the original trigger. Use the installed Cursor skill `root-cause-finder`.\n'
         '- **Defense in depth** - Add validation at multiple layers after finding the root cause\n'
         '- **Condition-based waiting** - Replace arbitrary timeouts with condition polling',
     ),
@@ -45,6 +44,7 @@ COMPANION_RESIDUE = (
     'root-cause-tracing.md',
     'defense-in-depth.md',
     'condition-based-waiting.md',
+    'root-cause-finder',
 )
 
 

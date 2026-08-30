@@ -8,7 +8,7 @@ Delegation is a strong prompt policy, but Cursor routing is heuristic and not ru
 
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, `simplicity-reviewer`
 - eight installed commands: seven Cursor-specific commands (`compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`) plus the shared canonical `reflect`
-- ten managed Cursor skills installed into Cursor `skills/`: `agents-md-mastery`, `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, `verification`
+- eight managed Cursor skills installed into Cursor `skills/`: `agents-md-mastery`, `brainstorming`, `finishing-a-development-branch`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, `verification`
 - twelve shared canonical skills consumed from `.apm/skills/` and installed into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: `cymbal`, `drawio-skill`, `frontend-slides`, `hard-cut`, `humanizer`, `react-best-practices`, `resume-tailoring`, `stop-design-slop`, `stop-slop`, `use-railway`, `web-design-guidelines`, `writing-for-humans`
 - optional personal skill `ivan-writing` installed into the agents dir when `CURSOR_INSTALL_IVAN_WRITING=1` is set
 
@@ -52,7 +52,7 @@ The thin helper `scripts/cursor-assets.sh` handles validation, temp/global copy,
 
 The current npm `oc-arkive@latest` is 2.3.5 and includes Engineering Judgment. OpenCode receives Engineering Judgment from the installed plugin. Cursor continues to use the provenance-pinned vendored snapshot because Cursor cannot load the plugin prompt directly. Provenance `packageVersion` is metadata from the selected source checkout, not evidence of npm publication. Maintainer sync requires Git, Python 3, and a local Agent Hive checkout containing the selected ref.
 
-Hive-overlapping skill packaging is in README.md. Maintainer sync for the four Hive-pinned Cursor skills is in CURSOR.md.
+Hive-overlapping skill packaging is in README.md. Maintainer sync for the four Hive-pinned Cursor skills is in CURSOR.md. OpenCode does not package Hive-overlapping skills and does not package `using-git-worktrees`, `finishing-a-development-branch`, `consolidate-test-suites`, or `root-cause-finder`. Hive/`oc-arkive` owns worktrees and merge. Cursor keeps the worktree and finish skills because it has no Hive runtime. Test placement is default Engineering Judgment / Quality Gates, not a separate skill.
 
 ## APM layout note
 
@@ -84,6 +84,6 @@ When opt-in installs `ivan-writing`, the helper writes a marker file `ivan-writi
 
 ## Opencode install isolation
 
-`scripts/install-profile.sh` copies OpenCode-local skills from `.apm/skills/` into the Opencode config `skills/` directory, upserts the twelve shared canonical skills into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`, and copies `.apm/agents/` and `.apm/prompts/*.prompt.md` into the Opencode config directory. It does not copy `.apm/cursor/**`, including the Cursor-specific `agents-md-mastery` adaptation. Opencode prompt-backed commands come only from `.apm/prompts/`, currently `interview-drill-down`, `planning-prompt`, and `reflect`.
+`scripts/install-profile.sh` copies the two OpenCode-local skills (`context-mode`, `writing-skills`) from `.apm/skills/` into the Opencode config `skills/` directory, upserts the twelve shared canonical skills into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`, removes leftover retired OpenCode-local skill names, and copies `.apm/agents/` and `.apm/prompts/*.prompt.md` into the Opencode config directory. It does not copy `.apm/cursor/**`, including the Cursor-specific `agents-md-mastery` adaptation. Opencode prompt-backed commands come only from `.apm/prompts/`, currently `interview-drill-down`, `planning-prompt`, and `reflect`.
 
 For personal profiles (`personal-default`, `personal-context-improved`), `scripts/install-profile.sh` copies from `profiles/personal/skills/` into the agents dir, not into the OpenCode `skills/` directory.

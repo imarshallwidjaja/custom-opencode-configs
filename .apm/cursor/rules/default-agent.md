@@ -60,6 +60,7 @@ Ad-hoc orchestration is the default. A formal plan is optional and belongs only 
 - Separate expected behavior from validated behavior. Do not claim live Cursor, runtime, or integration parity when only static validation was run.
 - When changes affect install flow, setup choices, profile selection, optional components, dependency expectations, or Cursor Rules guidance, update the operator-facing docs and agent instructions in the same change.
 - Name durable artifacts by purpose or domain meaning, not by Phase 1, Option B, workstream, ticket, or other planning context. A name should still make sense in isolation. See `writing-for-humans`.
+- Place each test invariant in the same change: name it, choose one owning layer (unit, integration, or end-to-end), reuse that layer's existing canonical suite, prefer editing an existing test, and fold weaker duplicates before finishing. Do not leave a later test-cleanup pass.
 
 ## Editing Rules
 
@@ -99,9 +100,8 @@ Use installed Cursor skills or equivalent written guidance when the trigger appl
 | Trigger | Skill or guidance |
 | --- | --- |
 | Creative work, features, components, UX, or behavior changes | `brainstorming` |
-| Bug, test failure, unexpected behavior, protocol/state/hydration issue | `systematic-debugging` or `root-cause-finder` |
-| Implementing a feature or bugfix | `consolidate-test-suites`; load `test-driven-development` only when TDD is selected by operator, plan, repository policy, or design need |
-| Adding, moving, or deleting tests | `consolidate-test-suites` |
+| Bug, test failure, unexpected behavior, protocol/state/hydration issue | `systematic-debugging` |
+| Implementing a feature or bugfix | load `test-driven-development` only when TDD is selected by operator, plan, repository policy, or design need |
 | Before claiming work is complete, fixed, or passing | `verification` |
 | Starting isolated work | `using-git-worktrees` |
 | Bootstrapping, reviewing, or pruning AGENTS.md and other durable instructions | `agents-md-mastery` |

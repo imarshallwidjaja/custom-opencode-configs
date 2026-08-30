@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "upstreamRepository": "https://github.com/imarshallwidjaja/agent-hive.git",
-  "commit": "6effc2033a0086c8f4fa7f3ab9bb062af173ff9e",
+  "commit": "caf2c7ab6e269495f8e2bed9eac7e0da7bb25d35",
   "packageVersion": "2.3.5",
   "skills": {
     "brainstorming": {
@@ -11,13 +11,13 @@
     },
     "systematic-debugging": {
       "sourcePath": "packages/opencode-hive/skills/systematic-debugging/SKILL.md",
-      "sourceSha256": "821e405a4bf4ff775a50660d0a034ede3a835cd4686f58b82371cec4082034dc",
-      "installedSha256": "55ba9def78d2501603f3e775a7b4a7cf855cef7fac23c8593cca06efbf1020d4"
+      "sourceSha256": "2129328be37aa1126c263eaed49e21d398a6d146f6972533443c550e371d8e0c",
+      "installedSha256": "d7d697fa8f5982766fa8340378a38e98be0bc72783814e73fe9b8e4d2e744ec8"
     },
     "test-driven-development": {
       "sourcePath": "packages/opencode-hive/skills/test-driven-development/SKILL.md",
-      "sourceSha256": "9dc9131dd9927aae1d90b955abff9ec89f35b99fcbc0eef8cafab6885fce6dfb",
-      "installedSha256": "9dc9131dd9927aae1d90b955abff9ec89f35b99fcbc0eef8cafab6885fce6dfb"
+      "sourceSha256": "a5eec9ed7842dec16ea1df1393fb74dd30af61583a251f23194dec47a31cac11",
+      "installedSha256": "a5eec9ed7842dec16ea1df1393fb74dd30af61583a251f23194dec47a31cac11"
     },
     "verification": {
       "sourcePath": "packages/opencode-hive/skills/verification/SKILL.md",

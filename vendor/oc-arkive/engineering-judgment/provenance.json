@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "upstreamRepository": "https://github.com/imarshallwidjaja/agent-hive.git",
-  "commit": "60d55b91f7a5cc4180d7667ed211ee39e77f4333",
+  "commit": "caf2c7ab6e269495f8e2bed9eac7e0da7bb25d35",
   "sourcePath": "packages/opencode-hive/src/agents/engineering-judgment.ts",
   "packageVersion": "2.3.5",
-  "sha256": "e2a0ac22c7ffd03a5d4d51e5cfc4baf0f5d6be5e8675c359d2359446399e0abd"
+  "sha256": "62afa573d87870d7262673298e368a91fdd1dcc7c2a4385c5c08291e1bdc95d3"
 }

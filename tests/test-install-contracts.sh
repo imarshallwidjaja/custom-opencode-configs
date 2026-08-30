@@ -63,7 +63,7 @@ build_fixture() {
   mkdir -p "${REPO_FIXTURE}"
 
   # Canonical skills (.apm/skills/)
-  for skill in humanizer stop-slop writing-for-humans context-mode cymbal hard-cut web-design-guidelines writing-skills using-git-worktrees finishing-a-development-branch consolidate-test-suites root-cause-finder; do
+  for skill in humanizer stop-slop writing-for-humans context-mode cymbal hard-cut web-design-guidelines writing-skills; do
     mkdir -p "${REPO_FIXTURE}/.apm/skills/${skill}"
     cat > "${REPO_FIXTURE}/.apm/skills/${skill}/SKILL.md" <<SKILL
 ---
@@ -166,7 +166,7 @@ provenance = {
 PY
 
   # Cursor skills
-  for skill in agents-md-mastery brainstorming consolidate-test-suites finishing-a-development-branch root-cause-finder subagent-delegation systematic-debugging test-driven-development using-git-worktrees verification; do
+  for skill in agents-md-mastery brainstorming finishing-a-development-branch subagent-delegation systematic-debugging test-driven-development using-git-worktrees verification; do
     mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/${skill}"
     cat > "${REPO_FIXTURE}/.apm/cursor/skills/${skill}/SKILL.md" <<SKILL
 ---
@@ -941,7 +941,13 @@ cmp -s "${REPO_FIXTURE}/profiles/base/agent_hive.json" "${td12}/agent_hive.json"
 [[ ! -e "${td12}/skills/writing-for-humans" ]] && pass "12m2: writing-for-humans absent from OpenCode skills" || fail "12n2: writing-for-humans leaked into OpenCode skills"
 [[ -f "${td12}/skills/context-mode/SKILL.md" ]] && pass "12u: OpenCode-local context-mode installed" || fail "12v: OpenCode-local context-mode missing"
 [[ -f "${td12}/skills/writing-skills/SKILL.md" ]] && pass "12w: OpenCode-local writing-skills installed" || fail "12x: OpenCode-local writing-skills missing"
-[[ -f "${td12}/skills/using-git-worktrees/SKILL.md" ]] && pass "12y: OpenCode-local using-git-worktrees installed" || fail "12z: OpenCode-local using-git-worktrees missing"
+retired12=""
+for skill12 in using-git-worktrees finishing-a-development-branch consolidate-test-suites root-cause-finder; do
+  if [[ -e "${td12}/skills/${skill12}" ]]; then
+    retired12="${retired12} ${skill12}"
+  fi
+done
+[[ -z "${retired12}" ]] && pass "12y: retired OpenCode workflow skills are not installed" || fail "12z: retired OpenCode workflow skills still installed:${retired12}"
 [[ -f "${td12}/commands/reflect.md" ]] && pass "12o: OpenCode reflect command installed" || fail "12p: OpenCode reflect command missing"
 cmp -s "${REPO_FIXTURE}/.apm/prompts/reflect.prompt.md" "${td12}/commands/reflect.md" && pass "12q: OpenCode reflect content installed byte-for-byte" || fail "12r: OpenCode reflect content changed during install"
 [[ ! -e "${td12}/skills/agents-md-mastery" ]] && pass "12s: OpenCode installer excludes Cursor agents-md-mastery" || fail "12t: OpenCode installer leaked Cursor agents-md-mastery"
@@ -2327,7 +2333,7 @@ for relative in docs:
 vendor = root / 'vendor/oc-arkive/engineering-judgment/engineering-judgment.md'
 provenance = json.loads((vendor.parent / 'provenance.json').read_text(encoding='utf-8'))
 expected_release = {
-    'commit': '60d55b91f7a5cc4180d7667ed211ee39e77f4333',
+    'commit': 'caf2c7ab6e269495f8e2bed9eac7e0da7bb25d35',
     'packageVersion': '2.3.5',
 }
 for field, expected in expected_release.items():
@@ -2361,7 +2367,15 @@ from pathlib import Path
 root = Path(sys.argv[1])
 skills = root / '.apm' / 'skills'
 missing = []
-for name in ('brainstorming', 'systematic-debugging', 'test-driven-development'):
+for name in (
+    'brainstorming',
+    'systematic-debugging',
+    'test-driven-development',
+    'using-git-worktrees',
+    'finishing-a-development-branch',
+    'consolidate-test-suites',
+    'root-cause-finder',
+):
     path = skills / name
     if path.exists() or path.is_symlink():
         missing.append(str(path.relative_to(root)))
@@ -2371,9 +2385,9 @@ if (skills / 'ast-grep').exists():
     raise SystemExit('ast-grep must remain unpackaged')
 PY
 then
-  pass "68a: OpenCode does not package Hive-overlapping brainstorming, systematic-debugging, or TDD forks"
+  pass "68a: OpenCode does not package Hive-overlapping or retired workflow skill forks"
 else
-  fail "68a: OpenCode still packages Hive-overlapping skill forks"
+  fail "68a: OpenCode still packages Hive-overlapping or retired workflow skill forks"
 fi
 
 td68b="${TMPDIR}/opencode68b"
@@ -2388,10 +2402,10 @@ target = Path(sys.argv[1])
 agents = Path(sys.argv[2])
 skills = target / 'skills'
 errors = []
-for name in ('brainstorming', 'systematic-debugging', 'test-driven-development', 'ast-grep'):
+for name in ('brainstorming', 'systematic-debugging', 'test-driven-development', 'ast-grep', 'using-git-worktrees', 'finishing-a-development-branch', 'consolidate-test-suites', 'root-cause-finder'):
     if (skills / name).exists():
         errors.append(f'installed OpenCode skill {name}')
-    if (agents / name).exists():
+    if name in ('brainstorming', 'systematic-debugging', 'test-driven-development', 'ast-grep') and (agents / name).exists():
         errors.append(f'installed agents skill {name}')
 if (skills / 'writing-for-humans' / 'SKILL.md').is_file():
     errors.append('writing-for-humans must not be copied into OpenCode skills')
@@ -2428,7 +2442,7 @@ expected_names = (
     'test-driven-development',
     'verification',
 )
-if provenance.get('commit') != '6effc2033a0086c8f4fa7f3ab9bb062af173ff9e':
+if provenance.get('commit') != 'caf2c7ab6e269495f8e2bed9eac7e0da7bb25d35':
     raise SystemExit(f'unexpected Hive skill pin: {provenance.get("commit")!r}')
 skills = provenance.get('skills')
 if not isinstance(skills, dict) or set(skills) != set(expected_names):
@@ -2459,8 +2473,10 @@ for name in expected_names:
         ):
             if forbidden in text:
                 errors.append(f'{name} still contains {forbidden!r}')
-        if 'root-cause-finder' not in text:
-            errors.append(f'{name} must point related tracing at root-cause-finder')
+        if 'root-cause-finder' in text:
+            errors.append(f'{name} still names root-cause-finder')
+        if 'first unintended' not in text and 'hidden write' not in text:
+            errors.append(f'{name} must inline the downstream-symptom or hidden-write protocol')
 if errors:
     raise SystemExit('\n'.join(errors))
 PY
@@ -2686,8 +2702,14 @@ errors = []
 cursor_rules = (root / '.apm/cursor/rules/default-agent.md').read_text(encoding='utf-8')
 if old_cursor in cursor_rules:
     errors.append('default-agent.md still auto-loads TDD on every feature/bugfix')
-if 'consolidate-test-suites' not in cursor_rules:
-    errors.append('default-agent.md dropped consolidate-test-suites')
+if 'consolidate-test-suites' in cursor_rules:
+    errors.append('default-agent.md still mentions consolidate-test-suites')
+if 'root-cause-finder' in cursor_rules:
+    errors.append('default-agent.md still mentions root-cause-finder')
+if 'using-git-worktrees' not in cursor_rules:
+    errors.append('default-agent.md dropped using-git-worktrees')
+if 'finishing-a-development-branch' not in cursor_rules:
+    errors.append('default-agent.md dropped finishing-a-development-branch')
 if 'test-driven-development' not in cursor_rules or 'TDD is selected' not in cursor_rules:
     errors.append('default-agent.md must load TDD only when TDD is selected')
 for relative in (
@@ -2699,8 +2721,10 @@ for relative in (
     text = (root / relative).read_text(encoding='utf-8')
     if old_profile in text:
         errors.append(f'{relative} still auto-loads TDD on every feature/bugfix')
-    if 'consolidate-test-suites' not in text:
-        errors.append(f'{relative} dropped consolidate-test-suites')
+    if 'consolidate-test-suites' in text:
+        errors.append(f'{relative} still mentions consolidate-test-suites')
+    if '| Starting isolated feature work' in text or '| Starting isolated feature work or executing an approved implementation plan |' in text:
+        errors.append(f'{relative} still loads using-git-worktrees for isolated work')
     if 'test-driven-development' not in text or 'TDD is selected' not in text:
         errors.append(f'{relative} must load TDD only when TDD is selected')
 tdd = (root / '.apm/cursor/skills/test-driven-development/SKILL.md').read_text(encoding='utf-8')
@@ -2723,6 +2747,10 @@ else:
                 errors.append('TDD skill description must say TDD has been selected')
             if 'Use when implementing features' in description:
                 errors.append('TDD skill description still uses feature auto-load wording')
+if 'Name the invariant' not in tdd:
+    errors.append('TDD skill RED must name the invariant and owning layer')
+if 'deterministic' not in tdd or 'durable contract value' not in tdd:
+    errors.append('TDD skill standalone regression rule must require a deterministic durable contract')
 if errors:
     raise SystemExit('\n'.join(errors))
 PY
@@ -2772,6 +2800,30 @@ else
   fail "68p: temp Cursor install from real worktree helper failed: $(cat "${TMPDIR}/install68p.err")"
 fi
 
+printf '\n=== 68q. Cursor installer removes leftover retired skills ===\n'
+td68q="${TMPDIR}/cursor68q"
+mkdir -p "${td68q}/skills/consolidate-test-suites" "${td68q}/skills/root-cause-finder"
+printf '%s\n' 'stale leftover consolidate-test-suites' > "${td68q}/skills/consolidate-test-suites/SKILL.md"
+printf '%s\n' 'stale leftover root-cause-finder' > "${td68q}/skills/root-cause-finder/SKILL.md"
+sandbox_agents_skills
+if env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td68q}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install --dry-run >"${TMPDIR}/dry68q.out" 2>"${TMPDIR}/dry68q.err"; then
+  grep -F "Would back up and remove leftover ${td68q}/skills/consolidate-test-suites" "${TMPDIR}/dry68q.out" >/dev/null && pass "68q-a: dry-run describes leftover consolidate-test-suites removal" || fail "68q-b: dry-run omitted leftover consolidate-test-suites removal"
+  grep -F "Would back up and remove leftover ${td68q}/skills/root-cause-finder" "${TMPDIR}/dry68q.out" >/dev/null && pass "68q-c: dry-run describes leftover root-cause-finder removal" || fail "68q-d: dry-run omitted leftover root-cause-finder removal"
+else
+  fail "68q-a: leftover Cursor retired-skill dry-run failed: $(cat "${TMPDIR}/dry68q.err")"
+  fail "68q-c: leftover Cursor retired-skill dry-run failed"
+fi
+if env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td68q}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install >"${TMPDIR}/install68q.out" 2>"${TMPDIR}/install68q.err"; then
+  [[ ! -e "${td68q}/skills/consolidate-test-suites" ]] && pass "68q-e: leftover Cursor consolidate-test-suites removed" || fail "68q-f: leftover Cursor consolidate-test-suites remained"
+  [[ ! -e "${td68q}/skills/root-cause-finder" ]] && pass "68q-g: leftover Cursor root-cause-finder removed" || fail "68q-h: leftover Cursor root-cause-finder remained"
+  [[ -f "${td68q}/skills/using-git-worktrees/SKILL.md" ]] && pass "68q-i: Cursor using-git-worktrees still installed" || fail "68q-j: Cursor using-git-worktrees missing"
+  [[ -f "${td68q}/skills/finishing-a-development-branch/SKILL.md" ]] && pass "68q-k: Cursor finishing-a-development-branch still installed" || fail "68q-l: Cursor finishing-a-development-branch missing"
+  ls "${td68q}/.backup/"*"/skills/consolidate-test-suites" >/dev/null 2>&1 && pass "68q-m: leftover consolidate-test-suites backup exists" || fail "68q-n: no leftover consolidate-test-suites backup"
+  ls "${td68q}/.backup/"*"/skills/root-cause-finder" >/dev/null 2>&1 && pass "68q-o: leftover root-cause-finder backup exists" || fail "68q-p: no leftover root-cause-finder backup"
+else
+  fail "68q-e: leftover Cursor retired-skill install failed: $(cat "${TMPDIR}/install68q.err")"
+fi
+
 # ---------------------------------------------------------------------------
 # 69. OpenCode installer preserves unmanaged skills
 # ---------------------------------------------------------------------------
@@ -2779,12 +2831,17 @@ printf '\n=== 69. OpenCode installer preserves unmanaged skills ===\n'
 build_fixture
 sandbox_agents_skills
 td69="${TMPDIR}/test69"
-mkdir -p "${td69}/skills/impeccable" "${td69}/skills/context-mode" "${td69}/skills/cymbal" "${td69}/skills/brainstorming" "${td69}/skills/ivan-writing"
+mkdir -p "${td69}/skills/impeccable" "${td69}/skills/context-mode" "${td69}/skills/cymbal" "${td69}/skills/brainstorming" "${td69}/skills/ivan-writing" \
+  "${td69}/skills/using-git-worktrees" "${td69}/skills/finishing-a-development-branch" "${td69}/skills/consolidate-test-suites" "${td69}/skills/root-cause-finder"
 printf '%s\n' 'impeccable-sentinel-keep' > "${td69}/skills/impeccable/SENTINEL"
 printf '%s\n' 'stale-opencode-local' > "${td69}/skills/context-mode/SKILL.md"
 printf '%s\n' 'stale leftover cymbal' > "${td69}/skills/cymbal/SKILL.md"
 printf '%s\n' 'stale leftover brainstorming' > "${td69}/skills/brainstorming/SKILL.md"
 printf '%s\n' 'unowned-ivan-writing' > "${td69}/skills/ivan-writing/SKILL.md"
+printf '%s\n' 'stale leftover using-git-worktrees' > "${td69}/skills/using-git-worktrees/SKILL.md"
+printf '%s\n' 'stale leftover finishing-a-development-branch' > "${td69}/skills/finishing-a-development-branch/SKILL.md"
+printf '%s\n' 'stale leftover consolidate-test-suites' > "${td69}/skills/consolidate-test-suites/SKILL.md"
+printf '%s\n' 'stale leftover root-cause-finder' > "${td69}/skills/root-cause-finder/SKILL.md"
 printf '%s\n' 'keep-file' > "${td69}/skills/keep.txt"
 OPENCODE_CONFIG_DIR="${td69}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td69}/err" && pass "69a: shared install succeeded" || fail "69b: shared install failed: $(cat "${td69}/err")"
 if grep -Fqx 'impeccable-sentinel-keep' "${td69}/skills/impeccable/SENTINEL"; then
@@ -2796,15 +2853,22 @@ cmp -s "${REPO_FIXTURE}/.apm/skills/context-mode/SKILL.md" "${td69}/skills/conte
 [[ ! -e "${td69}/skills/cymbal" ]] && pass "69g: leftover shared cymbal removed from OpenCode skills" || fail "69h: leftover shared cymbal remained in OpenCode skills"
 cmp -s "${REPO_FIXTURE}/.apm/skills/cymbal/SKILL.md" "${AGENTS_SKILLS_DIR}/cymbal/SKILL.md" && pass "69i: shared cymbal installed into agents dir" || fail "69j: shared cymbal missing or wrong in agents dir"
 [[ ! -e "${td69}/skills/brainstorming" ]] && pass "69k: leftover Hive brainstorming removed" || fail "69l: leftover Hive brainstorming remained"
+retired69=""
+for skill69r in using-git-worktrees finishing-a-development-branch consolidate-test-suites root-cause-finder; do
+  if [[ -e "${td69}/skills/${skill69r}" ]]; then
+    retired69="${retired69} ${skill69r}"
+  fi
+done
+[[ -z "${retired69}" ]] && pass "69k2: leftover retired OpenCode workflow skills removed" || fail "69l2: leftover retired OpenCode workflow skills remained:${retired69}"
 grep -Fqx 'unowned-ivan-writing' "${td69}/skills/ivan-writing/SKILL.md" && pass "69m: unowned ivan-writing preserved on shared install" || fail "69n: unowned ivan-writing was stripped on shared install"
 grep -Fqx 'keep-file' "${td69}/skills/keep.txt" && pass "69o: unmanaged skills file survived" || fail "69p: unmanaged skills file was deleted"
 missing69=""
-for skill69 in context-mode writing-skills using-git-worktrees finishing-a-development-branch consolidate-test-suites root-cause-finder; do
+for skill69 in context-mode writing-skills; do
   if [[ ! -f "${td69}/skills/${skill69}/SKILL.md" ]]; then
     missing69="${missing69} ${skill69}"
   fi
 done
-[[ -z "${missing69}" ]] && pass "69q: six OpenCode-local skills present" || fail "69r: missing OpenCode-local skills:${missing69}"
+[[ -z "${missing69}" ]] && pass "69q: two OpenCode-local skills present" || fail "69r: missing OpenCode-local skills:${missing69}"
 ls "${td69}/.backup/"*"/skills/impeccable/SENTINEL" >/dev/null 2>&1 && pass "69s: whole-skills backup includes unmanaged skill" || fail "69t: no whole-skills backup of unmanaged skill"
 
 printf '\n=== 69b. Personal OpenCode install strips leftover ivan-writing ===\n'

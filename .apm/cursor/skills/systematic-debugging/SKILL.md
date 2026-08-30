@@ -105,17 +105,21 @@ You MUST complete each phase before proceeding to the next.
 
    **This reveals:** Which layer fails (secrets → workflow ✓, workflow → build ✗)
 
-5. **Trace Data Flow**
+5. **Downstream Symptoms and Hidden Writes**
 
-   **WHEN error is deep in call stack:**
+   **WHEN the visible error is a contract, parse, null, schema, hydration, or state-ownership failure that may be downstream:**
 
-   See the installed Cursor skill `root-cause-finder` for the complete backward tracing technique.
+   - Do not stop at the first contract, parsing, type, null, or schema error
+   - State expected behavior, the invariant, and what definitely did not happen
+   - Trace the causal chain from the intended action or event to the observed effect
+   - Ask whether the request, mutation, or write should have happened at all
+   - Identify the canonical source of truth and competing sources
+   - Find the first unintended side effect or write; fix that layer first
+   - Do not make a contract more permissive unless you can prove the observed payload is intended
 
-   **Quick version:**
-   - Where does bad value originate?
-   - What called this with bad value?
-   - Keep tracing up until you find the source
-   - Fix at source, not at symptom
+   Hidden write checks: lifecycle hooks, callbacks, subscribers, watchers, interceptors, middleware, retries, background jobs, cache refreshers, persistence restore, scheduled tasks, startup code, observer-driven mirroring.
+
+   For other deep-stack errors, keep tracing up until you find the source. Fix at source, not at symptom.
 
 ### Phase 2: Pattern Analysis
 
@@ -277,11 +281,8 @@ If systematic investigation reveals issue is truly environmental, timing-depende
 
 ## Supporting Techniques
 
-These techniques are part of systematic debugging:
-
-- **Root-cause tracing** - Trace bugs backward through the call stack to find the original trigger. Use the installed Cursor skill `root-cause-finder`.
-- **Defense in depth** - Add validation at multiple layers after finding the root cause
-- **Condition-based waiting** - Replace arbitrary timeouts with condition polling
+- After finding root cause, add defense in depth: validate at multiple layers so the same class of failure cannot pass a later boundary silently.
+- Prefer condition-based waiting: poll a condition instead of arbitrary timeouts.
 
 **Related skills:**
 - **test-driven-development** - Load only when strict TDD is the selected strategy

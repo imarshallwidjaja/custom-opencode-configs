@@ -10,6 +10,8 @@ AGENTS_PROFILE="${OPENCODE_AGENTS_PROFILE:-shared}"
 OPENCODE_LOCAL_SKILLS=(
   context-mode
   writing-skills
+)
+OPENCODE_RETIRED_SKILLS=(
   using-git-worktrees
   finishing-a-development-branch
   consolidate-test-suites
@@ -515,7 +517,7 @@ for skill_name in "${SHARED_SKILLS[@]}"; do
   cp -a "${skill_source}" "${AGENTS_SKILLS_DIR}/${skill_name}"
   rm -rf -- "${TARGET_DIR}/skills/${skill_name}"
 done
-for skill_name in "${HIVE_OWNED_SKILLS[@]}"; do
+for skill_name in "${HIVE_OWNED_SKILLS[@]}" "${OPENCODE_RETIRED_SKILLS[@]}"; do
   rm -rf -- "${TARGET_DIR}/skills/${skill_name}"
 done
 if [[ -d "${REPO_ROOT}/.apm/agents" ]]; then

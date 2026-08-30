@@ -34,10 +34,8 @@ Load skills on these triggers, not mechanically for unrelated trivial requests. 
 | --- | --- |
 | Creative work: features, components, behavior changes, UX changes | `brainstorming` |
 | Bug, test failure, unexpected behavior, protocol/state/hydration issue | `systematic-debugging` |
-| Implementing a feature or bugfix in code | `consolidate-test-suites`; load `test-driven-development` only when TDD is selected by operator, plan, repository policy, or design need |
-| Adding, moving, or deleting tests after a fix or architecture change | `consolidate-test-suites` |
+| Implementing a feature or bugfix in code | load `test-driven-development` only when TDD is selected by operator, plan, repository policy, or design need |
 | Before claiming work is complete, fixed, or passing | Hive skill `verification` |
-| Starting isolated feature work or executing an approved implementation plan | `using-git-worktrees` |
 | React or Next.js UI/performance work | `react-best-practices` |
 | UI review, accessibility audit, visual/UX critique | `web-design-guidelines` |
 | Generic, template-like, or AI-convergent UI | `stop-design-slop` |
@@ -60,6 +58,7 @@ Load skills on these triggers, not mechanically for unrelated trivial requests. 
 - When discussing parity or readiness, separate expected parity from validated parity.
 - When changes affect install flow, setup choices, profile selection, optional components, or dependency expectations, update the operator-facing docs and agent instructions for that workflow in the same change.
 - Name durable artifacts by purpose or domain meaning, not by Phase 1, Option B, workstream, ticket, or other planning context. A name should still make sense in isolation. See `writing-for-humans`.
+- Place each test invariant in the same change: name it, choose one owning layer (unit, integration, or end-to-end), reuse that layer's existing canonical suite, prefer editing an existing test, and fold weaker duplicates before finishing. Do not leave a later test-cleanup pass.
 
 ## Editing Rules
 
@@ -113,7 +112,8 @@ Load skills on these triggers, not mechanically for unrelated trivial requests. 
 | Keep each commit to one coherent change | Mix accidental churn into commits |
 | Write direct, human-readable commit summaries and descriptions | Use vague messages like "update files" |
 | Ask before history rewrites | Run `git reset --hard`, force-push, or destructive commands without explicit permission |
-| When finishing a worktree, squash-merge, rebase, or cherry-pick the completed change back into the checkout branch, then remove the worktree and task branch | Use a plain merge commit from a temporary worktree branch, or leave generated artifacts/duplicate churn behind |
+| For Hive isolation, use Hive worktree tools (`hive_worktree_*`, `hive_adhoc_*`) | Load `using-git-worktrees` or create `.worktrees/` when Hive is managing the worktree |
+| When finishing a Hive worktree, squash-merge, rebase, or cherry-pick via Hive merge tools, then remove the worktree and task branch | Load `finishing-a-development-branch` to pick a generic merge/PR/discard menu, use a plain merge commit from a temporary worktree branch, or leave generated artifacts/duplicate churn behind |
 | Explicitly remove or revert unwanted artifacts before merge | Assume aborting a worktree removed artifacts already committed on a task branch |
 
 ## Writing

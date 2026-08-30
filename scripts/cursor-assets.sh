@@ -28,14 +28,16 @@ COMMANDS=(
 SKILLS=(
   agents-md-mastery
   brainstorming
-  consolidate-test-suites
   finishing-a-development-branch
-  root-cause-finder
   subagent-delegation
   systematic-debugging
   test-driven-development
   using-git-worktrees
   verification
+)
+RETIRED_SKILLS=(
+  consolidate-test-suites
+  root-cause-finder
 )
 
 CANONICAL_SKILLS=(
@@ -987,6 +989,11 @@ for name in expected_names:
         fail(f'.apm/cursor/skills/{name}/SKILL.md contains skill(')
     if 'writing-plans' in skill_text:
         fail(f'.apm/cursor/skills/{name}/SKILL.md contains writing-plans as a skill-call target')
+    if name == 'systematic-debugging':
+        if 'root-cause-finder' in skill_text:
+            fail(f'.apm/cursor/skills/{name}/SKILL.md contains root-cause-finder')
+        if 'first unintended' not in skill_text and 'hidden write' not in skill_text:
+            fail(f'.apm/cursor/skills/{name}/SKILL.md is missing the inlined downstream-symptom protocol')
 PY
 }
 
@@ -1007,6 +1014,11 @@ print_copy_plan() {
   for name in "${SKILLS[@]}"; do
     source="${root}/skills/${name}"
     printf 'Would copy %s -> %s\n' "${source#"${root}/"}" "${target_dir}/skills/${name}"
+  done
+  for name in "${RETIRED_SKILLS[@]}"; do
+    if [[ -e "${target_dir}/skills/${name}" || -L "${target_dir}/skills/${name}" ]]; then
+      printf 'Would back up and remove leftover %s/skills/%s\n' "${target_dir}" "${name}"
+    fi
   done
   for name in "${CANONICAL_SKILLS[@]}"; do
     printf 'Would copy canonical .apm/skills/%s -> %s/%s\n' "${name}" "${AGENTS_SKILLS_DIR}" "${name}"
@@ -1135,6 +1147,13 @@ install_assets_into() {
     cp -a "${root}/skills/${name}/." "${target_dir}/skills/${name}/"
     printf 'Copied skills/%s -> %s\n' "${name}" "${target_dir}/skills/${name}"
   done
+  for name in "${RETIRED_SKILLS[@]}"; do
+    if [[ -e "${target_dir}/skills/${name}" || -L "${target_dir}/skills/${name}" ]]; then
+      backup_path "${target_dir}" "${target_dir}/skills/${name}"
+      rm -rf "${target_dir}/skills/${name}"
+      printf 'Backed up and removed leftover skills/%s\n' "${name}"
+    fi
+  done
   for name in "${CANONICAL_SKILLS[@]}"; do
     install_canonical_skill "${name}" "${target_dir}"
   done
@@ -1235,7 +1254,7 @@ check_target_readability() {
   fi
 
   if [[ -d "${target}/skills" ]]; then
-    for name in "${SKILLS[@]}" "${CANONICAL_SKILLS[@]}" ivan-writing; do
+    for name in "${SKILLS[@]}" "${RETIRED_SKILLS[@]}" "${CANONICAL_SKILLS[@]}" ivan-writing; do
       if [[ -e "${target}/skills/${name}" || -L "${target}/skills/${name}" ]]; then
         check_recursive_readable "${target}/skills/${name}" "target/skills/${name}" || return 1
       fi
