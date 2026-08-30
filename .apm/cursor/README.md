@@ -8,9 +8,9 @@ Delegation is a strong prompt policy, but Cursor routing is heuristic and not ru
 
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, `simplicity-reviewer`
 - eight installed commands: seven Cursor-specific commands (`compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`) plus the shared canonical `reflect`
-- eleven managed Cursor skills: `agents-md-mastery`, `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, `verification`
-- six canonical skills consumed from `.apm/skills/`: `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, `writing-for-humans`
-- optional personal skill `ivan-writing` installed when `CURSOR_INSTALL_IVAN_WRITING=1` is set
+- ten managed Cursor skills installed into Cursor `skills/`: `agents-md-mastery`, `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, `verification`
+- twelve shared canonical skills consumed from `.apm/skills/` and installed into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: `cymbal`, `drawio-skill`, `frontend-slides`, `hard-cut`, `humanizer`, `react-best-practices`, `resume-tailoring`, `stop-design-slop`, `stop-slop`, `use-railway`, `web-design-guidelines`, `writing-for-humans`
+- optional personal skill `ivan-writing` installed into the agents dir when `CURSOR_INSTALL_IVAN_WRITING=1` is set
 
 `use-railway` needs the Railway CLI and Railway auth; without them the skill is unused. `drawio-skill` needs `uv` and the draw.io desktop CLI; Graphviz is optional. `frontend-slides` needs `uv` for PPTX conversion and Node.js for PDF export or Vercel deploy.
 
@@ -21,11 +21,12 @@ Delegation is a strong prompt policy, but Cursor routing is heuristic and not ru
 | `agents/*.md` | `<cursor-config>/agents/*.md` | Cursor user-global subagents |
 | `.apm/cursor/commands/*.md` | `<cursor-config>/commands/*.md` | Seven genuinely Cursor-specific user-global commands |
 | `.apm/prompts/reflect.prompt.md` | `<cursor-config>/commands/reflect.md` | Shared `/reflect` policy, installed byte-for-byte by the helper |
-| `skills/<name>/` | `<cursor-config>/skills/<name>/` | Cursor user-global skills; Cursor-specific skills require `SKILL.md` and may include `references/` and `scripts/`. Canonical skills copied from `.apm/skills/` may also include packaged files such as `viewport-base.css`, `bin/`, `data/`, `styles/`, `assets/`, and `examples/` |
+| `skills/<name>/` | `<cursor-config>/skills/<name>/` | Cursor-only and Hive-overlay skills; require `SKILL.md` and may include `references/` and `scripts/` |
+| `.apm/skills/<name>/` | `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}/<name>/` | Shared canonical skills used by Cursor and OpenCode. The installer also backs up and removes stale copies of those names from each Cursor target `skills/` directory |
 | `rules/default-agent.md` | Cursor Customize -> Rules -> User Rules (manual paste) | Cursor exposes user rules via the Customize UI, not a deployable file path |
 | `vendor/oc-arkive/engineering-judgment/engineering-judgment.md` | Cursor Customize -> Rules -> User Rules (composed by `print-rules`) | Provenance-pinned generated snapshot; it is validated but not copied by `install` |
 
-The install target defaults to `${CURSOR_CONFIG_DIR:-$HOME/.cursor}`. Set `CURSOR_CONFIG_DIR` to one custom target, or set `CURSOR_CONFIG_DIRS` to a semicolon-separated target list for dual installs.
+The install target defaults to `${CURSOR_CONFIG_DIR:-$HOME/.cursor}`. Set `CURSOR_CONFIG_DIR` to one custom target, or set `CURSOR_CONFIG_DIRS` to a semicolon-separated target list for dual installs. Shared canonical skills default to `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`; override `AGENTS_SKILLS_DIR` for tests or isolated installs so a real `$HOME` is not mutated.
 
 `.apm/prompts/reflect.prompt.md` is the only tracked `/reflect` command source. Validation rejects `.apm/cursor/commands/reflect.md` as a stale duplicate. APM routes the canonical prompt to project-local Opencode and Cursor command targets; it may normalize frontmatter or newlines, but both targets retain the same command metadata and body semantics.
 
@@ -73,16 +74,16 @@ uvx --from apm-cli apm install --target opencode,cursor
 
 Other Cursor commands continue to come from `.apm/cursor/commands/`.
 
-`drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, and `writing-for-humans` are consumed from `.apm/skills/` (the canonical source shared with Opencode), not duplicated under `.apm/cursor/skills/`. The Cursor installer copies them from the canonical source.
+The twelve shared canonical skills (`cymbal`, `drawio-skill`, `frontend-slides`, `hard-cut`, `humanizer`, `react-best-practices`, `resume-tailoring`, `stop-design-slop`, `stop-slop`, `use-railway`, `web-design-guidelines`, `writing-for-humans`) are consumed from `.apm/skills/` and installed into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`, not duplicated under `.apm/cursor/skills/` or copied into Cursor `skills/`. OpenCode prefers `~/.config/opencode/skills` over `~/.agents/skills` when both exist, so a leftover shared copy in a harness skills directory would keep serving the stale tree. Cursor and OpenCode also scan `~/.claude/skills`, so shared skills must not be left there either.
 
 `drawio-skill` needs `uv` and the draw.io desktop CLI; Graphviz is optional for auto-layout. `frontend-slides` needs `uv` for PPTX conversion and Node.js for PDF export or Vercel deploy. Without those tools the skills remain unused.
 
-The personal `ivan-writing` skill is installed from `profiles/personal/skills/ivan-writing/` only when `CURSOR_INSTALL_IVAN_WRITING=1` is set. This is an opt-in because the skill contains the author's personal voice preferences. Only unset/empty and exact `1` are accepted; other values (0, false, 2) fail before any target mutation.
+The personal `ivan-writing` skill is installed from `profiles/personal/skills/ivan-writing/` into the agents dir only when `CURSOR_INSTALL_IVAN_WRITING=1` is set. This is an opt-in because the skill contains the author's personal voice preferences. Only unset/empty and exact `1` are accepted; other values (0, false, 2) fail before any target mutation.
 
-When opt-in installs `ivan-writing`, the helper writes a marker file `skills/ivan-writing/.cursor-managed` inside the installed skill directory. On later opt-out, the skill directory is backed up and removed only when that marker exists. An unowned `ivan-writing` directory (no marker) is preserved and not modified.
+When opt-in installs `ivan-writing`, the helper writes a marker file `ivan-writing/.cursor-managed` inside the agents-dir skill directory and backs up and removes a leftover Cursor `skills/ivan-writing`. On later opt-out, the agents-dir skill is backed up and removed only when that marker exists, and a Cursor `skills/ivan-writing` that still has `.cursor-managed` is also backed up and removed. An unowned `ivan-writing` directory (no marker) is preserved and not modified.
 
 ## Opencode install isolation
 
-`scripts/install-profile.sh` copies from `.apm/skills/`, `.apm/agents/`, and `.apm/prompts/*.prompt.md` into the Opencode config directory. It does not copy `.apm/cursor/**`, including the Cursor-specific `agents-md-mastery` adaptation. Opencode prompt-backed commands come only from `.apm/prompts/`, currently `interview-drill-down`, `planning-prompt`, and `reflect`.
+`scripts/install-profile.sh` copies OpenCode-local skills from `.apm/skills/` into the Opencode config `skills/` directory, upserts the twelve shared canonical skills into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`, and copies `.apm/agents/` and `.apm/prompts/*.prompt.md` into the Opencode config directory. It does not copy `.apm/cursor/**`, including the Cursor-specific `agents-md-mastery` adaptation. Opencode prompt-backed commands come only from `.apm/prompts/`, currently `interview-drill-down`, `planning-prompt`, and `reflect`.
 
-For personal profiles (`personal-default`, `personal-context-improved`), `scripts/install-profile.sh` also copies from `profiles/personal/skills/` into the Opencode config directory.
+For personal profiles (`personal-default`, `personal-context-improved`), `scripts/install-profile.sh` copies from `profiles/personal/skills/` into the agents dir, not into the OpenCode `skills/` directory.

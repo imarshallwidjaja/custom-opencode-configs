@@ -119,7 +119,7 @@ Custom directory and selected profiles:
 
 ```bash
 git pull
-OPENCODE_CONFIG_DIR=/path/to/opencode-config OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
+OPENCODE_CONFIG_DIR=/path/to/opencode-config OPENCODE_AGENTS_PROFILE=personal-default AGENTS_SKILLS_DIR=/path/to/agents-skills ./scripts/install-profile.sh
 ```
 
 Some notes:
@@ -267,7 +267,7 @@ Recommendation:
 
 `profiles/base/agent_hive.json` is the sole Hive config source. It uses only non-fast `openai/gpt-5.6-sol` and `openai/gpt-5.6-luna`. Confirm OpenAI ChatGPT OAuth is available before install.
 
-Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, `AGENTS.md`, and `skills/` contents with this repo's versions; installs optional standalone `agents/` or prompt-backed `commands/` only when this repo packages them; removes the old managed Hive command prompt files from `commands/`; and writes timestamped backups under `<target>/.backup/` first when those paths already exist. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `uvx`, and `CONTEXT7_API_KEY`, then auto-applies the matching `context-improved` overlays. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
+Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, and `AGENTS.md` with this repo's versions. In `skills/`, it replaces the six OpenCode-local names (`context-mode`, `writing-skills`, `using-git-worktrees`, `finishing-a-development-branch`, `consolidate-test-suites`, `root-cause-finder`); removes leftover copies of the shared canonical skills and leftover Hive-owned skill names so they cannot shadow `${AGENTS_SKILLS_DIR}` or Hive materialization; and leaves other existing skill directories in place, including unmanaged installs such as `impeccable` from the official CLI. Shared-profile installs leave an unowned `skills/ivan-writing` in place; personal profiles copy `ivan-writing` into the agents dir and remove a leftover OpenCode `skills/ivan-writing`. It installs optional standalone `agents/` or prompt-backed `commands/` only when this repo packages them; removes the old managed Hive command prompt files from `commands/`; and writes timestamped backups under `<target>/.backup/` first when those paths already exist, including a whole-`skills/` backup before that directory is mutated. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `uvx`, and `CONTEXT7_API_KEY`, then auto-applies the matching `context-improved` overlays. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
 
 Run one of these:
 
@@ -425,14 +425,15 @@ Do you also want the separate Cursor prompt-level assets installed for Cursor, o
 
 Before running commands, verify that you are in the repository root, `python3` is available, and `scripts/cursor-assets.sh` exists. Use the default target `${HOME}/.cursor` unless the operator gives `CURSOR_CONFIG_DIR` for one target or `CURSOR_CONFIG_DIRS` for multiple targets. If the operator uses Windows Cursor with WSL projects, recommend dual install to both `$HOME/.cursor` and the Windows config path visible from WSL.
 
-`CURSOR_INSTALL_IVAN_WRITING` accepts only unset/empty (opt-out, no personal skill) or exact `1` (opt-in). Any other value (0, false, 2, etc.) fails before mutation. When opt-in installs `ivan-writing`, a marker file `skills/ivan-writing/.cursor-managed` is written inside the installed skill directory. On later opt-out, the skill is backed up and removed only when that marker exists; otherwise it is left untouched.
+Shared canonical skills install to `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`. Override that destination with `AGENTS_SKILLS_DIR`. Tests and other installer runs that keep the real `$HOME` must set this to a temp directory so they do not mutate `~/.agents/skills`. `CURSOR_INSTALL_IVAN_WRITING` accepts only unset/empty (opt-out, no personal skill) or exact `1` (opt-in). Any other value (0, false, 2, etc.) fails before mutation. When opt-in installs `ivan-writing`, a marker file `ivan-writing/.cursor-managed` is written inside the agents-dir skill directory. On later opt-out, the skill is backed up and removed only when that marker exists; otherwise it is left untouched. Cursor and OpenCode also scan `~/.claude/skills`, so shared skills must not be left there either.
 
 If the operator only wants to inspect the assets, run:
 
 ```bash
 ./scripts/cursor-assets.sh validate
 cursor_temp="$(mktemp -d)"
-CURSOR_CONFIG_DIR="$cursor_temp" ./scripts/cursor-assets.sh install --dry-run
+agents_temp="$(mktemp -d)"
+CURSOR_CONFIG_DIR="$cursor_temp" AGENTS_SKILLS_DIR="$agents_temp" ./scripts/cursor-assets.sh install --dry-run
 ./scripts/cursor-assets.sh print-rules
 ```
 
@@ -454,9 +455,9 @@ Verify the installed layout by checking for:
 
 - six files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/`
 - eight files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/`, including `reflect.md` sourced from the shared canonical prompt
-- the managed Cursor skills: `agents-md-mastery`, `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
-- the canonical skills `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, and `writing-for-humans` under `skills/`
-- `ivan-writing` under `skills/` when installed via `CURSOR_INSTALL_IVAN_WRITING=1`
+- the ten managed Cursor skills under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/skills/`: `agents-md-mastery`, `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, and `verification`
+- the twelve shared canonical skills under `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: `cymbal`, `drawio-skill`, `frontend-slides`, `hard-cut`, `humanizer`, `react-best-practices`, `resume-tailoring`, `stop-design-slop`, `stop-slop`, `use-railway`, `web-design-guidelines`, and `writing-for-humans`
+- `ivan-writing` under the agents dir when installed via `CURSOR_INSTALL_IVAN_WRITING=1`
 
 If `CURSOR_CONFIG_DIRS` was used, check those three layout conditions under every target in the semicolon-separated list.
 
@@ -615,7 +616,8 @@ Validate and inspect Cursor assets:
 ```bash
 ./scripts/cursor-assets.sh validate
 cursor_temp="$(mktemp -d)"
-CURSOR_CONFIG_DIR="$cursor_temp" ./scripts/cursor-assets.sh install --dry-run
+agents_temp="$(mktemp -d)"
+CURSOR_CONFIG_DIR="$cursor_temp" AGENTS_SKILLS_DIR="$agents_temp" ./scripts/cursor-assets.sh install --dry-run
 ./scripts/cursor-assets.sh print-rules
 ```
 

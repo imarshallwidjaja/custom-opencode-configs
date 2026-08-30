@@ -5,7 +5,49 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TARGET_DIR="${OPENCODE_CONFIG_DIR:-${HOME}/.config/opencode}"
+AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-${HOME}/.agents/skills}"
 AGENTS_PROFILE="${OPENCODE_AGENTS_PROFILE:-shared}"
+OPENCODE_LOCAL_SKILLS=(
+  context-mode
+  writing-skills
+  using-git-worktrees
+  finishing-a-development-branch
+  consolidate-test-suites
+  root-cause-finder
+)
+SHARED_SKILLS=(
+  cymbal
+  drawio-skill
+  frontend-slides
+  hard-cut
+  humanizer
+  react-best-practices
+  resume-tailoring
+  stop-design-slop
+  stop-slop
+  use-railway
+  web-design-guidelines
+  writing-for-humans
+)
+HIVE_OWNED_SKILLS=(
+  adversarial-review
+  agents-md-mastery
+  ast-grep
+  background-delegation
+  brainstorming
+  code-reviewer
+  dispatching-parallel-agents
+  docker-mastery
+  executing-plans
+  grilling
+  parallel-exploration
+  systematic-debugging
+  test-driven-development
+  verification
+  verification-before-completion
+  verification-reviewer
+  writing-plans
+)
 AGENTS_SOURCE="${REPO_ROOT}/profiles/agents/${AGENTS_PROFILE}.md"
 AGENTS_MODE="${OPENCODE_AGENTS_MODE:-install}"
 BASE_PAYLOAD_DIR="${REPO_ROOT}/profiles/base"
@@ -373,6 +415,63 @@ backup_path() {
   fi
 }
 
+backup_agents_skill() {
+  local skill_name="$1"
+  local path="${AGENTS_SKILLS_DIR}/${skill_name}"
+  if [[ -e "${path}" ]]; then
+    if [[ -z "${BACKUP_DIR}" ]]; then
+      BACKUP_DIR="${TARGET_DIR}/.backup/$(date +%Y%m%d-%H%M%S)"
+      mkdir -p "${BACKUP_DIR}"
+    fi
+    mkdir -p "${BACKUP_DIR}/agents-skills"
+    cp -a "${path}" "${BACKUP_DIR}/agents-skills/${skill_name}"
+  fi
+}
+
+same_resolved_path() {
+  local left right
+  left="$(realpath -m -- "$1")"
+  right="$(realpath -m -- "$2")"
+  [[ "${left}" == "${right}" ]]
+}
+
+abort_if_agents_skills_aliased() {
+  local other="$1"
+  local label="$2"
+  if same_resolved_path "${AGENTS_SKILLS_DIR}" "${other}"; then
+    printf 'ERROR: AGENTS_SKILLS_DIR resolves to the same directory as %s (%s)\n' "${label}" "${other}" >&2
+    exit 1
+  fi
+}
+
+preflight_agents_skills_dir() {
+  local dir="${AGENTS_SKILLS_DIR}"
+  local parent
+  if [[ -e "${dir}" || -L "${dir}" ]]; then
+    if [[ -L "${dir}" || ! -d "${dir}" ]]; then
+      printf 'ERROR: AGENTS_SKILLS_DIR exists and is not a directory: %s\n' "${dir}" >&2
+      exit 1
+    fi
+    if [[ ! -w "${dir}" || ! -x "${dir}" ]]; then
+      printf 'ERROR: AGENTS_SKILLS_DIR is not writable/traversable: %s\n' "${dir}" >&2
+      exit 1
+    fi
+    return 0
+  fi
+  parent="${dir}"
+  while [[ ! -e "${parent}" && ! -L "${parent}" && "${parent}" != "/" ]]; do
+    parent="$(dirname "${parent}")"
+  done
+  if [[ ! -d "${parent}" || ! -w "${parent}" || ! -x "${parent}" ]]; then
+    printf 'ERROR: cannot create AGENTS_SKILLS_DIR: %s\n' "${dir}" >&2
+    exit 1
+  fi
+}
+
+abort_if_agents_skills_aliased "${TARGET_DIR}" "OpenCode TARGET_DIR"
+abort_if_agents_skills_aliased "${TARGET_DIR}/skills" "OpenCode TARGET_DIR/skills"
+preflight_agents_skills_dir
+
 mkdir -p "${TARGET_DIR}"
 
 backup_path "${TARGET_DIR}/opencode.json"
@@ -385,8 +484,7 @@ backup_path "${TARGET_DIR}/skills"
 backup_path "${TARGET_DIR}/agents"
 backup_path "${TARGET_DIR}/commands"
 
-rm -rf -- "${TARGET_DIR}/skills"
-mkdir -p "${TARGET_DIR}/skills" "${TARGET_DIR}/agents"
+mkdir -p "${TARGET_DIR}/skills" "${TARGET_DIR}/agents" "${AGENTS_SKILLS_DIR}"
 
 install -m 0644 "${OPENCODE_SOURCE}" "${TARGET_DIR}/opencode.json"
 install -m 0644 "${AGENT_HIVE_SOURCE}" "${TARGET_DIR}/agent_hive.json"
@@ -395,13 +493,49 @@ install -m 0644 "${PLUGIN_SOURCE}" "${TARGET_DIR}/plugins/dcg-guard.js"
 if [[ "${AGENTS_MODE}" == "install" ]]; then
   install -m 0644 "${AGENTS_SOURCE}" "${TARGET_DIR}/AGENTS.md"
 fi
-cp -a "${REPO_ROOT}/.apm/skills/." "${TARGET_DIR}/skills/"
+for skill_name in "${OPENCODE_LOCAL_SKILLS[@]}"; do
+  skill_source="${REPO_ROOT}/.apm/skills/${skill_name}"
+  if [[ -L "${skill_source}" || ! -d "${skill_source}" ]]; then
+    printf 'ERROR: missing OpenCode-local skill source: %s\n' "${skill_source}" >&2
+    exit 1
+  fi
+  rm -rf -- "${TARGET_DIR}/skills/${skill_name}"
+  cp -a "${skill_source}" "${TARGET_DIR}/skills/${skill_name}"
+done
+for skill_name in "${SHARED_SKILLS[@]}"; do
+  skill_source="${REPO_ROOT}/.apm/skills/${skill_name}"
+  if [[ -L "${skill_source}" || ! -d "${skill_source}" ]]; then
+    printf 'ERROR: missing shared skill source: %s\n' "${skill_source}" >&2
+    exit 1
+  fi
+  if [[ -e "${AGENTS_SKILLS_DIR}/${skill_name}" ]]; then
+    backup_agents_skill "${skill_name}"
+  fi
+  rm -rf -- "${AGENTS_SKILLS_DIR}/${skill_name}"
+  cp -a "${skill_source}" "${AGENTS_SKILLS_DIR}/${skill_name}"
+  rm -rf -- "${TARGET_DIR}/skills/${skill_name}"
+done
+for skill_name in "${HIVE_OWNED_SKILLS[@]}"; do
+  rm -rf -- "${TARGET_DIR}/skills/${skill_name}"
+done
 if [[ -d "${REPO_ROOT}/.apm/agents" ]]; then
   cp -a "${REPO_ROOT}/.apm/agents/." "${TARGET_DIR}/agents/"
 fi
 case "${AGENTS_PROFILE}" in
   personal-default|personal-context-improved)
-    cp -a "${REPO_ROOT}/profiles/personal/skills/." "${TARGET_DIR}/skills/"
+    personal_skills="${REPO_ROOT}/profiles/personal/skills"
+    if [[ -d "${personal_skills}" ]]; then
+      for personal_entry in "${personal_skills}"/*; do
+        [[ -e "${personal_entry}" ]] || continue
+        personal_name="$(basename "${personal_entry}")"
+        if [[ -e "${AGENTS_SKILLS_DIR}/${personal_name}" ]]; then
+          backup_agents_skill "${personal_name}"
+        fi
+        rm -rf -- "${AGENTS_SKILLS_DIR}/${personal_name}"
+        cp -a "${personal_entry}" "${AGENTS_SKILLS_DIR}/${personal_name}"
+        rm -rf -- "${TARGET_DIR}/skills/${personal_name}"
+      done
+    fi
     ;;
 esac
 
@@ -434,6 +568,7 @@ if ! command -v dcg >/dev/null 2>&1; then
 fi
 
 printf 'Installed Opencode profile into %s\n' "${TARGET_DIR}"
+printf 'Installed shared skills into %s\n' "${AGENTS_SKILLS_DIR}"
 if [[ "${AGENTS_MODE}" == "install" ]]; then
   printf 'Installed AGENTS profile: %s\n' "${AGENTS_PROFILE}"
 else

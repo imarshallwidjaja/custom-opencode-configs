@@ -5,6 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 DEFAULT_TARGET_DIR="${CURSOR_CONFIG_DIR:-${HOME}/.cursor}"
+AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-${HOME}/.agents/skills}"
 REFLECT_SOURCE="${REPO_ROOT}/.apm/prompts/reflect.prompt.md"
 
 AGENTS=(
@@ -33,17 +34,22 @@ SKILLS=(
   subagent-delegation
   systematic-debugging
   test-driven-development
-  use-railway
   using-git-worktrees
   verification
 )
 
 CANONICAL_SKILLS=(
+  cymbal
   drawio-skill
   frontend-slides
+  hard-cut
   humanizer
+  react-best-practices
+  resume-tailoring
   stop-design-slop
   stop-slop
+  use-railway
+  web-design-guidelines
   writing-for-humans
 )
 
@@ -278,7 +284,7 @@ def validate_skill(path, expected_name, require_trigger=False, allowed_keys=None
     elif require_trigger and not description.startswith('Use when'):
         fail(f'{display(path)} description must begin with "Use when"')
 
-def validate_source_manifest(directory, expected_name, expected_entries, allowed_keys=None):
+def validate_source_manifest(directory, expected_name, expected_entries, allowed_keys=None, require_trigger=True):
     entries = validate_tree_root(directory, f'{expected_name} source')
     if not entries and (directory.is_symlink() or not directory.is_dir()):
         return
@@ -288,7 +294,7 @@ def validate_source_manifest(directory, expected_name, expected_entries, allowed
         fail(f'{display(directory / missing)} is missing')
     for extra in sorted(actual - expected):
         fail(f'{display(directory / extra)} is not in the {expected_name} source manifest')
-    validate_skill(directory / 'SKILL.md', expected_name, require_trigger=True, allowed_keys=allowed_keys)
+    validate_skill(directory / 'SKILL.md', expected_name, require_trigger=require_trigger, allowed_keys=allowed_keys)
     for _, path, kind in entries:
         if kind == 'file':
             check_forbidden_content(path)
@@ -546,10 +552,159 @@ source_manifests = (
             'references/sources.md',
         ),
         WRITING_ALLOWED_KEYS,
+        True,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'cymbal',
+        'cymbal',
+        ('SKILL.md',),
+        None,
+        False,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'hard-cut',
+        'hard-cut',
+        ('SKILL.md',),
+        None,
+        False,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'web-design-guidelines',
+        'web-design-guidelines',
+        ('SKILL.md',),
+        None,
+        False,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'use-railway',
+        'use-railway',
+        (
+            'SKILL.md',
+            'references',
+            'references/analyze-db-mongo.md',
+            'references/analyze-db-mysql.md',
+            'references/analyze-db-postgres.md',
+            'references/analyze-db-redis.md',
+            'references/analyze-db.md',
+            'references/configure.md',
+            'references/deploy.md',
+            'references/feature-flags.md',
+            'references/iac.md',
+            'references/operate.md',
+            'references/request.md',
+            'references/sandbox.md',
+            'references/setup.md',
+            'scripts',
+            'scripts/analyze-mongo.py',
+            'scripts/analyze-mysql.py',
+            'scripts/analyze-postgres.py',
+            'scripts/analyze-redis.py',
+            'scripts/dal.py',
+            'scripts/enable-pg-stats.py',
+            'scripts/pg-extensions.py',
+            'scripts/railway-api.sh',
+        ),
+        None,
+        False,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'react-best-practices',
+        'react-best-practices',
+        (
+            'AGENTS.md',
+            'README.md',
+            'SKILL.md',
+            'metadata.json',
+            'rules',
+            'rules/_sections.md',
+            'rules/_template.md',
+            'rules/advanced-event-handler-refs.md',
+            'rules/advanced-use-latest.md',
+            'rules/async-api-routes.md',
+            'rules/async-defer-await.md',
+            'rules/async-dependencies.md',
+            'rules/async-parallel.md',
+            'rules/async-suspense-boundaries.md',
+            'rules/bundle-barrel-imports.md',
+            'rules/bundle-conditional.md',
+            'rules/bundle-defer-third-party.md',
+            'rules/bundle-dynamic-imports.md',
+            'rules/bundle-preload.md',
+            'rules/client-event-listeners.md',
+            'rules/client-swr-dedup.md',
+            'rules/js-batch-dom-css.md',
+            'rules/js-cache-function-results.md',
+            'rules/js-cache-property-access.md',
+            'rules/js-cache-storage.md',
+            'rules/js-combine-iterations.md',
+            'rules/js-early-exit.md',
+            'rules/js-hoist-regexp.md',
+            'rules/js-index-maps.md',
+            'rules/js-length-check-first.md',
+            'rules/js-min-max-loop.md',
+            'rules/js-set-map-lookups.md',
+            'rules/js-tosorted-immutable.md',
+            'rules/rendering-activity.md',
+            'rules/rendering-animate-svg-wrapper.md',
+            'rules/rendering-conditional-render.md',
+            'rules/rendering-content-visibility.md',
+            'rules/rendering-hoist-jsx.md',
+            'rules/rendering-hydration-no-flicker.md',
+            'rules/rendering-svg-precision.md',
+            'rules/rerender-defer-reads.md',
+            'rules/rerender-dependencies.md',
+            'rules/rerender-derived-state.md',
+            'rules/rerender-functional-setstate.md',
+            'rules/rerender-lazy-state-init.md',
+            'rules/rerender-memo.md',
+            'rules/rerender-transitions.md',
+            'rules/server-after-nonblocking.md',
+            'rules/server-cache-lru.md',
+            'rules/server-cache-react.md',
+            'rules/server-parallel-fetching.md',
+            'rules/server-serialization.md',
+        ),
+        None,
+        False,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'resume-tailoring',
+        'resume-tailoring',
+        (
+            '.gitignore',
+            'LICENSE',
+            'MARKETPLACE.md',
+            'README.md',
+            'SKILL.md',
+            'SUBMISSION_GUIDE.md',
+            'branching-questions.md',
+            'docs',
+            'docs/plans',
+            'docs/plans/2025-11-04-multi-job-implementation-summary.md',
+            'docs/plans/2025-11-04-multi-job-resume-tailoring-design.md',
+            'docs/schemas',
+            'docs/schemas/batch-state-schema.md',
+            'docs/schemas/job-schema.md',
+            'docs/testing',
+            'docs/testing/multi-job-test-checklist.md',
+            'matching-strategies.md',
+            'multi-job-workflow.md',
+            'research-prompts.md',
+        ),
+        None,
+        False,
     ),
 )
-for source_directory, source_name, manifest, allowed_keys in source_manifests:
-    validate_source_manifest(source_directory, source_name, manifest, allowed_keys=allowed_keys)
+for source_item in source_manifests:
+    source_directory, source_name, manifest, allowed_keys = source_item[:4]
+    require_trigger = source_item[4] if len(source_item) > 4 else True
+    validate_source_manifest(
+        source_directory,
+        source_name,
+        manifest,
+        allowed_keys=allowed_keys,
+        require_trigger=require_trigger,
+    )
 
 if install_personal:
     validate_source_manifest(
@@ -854,18 +1009,31 @@ print_copy_plan() {
     printf 'Would copy %s -> %s\n' "${source#"${root}/"}" "${target_dir}/skills/${name}"
   done
   for name in "${CANONICAL_SKILLS[@]}"; do
-    printf 'Would copy canonical .apm/skills/%s -> %s/skills/%s\n' "${name}" "${target_dir}" "${name}"
+    printf 'Would copy canonical .apm/skills/%s -> %s/%s\n' "${name}" "${AGENTS_SKILLS_DIR}" "${name}"
+    if [[ -e "${target_dir}/skills/${name}" || -L "${target_dir}/skills/${name}" ]]; then
+      printf 'Would back up and remove stale %s/skills/%s\n' "${target_dir}" "${name}"
+    fi
   done
   case "${CURSOR_INSTALL_IVAN_WRITING:-}" in
     1)
-      printf 'Would copy personal profiles/personal/skills/ivan-writing -> %s/skills/ivan-writing (CURSOR_INSTALL_IVAN_WRITING=1)\n' "${target_dir}"
+      printf 'Would copy personal profiles/personal/skills/ivan-writing -> %s/ivan-writing (CURSOR_INSTALL_IVAN_WRITING=1)\n' "${AGENTS_SKILLS_DIR}"
+      if [[ -e "${target_dir}/skills/ivan-writing" || -L "${target_dir}/skills/ivan-writing" ]]; then
+        printf 'Would back up and remove stale %s/skills/ivan-writing\n' "${target_dir}"
+      fi
       ;;
     '')
-      local marker="${target_dir}/${MARKER_RELPATH}"
+      local marker="${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed"
       if [[ -f "${marker}" ]]; then
-        printf 'Would back up and remove previously managed %s/skills/ivan-writing (CURSOR_INSTALL_IVAN_WRITING unset, opt-out effective)\n' "${target_dir}"
-      elif [[ -d "${target_dir}/skills/ivan-writing" ]]; then
-        printf 'Would preserve existing %s/skills/ivan-writing (not managed by this helper)\n' "${target_dir}"
+        printf 'Would back up and remove previously managed %s/ivan-writing (CURSOR_INSTALL_IVAN_WRITING unset, opt-out effective)\n' "${AGENTS_SKILLS_DIR}"
+      elif [[ -d "${AGENTS_SKILLS_DIR}/ivan-writing" ]]; then
+        printf 'Would preserve existing %s/ivan-writing (not managed by this helper)\n' "${AGENTS_SKILLS_DIR}"
+      fi
+      if [[ -e "${target_dir}/skills/ivan-writing" || -L "${target_dir}/skills/ivan-writing" ]]; then
+        if [[ -f "${target_dir}/skills/ivan-writing/.cursor-managed" ]]; then
+          printf 'Would back up and remove previously managed %s/skills/ivan-writing (CURSOR_INSTALL_IVAN_WRITING unset, opt-out effective)\n' "${target_dir}"
+        else
+          printf 'Would preserve existing %s/skills/ivan-writing (not managed by this helper)\n' "${target_dir}"
+        fi
       fi
       ;;
   esac
@@ -887,31 +1055,53 @@ backup_path() {
   fi
 }
 
+backup_agents_skill() {
+  local target_dir="$1"
+  local skill_name="$2"
+  local path="${AGENTS_SKILLS_DIR}/${skill_name}"
+  if [[ -e "${path}" ]]; then
+    if [[ -z "${BACKUP_DIR}" ]]; then
+      BACKUP_DIR="${target_dir}/.backup/${BACKUP_BASENAME}"
+      mkdir -p "${BACKUP_DIR}"
+    fi
+    mkdir -p "${BACKUP_DIR}/agents-skills"
+    cp -a "${path}" "${BACKUP_DIR}/agents-skills/${skill_name}"
+  fi
+}
+
 install_canonical_skill() {
   local skill_name="$1"
   local target_dir="$2"
   local source="${REPO_ROOT}/.apm/skills/${skill_name}"
 
-  backup_path "${target_dir}" "${target_dir}/skills/${skill_name}"
-  rm -rf "${target_dir}/skills/${skill_name}"
-  mkdir -p "${target_dir}/skills/${skill_name}"
-  cp -a "${source}/." "${target_dir}/skills/${skill_name}/"
-  printf 'Copied canonical skills/%s -> %s\n' "${skill_name}" "${target_dir}/skills/${skill_name}"
+  mkdir -p "${AGENTS_SKILLS_DIR}"
+  backup_agents_skill "${target_dir}" "${skill_name}"
+  rm -rf "${AGENTS_SKILLS_DIR}/${skill_name}"
+  mkdir -p "${AGENTS_SKILLS_DIR}/${skill_name}"
+  cp -a "${source}/." "${AGENTS_SKILLS_DIR}/${skill_name}/"
+  if [[ -e "${target_dir}/skills/${skill_name}" || -L "${target_dir}/skills/${skill_name}" ]]; then
+    backup_path "${target_dir}" "${target_dir}/skills/${skill_name}"
+    rm -rf "${target_dir}/skills/${skill_name}"
+  fi
+  printf 'Copied canonical skills/%s -> %s\n' "${skill_name}" "${AGENTS_SKILLS_DIR}/${skill_name}"
 }
-
-MARKER_RELPATH="skills/ivan-writing/.cursor-managed"
 
 install_personal_skill() {
   local skill_name="$1"
   local target_dir="$2"
   local source="${REPO_ROOT}/profiles/personal/skills/${skill_name}"
 
-  backup_path "${target_dir}" "${target_dir}/skills/${skill_name}"
-  rm -rf "${target_dir}/skills/${skill_name}"
-  mkdir -p "${target_dir}/skills/${skill_name}"
-  cp -a "${source}/." "${target_dir}/skills/${skill_name}/"
-  touch "${target_dir}/skills/${skill_name}/.cursor-managed"
-  printf 'Copied personal skills/%s -> %s\n' "${skill_name}" "${target_dir}/skills/${skill_name}"
+  mkdir -p "${AGENTS_SKILLS_DIR}"
+  backup_agents_skill "${target_dir}" "${skill_name}"
+  rm -rf "${AGENTS_SKILLS_DIR}/${skill_name}"
+  mkdir -p "${AGENTS_SKILLS_DIR}/${skill_name}"
+  cp -a "${source}/." "${AGENTS_SKILLS_DIR}/${skill_name}/"
+  touch "${AGENTS_SKILLS_DIR}/${skill_name}/.cursor-managed"
+  if [[ -e "${target_dir}/skills/${skill_name}" || -L "${target_dir}/skills/${skill_name}" ]]; then
+    backup_path "${target_dir}" "${target_dir}/skills/${skill_name}"
+    rm -rf "${target_dir}/skills/${skill_name}"
+  fi
+  printf 'Copied personal skills/%s -> %s\n' "${skill_name}" "${AGENTS_SKILLS_DIR}/${skill_name}"
 }
 
 install_assets_into() {
@@ -949,16 +1139,26 @@ install_assets_into() {
     install_canonical_skill "${name}" "${target_dir}"
   done
 
-  local marker="${target_dir}/${MARKER_RELPATH}"
+  local marker="${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed"
+  local cursor_ivan="${target_dir}/skills/ivan-writing"
   case "${CURSOR_INSTALL_IVAN_WRITING:-}" in
     1)
       install_personal_skill "ivan-writing" "${target_dir}"
       ;;
     '')
-      if [[ -d "${target_dir}/skills/ivan-writing" ]]; then
+      if [[ -d "${AGENTS_SKILLS_DIR}/ivan-writing" ]]; then
         if [[ -f "${marker}" ]]; then
-          backup_path "${target_dir}" "${target_dir}/skills/ivan-writing"
-          rm -rf "${target_dir}/skills/ivan-writing"
+          backup_agents_skill "${target_dir}" "ivan-writing"
+          rm -rf "${AGENTS_SKILLS_DIR}/ivan-writing"
+          printf 'Backed up and removed previously managed ivan-writing from agents dir (opt-out effective)\n'
+        else
+          printf 'Preserved existing agents-dir ivan-writing (not managed by this helper)\n'
+        fi
+      fi
+      if [[ -e "${cursor_ivan}" || -L "${cursor_ivan}" ]]; then
+        if [[ -f "${cursor_ivan}/.cursor-managed" ]]; then
+          backup_path "${target_dir}" "${cursor_ivan}"
+          rm -rf "${cursor_ivan}"
           printf 'Backed up and removed previously managed skills/ivan-writing (opt-out effective)\n'
         else
           printf 'Preserved existing skills/ivan-writing (not managed by this helper)\n'
@@ -1038,6 +1238,14 @@ check_target_readability() {
     for name in "${SKILLS[@]}" "${CANONICAL_SKILLS[@]}" ivan-writing; do
       if [[ -e "${target}/skills/${name}" || -L "${target}/skills/${name}" ]]; then
         check_recursive_readable "${target}/skills/${name}" "target/skills/${name}" || return 1
+      fi
+    done
+  fi
+
+  if [[ -d "${AGENTS_SKILLS_DIR}" ]]; then
+    for name in "${CANONICAL_SKILLS[@]}" ivan-writing; do
+      if [[ -e "${AGENTS_SKILLS_DIR}/${name}" || -L "${AGENTS_SKILLS_DIR}/${name}" ]]; then
+        check_recursive_readable "${AGENTS_SKILLS_DIR}/${name}" "agents-skills/${name}" || return 1
       fi
     done
   fi
@@ -1126,11 +1334,61 @@ collect_targets() {
   fi
 }
 
+preflight_agents_skills_dir() {
+  local dir="${AGENTS_SKILLS_DIR}"
+  local parent
+  if [[ -e "${dir}" || -L "${dir}" ]]; then
+    if [[ -L "${dir}" || ! -d "${dir}" ]]; then
+      printf 'ERROR: AGENTS_SKILLS_DIR exists and is not a directory: %s\n' "${dir}" >&2
+      return 1
+    fi
+    if [[ ! -w "${dir}" || ! -x "${dir}" ]]; then
+      printf 'ERROR: AGENTS_SKILLS_DIR is not writable/traversable: %s\n' "${dir}" >&2
+      return 1
+    fi
+    return 0
+  fi
+  parent="${dir}"
+  while [[ ! -e "${parent}" && ! -L "${parent}" && "${parent}" != "/" ]]; do
+    parent="$(dirname "${parent}")"
+  done
+  if [[ ! -d "${parent}" || ! -w "${parent}" || ! -x "${parent}" ]]; then
+    printf 'ERROR: cannot create AGENTS_SKILLS_DIR: %s\n' "${dir}" >&2
+    return 1
+  fi
+}
+
+same_resolved_path() {
+  local left right
+  left="$(realpath -m -- "$1")"
+  right="$(realpath -m -- "$2")"
+  [[ "${left}" == "${right}" ]]
+}
+
+abort_if_agents_skills_aliased() {
+  local other="$1"
+  local label="$2"
+  if same_resolved_path "${AGENTS_SKILLS_DIR}" "${other}"; then
+    printf 'ERROR: AGENTS_SKILLS_DIR resolves to the same directory as %s (%s)\n' "${label}" "${other}" >&2
+    return 1
+  fi
+}
+
+preflight_agents_skills_alias() {
+  local target_dir
+  for target_dir in "${TARGETS[@]}"; do
+    abort_if_agents_skills_aliased "${target_dir}" "Cursor target" || return 1
+    abort_if_agents_skills_aliased "${target_dir}/skills" "Cursor target skills directory" || return 1
+  done
+}
+
 install_assets() {
   local root="$1"
   local target_dir
 
   collect_targets
+  preflight_agents_skills_alias || exit 1
+  preflight_agents_skills_dir || exit 1
   preflight_targets "${TARGETS[@]}" || exit 1
 
   for target_dir in "${TARGETS[@]}"; do
@@ -1145,6 +1403,8 @@ print_all_copy_plans() {
   local target_dir
 
   collect_targets
+  preflight_agents_skills_alias || exit 1
+  preflight_agents_skills_dir || exit 1
   preflight_targets "${TARGETS[@]}" || exit 1
 
   for target_dir in "${TARGETS[@]}"; do

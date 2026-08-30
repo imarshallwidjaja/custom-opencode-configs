@@ -12,9 +12,9 @@ The selected Cursor asset root contains:
 
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, and `simplicity-reviewer`
 - eight installed commands: seven Cursor-specific commands (`compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`) plus the shared canonical `reflect`
-- eleven managed Cursor skills: `agents-md-mastery`, `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `use-railway`, `using-git-worktrees`, and `verification`
-- six canonical skills consumed from `.apm/skills/`: `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, and `writing-for-humans`
-- optional personal skill `ivan-writing` installed when `CURSOR_INSTALL_IVAN_WRITING=1` is set
+- ten managed Cursor skills installed into Cursor `skills/`: `agents-md-mastery`, `brainstorming`, `consolidate-test-suites`, `finishing-a-development-branch`, `root-cause-finder`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, and `verification`
+- twelve shared canonical skills consumed from `.apm/skills/` and installed into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: `cymbal`, `drawio-skill`, `frontend-slides`, `hard-cut`, `humanizer`, `react-best-practices`, `resume-tailoring`, `stop-design-slop`, `stop-slop`, `use-railway`, `web-design-guidelines`, and `writing-for-humans`
+- optional personal skill `ivan-writing` installed into the agents dir when `CURSOR_INSTALL_IVAN_WRITING=1` is set
 - one composed default-Agent Rules payload: `rules/default-agent.md`, one separator, and the provenance-pinned Engineering Judgment snapshot under `vendor/oc-arkive/engineering-judgment/`
 
 The default Cursor-specific source root is `.apm/cursor`. If APM validation rejects unknown `.apm/cursor/**` content and a later task moves the bundle, the helper also supports the fallback root `cursor-assets/`. The shared `/reflect` source remains `.apm/prompts/reflect.prompt.md` in either layout. Do not hardcode only one Cursor-specific root in local automation; let `scripts/cursor-assets.sh` select it.
@@ -40,11 +40,13 @@ The target defaults to `~/.cursor`. For inspection, set `CURSOR_CONFIG_DIR` to a
 - `railway` CLI plus Railway auth when you want the packaged `use-railway` skill to operate Railway infrastructure.
 - `uv` plus the draw.io desktop CLI when you want the packaged `drawio-skill` to generate or export diagrams. Graphviz (`dot`) is optional for auto-layout.
 - Node.js when you want `frontend-slides` PDF export or Vercel deploy helpers; `uv` when converting PPTX.
-- Set `CURSOR_INSTALL_IVAN_WRITING=1` to also install the personal `ivan-writing` skill from `profiles/personal/skills/ivan-writing/`.
+- Shared canonical skills install to `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`. Override that destination with `AGENTS_SKILLS_DIR`. Tests and other installer runs that keep the real `$HOME` must set this to a temp directory so they do not mutate `~/.agents/skills`.
+- Set `CURSOR_INSTALL_IVAN_WRITING=1` to also install the personal `ivan-writing` skill from `profiles/personal/skills/ivan-writing/` into the agents dir.
 - Accepted values: unset/empty (opt-out, no personal skill) and exact `1` (opt-in). Any other value (0, false, 2, etc.) fails before install or dry-run starts.
-- When opt-in installs `ivan-writing`, the helper writes a hidden marker file `skills/ivan-writing/.cursor-managed` inside the installed skill directory.
-- On later opt-out (CURSOR_INSTALL_IVAN_WRITING unset), the helper backs up and removes `skills/ivan-writing` only when the in-directory `.cursor-managed` marker exists. If no marker exists, an existing `ivan-writing` directory is left untouched. A deleted-then-recreated user-owned directory is preserved.
-- Dry-run accurately describes only the expected managed removal when the in-directory marker exists, and "preserving" when it does not.
+- When opt-in installs `ivan-writing`, the helper writes a hidden marker file `ivan-writing/.cursor-managed` inside the agents-dir skill directory and backs up and removes a leftover Cursor `skills/ivan-writing` the same way it strips stale canonical copies.
+- On later opt-out (CURSOR_INSTALL_IVAN_WRITING unset), the helper backs up and removes the agents-dir `ivan-writing` only when that `.cursor-managed` marker exists, and also backs up and removes a Cursor `skills/ivan-writing` that still has `.cursor-managed`. If no marker exists, an existing `ivan-writing` directory is left untouched. A deleted-then-recreated user-owned directory is preserved.
+- Cursor and OpenCode also scan `~/.claude/skills`, so shared skills must not be left there either.
+- Dry-run describes those Cursor-dir backup and remove or preserve actions when they apply, and the expected agents-dir managed removal when the in-directory marker exists.
 
 ## Windows Cursor With WSL Projects
 
@@ -71,7 +73,8 @@ Inspect the copy plan against a temporary target:
 
 ```bash
 cursor_temp="$(mktemp -d)"
-CURSOR_CONFIG_DIR="$cursor_temp" ./scripts/cursor-assets.sh install --dry-run
+agents_temp="$(mktemp -d)"
+CURSOR_CONFIG_DIR="$cursor_temp" AGENTS_SKILLS_DIR="$agents_temp" ./scripts/cursor-assets.sh install --dry-run
 ```
 
 Install into the target Cursor config directory:
@@ -173,8 +176,10 @@ For a non-destructive verification run, install into a temp directory and inspec
 
 ```bash
 cursor_temp="$(mktemp -d)"
-CURSOR_CONFIG_DIR="$cursor_temp" ./scripts/cursor-assets.sh install
+agents_temp="$(mktemp -d)"
+CURSOR_CONFIG_DIR="$cursor_temp" AGENTS_SKILLS_DIR="$agents_temp" ./scripts/cursor-assets.sh install
 ls "$cursor_temp/agents" "$cursor_temp/commands" "$cursor_temp/skills"
+ls "$agents_temp"
 ```
 
 For dual-target verification, install into two temp directories:
@@ -182,10 +187,11 @@ For dual-target verification, install into two temp directories:
 ```bash
 one="$(mktemp -d)"
 two="$(mktemp -d)"
-CURSOR_CONFIG_DIRS="$one;$two" ./scripts/cursor-assets.sh install
+agents_temp="$(mktemp -d)"
+CURSOR_CONFIG_DIRS="$one;$two" AGENTS_SKILLS_DIR="$agents_temp" ./scripts/cursor-assets.sh install
 ```
 
-Then inspect both `$one` and `$two`.
+Then inspect `$one`, `$two`, and `$agents_temp`.
 
 ## Smoke Testing
 

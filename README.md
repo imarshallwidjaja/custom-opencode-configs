@@ -12,11 +12,12 @@ This repo is for installing a ready-to-use Opencode profile. It keeps secrets, l
 - `profiles/base/agent_hive.json` -> `agent_hive.json`: Agent Hive role and model configuration
 - `profiles/base/plugins/dcg-guard.js` -> `plugins/dcg-guard.js`: Destructive Command Guard adapter, auto-loaded from the Opencode plugins directory
 - `AGENTS.md`: the selected operating profile for Opencode agents
-- `skills/`: shared markdown skills used by Opencode, plus personal skills from `profiles/personal/skills/` when the selected AGENTS profile is `personal-default` or `personal-context-improved`
+- `skills/`: OpenCode-local skills (`context-mode`, `writing-skills`, `using-git-worktrees`, `finishing-a-development-branch`, `consolidate-test-suites`, `root-cause-finder`). The installer replaces those six names in place from `.apm/skills/`, removes leftover copies of the shared canonical skills and leftover Hive-owned skill names, and leaves other existing skill directories in place (for example `impeccable` from `npx impeccable install`).
+- `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: shared canonical skills used by both OpenCode and Cursor, plus personal skills from `profiles/personal/skills/` when the selected AGENTS profile is `personal-default` or `personal-context-improved`. Override the destination with `AGENTS_SKILLS_DIR`. Tests and other installer runs that keep the real `$HOME` must set this to a temp directory so they do not mutate `~/.agents/skills`.
 - `commands/`: non-Hive prompt-backed commands packaged under `.apm/prompts/` (`interview-drill-down`, `planning-prompt`, `reflect`)
 - `agents/`: installed only when this repository packages standalone Opencode agents
 
-If the target config directory already contains files with those names, the installer writes a timestamped backup under `<target>/.backup/` before replacing them. Set `OPENCODE_AGENTS_MODE=skip` when you want to update the profile files but keep an existing `AGENTS.md` in place for a manual merge.
+If those target paths already exist, the installer writes a timestamped backup under `<target>/.backup/` before replacing managed files. In `skills/` it replaces the six OpenCode-local names, removes leftover shared canonical and Hive-owned skill names, and leaves other existing skill directories in place. Set `OPENCODE_AGENTS_MODE=skip` when you want to update the profile files but keep an existing `AGENTS.md` in place for a manual merge.
 
 ## Requirements
 
@@ -47,7 +48,7 @@ Optional features require their own tools:
 - `npx` (Node.js) for the optional `chrome-devtools` browser MCP
 - VS Code if you want the companion extension
 
-Cursor prompt-level assets have a separate setup path. They are validated and installed by `./scripts/cursor-assets.sh` from the repository root, not by the Opencode profile installer. It requires `python3`, defaults to `${HOME}/.cursor`, accepts `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom target, and accepts semicolon-separated `CURSOR_CONFIG_DIRS="/path/one;/path/two"` for dual installs. `CURSOR_INSTALL_IVAN_WRITING` accepts only unset/empty (opt-out) or exact `1` (opt-in); the skill is backed up and removed on opt-out only when a helper-owned marker file exists. See `CURSOR.md` for details.
+Cursor prompt-level assets have a separate setup path. They are validated and installed by `./scripts/cursor-assets.sh` from the repository root, not by the Opencode profile installer. It requires `python3`, defaults to `${HOME}/.cursor`, accepts `CURSOR_CONFIG_DIR=/path/to/cursor-config` for one custom target, and accepts semicolon-separated `CURSOR_CONFIG_DIRS="/path/one;/path/two"` for dual installs. `CURSOR_INSTALL_IVAN_WRITING` accepts only unset/empty (opt-out) or exact `1` (opt-in); the skill is installed into the agents dir and backed up and removed on opt-out only when a helper-owned marker file exists. Shared canonical skills use `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`. See `CURSOR.md` for details.
 
 Install Opencode if it is not already present:
 
@@ -142,8 +143,10 @@ Install into the default Opencode config directory:
 Install into a custom config directory:
 
 ```bash
-OPENCODE_CONFIG_DIR=/path/to/opencode-config ./scripts/install-profile.sh
+OPENCODE_CONFIG_DIR=/path/to/opencode-config AGENTS_SKILLS_DIR=/path/to/agents-skills ./scripts/install-profile.sh
 ```
+
+Shared canonical skills default to `$HOME/.agents/skills`. Set `AGENTS_SKILLS_DIR` when the installer must not write that live directory.
 
 ### AGENTS profiles
 
@@ -199,7 +202,7 @@ Use the extension for:
 
 ## Cursor prompt-level assets
 
-This repository also ships a Cursor v1 asset bundle for prompt-level behavior. Its default parent Agent uses Hive-Builder-like ad-hoc orchestration with Cursor-native named subagents: non-trivial work is delegated, while the parent owns lane coordination, diff inspection, combined verification, review, synthesis, and integration. The bundle installs reusable Cursor subagents, seven Cursor-specific commands, the shared canonical `/reflect` command, eleven managed Cursor skills including `agents-md-mastery`, and shared canonical skills under the selected Cursor config directory, then prints default-Agent Rules that you paste into Cursor Customize -> Rules -> User Rules. The current npm `oc-arkive@latest` is 2.3.5 and includes Engineering Judgment. OpenCode receives Engineering Judgment from the installed plugin, without a second local copy in this repository's profiles or config surfaces. Cursor continues to use the provenance-pinned vendored snapshot because Cursor cannot load the plugin prompt directly.
+This repository also ships a Cursor v1 asset bundle for prompt-level behavior. Its default parent Agent uses Hive-Builder-like ad-hoc orchestration with Cursor-native named subagents: non-trivial work is delegated, while the parent owns lane coordination, diff inspection, combined verification, review, synthesis, and integration. The bundle installs reusable Cursor subagents, seven Cursor-specific commands, the shared canonical `/reflect` command, ten managed Cursor skills including `agents-md-mastery` into the selected Cursor config `skills/` directory, and twelve shared canonical skills into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`, then prints default-Agent Rules that you paste into Cursor Customize -> Rules -> User Rules. The current npm `oc-arkive@latest` is 2.3.5 and includes Engineering Judgment. OpenCode receives Engineering Judgment from the installed plugin, without a second local copy in this repository's profiles or config surfaces. Cursor continues to use the provenance-pinned vendored snapshot because Cursor cannot load the plugin prompt directly.
 
 Delegation is a strong prompt policy, but Cursor routing is heuristic and not runtime-guaranteed. The parent has a bounded direct-work exception for coordination, setup, trivial conversation, and at most one bounded read, one bounded write or patch, and one cheap focused check. Separate context does not isolate files in a shared checkout. Overlapping writers require explicit worktrees or isolated project copies; otherwise children must own disjoint paths or run serially.
 
@@ -221,7 +224,8 @@ Quick inspection flow:
 ```bash
 ./scripts/cursor-assets.sh validate
 cursor_temp="$(mktemp -d)"
-CURSOR_CONFIG_DIR="$cursor_temp" ./scripts/cursor-assets.sh install --dry-run
+agents_temp="$(mktemp -d)"
+CURSOR_CONFIG_DIR="$cursor_temp" AGENTS_SKILLS_DIR="$agents_temp" ./scripts/cursor-assets.sh install --dry-run
 ./scripts/cursor-assets.sh print-rules
 ```
 
@@ -338,7 +342,7 @@ During install, `scripts/install-profile.sh` copies `.apm/prompts/*.prompt.md` i
 - `interview`
 - `start-execution`
 
-Reusable non-Hive behavior remains packaged as skills under `.apm/skills/`. OpenCode does not package Hive-overlapping skills; Hive/`oc-arkive` supplies `brainstorming`, `systematic-debugging`, `test-driven-development`, and `ast-grep`. Cursor still installs those overlapping names except `ast-grep` because Cursor has no Hive runtime. Shared Cursor copies of `brainstorming`, `systematic-debugging`, `test-driven-development`, and `verification` are provenance-pinned from Agent Hive with a Cursor-runtime rewrite. `agents-md-mastery` remains a Cursor-specific adaptation under `.apm/cursor/skills/` so it does not shadow Agent Hive's generated OpenCode skill. The `use-railway` skill is included by explicit request; it needs the Railway CLI and auth, and is otherwise inert. `drawio-skill`, `frontend-slides`, `humanizer`, `stop-design-slop`, `stop-slop`, and `writing-for-humans` are shared canonical skills installed for both Opencode and Cursor. `drawio-skill` needs `uv` plus draw.io, and `frontend-slides` needs Node.js/`uv` for export helpers; both are otherwise inert.
+Reusable non-Hive behavior remains packaged as skills under `.apm/skills/`. OpenCode does not package Hive-overlapping skills; Hive/`oc-arkive` supplies `brainstorming`, `systematic-debugging`, `test-driven-development`, and `ast-grep`. Cursor still installs those overlapping names except `ast-grep` because Cursor has no Hive runtime. Shared Cursor copies of `brainstorming`, `systematic-debugging`, `test-driven-development`, and `verification` are provenance-pinned from Agent Hive with a Cursor-runtime rewrite. `agents-md-mastery` remains a Cursor-specific adaptation under `.apm/cursor/skills/` so it does not shadow Agent Hive's generated OpenCode skill. The twelve shared canonical skills are `cymbal`, `drawio-skill`, `frontend-slides`, `hard-cut`, `humanizer`, `react-best-practices`, `resume-tailoring`, `stop-design-slop`, `stop-slop`, `use-railway`, `web-design-guidelines`, and `writing-for-humans`. Both installers upsert those names into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}` and leave them out of harness `skills/` directories. OpenCode prefers `~/.config/opencode/skills` over `~/.agents/skills` when both exist, so a leftover shared copy in the OpenCode skills directory would keep serving the stale tree; `scripts/install-profile.sh` removes leftover copies of those shared names and leftover Hive-owned skill names from OpenCode `skills/` on install. Other existing skill directories stay. Personal OpenCode profiles also remove a leftover `skills/ivan-writing` after copying that skill into the agents dir. Cursor and OpenCode also scan `~/.claude/skills`, so shared skills must not be left there either. The `use-railway` skill needs the Railway CLI and auth, and is otherwise inert. `drawio-skill` needs `uv` plus draw.io, and `frontend-slides` needs Node.js/`uv` for export helpers; both are otherwise inert. The optional personal `ivan-writing` skill is installed into the agents dir for personal OpenCode profiles, and for Cursor only when `CURSOR_INSTALL_IVAN_WRITING=1`.
 
 ## Assisted setup
 

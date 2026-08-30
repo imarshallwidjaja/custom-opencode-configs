@@ -16,6 +16,11 @@ fail() { FAIL=$((FAIL+1)); FAIL_NAMES+=("$1"); printf '  FAIL: %s\n' "$1"; }
 BUILDER_DIR="$(cd "$(dirname "$0")" && pwd)/.."
 BASELINE_PWD="$(cd "${BUILDER_DIR}" && pwd)"
 TMPDIR="$(mktemp -d)"
+sandbox_agents_skills() {
+  AGENTS_SKILLS_DIR="$(mktemp -d "${TMPDIR}/agents-skills.XXXXXX")"
+  export AGENTS_SKILLS_DIR
+}
+sandbox_agents_skills
 
 REPO_FIXTURE="${TMPDIR}/reporoot"
 
@@ -58,7 +63,7 @@ build_fixture() {
   mkdir -p "${REPO_FIXTURE}"
 
   # Canonical skills (.apm/skills/)
-  for skill in humanizer stop-slop writing-for-humans context-mode cymbal hard-cut web-design-guidelines writing-skills; do
+  for skill in humanizer stop-slop writing-for-humans context-mode cymbal hard-cut web-design-guidelines writing-skills using-git-worktrees finishing-a-development-branch consolidate-test-suites root-cause-finder; do
     mkdir -p "${REPO_FIXTURE}/.apm/skills/${skill}"
     cat > "${REPO_FIXTURE}/.apm/skills/${skill}/SKILL.md" <<SKILL
 ---
@@ -89,6 +94,9 @@ SKILL
   stub_canonical_skill_tree frontend-slides
   stub_canonical_skill_tree drawio-skill
   stub_canonical_skill_tree stop-design-slop
+  stub_canonical_skill_tree react-best-practices
+  stub_canonical_skill_tree resume-tailoring
+  stub_canonical_skill_tree use-railway
 
   # Cursor asset root (.apm/cursor/)
   mkdir -p "${REPO_FIXTURE}/.apm/cursor/agents" "${REPO_FIXTURE}/.apm/cursor/commands" "${REPO_FIXTURE}/.apm/cursor/skills" "${REPO_FIXTURE}/.apm/cursor/rules"
@@ -158,7 +166,7 @@ provenance = {
 PY
 
   # Cursor skills
-  for skill in agents-md-mastery brainstorming consolidate-test-suites finishing-a-development-branch root-cause-finder subagent-delegation systematic-debugging test-driven-development use-railway using-git-worktrees verification; do
+  for skill in agents-md-mastery brainstorming consolidate-test-suites finishing-a-development-branch root-cause-finder subagent-delegation systematic-debugging test-driven-development using-git-worktrees verification; do
     mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/${skill}"
     cat > "${REPO_FIXTURE}/.apm/cursor/skills/${skill}/SKILL.md" <<SKILL
 ---
@@ -168,18 +176,6 @@ description: Use when testing fixture Cursor skill ${skill}.
 OK
 SKILL
   done
-
-  # use-railway needs references and scripts (real bundle has them)
-  mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/use-railway/references"
-  for ref in analyze-db-mongo analyze-db-mysql analyze-db-postgres analyze-db-redis analyze-db configure deploy operate request setup; do
-    echo "# ${ref}" > "${REPO_FIXTURE}/.apm/cursor/skills/use-railway/references/${ref}.md"
-  done
-  mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/use-railway/scripts"
-  for script in analyze-mongo analyze-mysql analyze-postgres analyze-redis dal enable-pg-stats pg-extensions; do
-    echo "#!/usr/bin/env python3" > "${REPO_FIXTURE}/.apm/cursor/skills/use-railway/scripts/${script}.py"
-  done
-  printf '%s\n' '#!/usr/bin/env bash' 'echo ok' > "${REPO_FIXTURE}/.apm/cursor/skills/use-railway/scripts/railway-api.sh"
-  chmod +x "${REPO_FIXTURE}/.apm/cursor/skills/use-railway/scripts/"*
 
   # Personal source
   mkdir -p "${REPO_FIXTURE}/profiles/personal/skills/ivan-writing/references"
@@ -780,22 +776,26 @@ cursor_target_unmodified "${td2}" && pass "2b: no managed paths created after in
 # ---------------------------------------------------------------------------
 printf '\n=== 3. Opt-in install (marker inside) ===\n'
 td3="${TMPDIR}/test3"; mkdir -p "${td3}"
+sandbox_agents_skills
 CURSOR_CONFIG_DIR="${td3}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}" install 2>"${td3}/install.log" && pass "3a: opt-in install succeeded" || fail "3b: opt-in install failed"
-[[ -f "${td3}/skills/ivan-writing/SKILL.md" ]] && pass "3c: ivan-writing SKILL.md" || fail "3d: ivan-writing SKILL.md not found"
-[[ -f "${td3}/skills/ivan-writing/references/registers.md" ]] && pass "3e: registers.md" || fail "3f: registers.md not found"
-[[ -f "${td3}/skills/ivan-writing/references/examples.md" ]] && pass "3g: examples.md" || fail "3h: examples.md not found"
-[[ -f "${td3}/skills/stop-slop/SKILL.md" ]] && pass "3i: stop-slop installed" || fail "3j: canonical skill not installed"
-[[ -f "${td3}/skills/humanizer/SKILL.md" ]] && pass "3k: humanizer installed" || fail "3l: canonical skill not installed"
-[[ -f "${td3}/skills/writing-for-humans/SKILL.md" ]] && pass "3ac: writing-for-humans installed" || fail "3ad: writing-for-humans canonical skill not installed"
-[[ -f "${td3}/skills/writing-for-humans/references/sources.md" ]] && pass "3ae: writing-for-humans sources" || fail "3af: writing-for-humans extra file not copied"
-[[ -f "${td3}/skills/frontend-slides/SKILL.md" ]] && pass "3o: frontend-slides installed" || fail "3p: frontend-slides canonical skill not installed"
-[[ -f "${td3}/skills/frontend-slides/viewport-base.css" ]] && pass "3q: frontend-slides viewport-base.css" || fail "3r: frontend-slides extra file not copied"
-[[ -f "${td3}/skills/drawio-skill/SKILL.md" ]] && pass "3s: drawio-skill installed" || fail "3t: drawio-skill canonical skill not installed"
-[[ -f "${td3}/skills/drawio-skill/bin/run" ]] && pass "3u: drawio-skill bin/run" || fail "3v: drawio-skill extra file not copied"
-[[ -f "${td3}/skills/drawio-skill/data/shape-index.json.gz" ]] && pass "3w: drawio-skill gzip index" || fail "3x: drawio-skill gzip index not copied"
-[[ -f "${td3}/skills/stop-design-slop/SKILL.md" ]] && pass "3y: stop-design-slop installed" || fail "3z: stop-design-slop canonical skill not installed"
-[[ -f "${td3}/skills/stop-design-slop/references/review-rubric.md" ]] && pass "3aa: stop-design-slop rubric" || fail "3ab: stop-design-slop extra file not copied"
-[[ -f "${td3}/skills/ivan-writing/.cursor-managed" ]] && pass "3m: marker inside ivan-writing" || fail "3n: marker not inside ivan-writing"
+[[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "3c: ivan-writing SKILL.md" || fail "3d: ivan-writing SKILL.md not found"
+[[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/references/registers.md" ]] && pass "3e: registers.md" || fail "3f: registers.md not found"
+[[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/references/examples.md" ]] && pass "3g: examples.md" || fail "3h: examples.md not found"
+[[ ! -e "${td3}/skills/ivan-writing" ]] && pass "3c2: ivan-writing absent from Cursor skills" || fail "3d2: ivan-writing leaked into Cursor skills"
+[[ -f "${AGENTS_SKILLS_DIR}/stop-slop/SKILL.md" ]] && pass "3i: stop-slop installed" || fail "3j: canonical skill not installed"
+[[ ! -e "${td3}/skills/stop-slop" ]] && pass "3i2: stop-slop absent from Cursor skills" || fail "3j2: stop-slop leaked into Cursor skills"
+[[ -f "${AGENTS_SKILLS_DIR}/humanizer/SKILL.md" ]] && pass "3k: humanizer installed" || fail "3l: canonical skill not installed"
+[[ -f "${AGENTS_SKILLS_DIR}/writing-for-humans/SKILL.md" ]] && pass "3ac: writing-for-humans installed" || fail "3ad: writing-for-humans canonical skill not installed"
+[[ -f "${AGENTS_SKILLS_DIR}/writing-for-humans/references/sources.md" ]] && pass "3ae: writing-for-humans sources" || fail "3af: writing-for-humans extra file not copied"
+[[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/SKILL.md" ]] && pass "3o: frontend-slides installed" || fail "3p: frontend-slides canonical skill not installed"
+[[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/viewport-base.css" ]] && pass "3q: frontend-slides viewport-base.css" || fail "3r: frontend-slides extra file not copied"
+[[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/SKILL.md" ]] && pass "3s: drawio-skill installed" || fail "3t: drawio-skill canonical skill not installed"
+[[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/bin/run" ]] && pass "3u: drawio-skill bin/run" || fail "3v: drawio-skill extra file not copied"
+[[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/data/shape-index.json.gz" ]] && pass "3w: drawio-skill gzip index" || fail "3x: drawio-skill gzip index not copied"
+[[ -f "${AGENTS_SKILLS_DIR}/stop-design-slop/SKILL.md" ]] && pass "3y: stop-design-slop installed" || fail "3z: stop-design-slop canonical skill not installed"
+[[ -f "${AGENTS_SKILLS_DIR}/stop-design-slop/references/review-rubric.md" ]] && pass "3aa: stop-design-slop rubric" || fail "3ab: stop-design-slop extra file not copied"
+[[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed" ]] && pass "3m: marker inside ivan-writing" || fail "3n: marker not inside ivan-writing"
+[[ -f "${td3}/skills/agents-md-mastery/SKILL.md" ]] && pass "3ak: Cursor-specific skill still in Cursor skills" || fail "3al: Cursor-specific skill missing from Cursor skills"
 cmp -s "${REPO_FIXTURE}/.apm/prompts/reflect.prompt.md" "${td3}/commands/reflect.md" && pass "3ag: canonical reflect content installed byte-for-byte" || fail "3ah: canonical reflect content changed during Cursor install"
 cmp -s "${REPO_FIXTURE}/.apm/cursor/skills/agents-md-mastery/SKILL.md" "${td3}/skills/agents-md-mastery/SKILL.md" && pass "3ai: Cursor agents-md-mastery installed byte-for-byte" || fail "3aj: Cursor agents-md-mastery content changed during install"
 
@@ -805,12 +805,13 @@ cmp -s "${REPO_FIXTURE}/.apm/cursor/skills/agents-md-mastery/SKILL.md" "${td3}/s
 printf '\n=== 4. Opt-out removes managed ivan-writing (in-directory marker) ===\n'
 td4="${TMPDIR}/test4"; mkdir -p "${td4}"
 build_fixture
+sandbox_agents_skills
 CURSOR_CONFIG_DIR="${td4}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}" install 2>"${td4}/install.log" || fail "4a: install failed"
-[[ -f "${td4}/skills/ivan-writing/SKILL.md" ]] || fail "4b: pre-check failed"
-[[ -f "${td4}/skills/ivan-writing/.cursor-managed" ]] || fail "4c: installer did not create marker"
+[[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] || fail "4b: pre-check failed"
+[[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed" ]] || fail "4c: installer did not create marker"
 CURSOR_CONFIG_DIR="${td4}" bash "${CURSOR_HELPER}" install 2>"${td4}/optout.log" || fail "4d: opt-out install failed"
-[[ ! -d "${td4}/skills/ivan-writing" ]] && pass "4e: opt-out removed ivan-writing" || fail "4f: opt-out did not remove ivan-writing"
-ls "${td4}/.backup/"*"/skills/ivan-writing" >/dev/null 2>&1 && pass "4g: backup exists" || fail "4h: no backup"
+[[ ! -d "${AGENTS_SKILLS_DIR}/ivan-writing" ]] && pass "4e: opt-out removed ivan-writing" || fail "4f: opt-out did not remove ivan-writing"
+ls "${td4}/.backup/"*"/agents-skills/ivan-writing" >/dev/null 2>&1 && pass "4g: backup exists" || fail "4h: no backup"
 
 # ---------------------------------------------------------------------------
 # 5. Unowned existing ivan-writing preserved on opt-out (no marker)
@@ -819,8 +820,40 @@ printf '\n=== 5. Unowned existing ivan-writing preserved ===\n'
 td5="${TMPDIR}/test5"; mkdir -p "${td5}/skills/ivan-writing"
 echo "user content" > "${td5}/skills/ivan-writing/user-file.txt"
 build_fixture
+sandbox_agents_skills
 CURSOR_CONFIG_DIR="${td5}" bash "${CURSOR_HELPER}" install 2>"${td5}/optout.log" || fail "5a: install with unowned ivan-writing failed"
 [[ -f "${td5}/skills/ivan-writing/user-file.txt" ]] && pass "5b: unowned preserved" || fail "5c: unowned removed"
+
+# ---------------------------------------------------------------------------
+# 5d. Opt-in strips stale Cursor skills/ivan-writing
+# ---------------------------------------------------------------------------
+printf '\n=== 5d. Opt-in strips stale Cursor ivan-writing ===\n'
+td5d="${TMPDIR}/test5d"; mkdir -p "${td5d}/skills/ivan-writing"
+echo "stale ivan-writing" > "${td5d}/skills/ivan-writing/SKILL.md"
+build_fixture
+sandbox_agents_skills
+CURSOR_CONFIG_DIR="${td5d}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}" install --dry-run >"${td5d}/dry.log" 2>&1 && pass "5d-a: opt-in dry-run succeeded" || fail "5d-b: opt-in dry-run failed"
+grep -F "Would back up and remove stale ${td5d}/skills/ivan-writing" "${td5d}/dry.log" >/dev/null && pass "5d-c: dry-run describes Cursor ivan-writing strip" || fail "5d-d: dry-run omitted Cursor ivan-writing strip"
+CURSOR_CONFIG_DIR="${td5d}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}" install 2>"${td5d}/install.log" && pass "5d-e: opt-in install succeeded" || fail "5d-f: opt-in install failed"
+[[ ! -e "${td5d}/skills/ivan-writing" ]] && pass "5d-g: stale Cursor ivan-writing removed" || fail "5d-h: stale Cursor ivan-writing remained"
+[[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "5d-i: ivan-writing installed to agents dir" || fail "5d-j: ivan-writing missing from agents dir"
+ls "${td5d}/.backup/"*"/skills/ivan-writing" >/dev/null 2>&1 && pass "5d-k: Cursor ivan-writing backup exists" || fail "5d-l: no Cursor ivan-writing backup"
+
+# ---------------------------------------------------------------------------
+# 5e. Opt-out removes Cursor ivan-writing that still has .cursor-managed
+# ---------------------------------------------------------------------------
+printf '\n=== 5e. Opt-out removes Cursor ivan-writing with .cursor-managed ===\n'
+td5e="${TMPDIR}/test5e"; mkdir -p "${td5e}/skills/ivan-writing"
+echo "legacy cursor copy" > "${td5e}/skills/ivan-writing/SKILL.md"
+touch "${td5e}/skills/ivan-writing/.cursor-managed"
+build_fixture
+sandbox_agents_skills
+CURSOR_CONFIG_DIR="${td5e}" bash "${CURSOR_HELPER}" install --dry-run >"${td5e}/dry.log" 2>&1 && pass "5e-a: opt-out dry-run succeeded" || fail "5e-b: opt-out dry-run failed"
+grep -F "Would back up and remove previously managed ${td5e}/skills/ivan-writing" "${td5e}/dry.log" >/dev/null && pass "5e-c: dry-run describes Cursor marker removal" || fail "5e-d: dry-run omitted Cursor marker removal"
+CURSOR_CONFIG_DIR="${td5e}" bash "${CURSOR_HELPER}" install 2>"${td5e}/optout.log" && pass "5e-e: opt-out install succeeded" || fail "5e-f: opt-out install failed"
+[[ ! -e "${td5e}/skills/ivan-writing" ]] && pass "5e-g: managed Cursor ivan-writing removed" || fail "5e-h: managed Cursor ivan-writing remained"
+[[ ! -e "${AGENTS_SKILLS_DIR}/ivan-writing" ]] && pass "5e-i: agents-dir ivan-writing not created on opt-out" || fail "5e-j: agents-dir ivan-writing appeared on opt-out"
+ls "${td5e}/.backup/"*"/skills/ivan-writing" >/dev/null 2>&1 && pass "5e-k: Cursor ivan-writing backup exists" || fail "5e-l: no Cursor ivan-writing backup"
 
 # ---------------------------------------------------------------------------
 # 6. Missing canonical source fails before mutation
@@ -895,14 +928,20 @@ build_fixture
 # ---------------------------------------------------------------------------
 printf '\n=== 12. Shared install independent of personal source ===\n'
 td12="${TMPDIR}/test12"; mkdir -p "${td12}"
+sandbox_agents_skills
 rm -rf "${REPO_FIXTURE}/profiles/personal/skills/ivan-writing"
 OPENCODE_CONFIG_DIR="${td12}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td12}/err" && pass "12a: shared install succeeded" || fail "12b: shared install failed"
 cmp -s "${REPO_FIXTURE}/profiles/base/opencode.json" "${td12}/opencode.json" && pass "12c: base opencode payload installed" || fail "12d: installed opencode payload did not come from profiles/base"
 cmp -s "${REPO_FIXTURE}/profiles/base/agent_hive.json" "${td12}/agent_hive.json" && pass "12e: base Agent Hive payload installed" || fail "12f: installed Agent Hive payload did not come from profiles/base"
-[[ -f "${td12}/skills/frontend-slides/SKILL.md" ]] && pass "12g: OpenCode frontend-slides installed" || fail "12h: OpenCode frontend-slides missing"
-[[ -f "${td12}/skills/drawio-skill/SKILL.md" ]] && pass "12i: OpenCode drawio-skill installed" || fail "12j: OpenCode drawio-skill missing"
-[[ -f "${td12}/skills/stop-design-slop/SKILL.md" ]] && pass "12k: OpenCode stop-design-slop installed" || fail "12l: OpenCode stop-design-slop missing"
-[[ -f "${td12}/skills/writing-for-humans/SKILL.md" ]] && pass "12m: OpenCode writing-for-humans installed" || fail "12n: OpenCode writing-for-humans missing"
+[[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/SKILL.md" ]] && pass "12g: shared frontend-slides installed" || fail "12h: shared frontend-slides missing"
+[[ ! -e "${td12}/skills/frontend-slides" ]] && pass "12g2: frontend-slides absent from OpenCode skills" || fail "12h2: frontend-slides leaked into OpenCode skills"
+[[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/SKILL.md" ]] && pass "12i: shared drawio-skill installed" || fail "12j: shared drawio-skill missing"
+[[ -f "${AGENTS_SKILLS_DIR}/stop-design-slop/SKILL.md" ]] && pass "12k: shared stop-design-slop installed" || fail "12l: shared stop-design-slop missing"
+[[ -f "${AGENTS_SKILLS_DIR}/writing-for-humans/SKILL.md" ]] && pass "12m: shared writing-for-humans installed" || fail "12n: shared writing-for-humans missing"
+[[ ! -e "${td12}/skills/writing-for-humans" ]] && pass "12m2: writing-for-humans absent from OpenCode skills" || fail "12n2: writing-for-humans leaked into OpenCode skills"
+[[ -f "${td12}/skills/context-mode/SKILL.md" ]] && pass "12u: OpenCode-local context-mode installed" || fail "12v: OpenCode-local context-mode missing"
+[[ -f "${td12}/skills/writing-skills/SKILL.md" ]] && pass "12w: OpenCode-local writing-skills installed" || fail "12x: OpenCode-local writing-skills missing"
+[[ -f "${td12}/skills/using-git-worktrees/SKILL.md" ]] && pass "12y: OpenCode-local using-git-worktrees installed" || fail "12z: OpenCode-local using-git-worktrees missing"
 [[ -f "${td12}/commands/reflect.md" ]] && pass "12o: OpenCode reflect command installed" || fail "12p: OpenCode reflect command missing"
 cmp -s "${REPO_FIXTURE}/.apm/prompts/reflect.prompt.md" "${td12}/commands/reflect.md" && pass "12q: OpenCode reflect content installed byte-for-byte" || fail "12r: OpenCode reflect content changed during install"
 [[ ! -e "${td12}/skills/agents-md-mastery" ]] && pass "12s: OpenCode installer excludes Cursor agents-md-mastery" || fail "12t: OpenCode installer leaked Cursor agents-md-mastery"
@@ -965,6 +1004,7 @@ printf '\n=== 13. Dry-run non-mutation ===\n'
 td13="${TMPDIR}/test13"; mkdir -p "${td13}"
 echo "keep" > "${td13}/should_stay.txt"
 build_fixture
+sandbox_agents_skills
 before13="$(snapshot_tree "${td13}")"
 CURSOR_CONFIG_DIR="${td13}" bash "${CURSOR_HELPER}" install --dry-run >"${TMPDIR}/test13-dryrun.log" 2>&1 && pass "13a: dry-run succeeded" || fail "13b: dry-run failed"
 after13="$(snapshot_tree "${td13}")"
@@ -973,6 +1013,7 @@ grep -q 'canonical .apm/skills/frontend-slides' "${TMPDIR}/test13-dryrun.log" &&
 grep -q 'canonical .apm/skills/drawio-skill' "${TMPDIR}/test13-dryrun.log" && pass "13g: dry-run plans drawio-skill" || fail "13h: dry-run omitted drawio-skill"
 grep -q 'canonical .apm/skills/stop-design-slop' "${TMPDIR}/test13-dryrun.log" && pass "13i: dry-run plans stop-design-slop" || fail "13j: dry-run omitted stop-design-slop"
 grep -q 'canonical .apm/skills/writing-for-humans' "${TMPDIR}/test13-dryrun.log" && pass "13k: dry-run plans writing-for-humans" || fail "13l: dry-run omitted writing-for-humans"
+grep -q "${AGENTS_SKILLS_DIR}/writing-for-humans" "${TMPDIR}/test13-dryrun.log" && pass "13q: dry-run destinations use agents dir" || fail "13r: dry-run omitted agents-dir destination"
 grep -q '\.apm/prompts/reflect\.prompt\.md.*commands/reflect\.md' "${TMPDIR}/test13-dryrun.log" && pass "13m: dry-run sources reflect from canonical prompt" || fail "13n: dry-run omitted canonical reflect source"
 grep -q 'skills/agents-md-mastery.*skills/agents-md-mastery' "${TMPDIR}/test13-dryrun.log" && pass "13o: dry-run plans Cursor agents-md-mastery" || fail "13p: dry-run omitted Cursor agents-md-mastery"
 
@@ -994,13 +1035,14 @@ printf '\n=== 15. Semicolon multi-root install ===\n'
 td15a="${TMPDIR}/test15a"; td15b="${TMPDIR}/test15b"
 mkdir -p "${td15a}" "${td15b}"
 build_fixture
+sandbox_agents_skills
 CURSOR_CONFIG_DIRS="${td15a};${td15b}" bash "${CURSOR_HELPER}" install 2>"${TMPDIR}/multi.log" && pass "15a: multi-root succeeded" || fail "15b: multi-root failed"
-[[ -f "${td15a}/skills/stop-slop/SKILL.md" ]] && pass "15c: first target canonical" || fail "15d: first target missing canonical"
-[[ -f "${td15b}/skills/stop-slop/SKILL.md" ]] && pass "15e: second target canonical" || fail "15f: second target missing canonical"
-[[ -f "${td15a}/skills/frontend-slides/SKILL.md" && -f "${td15b}/skills/frontend-slides/SKILL.md" ]] && pass "15k: both targets frontend-slides" || fail "15l: multi-root missing frontend-slides"
-[[ -f "${td15a}/skills/drawio-skill/SKILL.md" && -f "${td15b}/skills/drawio-skill/SKILL.md" ]] && pass "15m: both targets drawio-skill" || fail "15n: multi-root missing drawio-skill"
-[[ -f "${td15a}/skills/stop-design-slop/SKILL.md" && -f "${td15b}/skills/stop-design-slop/SKILL.md" ]] && pass "15o: both targets stop-design-slop" || fail "15p: multi-root missing stop-design-slop"
-[[ -f "${td15a}/skills/writing-for-humans/SKILL.md" && -f "${td15b}/skills/writing-for-humans/SKILL.md" ]] && pass "15q: both targets writing-for-humans" || fail "15r: multi-root missing writing-for-humans"
+[[ -f "${AGENTS_SKILLS_DIR}/stop-slop/SKILL.md" ]] && pass "15c: shared stop-slop in agents dir" || fail "15d: shared stop-slop missing from agents dir"
+[[ ! -e "${td15a}/skills/stop-slop" && ! -e "${td15b}/skills/stop-slop" ]] && pass "15e: stop-slop absent from both Cursor targets" || fail "15f: stop-slop leaked into a Cursor target"
+[[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/SKILL.md" ]] && pass "15k: shared frontend-slides in agents dir" || fail "15l: multi-root missing frontend-slides"
+[[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/SKILL.md" ]] && pass "15m: shared drawio-skill in agents dir" || fail "15n: multi-root missing drawio-skill"
+[[ -f "${AGENTS_SKILLS_DIR}/stop-design-slop/SKILL.md" ]] && pass "15o: shared stop-design-slop in agents dir" || fail "15p: multi-root missing stop-design-slop"
+[[ -f "${AGENTS_SKILLS_DIR}/writing-for-humans/SKILL.md" ]] && pass "15q: shared writing-for-humans in agents dir" || fail "15r: multi-root missing writing-for-humans"
 [[ -f "${td15a}/agents/forager.md" ]] && pass "15g: first target agent" || fail "15h: first target missing agent"
 [[ -f "${td15b}/agents/forager.md" ]] && pass "15i: second target agent" || fail "15j: second target missing agent"
 [[ -f "${td15a}/commands/reflect.md" && -f "${td15b}/commands/reflect.md" ]] && pass "15s: both targets reflect command" || fail "15t: multi-root missing reflect command"
@@ -1016,17 +1058,17 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 16. Opt-in multi-root copies ivan-writing to both
+# 16. Opt-in multi-root copies ivan-writing to the agents dir once
 # ---------------------------------------------------------------------------
 printf '\n=== 16. Opt-in multi-root install ===\n'
 td16a="${TMPDIR}/test16a"; td16b="${TMPDIR}/test16b"
 mkdir -p "${td16a}" "${td16b}"
 build_fixture
+sandbox_agents_skills
 CURSOR_CONFIG_DIRS="${td16a};${td16b}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}" install 2>"${TMPDIR}/multi-optin.log" && pass "16a: opt-in multi-root succeeded" || fail "16b: opt-in multi-root failed"
-[[ -f "${td16a}/skills/ivan-writing/SKILL.md" ]] && pass "16c: first target ivan-writing" || fail "16d: first target missing"
-[[ -f "${td16b}/skills/ivan-writing/SKILL.md" ]] && pass "16e: second target ivan-writing" || fail "16f: second target missing"
-[[ -f "${td16a}/skills/ivan-writing/.cursor-managed" ]] && pass "16g: first target marker" || fail "16h: first target marker missing"
-[[ -f "${td16b}/skills/ivan-writing/.cursor-managed" ]] && pass "16i: second target marker" || fail "16j: second target marker missing"
+[[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "16c: ivan-writing in agents dir" || fail "16d: ivan-writing missing from agents dir"
+[[ ! -e "${td16a}/skills/ivan-writing" && ! -e "${td16b}/skills/ivan-writing" ]] && pass "16e: ivan-writing absent from both Cursor targets" || fail "16f: ivan-writing leaked into a Cursor target"
+[[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed" ]] && pass "16g: agents-dir marker" || fail "16h: agents-dir marker missing"
 
 # ---------------------------------------------------------------------------
 # 17. Stale-marker: deleted managed dir then recreate, opt-out preserves
@@ -1034,14 +1076,69 @@ CURSOR_CONFIG_DIRS="${td16a};${td16b}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CUR
 printf '\n=== 17. Deleted managed dir recreated by user, opt-out preserves ===\n'
 td17="${TMPDIR}/test17"; mkdir -p "${td17}"
 build_fixture
+sandbox_agents_skills
 CURSOR_CONFIG_DIR="${td17}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}" install 2>"${td17}/log1" || fail "17a: install failed"
-rm -rf "${td17}/skills/ivan-writing"
-mkdir -p "${td17}/skills/ivan-writing"
-echo "user file" > "${td17}/skills/ivan-writing/user.txt"
+rm -r "${AGENTS_SKILLS_DIR}/ivan-writing"
+mkdir -p "${AGENTS_SKILLS_DIR}/ivan-writing"
+echo "user file" > "${AGENTS_SKILLS_DIR}/ivan-writing/user.txt"
 CURSOR_CONFIG_DIR="${td17}" bash "${CURSOR_HELPER}" install 2>"${td17}/log2" || fail "17b: opt-out failed"
-[[ -f "${td17}/skills/ivan-writing/user.txt" ]] && pass "17c: user-owned recreated dir preserved" || fail "17d: user dir removed despite missing marker"
+[[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/user.txt" ]] && pass "17c: user-owned recreated dir preserved" || fail "17d: user dir removed despite missing marker"
 
+# ---------------------------------------------------------------------------
+# 17b. Stale Cursor copy of a shared skill is removed on install
+# ---------------------------------------------------------------------------
+printf '\n=== 17b. Stale Cursor shared skill is removed ===\n'
+td17b="${TMPDIR}/test17b"; mkdir -p "${td17b}/skills/stop-slop" "${td17b}/skills/use-railway"
+echo "stale stop-slop" > "${td17b}/skills/stop-slop/SKILL.md"
+echo "stale use-railway" > "${td17b}/skills/use-railway/SKILL.md"
+build_fixture
+sandbox_agents_skills
+CURSOR_CONFIG_DIR="${td17b}" bash "${CURSOR_HELPER}" install 2>"${td17b}/install.log" && pass "17b-a: install succeeded" || fail "17b-b: install failed"
+[[ ! -e "${td17b}/skills/stop-slop" ]] && pass "17b-c: stale stop-slop removed from Cursor skills" || fail "17b-d: stale stop-slop remained"
+[[ ! -e "${td17b}/skills/use-railway" ]] && pass "17b-e: stale use-railway removed from Cursor skills" || fail "17b-f: stale use-railway remained"
+[[ -f "${AGENTS_SKILLS_DIR}/stop-slop/SKILL.md" ]] && pass "17b-g: stop-slop installed to agents dir" || fail "17b-h: stop-slop missing from agents dir"
+[[ -f "${AGENTS_SKILLS_DIR}/use-railway/SKILL.md" ]] && pass "17b-i: use-railway installed to agents dir" || fail "17b-j: use-railway missing from agents dir"
 
+# ---------------------------------------------------------------------------
+# 17c. Personal OpenCode profile installs ivan-writing into the agents dir
+# ---------------------------------------------------------------------------
+printf '\n=== 17c. Personal OpenCode ivan-writing goes to agents dir ===\n'
+td17c="${TMPDIR}/test17c"; mkdir -p "${td17c}"
+build_fixture
+sandbox_agents_skills
+OPENCODE_CONFIG_DIR="${td17c}" OPENCODE_AGENTS_PROFILE=personal-default bash "${INSTALL_HELPER}" 2>"${td17c}/err" && pass "17c-a: personal install succeeded" || fail "17c-b: personal install failed: $(cat "${td17c}/err")"
+[[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "17c-c: ivan-writing in agents dir" || fail "17c-d: ivan-writing missing from agents dir"
+[[ ! -e "${td17c}/skills/ivan-writing" ]] && pass "17c-e: ivan-writing absent from OpenCode skills" || fail "17c-f: ivan-writing leaked into OpenCode skills"
+
+# ---------------------------------------------------------------------------
+# 17d. Installer aborts when AGENTS_SKILLS_DIR equals the harness skills dir
+# ---------------------------------------------------------------------------
+printf '\n=== 17d. AGENTS_SKILLS_DIR alias to harness skills/ aborts ===\n'
+td17d="${TMPDIR}/test17d"; mkdir -p "${td17d}/skills"
+echo "keep-opencode" > "${td17d}/skills/sentinel.txt"
+build_fixture
+AGENTS_SKILLS_DIR="${td17d}/skills"
+export AGENTS_SKILLS_DIR
+if ! OPENCODE_CONFIG_DIR="${td17d}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td17d}/err"; then
+  grep -q 'AGENTS_SKILLS_DIR resolves to the same directory' "${td17d}/err" && pass "17d-a: OpenCode alias aborted" || fail "17d-b: wrong OpenCode alias error: $(cat "${td17d}/err")"
+  [[ -f "${td17d}/skills/sentinel.txt" ]] && pass "17d-c: OpenCode skills sentinel preserved" || fail "17d-d: OpenCode skills dir mutated before alias abort"
+  [[ ! -f "${td17d}/opencode.json" ]] && pass "17d-e: OpenCode target not installed after alias abort" || fail "17d-f: OpenCode install continued after alias abort"
+else
+  fail "17d-g: OpenCode install should have aborted when AGENTS_SKILLS_DIR equals skills/"
+fi
+sandbox_agents_skills
+
+td17d_c="${TMPDIR}/test17d-cursor"; mkdir -p "${td17d_c}/skills/keep-me"
+echo "keep-cursor" > "${td17d_c}/skills/keep-me/file.txt"
+AGENTS_SKILLS_DIR="${td17d_c}/skills"
+export AGENTS_SKILLS_DIR
+if ! CURSOR_CONFIG_DIR="${td17d_c}" bash "${CURSOR_HELPER}" install --dry-run 2>"${td17d_c}/err"; then
+  grep -q 'AGENTS_SKILLS_DIR resolves to the same directory' "${td17d_c}/err" && pass "17d-h: Cursor alias aborted" || fail "17d-i: wrong Cursor alias error: $(cat "${td17d_c}/err")"
+  [[ -f "${td17d_c}/skills/keep-me/file.txt" ]] && pass "17d-j: Cursor skills sentinel preserved" || fail "17d-k: Cursor skills dir mutated before alias abort"
+else
+  fail "17d-l: Cursor dry-run should have aborted when AGENTS_SKILLS_DIR equals skills/"
+fi
+sandbox_agents_skills
 
 # ---------------------------------------------------------------------------
 # 22. Unsupported extra file in canonical skill directory
@@ -2281,19 +2378,27 @@ fi
 
 td68b="${TMPDIR}/opencode68b"
 mkdir -p "${td68b}"
+sandbox_agents_skills
 if OPENCODE_CONFIG_DIR="${td68b}" OPENCODE_AGENTS_PROFILE=shared bash "${BASELINE_PWD}/scripts/install-profile.sh" >"${TMPDIR}/install68b.out" 2>"${TMPDIR}/install68b.err"; then
-  if python3 - "${td68b}" <<'PY'
+  if python3 - "${td68b}" "${AGENTS_SKILLS_DIR}" <<'PY'
 import sys
 from pathlib import Path
 
 target = Path(sys.argv[1])
+agents = Path(sys.argv[2])
 skills = target / 'skills'
 errors = []
 for name in ('brainstorming', 'systematic-debugging', 'test-driven-development', 'ast-grep'):
     if (skills / name).exists():
         errors.append(f'installed OpenCode skill {name}')
-if not (skills / 'writing-for-humans' / 'SKILL.md').is_file():
-    errors.append('missing remaining OpenCode skill writing-for-humans')
+    if (agents / name).exists():
+        errors.append(f'installed agents skill {name}')
+if (skills / 'writing-for-humans' / 'SKILL.md').is_file():
+    errors.append('writing-for-humans must not be copied into OpenCode skills')
+if not (agents / 'writing-for-humans' / 'SKILL.md').is_file():
+    errors.append('missing shared skill writing-for-humans in agents dir')
+if not (skills / 'context-mode' / 'SKILL.md').is_file():
+    errors.append('missing OpenCode-local skill context-mode')
 if errors:
     raise SystemExit('\n'.join(errors))
 PY
@@ -2629,6 +2734,7 @@ fi
 
 td68p="${TMPDIR}/cursor68p"
 mkdir -p "${td68p}"
+sandbox_agents_skills
 if env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td68p}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install >"${TMPDIR}/install68p.out" 2>"${TMPDIR}/install68p.err"; then
   if python3 - "${BASELINE_PWD}" "${td68p}" <<'PY'
 import hashlib
@@ -2665,6 +2771,53 @@ PY
 else
   fail "68p: temp Cursor install from real worktree helper failed: $(cat "${TMPDIR}/install68p.err")"
 fi
+
+# ---------------------------------------------------------------------------
+# 69. OpenCode installer preserves unmanaged skills
+# ---------------------------------------------------------------------------
+printf '\n=== 69. OpenCode installer preserves unmanaged skills ===\n'
+build_fixture
+sandbox_agents_skills
+td69="${TMPDIR}/test69"
+mkdir -p "${td69}/skills/impeccable" "${td69}/skills/context-mode" "${td69}/skills/cymbal" "${td69}/skills/brainstorming" "${td69}/skills/ivan-writing"
+printf '%s\n' 'impeccable-sentinel-keep' > "${td69}/skills/impeccable/SENTINEL"
+printf '%s\n' 'stale-opencode-local' > "${td69}/skills/context-mode/SKILL.md"
+printf '%s\n' 'stale leftover cymbal' > "${td69}/skills/cymbal/SKILL.md"
+printf '%s\n' 'stale leftover brainstorming' > "${td69}/skills/brainstorming/SKILL.md"
+printf '%s\n' 'unowned-ivan-writing' > "${td69}/skills/ivan-writing/SKILL.md"
+printf '%s\n' 'keep-file' > "${td69}/skills/keep.txt"
+OPENCODE_CONFIG_DIR="${td69}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td69}/err" && pass "69a: shared install succeeded" || fail "69b: shared install failed: $(cat "${td69}/err")"
+if grep -Fqx 'impeccable-sentinel-keep' "${td69}/skills/impeccable/SENTINEL"; then
+  pass "69c: unmanaged impeccable survived"
+else
+  fail "69d: unmanaged impeccable was deleted or changed"
+fi
+cmp -s "${REPO_FIXTURE}/.apm/skills/context-mode/SKILL.md" "${td69}/skills/context-mode/SKILL.md" && pass "69e: stale context-mode replaced from fixture" || fail "69f: stale context-mode was not replaced"
+[[ ! -e "${td69}/skills/cymbal" ]] && pass "69g: leftover shared cymbal removed from OpenCode skills" || fail "69h: leftover shared cymbal remained in OpenCode skills"
+cmp -s "${REPO_FIXTURE}/.apm/skills/cymbal/SKILL.md" "${AGENTS_SKILLS_DIR}/cymbal/SKILL.md" && pass "69i: shared cymbal installed into agents dir" || fail "69j: shared cymbal missing or wrong in agents dir"
+[[ ! -e "${td69}/skills/brainstorming" ]] && pass "69k: leftover Hive brainstorming removed" || fail "69l: leftover Hive brainstorming remained"
+grep -Fqx 'unowned-ivan-writing' "${td69}/skills/ivan-writing/SKILL.md" && pass "69m: unowned ivan-writing preserved on shared install" || fail "69n: unowned ivan-writing was stripped on shared install"
+grep -Fqx 'keep-file' "${td69}/skills/keep.txt" && pass "69o: unmanaged skills file survived" || fail "69p: unmanaged skills file was deleted"
+missing69=""
+for skill69 in context-mode writing-skills using-git-worktrees finishing-a-development-branch consolidate-test-suites root-cause-finder; do
+  if [[ ! -f "${td69}/skills/${skill69}/SKILL.md" ]]; then
+    missing69="${missing69} ${skill69}"
+  fi
+done
+[[ -z "${missing69}" ]] && pass "69q: six OpenCode-local skills present" || fail "69r: missing OpenCode-local skills:${missing69}"
+ls "${td69}/.backup/"*"/skills/impeccable/SENTINEL" >/dev/null 2>&1 && pass "69s: whole-skills backup includes unmanaged skill" || fail "69t: no whole-skills backup of unmanaged skill"
+
+printf '\n=== 69b. Personal OpenCode install strips leftover ivan-writing ===\n'
+build_fixture
+sandbox_agents_skills
+td69b="${TMPDIR}/test69b"
+mkdir -p "${td69b}/skills/ivan-writing" "${td69b}/skills/keep-me"
+printf '%s\n' 'stale leftover ivan-writing' > "${td69b}/skills/ivan-writing/SKILL.md"
+printf '%s\n' 'keep-me-sentinel' > "${td69b}/skills/keep-me/file.txt"
+OPENCODE_CONFIG_DIR="${td69b}" OPENCODE_AGENTS_PROFILE=personal-default bash "${INSTALL_HELPER}" 2>"${td69b}/err" && pass "69b-a: personal install succeeded" || fail "69b-b: personal install failed: $(cat "${td69b}/err")"
+[[ ! -e "${td69b}/skills/ivan-writing" ]] && pass "69b-c: leftover ivan-writing removed from OpenCode skills" || fail "69b-d: leftover ivan-writing remained"
+[[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "69b-e: ivan-writing installed to agents dir" || fail "69b-f: ivan-writing missing from agents dir"
+grep -Fqx 'keep-me-sentinel' "${td69b}/skills/keep-me/file.txt" && pass "69b-g: unmanaged skill preserved on personal install" || fail "69b-h: unmanaged skill removed on personal install"
 
 # ---------------------------------------------------------------------------
 # Summary
