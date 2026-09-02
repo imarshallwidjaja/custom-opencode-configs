@@ -18,18 +18,24 @@ OPENCODE_RETIRED_SKILLS=(
   root-cause-finder
 )
 SHARED_SKILLS=(
+  connecting-atlassian-tools
   cymbal
+  decomposing-work
   drawio-skill
   frontend-slides
   hard-cut
   humanizer
+  managing-work-in-jira
   react-best-practices
   resume-tailoring
+  running-agile-delivery
   stop-design-slop
   stop-slop
   use-railway
   web-design-guidelines
+  working-with-atlassian
   writing-for-humans
+  writing-work-items
 )
 HIVE_OWNED_SKILLS=(
   adversarial-review
@@ -379,9 +385,11 @@ validate_skill_source() {
   validate_skill_frontmatter "${source}/SKILL.md" "${expected_name}" "${label}" || return 1
 }
 
+validate_skill_source "${REPO_ROOT}/.apm/skills/decomposing-work" decomposing-work ".apm/skills/decomposing-work" "SKILL.md" "decomposition-example.md" || exit 1
 validate_skill_source "${REPO_ROOT}/.apm/skills/humanizer" humanizer ".apm/skills/humanizer" "SKILL.md" "patterns.md" || exit 1
 validate_skill_source "${REPO_ROOT}/.apm/skills/stop-slop" stop-slop ".apm/skills/stop-slop" "SKILL.md README.md LICENSE" "examples.md phrases.md structures.md" || exit 1
 validate_skill_source "${REPO_ROOT}/.apm/skills/writing-for-humans" writing-for-humans ".apm/skills/writing-for-humans" "SKILL.md" "examples.md sources.md" || exit 1
+validate_skill_source "${REPO_ROOT}/.apm/skills/writing-work-items" writing-work-items ".apm/skills/writing-work-items" "SKILL.md" "work-item-templates.md" || exit 1
 case "${AGENTS_PROFILE}" in
   personal-default|personal-context-improved)
     validate_skill_source "${REPO_ROOT}/profiles/personal/skills/ivan-writing" ivan-writing "profiles/personal/skills/ivan-writing" "SKILL.md" "registers.md examples.md" || exit 1

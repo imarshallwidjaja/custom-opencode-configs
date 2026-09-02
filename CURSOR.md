@@ -13,7 +13,7 @@ The selected Cursor asset root contains:
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, and `simplicity-reviewer`
 - eight installed commands: seven Cursor-specific commands (`compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`) plus the shared canonical `reflect`
 - eight managed Cursor skills installed into Cursor `skills/`: `agents-md-mastery`, `brainstorming`, `finishing-a-development-branch`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, and `verification`
-- twelve shared canonical skills consumed from `.apm/skills/` and installed into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: `cymbal`, `drawio-skill`, `frontend-slides`, `hard-cut`, `humanizer`, `react-best-practices`, `resume-tailoring`, `stop-design-slop`, `stop-slop`, `use-railway`, `web-design-guidelines`, and `writing-for-humans`
+- eighteen shared canonical skills consumed from `.apm/skills/` and installed into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: `connecting-atlassian-tools`, `cymbal`, `decomposing-work`, `drawio-skill`, `frontend-slides`, `hard-cut`, `humanizer`, `managing-work-in-jira`, `react-best-practices`, `resume-tailoring`, `running-agile-delivery`, `stop-design-slop`, `stop-slop`, `use-railway`, `web-design-guidelines`, `working-with-atlassian`, `writing-for-humans`, and `writing-work-items`
 - optional personal skill `ivan-writing` installed into the agents dir when `CURSOR_INSTALL_IVAN_WRITING=1` is set
 - one composed default-Agent Rules payload: `rules/default-agent.md`, one separator, and the provenance-pinned Engineering Judgment snapshot under `vendor/oc-arkive/engineering-judgment/`
 

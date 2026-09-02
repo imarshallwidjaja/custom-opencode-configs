@@ -456,7 +456,7 @@ Verify the installed layout by checking for:
 - six files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/`
 - eight files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/`, including `reflect.md` sourced from the shared canonical prompt
 - the eight managed Cursor skills under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/skills/`: `agents-md-mastery`, `brainstorming`, `finishing-a-development-branch`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, and `verification`
-- the twelve shared canonical skills under `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: `cymbal`, `drawio-skill`, `frontend-slides`, `hard-cut`, `humanizer`, `react-best-practices`, `resume-tailoring`, `stop-design-slop`, `stop-slop`, `use-railway`, `web-design-guidelines`, and `writing-for-humans`
+- the eighteen shared canonical skills under `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: `connecting-atlassian-tools`, `cymbal`, `decomposing-work`, `drawio-skill`, `frontend-slides`, `hard-cut`, `humanizer`, `managing-work-in-jira`, `react-best-practices`, `resume-tailoring`, `running-agile-delivery`, `stop-design-slop`, `stop-slop`, `use-railway`, `web-design-guidelines`, `working-with-atlassian`, `writing-for-humans`, and `writing-work-items`
 - `ivan-writing` under the agents dir when installed via `CURSOR_INSTALL_IVAN_WRITING=1`
 
 If `CURSOR_CONFIG_DIRS` was used, check those three layout conditions under every target in the semicolon-separated list.

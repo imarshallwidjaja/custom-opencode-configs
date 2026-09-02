@@ -41,18 +41,24 @@ RETIRED_SKILLS=(
 )
 
 CANONICAL_SKILLS=(
+  connecting-atlassian-tools
   cymbal
+  decomposing-work
   drawio-skill
   frontend-slides
   hard-cut
   humanizer
+  managing-work-in-jira
   react-best-practices
   resume-tailoring
+  running-agile-delivery
   stop-design-slop
   stop-slop
   use-railway
   web-design-guidelines
+  working-with-atlassian
   writing-for-humans
+  writing-work-items
 )
 
 usage() {
@@ -668,6 +674,60 @@ source_manifests = (
         ),
         None,
         False,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'connecting-atlassian-tools',
+        'connecting-atlassian-tools',
+        ('SKILL.md',),
+        WRITING_ALLOWED_KEYS,
+        False,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'decomposing-work',
+        'decomposing-work',
+        (
+            'SKILL.md',
+            'references',
+            'references/decomposition-example.md',
+        ),
+        WRITING_ALLOWED_KEYS,
+        True,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'managing-work-in-jira',
+        'managing-work-in-jira',
+        ('SKILL.md',),
+        WRITING_ALLOWED_KEYS,
+        False,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'running-agile-delivery',
+        'running-agile-delivery',
+        ('SKILL.md',),
+        WRITING_ALLOWED_KEYS,
+        True,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'working-with-atlassian',
+        'working-with-atlassian',
+        (
+            'SKILL.md',
+            'references',
+            'references/jql-essentials.md',
+        ),
+        WRITING_ALLOWED_KEYS,
+        False,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'writing-work-items',
+        'writing-work-items',
+        (
+            'SKILL.md',
+            'references',
+            'references/work-item-templates.md',
+        ),
+        WRITING_ALLOWED_KEYS,
+        True,
     ),
     (
         repo_root / '.apm' / 'skills' / 'resume-tailoring',
