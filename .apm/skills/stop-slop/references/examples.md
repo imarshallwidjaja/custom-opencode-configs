@@ -30,9 +30,9 @@
 > "In today's fast-paced landscape, we need to lean into discomfort and navigate uncertainty with clarity. This matters because your competition isn't waiting."
 
 **After:**
-> "We need to lean into discomfort and navigate uncertainty with clarity because your competition isn't waiting."
+> "We need to accept discomfort and handle uncertainty with clarity because your competition isn't waiting."
 
-**Preserved:** "We need," discomfort, uncertainty, clarity, and the claim that the competition is not waiting.
+**Preserved:** "We need," discomfort, uncertainty, clarity, and the claim that the competition is not waiting. "Lean into" and "navigate" are replaced with the plain verbs from phrases.md.
 
 ---
 

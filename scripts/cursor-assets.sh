@@ -533,6 +533,7 @@ source_manifests = (
             'references/terminology.md',
             'scripts',
             'scripts/audit_ui.py',
+            'scripts/contrast_check.py',
         ),
         None,
     ),

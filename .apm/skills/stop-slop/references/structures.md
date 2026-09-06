@@ -72,9 +72,9 @@ These announce insight rather than deliver it.
 
 | Pattern | Fix |
 |---------|-----|
-| Three-item lists | Use two items or one |
+| Forced three-item cadence | Keep the items the content needs; do not pad or trim to reach three |
 | Questions answered immediately | Let questions breathe or cut them |
 | Paragraphs starting with "So" | Start with content |
 | Sentences starting with "Look," | Remove |
 | Every paragraph ends punchily | Vary endings |
-| Em-dashes before reveals | Use periods or commas |
+| Em-dashes before reveals | Use periods or commas (em dash policy lives in `writing-for-humans`) |

@@ -45,7 +45,16 @@ If the task or plan is missing and the current requirement cannot be inferred fr
 
 - Remove duplicated checks, repeated parsing, repeated validation, and repeated formatting introduced by the change.
 - Prefer one boundary validation point over defensive internal fallbacks.
-- Remove commented-out code and AI-slop comments that explain obvious code.
+- Remove commented-out code and AI-slop comments that explain obvious code. Comment tells to flag:
+  - decorative separators and banner comments (`// =====`, `/* ---- ROUTES ---- */`)
+  - comments restating the next line or declaration (`// Initialize count` above `let count = 0`)
+  - step narration (`// Step 1:`, `// First`, `// Next`, `// Finally`)
+  - empty labels (`// Main logic`, `// Helper function`, `// Error handling`, `// Note: this is important`)
+  - vague TODOs with no named action (`// TODO: improve this`)
+  - doc blocks that only echo the signature (`@param price The price.`)
+  - emoji and end-of-block markers (`} // end if`)
+  - one comment per line instead of one per logical block
+- Preserve comments that explain intent, contracts, invariants, units, side effects, security, concurrency, protocol details, workarounds, edge cases, and legal notices. Flag; do not edit.
 - Reuse existing local helpers only when that reduces net complexity.
 
 ### 3. Abstractions
@@ -131,3 +140,5 @@ Action Plan:
 ```
 
 Findings must include file/line evidence. Do not include mandatory praise.
+
+Review prose follows the Prose Finish Gate from the default Agent Rules: lead with the finding, and avoid antithesis frames, fragment runs, signposting openers, AI vocabulary clusters, chatbot closers, inline-header bullets, and facts not present in the diff or supplied evidence.

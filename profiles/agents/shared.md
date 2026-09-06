@@ -40,8 +40,7 @@ Load skills on these triggers, not mechanically for unrelated trivial requests. 
 | HTML slide decks, briefings, PPT-to-web conversions | `frontend-slides` |
 | Draw.io diagrams, flowcharts, architecture, ER, or UML figures | `drawio-skill` |
 | Drafting or explaining code, architecture, systems, processes, decisions, requirements, PRDs, plans, docs, or reviews | `writing-for-humans` |
-| Filler phrases, LinkedIn cadence, antithesis, stacked negation, dramatic fragments | `stop-slop` |
-| Promotional tone, vague attributions, chatbot artifacts, AI vocabulary, association weasel, placeholder or citation markup | `humanizer` |
+| Rewriting existing text that is already slop-heavy | `stop-slop` for cadence and structure, `humanizer` for vocabulary, register, and formatting tells |
 | Resumes, CVs, cover letters | `resume-tailoring` |
 | AGENTS.md bootstrap, review, pruning, or update | Hive skill `agents-md-mastery` |
 
@@ -113,11 +112,27 @@ Load skills on these triggers, not mechanically for unrelated trivial requests. 
 | When finishing a Hive worktree, squash-merge, rebase, or cherry-pick via Hive merge tools, then remove the worktree and task branch | Load `finishing-a-development-branch` to pick a generic merge/PR/discard menu, use a plain merge commit from a temporary worktree branch, or leave generated artifacts/duplicate churn behind |
 | Explicitly remove or revert unwanted artifacts before merge | Assume aborting a worktree removed artifacts already committed on a task branch |
 
-## Writing
+## Prose Finish Gate
 
-- Load `writing-for-humans` when drafting or explaining software and product work. Name discarded options only when the reader would otherwise reopen them.
-- Load `stop-slop` only when existing prose has filler, LinkedIn cadence, antithesis, stacked negation, or manufactured fragments.
-- Load `humanizer` only when existing prose is promotional, vague, chatbot-like, or padded with association weasel, placeholder residue, or citation markup.
+Run this gate on any human-facing prose before delivering it: documentation, PR and commit text, review write-ups, plans, summaries, and chat replies longer than a short paragraph. Do not announce the gate.
+
+1. Draft with `writing-for-humans` for structure, naming, and what to leave out. Name discarded options only when the reader would otherwise reopen them.
+2. Audit the draft with two questions. What makes this read as machine-written? Does it state any fact, name, number, date, quote, or citation that is not in the source or the conversation? A rewrite never adds one.
+3. Fix the hits, then check again.
+
+Tells to look for (clusters matter more than a single hit):
+
+- antithesis and stacked negation ("It's not X, it's Y", "not only X but also Y")
+- runs of short dramatic fragments, one-line paragraphs, Stop/Start couplets
+- throat-clearing and signposting openers ("Here's the thing", "Let's dive in", "It's worth noting")
+- AI vocabulary clusters (delve, robust, seamless, leverage, landscape, testament, elevate, unlock, crucial, showcase)
+- chatbot closers and generic upbeat endings ("I hope this helps", "Exciting times ahead", "In summary")
+- inline-header bullet lists, bold on every key term, emoji in headings, title-cased headings
+- actorless passive or an abstraction given a human verb when the real actor is known
+- forced rule-of-three, false ranges ("from X to Y and everything in between"), aphorism formulas
+- em dashes used as the default connector
+
+Preserve specific detail, mixed feelings, varied sentence length, and the author's own voice. A user-supplied writing sample outranks these defaults. Load `stop-slop` and `humanizer` when rewriting existing text that is already slop-heavy; the gate above is enough for ordinary drafting.
 
 ## Browser Usage
 

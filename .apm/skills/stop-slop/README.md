@@ -41,7 +41,7 @@ stop-slop/
 
 ## Companion skill
 
-For a more exhaustive, Wikipedia-derived checklist (promo tone, AI-vocab clusters, vague attributions, chatbot artifacts, formatting tells), see the sibling skill: `../humanizer/`.
+This skill is a depth skill for `writing-for-humans`, which owns the finish pass and em dash policy. For a more exhaustive, Wikipedia-derived checklist (promo tone, AI-vocab clusters, vague attributions, chatbot artifacts, formatting tells), see the sibling skill `humanizer`.
 
 ## Author
 

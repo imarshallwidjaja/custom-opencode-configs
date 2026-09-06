@@ -97,6 +97,12 @@ SKILL
   stub_canonical_skill_tree react-best-practices
   stub_canonical_skill_tree resume-tailoring
   stub_canonical_skill_tree use-railway
+  stub_canonical_skill_tree connecting-atlassian-tools
+  stub_canonical_skill_tree decomposing-work
+  stub_canonical_skill_tree managing-work-in-jira
+  stub_canonical_skill_tree running-agile-delivery
+  stub_canonical_skill_tree working-with-atlassian
+  stub_canonical_skill_tree writing-work-items
 
   # Cursor asset root (.apm/cursor/)
   mkdir -p "${REPO_FIXTURE}/.apm/cursor/agents" "${REPO_FIXTURE}/.apm/cursor/commands" "${REPO_FIXTURE}/.apm/cursor/skills" "${REPO_FIXTURE}/.apm/cursor/rules"
@@ -794,6 +800,7 @@ CURSOR_CONFIG_DIR="${td3}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}"
 [[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/data/shape-index.json.gz" ]] && pass "3w: drawio-skill gzip index" || fail "3x: drawio-skill gzip index not copied"
 [[ -f "${AGENTS_SKILLS_DIR}/stop-design-slop/SKILL.md" ]] && pass "3y: stop-design-slop installed" || fail "3z: stop-design-slop canonical skill not installed"
 [[ -f "${AGENTS_SKILLS_DIR}/stop-design-slop/references/review-rubric.md" ]] && pass "3aa: stop-design-slop rubric" || fail "3ab: stop-design-slop extra file not copied"
+[[ -f "${AGENTS_SKILLS_DIR}/stop-design-slop/scripts/contrast_check.py" ]] && pass "3am: stop-design-slop contrast_check.py" || fail "3an: stop-design-slop script not copied"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed" ]] && pass "3m: marker inside ivan-writing" || fail "3n: marker not inside ivan-writing"
 [[ -f "${td3}/skills/agents-md-mastery/SKILL.md" ]] && pass "3ak: Cursor-specific skill still in Cursor skills" || fail "3al: Cursor-specific skill missing from Cursor skills"
 cmp -s "${REPO_FIXTURE}/.apm/prompts/reflect.prompt.md" "${td3}/commands/reflect.md" && pass "3ag: canonical reflect content installed byte-for-byte" || fail "3ah: canonical reflect content changed during Cursor install"

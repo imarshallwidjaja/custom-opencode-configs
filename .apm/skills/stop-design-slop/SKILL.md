@@ -1,6 +1,6 @@
 ---
 name: stop-design-slop
-description: Use when designing, generating, reviewing, refactoring, or polishing product interfaces, dashboards, landing pages, data applications, design systems, or frontend code where visual hierarchy, product specificity, density, composition, component usage, or brand character matter. Prevents generic, template-like, AI-convergent UI. Detects card soup, indiscriminate rounding/pills, generic SaaS heroes, three-card feature rows, gratuitous gradients/glass, decorative icons, weak hierarchy, fake product imagery, meaningless KPIs, component-library sameness, generic copy, and other signs of design-by-default.
+description: Use when designing, generating, reviewing, refactoring, or polishing product interfaces, dashboards, landing pages, data applications, design systems, or frontend code, or when a UI is described as premium, modern, clean, minimal, or SaaS without stronger product-specific direction.
 metadata:
   version: "1.0.0"
   evidence_basis: "HCI research, accessibility standards, major design systems, and 2024-2026 GenAI design-fixation/homogenization research"
@@ -41,6 +41,8 @@ Acceptable answers usually refer to one or more of:
 7. a deliberate compositional idea.
 
 "It looks modern", "it feels premium", "this is standard SaaS", and "the component library does this" are insufficient.
+
+Removing slop does not produce good design. A result that is merely clean, flat, and grey has also failed; add one governing idea, one clear focal point per screen, and one deliberate accent on purpose.
 
 ---
 
@@ -257,7 +259,7 @@ Avoid placeholder marketing language such as:
 - Smarter insights, faster.
 - Powerful. Simple. Intuitive.
 
-Use concrete product nouns, actions, constraints, and outcomes. Specific copy creates specific layout opportunities.
+Use concrete product nouns, actions, constraints, and outcomes. Specific copy creates specific layout opportunities. For prose rewrites beyond these UI-copy tells, use the `humanizer` and `writing-for-humans` skills.
 
 ## R. Component-library fingerprinting
 
@@ -317,4 +319,6 @@ When asked to review an existing design:
 - do not recommend novelty that harms learnability, accessibility, or task efficiency;
 - prefer specific structural changes over subjective comments like "make it pop".
 
-Optional static heuristic: run `python scripts/audit_ui.py <path>` on HTML/CSS/JS/TS/JSX/TSX to flag likely slop signals. Treat its output as prompts for review, never as a design verdict.
+Optional static heuristic: run `python3 scripts/audit_ui.py <path>` on HTML/CSS/JS/TS/JSX/TSX to flag likely slop signals. Treat its output as prompts for review, never as a design verdict.
+
+Never assert that a colour pairing passes contrast by eye; compute it with `python3 scripts/contrast_check.py <fg> <bg>`, and when text sits over an image or gradient, check the worst spot it passes over. As an anchor, `#555555` on black is 2.82:1 and fails normal text.

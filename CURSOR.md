@@ -99,7 +99,7 @@ Paste that output into Cursor Customize -> Rules -> User Rules. The helper does 
 
 The current npm `oc-arkive@latest` is 2.3.5 and includes Engineering Judgment. OpenCode receives Engineering Judgment from the installed plugin; this repository does not duplicate it in OpenCode AGENTS profiles, config, agents, commands, or skills. Cursor continues to use the provenance-pinned vendored snapshot because Cursor cannot load the plugin prompt directly.
 
-Cursor User Rules apply to the parent Agent Chat, not Inline Edit, and Cursor does not document guaranteed propagation into every child subagent. The installed agent definitions and parent handoff packets therefore carry critical child instructions. Project `.cursor/rules/*.mdc` files are a separate opt-in mechanism for workspace-specific propagation; this helper does not create or install project rules automatically.
+Cursor User Rules apply to the parent Agent Chat, not Inline Edit, and Cursor does not document guaranteed propagation into every child subagent. The installed agent definitions and parent handoff packets therefore carry critical child instructions. One of those is the Prose Finish Gate: `rules/default-agent.md` runs an always-on draft, audit, fix loop on human-facing prose for the parent, each of the six agent definitions carries a short prose contract that points back to it, and the `subagent-delegation` skill requires every handoff to include that contract. Project `.cursor/rules/*.mdc` files are a separate opt-in mechanism for workspace-specific propagation; this helper does not create or install project rules automatically.
 
 ## Maintainer Sync
 

@@ -1,6 +1,6 @@
 ---
 name: humanizer
-description: Use when prose is promotional, vague, over-hedged, or chatbot-like, or when it shows association weasel words, placeholder residue, citation markup, or markdown section chrome, and needs cleanup without inventing personality or facts.
+description: Use when rewriting existing prose that is promotional, vague, over-hedged, or chatbot-like, or that shows AI vocabulary clusters, weasel attributions, actorless passive, placeholder residue, citation markup, or markdown section chrome. Depth skill for writing-for-humans.
 ---
 
 # Humanizer
@@ -24,13 +24,32 @@ Use when the text:
 - Pads relationships with "associated with" / "in connection with"
 - Leaves placeholder text, Mad Libs brackets, or model citation markup (`contentReference`, `grok_card`, `[cite: 1]`)
 
-If the text is mainly suffering from filler, throat-clearing openers, LinkedIn cadence, or mechanical antithesis, start with `stop-slop` first. For ordinary drafting, use `writing-for-humans` rather than treating this skill as the default voice.
+Load with `writing-for-humans`. That skill is the core: it owns the finish pass, the non-invention rule, and the em dash policy. `stop-slop` owns cadence and structure. This skill owns vocabulary, register, attribution, formatting tells, and chatbot artifacts.
 
 ## Workflow
 
 1. Scan for patterns (use `references/patterns.md` as the checklist).
 2. Rewrite the flagged parts with plain, direct constructions (prefer "is/are/has").
-3. Remove chatbot meta, fix typography (straight quotes), avoid em-dash reliance.
+3. Remove chatbot meta, fix typography (straight quotes), apply the em dash policy from `writing-for-humans`.
+
+## What not to flag
+
+A clean human writer can hit several of these patterns with no model involved. None of the following is a reliable tell on its own:
+
+- Perfect grammar and consistent style. Many writers are professionals or have been edited.
+- Mixed casual and formal registers. This usually signals a person, not a chatbot.
+- Dry or bland prose without a specific tell. Dryness is just dryness.
+- Formal vocabulary in general. The pattern list names specific overused words, not every precise one.
+- A single transition word. One "however" or "additionally" counts only when piled up.
+- Curly quotes alone. Most editors and CMSes auto-curl by default.
+- Em dashes alone. Editors and journalists use them; they count only inside a cluster.
+- One short emphatic sentence. Flag fragment runs, not one clipped line.
+- Unsourced claims alone. Most writing is unsourced, and a missing citation proves nothing.
+- Phrases inside quotations, titles, proper names, or examples where the phrase is being discussed rather than used.
+
+## Voice calibration
+
+If the user supplies a sample of their own writing, read it first and note its sentence lengths, vocabulary, paragraph openings, punctuation, and recurring phrases. Match those habits rather than only deleting patterns; do not upgrade casual words or regularise deliberate quirks. The sample outranks these rules. Without a sample, use the defaults in this skill.
 
 ## Output
 

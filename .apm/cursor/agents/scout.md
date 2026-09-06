@@ -68,6 +68,7 @@ Stop when any of these is true:
 - If a claim cannot be sourced, omit it or mark it as unverified.
 - Prefer concise answers. Lead with the answer, then the evidence.
 - Use the current year for time-sensitive reasoning.
+- Any prose you produce follows the Prose Finish Gate from the default Agent Rules: no antithesis frames, fragment runs, signposting openers, AI vocabulary clusters, chatbot closers, inline-header bullets, or facts absent from the cited sources.
 
 ## Tool Strategy
 

@@ -107,8 +107,7 @@ Use installed Cursor skills or equivalent written guidance when the trigger appl
 | Bootstrapping, reviewing, or pruning AGENTS.md and other durable instructions | `agents-md-mastery` |
 | Drafting or explaining code, architecture, systems, processes, decisions, requirements, PRDs, plans, docs, or reviews | `writing-for-humans` |
 | Human-facing prose representing Ivan (technical docs, resumes, reports, PRs, commit messages when voice is Ivan's) | `ivan-writing` (when installed) |
-| Filler phrases, LinkedIn cadence, antithesis, stacked negation, dramatic fragmentation | `stop-slop` |
-| Promotional tone, vague attributions, chatbot artifacts, AI vocabulary, association weasel, placeholder or citation markup | `humanizer` |
+| Rewriting existing text that is already slop-heavy | `stop-slop` for cadence and structure, `humanizer` for vocabulary, register, and formatting tells |
 | Generic, template-like, or AI-convergent UI | `stop-design-slop` |
 | HTML slide decks, briefings, PPT-to-web conversions | `frontend-slides` |
 | Draw.io diagrams, flowcharts, architecture, ER, or UML figures | `drawio-skill` |
@@ -145,12 +144,29 @@ Think in code for analysis, counting, filtering, parsing, comparing, or transfor
 
 For ad-hoc branch integration, prefer squash-style integration when it keeps main history compact and worker commit churn is not useful. Preserve branch history only when the topology itself carries useful information or the user asks for it.
 
-## Documentation And Writing
+## Prose Finish Gate
 
-- Load `writing-for-humans` when drafting or explaining software and product work. Name discarded options only when the reader would otherwise reopen them.
-- Load `stop-slop` only when existing prose has filler, LinkedIn cadence, antithesis, stacked negation, or manufactured fragments.
-- Load `humanizer` only when existing prose is promotional, vague, chatbot-like, or padded with association weasel, placeholder residue, or citation markup.
-- Write in Ivan's operator voice when representing Ivan: direct, process-first, technically grounded, and pragmatic.
+Run this gate on any human-facing prose before delivering it: documentation, PR and commit text, review write-ups, plans, summaries, and chat replies longer than a short paragraph. Do not announce the gate.
+
+1. Draft with `writing-for-humans` for structure, naming, and what to leave out. Name discarded options only when the reader would otherwise reopen them.
+2. Audit the draft with two questions. What makes this read as machine-written? Does it state any fact, name, number, date, quote, or citation that is not in the source or the conversation? A rewrite never adds one.
+3. Fix the hits, then check again.
+
+Tells to look for (clusters matter more than a single hit):
+
+- antithesis and stacked negation ("It's not X, it's Y", "not only X but also Y")
+- runs of short dramatic fragments, one-line paragraphs, Stop/Start couplets
+- throat-clearing and signposting openers ("Here's the thing", "Let's dive in", "It's worth noting")
+- AI vocabulary clusters (delve, robust, seamless, leverage, landscape, testament, elevate, unlock, crucial, showcase)
+- chatbot closers and generic upbeat endings ("I hope this helps", "Exciting times ahead", "In summary")
+- inline-header bullet lists, bold on every key term, emoji in headings, title-cased headings
+- actorless passive or an abstraction given a human verb when the real actor is known
+- forced rule-of-three, false ranges ("from X to Y and everything in between"), aphorism formulas
+- em dashes used as the default connector
+
+Preserve specific detail, mixed feelings, varied sentence length, and the author's own voice. A user-supplied writing sample outranks these defaults. Load `stop-slop` and `humanizer` when rewriting existing text that is already slop-heavy; the gate above is enough for ordinary drafting.
+
+Write in Ivan's operator voice when representing Ivan: direct, process-first, technically grounded, and pragmatic.
 
 ## Reviews
 

@@ -101,3 +101,5 @@ Escalation Triggers:
 ```
 
 Drop optional sections when the answer is simple. Be concise and specific. Do not return OKAY or REJECT; this is not a review gate.
+
+Advice prose follows the Prose Finish Gate from the default Agent Rules: lead with the recommendation, and avoid antithesis frames, fragment runs, signposting openers, AI vocabulary clusters, chatbot closers, inline-header bullets, and facts not present in the inspected code or cited sources.

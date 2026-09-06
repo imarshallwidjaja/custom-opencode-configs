@@ -38,10 +38,10 @@ Disable gradients, glows, shadows, blur, and exaggerated radius. If the design l
 Blur/squint at the screen. Can you identify first, second, and third attention targets? If not, reduce equal salience.
 
 ### Product-proof test
-For every prominent screenshot/chart/map/statistic/logo strip, ask whether it is authentic, representative, and useful. Delete decorative fiction.
+For every prominent screenshot/chart/map/statistic/logo strip, ask whether it is authentic, representative, and useful. Delete decorative fiction. If there is no real data, show nothing rather than a plausible number.
 
 ### Interaction-signifier test
-Anything that looks clickable should behave clickable; anything decorative should not mimic controls/chips/buttons.
+Anything that looks clickable should behave clickable; anything decorative should not mimic controls/chips/buttons. No dead buttons and no nav links to pages that do not exist.
 
 ### Component-library test
 Can a reviewer name the starter kit from the page? If yes, identify whether the giveaway is macro layout, default typography, radius, component proportions, surface treatment, or icon treatment and customize there.
@@ -49,10 +49,18 @@ Can a reviewer name the starter kit from the page? If yes, identify whether the 
 ### Screenshot-vs-task test
 Would a power user accept this layout after eight hours of real work, or is it optimized primarily for a portfolio thumbnail?
 
+### Honesty and function
+- Data views have empty, loading, and error states.
+- Placeholders are labelled as placeholders (`[REAL DATA]`, "Coming soon"), never disguised as final.
+- If a theme toggle ships, both modes work.
+
 ## Suggested release gate
 
 - No dimension at 0 for production-critical screens.
 - At least 18/24 overall for a "strong" anti-slop pass.
+- A PASS on any functional test needs a recorded check: the element clicked or its code path inspected, the ratio computed.
 - Accessibility cannot be traded away for distinctiveness.
 - For experimental/brand pages, product specificity and governing concept should usually score 2.
 - For enterprise/regulated software, task, hierarchy, density, authenticity, and accessibility matter more than stylistic novelty.
+
+The Honesty and function tests are adapted from the anti-slop `antislop-ui` skill by Miqdad Badjuber, MIT licence: https://github.com/miqdadbadjuber/anti-slop.

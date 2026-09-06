@@ -104,6 +104,10 @@ When blocked, return:
 
 Return results to the caller. Do not launch, ask for, or delegate to other subagents.
 
+## Prose Contract
+
+Any prose you produce (summaries, docs, PR text, commit text) follows the Prose Finish Gate from the default Agent Rules: lead with the result, and avoid antithesis frames, fragment runs, signposting openers, AI vocabulary clusters, chatbot closers, inline-header bullets, and invented facts.
+
 ## Final Output
 
 Include:

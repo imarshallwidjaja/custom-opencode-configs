@@ -4,9 +4,9 @@ Scan for these patterns, then rewrite the flagged text to be specific, direct, a
 
 ## 1) Undue emphasis on significance, legacy, and broader trends
 
-**Words to watch:** stands/serves as, is a testament/reminder, a vital/significant/crucial/pivotal/key role/moment, underscores/highlights its importance/significance, reflects broader, symbolizing its ongoing/enduring/lasting, contributing to the, setting the stage for, marking/shaping the, represents/marks a shift, key turning point, evolving landscape, focal point, indelible mark, deeply rooted
+**Words to watch:** stands/serves as, is a testament/reminder, a vital/significant/crucial/pivotal/key role/moment, underscores/highlights its importance/significance, reflects broader, symbolizing its ongoing/enduring/lasting, contributing to the, setting the stage for, marking/shaping the, represents/marks a shift, key turning point, evolving landscape, focal point, indelible mark, deeply rooted, a new era of, the future of [X], ushering in, revolutionising
 
-**Problem:** Puffing up arbitrary facts into sweeping "this matters" claims.
+**Problem:** Puffing up arbitrary facts into sweeping "this matters" claims. The sentence reads the same whatever the subject does, which is the sign that it is ceremony rather than content.
 
 **Before:**
 > The Statistical Institute of Catalonia was officially established in 1989, marking a pivotal moment in the evolution of regional statistics in Spain.
@@ -76,7 +76,7 @@ Scan for these patterns, then rewrite the flagged text to be specific, direct, a
 
 ## 7) Overused "AI vocabulary" words
 
-**High-frequency AI words:** Additionally, align with, crucial, delve, emphasizing, enduring, enhance, fostering, garner, highlight (verb), highlighting, interplay, intricate/intricacies, key (adjective), landscape (abstract noun), meticulous, pivotal, robust (figurative), showcase, showcasing, tapestry (abstract noun), testament, underscore (verb), valuable, vibrant
+**High-frequency AI words:** Additionally, align with, crucial, cutting-edge, delve, elevate, emphasizing, empower, enduring, enhance, fostering, game-changer, garner, highlight (verb), highlighting, interplay, intricate/intricacies, journey (figurative), key (adjective), landscape (abstract noun), meticulous, next-level, pivotal, revolutionary (figurative), robust (figurative), seamless, showcase, showcasing, tapestry (abstract noun), testament, underscore (verb), unlock (figurative), valuable, vibrant
 
 **Later-model extras:** GPT-5-era text still clusters emphasizing / enhance / highlighting / showcasing. Grok-heavy text overuses superficially scientific words (causal, empirical, correlate) and still leans on underscore. Keep those words when they are the accurate technical term.
 
@@ -102,22 +102,13 @@ Scan for these patterns, then rewrite the flagged text to be specific, direct, a
 
 ## 9) Negative parallelisms
 
-**Problem:** Contrast used as the default explanation. Two-part and three-part forms are the same tell. Cadence cleanup lives in `stop-slop`; flag these here when they appear in encyclopedic or promotional prose.
-
-**Forms:**
-- "Not only X, but Y" / "It's not just about X, it's Y"
-- "It's not X, it's Y"
-- "It's not X, and it's not Y, but it is Z"
-- "No X, no Y, just Z"
-- "X rather than Y" as a rhetorical punch (common in Grok output)
+Contrast frames such as "It's not X, it's Y" and "It's not X, and it's not Y, but it is Z" are cadence tells. The rewrite rules live in `stop-slop` (structures.md, "Antithesis and stacked negation"); recognise them here and hand off.
 
 **Before:**
-> It's not just about the beat ... it's part of the aggression ... It's not merely a song, it's a statement. It's not a protest, and it's not a joke, but it is a warning.
+> It's not merely a song, it's a statement. It's not a protest, and it's not a joke, but it is a warning.
 
 **After:**
-> The heavy beat adds to the aggressive tone.
-
-If the reader was already choosing among those names, keep the denials as facts, not as a reveal.
+> The song is a statement and a warning.
 
 ## 10) Rule-of-three overuse
 
@@ -153,7 +144,7 @@ If the reader was already choosing among those names, keep the denials as facts,
 
 **Problem:** Em dashes used as a default "punch" tool.
 
-**Fix:** Prefer periods/commas; keep em dashes for rare, deliberate asides.
+**Fix:** Apply the em dash policy in `writing-for-humans` (SKILL.md, "Finish pass"). It is a limit, not a ban, and a user-supplied sample sets the frequency.
 
 ## 14) Overuse of boldface
 
@@ -199,7 +190,13 @@ If the reader was already choosing among those names, keep the denials as facts,
 
 **Problem:** Model meta leaking into the text, or inventing absence and then filling it with guesses ("maintains a low profile", "likely supports a diverse ecosystem").
 
-**Fix:** Replace with facts + source, or remove. Do not speculate into a gap you just declared.
+**Fix:** Replace with facts + source, or remove. State the gap plainly or omit the sentence. Do not speculate into a gap you just declared, and state a date or figure only when a source supplies it.
+
+**Before:**
+> While records from the period are limited, the cooperative was likely founded in the early 1980s and probably grew through word of mouth.
+
+**After:**
+> The founding date is not recorded in the available sources.
 
 ## 21) Sycophantic / servile tone
 
@@ -269,8 +266,98 @@ If the reader was already choosing among those names, keep the denials as facts,
 
 ## 30) Section restatements
 
-**Words to watch:** In this section we will, In summary, In conclusion, Overall, To conclude
+Openers such as "In this section we will" and closers such as "In summary", "In conclusion", "Overall", and "To conclude" are owned by `stop-slop` (phrases.md, "Filler Adverbs"). End on the last new fact and do not recap the heading.
 
-**Problem:** The paragraph repeats itself as a closer.
+## 31) Actorless passive when the actor is known
 
-**Fix:** End on the last new fact. Do not recap the heading.
+**Problem:** Passive voice with the actor deleted: "the decision was made to retire the free tier", "the pricing page has been updated", "mistakes were made". The model does not know who acted, so it writes around the gap. The team that shipped the thing does know. Dropping the actor also removes accountability from the sentence.
+
+**Fix:** Name the actor when it is available. This is not a ban: passive is right when the actor is unknown, irrelevant, or deliberately withheld ("the server was restarted at 03:00"), or when the object is the real subject of the paragraph. The tell is passive chosen by default with an actor that was there the whole time.
+
+**Before:**
+> The onboarding guide was rewritten to reflect the new roles, and the old version has been archived.
+
+**After:**
+> The support team rewrote the onboarding guide for the new roles and archived the old version.
+
+## 32) Inanimate subject with a human verb
+
+**Problem:** An abstraction given a mind: "the data tells us", "the dashboard understands", "the roadmap wants to focus on retention". It sounds active while naming nobody, so it passes a passive-voice check and still hides the actor. It also flatters the product; no dashboard understands anything.
+
+**Fix:** Name the person or describe what the thing does. This is not a ban on ordinary product verbs: "the report shows", "the form submits", "the filter narrows the list" describe behaviour. The tell is a verb that needs a mind behind it: understands, knows, decides, wants, believes, cares.
+
+**Before:**
+> The analytics layer understands which cohorts matter to you and decides what to surface first.
+
+**After:**
+> The analytics layer opens on the three cohorts you pinned last, in the order you pinned them.
+
+## 33) All-caps emphasis inside paragraphs
+
+**Problem:** A clause or sentence in ALL CAPS inside a paragraph to manufacture urgency: "the migration is scheduled and WE CANNOT SLIP THIS DATE." In running text it reads as shouting, and it flattens the real peaks by making everything loud.
+
+**Fix:** Write the emphasis into the sentence. This is not a ban on a genuine headline, a line in a voice that shouts, or a single all-caps word used once as an accent. The tell is caps doing the emphasis work sentence after sentence.
+
+**Before:**
+> The renewal closes on Friday, and IF WE MISS IT THE DISCOUNT IS GONE for the whole year.
+
+**After:**
+> The renewal closes on Friday. If we miss it, the discount is gone for the whole year.
+
+## 34) Excessive quotation marks and scare quotes
+
+**Problem:** Text studded with quotation marks around words that need no quoting, scare quotes on ordinary terms, and quotes used as a default for emphasis or distance. The page reads quoted rather than written.
+
+**Fix:** Remove quotes that carry no meaning and write the distance or irony into the sentence if it matters. This is not a ban on dialogue, quoted real sources, or titles of works. One scare quote used once for a reason is fine; a cluster is the tell.
+
+**Before:**
+> The new "workflow" lets you "focus" on the "important" tasks while the "assistant" handles the rest.
+
+**After:**
+> The new workflow lets you focus on the important tasks while the assistant handles the rest.
+
+## 35) Aphorism formulas
+
+**Words to watch:** X is the language of Y, X is the currency of Z, X is not a tool but a mirror, X becomes a trap when
+
+**Problem:** A reusable formula that sounds profound without adding precision. It gestures at a point instead of stating it.
+
+**Fix:** State the point plainly with the claim it was hiding.
+
+**Before:**
+> Consistency is the currency of trust. Speed becomes a trap when teams forget the reader.
+
+**After:**
+> Consistent layouts are easier for users to predict. Teams that optimise for speed alone can miss how people read the page.
+
+## 36) Signposting announcements
+
+**Words to watch:** Let's dive in, Here's what you need to know, In this article we'll explore, Without further ado, In the following sections
+
+**Problem:** Announcing what the text is about to do instead of doing it. It slows the reader and gives the text a tutorial-script feel.
+
+**Fix:** Delete the announcement and start with the content.
+
+**Before:**
+> Let's dive into how the retry policy works. Here's what you need to know.
+
+**After:**
+> The retry policy attempts the request three times with exponential backoff, then moves the job to the dead-letter queue.
+
+## 37) Fake-candid openers
+
+**Words to watch:** Honestly?, Let's be honest, Real talk, To be frank, I'll be honest with you
+
+**Problem:** A theatrical pause before an ordinary point. A person being honest usually says the thing. The pause-and-reveal is manufactured intimacy. "Here's the thing" belongs to the same family and is owned by `stop-slop` (phrases.md, "Throat-Clearing Openers").
+
+**Fix:** Cut the opener and keep the point.
+
+**Before:**
+> Is the enterprise tier worth it? Honestly? Only if you need the audit log.
+
+**After:**
+> The enterprise tier is worth it only if you need the audit log.
+
+## Attribution
+
+Sections 31 onward are adapted from the anti-slop `antislop-copywriting` skill by Miqdad Badjuber, MIT licence: https://github.com/miqdadbadjuber/anti-slop. The examples are rewritten for this profile.

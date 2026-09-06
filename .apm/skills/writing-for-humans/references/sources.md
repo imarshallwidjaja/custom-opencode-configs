@@ -22,6 +22,8 @@ This skill borrows useful principles from public writing guidance. It does not c
 
 **wait-what.** If an explanation would not land, re-pitch it with a little context and the project's own terms. See [mattpocock/wait-what](https://github.com/mattpocock/skills/tree/main/skills/productivity/wait-what).
 
+**anti-slop `antislop-copywriting`.** The finish-pass loop (draft, audit, fix), the non-invention rule, the cluster principle, and the list of human-writing signs to preserve are adapted from this skill by Miqdad Badjuber, MIT licence. From the same project, `antislop-code` supplies the code comment tells used in the Cursor `code-reviewer` and `simplicity-reviewer` agent definitions, and `antislop-ui` supplies the honesty checks and the sterile-result note in `stop-design-slop`. See [anti-slop](https://github.com/miqdadbadjuber/anti-slop).
+
 ## What to leave
 
 - ASD-STE100's controlled dictionary, hard sentence-length caps, semicolon ban, and aerospace lockdown

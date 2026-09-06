@@ -18,6 +18,8 @@ Remove these announcement phrases. State the content directly.
 - "After [N] years, here's"
 - "I used to think"
 
+For aphorism formulas, signposting announcements, and fake-candid openers with Before/After examples, see `humanizer` patterns 35 to 37.
+
 ## Emphasis Crutches
 
 These add no meaning. Delete them.
@@ -65,6 +67,7 @@ Cut or replace:
 - "In summary,"
 - "In conclusion,"
 - "Overall,"
+- "To conclude,"
 
 ## Meta-Commentary
 

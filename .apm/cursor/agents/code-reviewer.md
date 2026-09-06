@@ -31,6 +31,12 @@ Use the provided task or plan reference, diff, changed files, acceptance criteri
 6. Check simplicity: remove dead code, unused options, speculative abstractions, redundant defensive checks, AI-slop comments, and future scaffolding.
 7. Provide one concrete path to resolving blocking findings.
 
+### Comment Tells To Flag
+
+Flag AI-slop comments as YAGNI or dead code: section banners, comments that restate the line, step-by-step narration, empty labels such as `} // end if`, vague TODOs with no named action, and docblocks that echo the signature. Do not edit them yourself.
+
+Preserve comments that explain intent, contracts, invariants, units, side effects, security, concurrency, protocol details, workarounds, edge cases, and legal notices.
+
 ## Boundaries
 
 - Do not review plan readiness. Use `plan-reviewer` for that.
@@ -106,3 +112,5 @@ Effort Estimate: [Quick <1h / Short 1-4h / Medium 1-2d / Large 3d+]
 ```
 
 Findings must include file/line evidence or a URL when external evidence is used. Do not include mandatory praise.
+
+Review prose follows the Prose Finish Gate from the default Agent Rules: lead with the finding, and avoid antithesis frames, fragment runs, signposting openers, AI vocabulary clusters, chatbot closers, inline-header bullets, and facts not present in the diff or supplied evidence.

@@ -1,6 +1,6 @@
 ---
 name: stop-slop
-description: Use when prose has filler phrases, throat-clearing openers, LinkedIn cadence, antithesis, stacked negation, dramatic fragmentation, or rhetorical setups that need removal without changing facts.
+description: Use when rewriting existing prose whose cadence or structure reads as machine-written, such as antithesis, stacked negation, fragment runs, LinkedIn cadence, rhetorical setups, throat-clearing openers, or quotable one-liners. Depth skill for writing-for-humans.
 ---
 
 # Stop Slop
@@ -17,12 +17,7 @@ Remove filler, formulaic structures, and mechanical cadence from prose while pre
 
 ## Related skills
 
-`writing-for-humans` is the default generative discipline. Use this skill to clean existing filler and cadence problems. That skill also owns discarded-option narration and planning labels leaking into durable names (`phase-1`, `option-b`, `workstream-2`).
-
-For promotional tone, AI-vocabulary clusters, vague attributions, chatbot artifacts, or formatting tells, use `humanizer`:
-
-- `../humanizer/SKILL.md`
-- `../humanizer/references/patterns.md` (checklist)
+Load with `writing-for-humans`. That skill is the core: it owns the finish pass, the non-invention rule, the em dash policy, durable names, and rejected-alternative narration. This skill owns cadence and structure rewrites. `humanizer` owns vocabulary, register, attribution, and formatting tells; use it when the text is promotional, chatbot-like, or padded with AI vocabulary.
 
 ## Quick Checks
 

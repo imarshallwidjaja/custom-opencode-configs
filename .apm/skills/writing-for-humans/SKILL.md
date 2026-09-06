@@ -33,7 +33,19 @@ Brevity is useful when it improves understanding. Cutting words is not the goal.
 
 Do not manufacture importance or tension. Avoid antithesis frames such as "This isn't about X. It's about Y." Avoid stacked negation such as "It's not X, and it's not Y, but it is Z." Avoid the related cadence: dramatic sentence fragments, chains of one-line paragraphs, Stop/Start couplets, "I used to / then I learned" setups, rhetorical setup and payoff, repeated three-part slogans, and phrases written mainly to sound quotable. That register is LinkedIn cadence. Do not reach for "this changes everything", "the real problem is", or "here's the thing" when an ordinary explanation would do.
 
-If existing prose already has that cadence, load `stop-slop`. If it is promotional, chatbot-like, or padded with vague AI vocabulary, load `humanizer`. If the user wants Ivan's personal voice, load `ivan-writing`.
+## Finish pass
+
+Before delivering, run one loop: draft, audit, fix.
+
+1. Draft with the principles above, then read it as the intended reader would.
+2. Audit with two questions and answer each briefly. What makes this read as machine-written? Does it state any fact, name, number, date, quote, or citation not in the source or conversation?
+3. Fix the hits, then check again.
+
+A rewrite adds nothing that is not in the source or supplied by the user. Specificity comes from the source, not from the rewrite. If a sentence needs real detail to work, ask for it or write the plain version without it.
+
+Calibrate before cutting. Look for clusters of tells rather than single instances; one "however" or one em dash proves nothing. Preserve what marks writing as human: specific hard-to-fabricate detail, mixed feelings and unresolved tension, dated references, varied sentence length, and genuine asides. A user-supplied writing sample outranks this skill's defaults, including its em dash frequency.
+
+Em dash policy: limit them. Prefer a new sentence, a comma, a colon, or parentheses. A deliberate aside may keep one. Match the frequency of a user-supplied sample. This is not an absolute ban.
 
 ## Rejected alternatives
 
@@ -87,11 +99,11 @@ Constructed. They show the intended voice, not a required house style.
 **After:**
 > Onboarding interviews (n=8) showed that new teammates cannot tell which launch checklist is current, and they ping the duty engineer to find out. The desired outcome is that a teammate can identify the current checklist without asking. Success is that, in the next onboarding cohort, fewer than two people ask that question in their first week. The proposed capability is a single pinned "current launch checklist" page, with one owner and a last-updated timestamp. We are not replacing status meetings in this pass.
 
-## Related skills
+## Ownership
 
-- `stop-slop` for filler, LinkedIn cadence, antithesis, stacked negation, and other cadence cleanup of existing text
-- `humanizer` for promotional tone, vague attributions, chatbot artifacts, and AI-vocabulary clusters
-- `ivan-writing` when the prose should represent Ivan's personal voice
+`writing-for-humans` owns generative discipline, the finish pass, durable names, rejected-alternative narration, and artifact instincts. `stop-slop` owns cadence and structure rewrites: antithesis, stacked negation, fragment runs, LinkedIn cadence, rhetorical setups, quotables, and filler openers. `humanizer` owns vocabulary, register, attribution, formatting tells, and chat artefacts. `ivan-writing` owns Ivan's personal voice.
+
+Load `stop-slop` or `humanizer` when rewriting existing text that is already slop-heavy. For ordinary drafting, the finish pass above is enough.
 
 ## Additional resources
 
