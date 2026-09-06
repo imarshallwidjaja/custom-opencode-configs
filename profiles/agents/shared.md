@@ -96,10 +96,6 @@ Load skills on these triggers, not mechanically for unrelated trivial requests. 
 | General web research | `websearch` | Use for current facts beyond official docs and code examples. |
 | Interactive web pages, forms, screenshots, rendered state, downloads | `chrome-devtools` | Save large browser output to files when possible, then process bounded results. |
 
-## Optional Context-Improved Pairing
-
-- Use `shared-context-improved` when the `context-improved` optional overlay is enabled and you want stronger routing policy for `context-mode`, `ast-grep`, `grep_app`, `context7`, and `cymbal`.
-
 ## Git And SCM
 
 | Do | Don't |
