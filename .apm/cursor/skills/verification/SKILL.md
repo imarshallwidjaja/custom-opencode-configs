@@ -39,7 +39,7 @@ Use this mode when the task is explicitly to independently verify work. Be falsi
 
 - No completion claims without fresh command/tool evidence.
 - Rationalizations are not evidence.
-- Reading code is not verification.
+- Reading implementation alone cannot prove runtime behavior. Direct text inspection can verify text claims, with applicable syntax or format checks.
 - Agent reports, stale logs, similar checks, and confidence are not evidence.
 - Verify the claim being made, not a nearby claim. Build proves build. Lint proves lint. Tests prove only what they exercise.
 
@@ -92,17 +92,19 @@ If a check fails:
 
 Use PARTIAL only for environmental or tool limitations, such as unavailable services, missing credentials, or a server that cannot start for reasons outside the change. Do not use PARTIAL for uncertainty when a check ran.
 
+## Stopping Condition
+
+Stop after acceptance criteria and required checks pass, including applicable review and packaging gates. Reopen verification only for new changes, failures, or concrete unresolved risk. Do not add probes or repeat equivalent checks merely to increase confidence.
+
 ## Output Formats
+
+These formats are illustrative, not mandatory per-item ceremony. Combine related claims in a compact report while preserving the check, observed result, and limitations.
 
 ### Completion Gate Mode
 
 ```markdown
-## Verification Evidence
-
-**Claim**: [claim]
-**Command/tool run**: [exact command or tool]
-**Output observed**: [relevant output excerpt]
-**Result**: PASS / FAIL / PARTIAL
+PASS: [claim] - `[exact command/tool]` returned [observed result].
+Not checked: [relevant limitation, if any].
 ```
 
 ### Verification Report Mode

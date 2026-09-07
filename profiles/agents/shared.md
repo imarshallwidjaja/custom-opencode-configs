@@ -6,6 +6,14 @@ Prefer retrieval-led reasoning over pre-training-led reasoning.
 
 AGENTS.md is behavioral memory, not documentation. Every rule should change agent behavior by preventing a likely mistake, selecting the correct workflow, or pointing to a focused reference.
 
+## Request And Skill Precedence
+
+Explicit user intent overrides skill defaults, subject to higher-priority instructions, tool permissions, and applicable project requirements. If a skill causes a pause or departure from the requested path, cite or link the exact skill source and quote the relevant instruction; explain the unresolved decision.
+
+Treat clear "can you" or "help me" implementation requests as requests to act, not capability questions. Respect explicit advice-only and read-only scope. While an approval is pending, continue safe, already-authorized preparation that does not preempt that decision.
+
+Stop expanding verification after acceptance criteria and required gates pass, including applicable reviews and repository packaging checks. Reopen only for new changes, failures, or concrete unresolved risk.
+
 ## Operating Model
 
 | Situation | Do | Don't |

@@ -43,7 +43,7 @@ Use for ANY technical issue:
 
 ## The Four Phases
 
-You MUST complete each phase before proceeding to the next.
+Use each phase to resolve causal uncertainty before editing. A bounded defect may need only a focused error read, reproduction, and local comparison; expand investigation only where evidence leaves the cause uncertain.
 
 ### Phase 1: Root Cause Investigation
 
@@ -69,11 +69,11 @@ You MUST complete each phase before proceeding to the next.
 
 4. **Gather Evidence in Multi-Component Systems**
 
-   **WHEN system has multiple components (CI → build → signing, API → service → database):**
+   **WHEN existing evidence does not locate the failure across components (CI → build → signing, API → service → database):**
 
-   **BEFORE proposing fixes, add diagnostic instrumentation:**
+   **Instrument only the boundaries needed to distinguish plausible causes. Reuse existing logs first and avoid exposing secrets:**
    ```
-   For EACH component boundary:
+   For each relevant unresolved component boundary:
      - Log what data enters component
      - Log what data exits component
      - Verify environment/config propagation
@@ -130,9 +130,9 @@ You MUST complete each phase before proceeding to the next.
    - What works that's similar to what's broken?
 
 2. **Compare Against References**
-   - If implementing pattern, read reference implementation COMPLETELY
-   - Don't skim - read every line
-   - Understand the pattern fully before applying
+   - Read the reference paths and contracts relevant to the suspected cause
+   - Expand to callers, dependencies, or the full reference when uncertainty requires it
+   - Understand the assumptions the fix relies on before applying it
 
 3. **Identify Differences**
    - What's different between working and broken?
@@ -198,7 +198,7 @@ You MUST complete each phase before proceeding to the next.
    - Count: How many fixes have you tried?
    - If < 3: Return to Phase 1, re-analyze with new information
    - **If ≥ 3: STOP and question the architecture (step 6 below)**
-   - DON'T attempt Fix #4 without architectural discussion
+   - Do not repeat the same approach without reassessing the evidence and assumptions
 
 6. **If 3+ Fixes Failed: Question Architecture**
 
@@ -212,9 +212,7 @@ You MUST complete each phase before proceeding to the next.
    - Are we "sticking with it through sheer inertia"?
    - Should we refactor architecture vs. continue fixing symptoms?
 
-   **Discuss with your human partner before attempting more fixes**
-
-   This is NOT a failed hypothesis - this is a wrong architecture.
+   Repeated failures warrant reassessment; they do not prove the architecture is wrong. Continue a new evidence-backed approach within the authorized scope. Ask the human only when the next step needs a scope, risk, or authorization decision.
 
 ## Red Flags - STOP and Follow Process
 
@@ -255,9 +253,9 @@ If you catch yourself thinking:
 | "Just try this first, then investigate" | First fix sets the pattern. Do it right from the start. |
 | "No new test means no verification is needed" | Every selected strategy still requires proportionate evidence that the defect is resolved. |
 | "Multiple fixes at once saves time" | Can't isolate what worked. Causes new bugs. |
-| "Reference too long, I'll adapt the pattern" | Partial understanding guarantees bugs. Read it completely. |
+| "Reference too long, I'll guess" | Read the relevant contracts and expand until the causal uncertainty is resolved. |
 | "I see the problem, let me fix it" | Seeing symptoms ≠ understanding root cause. |
-| "One more fix attempt" (after 2+ failures) | 3+ failures = architectural problem. Question pattern, don't fix again. |
+| "One more fix attempt" (after repeated failures) | Reassess evidence and architecture before selecting a new approach. |
 
 ## Quick Reference
 
@@ -277,21 +275,17 @@ If systematic investigation reveals issue is truly environmental, timing-depende
 3. Implement appropriate handling (retry, timeout, error message)
 4. Add monitoring/logging for future investigation
 
-**But:** 95% of "no root cause" cases are incomplete investigation.
+Distinguish evidence of an external cause from a cause that remains unknown. Report the latter as unresolved.
 
 ## Supporting Techniques
 
-- After finding root cause, add defense in depth: validate at multiple layers so the same class of failure cannot pass a later boundary silently.
+- Validate the demonstrated invariant at its owning boundary. Add another layer only when it owns a distinct demonstrated failure mode; avoid duplicating the same check throughout the stack.
 - Prefer condition-based waiting: poll a condition instead of arbitrary timeouts.
 
 **Related skills:**
 - **test-driven-development** - Load only when strict TDD is the selected strategy
 - **the verification skill** - Verify fix worked before claiming success
 
-## Real-World Impact
+## Stopping Condition
 
-From debugging sessions:
-- Systematic approach: 15-30 minutes to fix
-- Random fixes approach: 2-3 hours of thrashing
-- First-time fix rate: 95% vs 40%
-- New bugs introduced: Near zero vs common
+Stop when the defect is resolved against the selected acceptance criteria and required checks pass. Expand verification only for new changes, failures, or concrete unresolved risk.

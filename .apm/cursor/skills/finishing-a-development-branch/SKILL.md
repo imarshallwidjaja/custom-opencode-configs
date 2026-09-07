@@ -32,7 +32,9 @@ Inspect the branch diff before recommending merge, pull request, or discard acti
 
 ## Step 3: Present Options
 
-Present these choices plainly:
+If the user already chose an exact integration and cleanup path, skip this menu and execute that authorization after the required checks. Existing authorization satisfies confirmation for the named branches, worktrees, and actions; ask again only if the scope changed, ownership is uncertain, or new destructive risk was not covered.
+
+Otherwise, present these choices plainly:
 
 1. Merge back to the base branch locally.
 2. Push and create a pull request.

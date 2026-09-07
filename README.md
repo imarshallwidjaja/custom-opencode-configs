@@ -150,7 +150,7 @@ Shared canonical skills default to `$HOME/.agents/skills`. Set `AGENTS_SKILLS_DI
 
 ### AGENTS profiles
 
-The installer uses `profiles/agents/shared.md` by default. Select another profile with `OPENCODE_AGENTS_PROFILE`.
+The installer uses `profiles/agents/shared.md` by default. Select another profile with `OPENCODE_AGENTS_PROFILE`. All four profiles include request-over-skill defaults, source citations for skill-driven pauses, and a stopping condition after required verification gates; preserve `Request And Skill Precedence` when merging into an existing profile. See `profiles/agents/README.md` for the operating-policy details and `CURSOR.md` for the equivalent manually pasted Cursor Rules.
 
 Available profiles:
 

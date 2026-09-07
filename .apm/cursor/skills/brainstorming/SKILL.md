@@ -7,63 +7,28 @@ description: "Use before creative work such as creating features, building compo
 
 ## Overview
 
-Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
+Understand the project context, desired behavior, constraints, and observable acceptance criteria before editing. Scale dialogue to the decisions still open.
 
-For ordinary creative work, start by understanding the current project context, then ask questions one at a time to refine the idea. Once you understand what you're building, present the design in small sections (200-300 words), checking after each section whether it looks right so far.
+## Choose The Path
 
-## Corrective Feedback Fast Path
+For a clear, authorized feature request or concrete corrective feedback, proceed with the smallest coherent implementation through the applicable execution workflow. Do not add a readiness prompt, design approval, or planning handoff by default.
 
-Use this fast path only when operator corrective feedback concretely identifies all four:
-- The wrong behavior
-- The desired behavior
-- The affected artifact
-- The correction direction
+Ask one targeted question when a material ambiguity affects correctness, safety, data scope, persistence, UX, or a public contract. Pause the affected decision until it is resolved; do not guess. Continue independent authorized preparation when safe.
 
-Bare bug reports and vague feature requests do not qualify. If the operator explicitly asks to explore alternatives, discuss the change, or design it, keep the work exploratory even when the feedback is concrete.
+When the user asks to explore, discuss, or design, keep the work exploratory. Reading this skill does not authorize implementation of an advice-only request.
 
-For qualifying corrective feedback:
-- Skip only the brainstorming dialogue and readiness prompt: do not ask ordinary refinement questions, propose 2-3 approaches, or present and validate incremental design sections
-- Retain applicable project-context review, planning, isolation, testing, and verification requirements; if planning is required, enter that workflow without a readiness prompt
-- Ask exactly one targeted question only when a material ambiguity affects correctness, safety, data scope, persistence, UX, or a public contract
-- If the question is unanswered, or material ambiguity remains after the answer, stop rather than guess or enter the ordinary brainstorming process
+## Collaborative Exploration
 
-## The Process
+Use these steps when exploration is requested or unresolved material choices need dialogue:
 
-**Understanding the idea:**
-- Check out the current project state first (files, docs, recent commits)
-- Ask questions one at a time to refine the idea
-- Prefer multiple choice questions when possible, but open-ended is fine too
-- Only one question per message - if a topic needs more exploration, break it into multiple questions
-- Focus on understanding: purpose, constraints, success criteria
+- Inspect relevant files, docs, and recent changes.
+- Ask one question at a time about purpose, constraints, or success criteria.
+- Compare genuinely different approaches when the choice has meaningful trade-offs. Lead with a recommendation and its reasoning.
+- Present the design at the level needed to resolve the open choices. Check agreement on material decisions, rather than requiring approval for every section.
+- Surface fragile assumptions and remove speculative features.
 
-**Exploring approaches:**
-- Propose 2-3 different approaches with trade-offs
-- Present options conversationally with your recommendation and reasoning
-- Lead with your recommended option and explain why
+## After The Design
 
-**Presenting the design:**
-- Once you believe you understand what you're building, present the design
-- Break it into sections of 200-300 words
-- Ask after each section whether it looks right so far
-- Cover: architecture, components, data flow, error handling, testing
-- Be ready to go back and clarify if something doesn't make sense
+Keep the design in the conversation unless the user requests a tracked artifact or the repository workflow requires one.
 
-## After the Design
-
-**Documentation:**
-- Keep the validated design in-session in the conversation unless the user explicitly asks for a tracked artifact
-- Write a tracked design document only when the user explicitly requests one or the repository workflow explicitly requires one (for example an approved Hive plan or another named project artifact)
-
-**Implementation (if continuing):**
-- After ordinary brainstorming, ask: "Ready to set up for implementation?"
-- Use `the planning-prompt or implementation-brief command` to create detailed implementation plan
-
-## Key Principles
-
-- **One question at a time** - Don't overwhelm with multiple questions during ordinary brainstorming
-- **Multiple choice preferred** - Easier to answer than open-ended when possible
-- **YAGNI ruthlessly** - Remove unnecessary features from all designs
-- **Explore alternatives** - Propose 2-3 approaches during ordinary brainstorming or when the operator explicitly requests alternatives
-- **Incremental validation** - Present ordinary brainstorming designs in sections and validate each
-- **Be flexible** - During ordinary brainstorming, go back and clarify when something does not make sense
-- **Challenge assumptions** - During ordinary brainstorming, surface fragile assumptions, ask what changes if they fail, and offer lean fallback options
+Proceed with implementation when already authorized and material decisions are resolved. Ask for authorization when the request was exploratory only. Use `planning-prompt` or `implementation-brief` only when a handoff is requested or needed by the chosen workflow: these commands prepare handoff prompts, not implementation plans. Do not create a formal plan by default.

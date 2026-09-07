@@ -7,6 +7,10 @@ description: Use when running agile delivery with humans and agents, covering ca
 
 Decomposition (decomposing-work) and specification (writing-work-items) set up the work. This skill covers running it: who does what, how the backlog stays honest, how waves execute, how review gates govern quality, and how the system improves itself.
 
+## Applicability
+
+Apply this governance only when the user or project has explicitly adopted it for the work. Reading it for advice or reference does not activate backlog items, waves, or human review gates for an otherwise ad-hoc task.
+
 ## Roles
 
 | Contribution | Owner |
@@ -41,7 +45,7 @@ Keep the taxonomy small and stable; a taxonomy nobody can remember is decoration
 Rules for the executing wave:
 
 1. **One branch or workspace per item.** Each contributor works in isolation on the artefacts their item owns. Exclusive ownership plus isolated workspaces is what makes zero-conflict integration the norm.
-2. **No coordination messages mid-wave.** If contributors need to talk mid-wave, the decomposition failed; the fix belongs in the next planning pass, not in a patched-up chat thread. Everything a contributor needs is in the item and the frozen contracts from the previous gate.
+2. **Avoid routine coordination mid-wave.** Contributors should have the item and frozen contracts they need. Report blockers, unsafe assumptions, ownership conflicts, or invalid contracts immediately; pause affected work rather than waiting for the gate. Record decomposition improvements for the next planning pass.
 3. **Self-verification before handback.** Each contributor verifies their own work against the item's acceptance criteria before submitting it to the gate. The gate reviews verified work; it does not run first-pass debugging.
 
 ## Review Gates

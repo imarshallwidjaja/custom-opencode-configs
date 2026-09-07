@@ -78,4 +78,4 @@ Report:
 - Do not create a project-local worktree without ignore verification.
 - Do not assume a directory when project instructions specify one.
 - Do not skip baseline verification unless no relevant command exists.
-- Do not delete a worktree or branch without explicit user confirmation.
+- Do not delete a worktree or branch without explicit user authorization. An existing instruction covering the exact integration and cleanup actions satisfies confirmation; do not ask again unless scope, ownership, or destructive risk has changed. Verify integration and ownership before cleanup, and preserve unrelated work.

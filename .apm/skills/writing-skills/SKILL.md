@@ -7,17 +7,11 @@ description: Use when creating new skills, editing existing skills, or verifying
 
 ## Overview
 
-**Writing skills IS Test-Driven Development applied to process documentation.**
+Write reusable guidance and verify the claims it makes. Match verification to the risk of the change: material instruction changes need representative behavioral scenarios; editorial edits need focused text review and applicable syntax checks.
 
-**Personal skills live in `~/.config/opencode/skills/` for local OpenCode installs.**
+Select acceptance criteria and checks before editing. TDD-style baseline comparisons are useful for demonstrated behavioral failures, but are not mandatory for every skill edit. Load `test-driven-development` only when TDD is selected.
 
-You write test cases (pressure scenarios with subagents), watch them fail (baseline behavior), write the skill (documentation), watch tests pass (agents comply), and refactor (close loopholes).
-
-**Core principle:** If you didn't watch an agent fail without the skill, you don't know if the skill teaches the right thing.
-
-**REQUIRED BACKGROUND:** You MUST understand `test-driven-development` before using this skill. That skill defines the fundamental RED-GREEN-REFACTOR cycle. This skill adapts TDD to documentation.
-
-**Official guidance:** For Anthropic's official skill authoring best practices, see anthropic-best-practices.md. This document provides additional patterns and guidelines that complement the TDD-focused approach in this skill.
+**Official guidance:** See anthropic-best-practices.md for Anthropic-specific authoring guidance. Model and harness behavior can differ; do not treat Claude-specific advice as a universal runtime contract.
 
 ## What is a Skill?
 
@@ -42,7 +36,7 @@ A **skill** is a reference guide for proven techniques, patterns, or tools. Skil
 | **Watch it pass** | Verify agent now complies |
 | **Refactor cycle** | Find new rationalizations → plug → re-verify |
 
-The entire skill creation process follows RED-GREEN-REFACTOR.
+Use this mapping when TDD-style behavioral evaluation is selected.
 
 ## When to Create a Skill
 
@@ -93,8 +87,8 @@ skills/
 ## SKILL.md Structure
 
 **Frontmatter (YAML):**
-- Only two fields supported: `name` and `description`
-- Max 1024 characters total
+- Use `name` and `description` for this guide's minimal template; confirm supported fields and size limits with the target package or harness validator
+- Keep frontmatter concise
 - `name`: Use letters, numbers, and hyphens only (no parentheses, special chars)
 - `description`: Third-person, describes ONLY when to use (NOT what it does)
   - Start with "Use when..." to focus on triggering conditions
@@ -151,11 +145,7 @@ Concrete results
 
 The description should ONLY describe triggering conditions. Do NOT summarize the skill's process or workflow in the description.
 
-**Why this matters:** Testing revealed that when a description summarizes the skill's workflow, Claude may follow the description instead of reading the full skill content. A description saying "code review between tasks" caused Claude to do ONE review, even though the skill's flowchart clearly showed TWO reviews (spec compliance then code quality).
-
-When the description was changed to just "Use when executing implementation plans with independent tasks" (no workflow summary), Claude correctly read the flowchart and followed the two-stage review process.
-
-**The trap:** Descriptions that summarize workflow create a shortcut Claude will take. The skill body becomes documentation Claude skips.
+Keep triggers in the description and detailed procedure in the body so discovery text does not present an incomplete procedure. Whether a model reads and follows the body depends on the model and harness; verify that behavior when it matters. This guide does not establish a universal Claude discovery mechanism.
 
 ```yaml
 # ❌ BAD: Summarizes workflow - Claude may follow this instead of reading skill
@@ -176,7 +166,7 @@ description: Use when implementing any feature or bugfix, before writing impleme
 - Describe the *problem* (race conditions, inconsistent behavior) not *language-specific symptoms* (setTimeout, sleep)
 - Keep triggers technology-agnostic unless the skill itself is technology-specific
 - If skill is technology-specific, make that explicit in the trigger
-- Write in third person (injected into system prompt)
+- Write in third person; how descriptions enter context depends on the harness
 - **NEVER summarize the skill's process or workflow**
 
 ```yaml
@@ -212,7 +202,7 @@ Use words Claude would search for:
 
 ### 4. Token Efficiency (Critical)
 
-**Problem:** getting-started and frequently-referenced skills load into EVERY conversation. Every token counts.
+Frequently loaded skills consume context repeatedly. Keep them focused; loading behavior depends on the harness.
 
 **Target word counts:**
 - getting-started workflows: <150 words each
@@ -237,7 +227,7 @@ When searching, dispatch subagent with template...
 [20 lines of repeated instructions]
 
 # ✅ GOOD: Reference other skill
-Always use subagents (50-100x context savings). REQUIRED: Use [other-skill-name] for workflow.
+Use [other-skill-name] for the applicable workflow.
 ```
 
 **Compress examples:**
@@ -283,9 +273,9 @@ Use skill name only, with explicit requirement markers:
 - ✅ Good: `**REQUIRED SUB-SKILL:** Use test-driven-development`
 - ✅ Good: `**REQUIRED BACKGROUND:** You MUST understand systematic-debugging`
 - ❌ Bad: `See skills/testing/test-driven-development` (unclear if required)
-- ❌ Bad: `@skills/testing/test-driven-development/SKILL.md` (force-loads, burns context)
+- Use an ordinary path or link when the reader needs an exact source.
 
-**Why no @ links:** `@` syntax force-loads files immediately, consuming 200k+ context before you need them.
+File-reference syntax and automatic loading vary by harness. Do not assume `@` references force-load content or consume a fixed amount of context.
 
 ## Flowchart Usage
 
@@ -371,26 +361,13 @@ pptx/
 ```
 When: Reference material too large for inline
 
-## The Iron Law (Same as TDD)
+## Select Verification By Risk
 
-```
-NO SKILL WITHOUT A FAILING TEST FIRST
-```
+For material instruction changes, choose representative scenarios that exercise the intended action, a relevant exception, and any authorization boundary. Use fresh agent runs when model behavior is the claim and the available tools and delegation policy permit them. A static scenario walkthrough can establish textual consistency, but is not a model evaluation.
 
-This applies to NEW skills AND EDITS to existing skills.
+For editorial edits, inspect the changed text for meaning, links, frontmatter, and applicable syntax. Do not delete existing work or require a failing agent run merely because an edit preceded verification.
 
-Write skill before testing? Delete it. Start over.
-Edit skill without testing? Same violation.
-
-**No exceptions:**
-- Not for "simple additions"
-- Not for "just adding a section"
-- Not for "documentation updates"
-- Don't keep untested changes as "reference"
-- Don't "adapt" while running tests
-- Delete means delete
-
-**REQUIRED BACKGROUND:** The `test-driven-development` skill explains why this matters. Same principles apply to documentation.
+When TDD-style skill evaluation is selected, compare baseline behavior with behavior under the revised skill and record the model, harness, inputs, and observed result. Keep claims scoped to that evidence.
 
 ## Testing All Skill Types
 
@@ -441,98 +418,15 @@ Different skill types need different test approaches:
 
 **Success criteria:** Agent finds and correctly applies reference information
 
-## Common Rationalizations for Skipping Testing
+## Repair Demonstrated Instruction Failures
 
-| Excuse | Reality |
-|--------|---------|
-| "Skill is obviously clear" | Clear to you ≠ clear to other agents. Test it. |
-| "It's just a reference" | References can have gaps, unclear sections. Test retrieval. |
-| "Testing is overkill" | Untested skills have issues. Always. 15 min testing saves hours. |
-| "I'll test if problems emerge" | Problems = agents can't use skill. Test BEFORE deploying. |
-| "Too tedious to test" | Testing is less tedious than debugging bad skill in production. |
-| "I'm confident it's good" | Overconfidence guarantees issues. Test anyway. |
-| "Academic review is enough" | Reading ≠ using. Test application scenarios. |
-| "No time to test" | Deploying untested skill wastes more time fixing it later. |
+When a scenario exposes an instruction failure, record the observed choice and the missing or conflicting rule. Add the smallest clarification that addresses it, including legitimate exceptions. Avoid escalating emphasis or adding hypothetical prohibitions without evidence.
 
-**All of these mean: Test before deploying. No exceptions.**
-
-## Bulletproofing Skills Against Rationalization
-
-Skills that enforce discipline (like TDD) need to resist rationalization. Agents are smart and will find loopholes when under pressure.
-
-**Psychology note:** Understanding WHY persuasion techniques work helps you apply them systematically. See persuasion-principles.md for research foundation (Cialdini, 2021; Meincke et al., 2025) on authority, commitment, scarcity, social proof, and unity principles.
-
-### Close Every Loophole Explicitly
-
-Don't just state the rule - forbid specific workarounds:
-
-<Bad>
-```markdown
-Write code before test? Delete it.
-```
-</Bad>
-
-<Good>
-```markdown
-Write code before test? Delete it. Start over.
-
-**No exceptions:**
-- Don't keep it as "reference"
-- Don't "adapt" it while writing tests
-- Don't look at it
-- Delete means delete
-```
-</Good>
-
-### Address "Spirit vs Letter" Arguments
-
-Add foundational principle early:
-
-```markdown
-**Violating the letter of the rules is violating the spirit of the rules.**
-```
-
-This cuts off entire class of "I'm following the spirit" rationalizations.
-
-### Build Rationalization Table
-
-Capture rationalizations from baseline testing (see Testing section below). Every excuse agents make goes in the table:
-
-```markdown
-| Excuse | Reality |
-|--------|---------|
-| "Too simple to test" | Simple code breaks. Test takes 30 seconds. |
-| "I'll test after" | Tests passing immediately prove nothing. |
-| "Tests after achieve same goals" | Tests-after = "what does this do?" Tests-first = "what should this do?" |
-```
-
-### Create Red Flags List
-
-Make it easy for agents to self-check when rationalizing:
-
-```markdown
-## Red Flags - STOP and Start Over
-
-- Code before test
-- "I already manually tested it"
-- "Tests after achieve the same purpose"
-- "It's about spirit not ritual"
-- "This is different because..."
-
-**All of these mean: Delete code. Start over with TDD.**
-```
-
-### Update CSO for Violation Symptoms
-
-Add to description: symptoms of when you're ABOUT to violate the rule:
-
-```yaml
-description: use when implementing any feature or bugfix, before writing implementation code
-```
+Confidence alone does not verify behavior. Conversely, a focused text check is appropriate for an editorial claim. Report which kind of evidence you actually gathered.
 
 ## RED-GREEN-REFACTOR for Skills
 
-Follow the TDD cycle:
+When TDD-style evaluation is selected, use this cycle:
 
 ### RED: Write Failing Test (Baseline)
 
@@ -551,7 +445,7 @@ Run same scenarios WITH skill. Agent should now comply.
 
 ### REFACTOR: Close Loopholes
 
-Agent found new rationalization? Add explicit counter. Re-test until bulletproof.
+If a selected scenario fails, clarify the demonstrated gap and rerun the affected checks. Stop at the completion criteria below.
 
 **Testing methodology:** See @testing-skills-with-subagents.md for the complete testing methodology:
 - How to write pressure scenarios
@@ -580,61 +474,17 @@ step2 [label="read file"];
 helper1, helper2, step3, pattern4
 **Why bad:** Labels should have semantic meaning
 
-## STOP: Before Moving to Next Skill
+## Completion And Deployment
 
-**After writing ANY skill, you MUST STOP and complete the deployment process.**
+Verify the selected acceptance criteria and required repository checks before reporting completion. Related skill edits may be checked together; do not create a separate todo or deployment ceremony for every checklist item.
 
-**Do NOT:**
-- Create multiple skills in batch without testing each
-- Move to next skill before current one is verified
-- Skip testing because "batching is more efficient"
+Stop when the selected checks pass and acceptance criteria are met. Reopen verification only for new changes, failures, or concrete unresolved risk, rather than seeking a "bulletproof" skill.
 
-**The deployment checklist below is MANDATORY for EACH skill.**
-
-Deploying untested skills = deploying untested code. It's a violation of quality standards.
-
-## Skill Creation Checklist (TDD Adapted)
-
-**IMPORTANT: Use TodoWrite to create todos for EACH checklist item below.**
-
-**RED Phase - Write Failing Test:**
-- [ ] Create pressure scenarios (3+ combined pressures for discipline skills)
-- [ ] Run scenarios WITHOUT skill - document baseline behavior verbatim
-- [ ] Identify patterns in rationalizations/failures
-
-**GREEN Phase - Write Minimal Skill:**
-- [ ] Name uses only letters, numbers, hyphens (no parentheses/special chars)
-- [ ] YAML frontmatter with only name and description (max 1024 chars)
-- [ ] Description starts with "Use when..." and includes specific triggers/symptoms
-- [ ] Description written in third person
-- [ ] Keywords throughout for search (errors, symptoms, tools)
-- [ ] Clear overview with core principle
-- [ ] Address specific baseline failures identified in RED
-- [ ] Code inline OR link to separate file
-- [ ] One excellent example (not multi-language)
-- [ ] Run scenarios WITH skill - verify agents now comply
-
-**REFACTOR Phase - Close Loopholes:**
-- [ ] Identify NEW rationalizations from testing
-- [ ] Add explicit counters (if discipline skill)
-- [ ] Build rationalization table from all test iterations
-- [ ] Create red flags list
-- [ ] Re-test until bulletproof
-
-**Quality Checks:**
-- [ ] Small flowchart only if decision non-obvious
-- [ ] Quick reference table
-- [ ] Common mistakes section
-- [ ] No narrative storytelling
-- [ ] Supporting files only for tools or heavy reference
-
-**Deployment:**
-- [ ] Commit skill to git and push to your fork (if configured)
-- [ ] Consider contributing back via PR (if broadly useful)
+Report changed files, evidence, and unrun checks. Commit, push, or open a pull request only with explicit user authorization covering that action; a configured remote is not authorization.
 
 ## Discovery Workflow
 
-How future Claude finds your skill:
+An illustrative discovery flow; actual loading varies by model and harness:
 
 1. **Encounters problem** ("tests are flaky")
 3. **Finds SKILL** (description matches)
@@ -646,10 +496,4 @@ How future Claude finds your skill:
 
 ## The Bottom Line
 
-**Creating skills IS TDD for process documentation.**
-
-Same Iron Law: No skill without failing test first.
-Same cycle: RED (baseline) → GREEN (write skill) → REFACTOR (close loopholes).
-Same benefits: Better quality, fewer surprises, bulletproof results.
-
-If you follow TDD for code, follow it for skills. It's the same discipline applied to documentation.
+Keep skills focused on reusable decisions. Verify material instruction changes with selected scenarios, verify editorial changes with focused text and syntax checks, and limit claims to the evidence gathered.

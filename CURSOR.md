@@ -101,6 +101,8 @@ The current npm `oc-arkive@latest` is 2.3.5 and includes Engineering Judgment. O
 
 Cursor User Rules apply to the parent Agent Chat, not Inline Edit, and Cursor does not document guaranteed propagation into every child subagent. The installed agent definitions and parent handoff packets therefore carry critical child instructions. One of those is the Prose Finish Gate: `rules/default-agent.md` runs an always-on draft, audit, fix loop on human-facing prose for the parent, each of the six agent definitions carries a short prose contract that points back to it, and the `subagent-delegation` skill requires every handoff to include that contract. Project `.cursor/rules/*.mdc` files are a separate opt-in mechanism for workspace-specific propagation; this helper does not create or install project rules automatically.
 
+The Rules' `Request And Skill Precedence` section makes explicit user intent override skill defaults within higher-priority instructions, tool permissions, and project requirements. Clear implementation requests proceed; advice-only requests remain read-only. Skill-driven pauses cite the source instruction, and verification stops after acceptance and required gates unless new evidence warrants more checks. Reprint and manually repaste Rules after updating this guidance, and reinstall the changed managed skills.
+
 ## Maintainer Sync
 
 Maintainer sync requires Git, Python 3, and a local Agent Hive checkout containing the selected ref. The scripts resolve that ref to a full commit and read committed Git objects, so dirty checkout files are ignored and no network access is required.
@@ -114,7 +116,7 @@ Engineering Judgment:
 ./scripts/cursor-assets.sh validate
 ```
 
-Shared Cursor copies of `brainstorming`, `systematic-debugging`, `test-driven-development`, and `verification` are provenance-pinned from Agent Hive with a Cursor-runtime rewrite. `agents-md-mastery` remains the Cursor-specific adaptation and is not overwritten from Hive.
+Shared Cursor copies of `brainstorming`, `systematic-debugging`, `test-driven-development`, and `verification` record their Agent Hive source pin and installed hashes. The installed copies include Cursor-runtime adaptations; `brainstorming`, `systematic-debugging`, and `verification` also carry local request-scope and verification repairs. A sync regenerates these files, so review and preserve those local repairs before accepting its diff. `agents-md-mastery` remains the Cursor-specific adaptation and is not overwritten from Hive.
 
 ```bash
 ./scripts/sync-cursor-hive-skills.py \

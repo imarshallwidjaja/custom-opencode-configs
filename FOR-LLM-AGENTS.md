@@ -73,7 +73,7 @@ Some setup facts are not user choices:
 - Windows Cursor with WSL projects should normally install into both the WSL config root and the Windows config root, for example `CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor"` from WSL.
 - If the operator asks only for Cursor assets, skip Opencode install, Opencode startup, and final Opencode verification. Stop after Cursor validation, optional install, Rules paste or paste instructions, and target-layout verification.
 - When merging into an existing `AGENTS.md`, start from the user's file and reconcile the selected profile into it instead of replacing it by default.
-- AGENTS profile selection changes operating rules, not just tool routing. Preserve the selected profile's parity-validation wording, failed-subagent retry policy, subagent final-response instructions, and resume-work guidance when merging.
+- AGENTS profile selection changes operating rules, not just tool routing. Preserve the selected profile's parity-validation wording, failed-subagent retry policy, subagent final-response instructions, resume-work guidance, and `Request And Skill Precedence` section when merging. That section keeps explicit user intent above skill defaults within higher-priority instructions and permissions, respects advice-only scope, requires source quotes for skill-driven pauses, and bounds verification after required gates. Cursor carries the same precedence guidance in its manually pasted Rules; after an update, reprint and repaste Rules and reinstall changed managed skills.
 
 To make it simple: use the repo scripts for the normal setup path, then offer the optional bundles only after the base profile is installed.
 
