@@ -495,6 +495,7 @@ source_manifests = (
             'references/html-template.md',
             'references/visual-system.md',
             'scripts',
+            'scripts/build-standalone.py',
             'scripts/deploy.sh',
             'scripts/export-pdf.sh',
             'scripts/extract-pptx.py',

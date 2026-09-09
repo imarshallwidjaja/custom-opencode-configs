@@ -1,23 +1,24 @@
 ---
 name: frontend-slides
-description: Use when building, converting, or revising HTML slide decks, presentations, briefings, or PPT/PPTX-to-web conversions; when the user asks for slides, a talk, pitch, or a reading-and-speaking briefing as a single HTML file.
+description: Use when building, converting, revising, or packaging HTML slide decks, presentations, talks, pitches, briefings, standalone deck files, or PPT/PPTX-to-web conversions.
 ---
 
 # Frontend Slides
 
-Zero-dependency HTML briefings. One file. Fixed 1920×1080 stage. Default visual world is navy / orange / cream / green with chevrons and numbered spines, without org branding unless supplied.
+Zero-dependency HTML briefings. An authored deck may include a relative `assets/` directory; package it when a standalone file is required. Fixed 1920×1080 stage. Default visual world is navy / orange / cream / green with chevrons and numbered spines, without org branding unless supplied.
 
 Follow the operators writing style and voice unless specified.
 
 ## Invariants
 
-- Single HTML file. Inline CSS and JS. No npm, no bundler.
+- One HTML file with inline CSS and JS, plus relative local assets when needed. No npm, no bundler.
 - Viewport wrapper + 1920×1080 `.deck-stage`. Uniform scale. Letterbox or pillarbox. No content reflow. No mobile breakpoints inside slides.
 - Slide switching: `.active` / `.visible` with `visibility`, `opacity`, `pointer-events`. Never `display: none` on `.slide`.
 - Authored measurements are px at 1920×1080. Do not use `vw` / `vh` / `clamp()` inside slides. Never negate a CSS function with a leading `-`; wrap `calc(-1 * ...)`.
 - `prefers-reduced-motion` is already in the base CSS. Keep it.
 - Include the full [viewport-base.css](viewport-base.css) in every deck.
-- Diagrams are HTML/CSS in the process grammar. Do not default to generated rasters or mermaid embeds.
+- Use HTML/CSS process diagrams by default; do not default to generated rasters or Mermaid embeds.
+- Supplied or generated imagery and relative local assets are permitted when they serve the deck.
 - A maintained deck is edited in place. Do not regenerate it from this skill.
 
 ## Writing
@@ -123,6 +124,14 @@ bash <skill-root>/scripts/deploy.sh <path-to-html-or-folder>
 
 Vercel. Prefer deploying a folder when assets exist beside the HTML. Confirm the live URL actually loads images.
 
+Standalone single file (offline, attachable):
+
+```bash
+python3 <skill-root>/scripts/build-standalone.py <deck.html> [-o output.html]
+```
+
+Inlines local `src` attributes and CSS `url()` references in `<style>` blocks and `style` attributes, preserving resource fragments. It does not process `srcset`, JavaScript-loaded assets, other asset attributes such as SVG `href`, or linked stylesheets other than Google Fonts. Keep deck CSS and JS inline; review unsupported and remote references before treating the result as offline-ready. It inlines Google Fonts when they are reachable; a warning means the output retains the original network font dependency. `--skip-fonts` preserves that dependency intentionally. Use it when the deck ships as a single file: email or chat attachment, offline viewing with available fonts, or handoff without an `assets/` folder.
+
 `<skill-root>` is the directory that contains this `SKILL.md`.
 
 ## Common mistakes
@@ -133,7 +142,7 @@ Vercel. Prefer deploying a folder when assets exist beside the HTML. Confirm the
 - `display: none` slide switching (later `display: flex` on `.slide-content` unhides every slide)
 - `vh` image max-height or `clamp()` type inside the stage
 - Inventing logos or putting title text under the orange slash
-- Raster diagrams as the default picture
+- Raster diagrams where the process grammar in HTML/CSS would serve
 - Shrinking type to save a slide
 - Leaving `STORE_KEY` unchanged after adding fields, so localStorage restores stale copy
 - `pip install` for extract/resize; use `uv run --with ...`
@@ -149,3 +158,4 @@ Vercel. Prefer deploying a folder when assets exist beside the HTML. Confirm the
 | [scripts/extract-pptx.py](scripts/extract-pptx.py) | PPT conversion |
 | [scripts/export-pdf.sh](scripts/export-pdf.sh) | PDF export |
 | [scripts/deploy.sh](scripts/deploy.sh) | Live URL |
+| [scripts/build-standalone.py](scripts/build-standalone.py) | Standalone single-file packaging |

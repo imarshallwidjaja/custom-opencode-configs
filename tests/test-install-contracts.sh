@@ -795,6 +795,7 @@ CURSOR_CONFIG_DIR="${td3}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}"
 [[ -f "${AGENTS_SKILLS_DIR}/writing-for-humans/references/sources.md" ]] && pass "3ae: writing-for-humans sources" || fail "3af: writing-for-humans extra file not copied"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/SKILL.md" ]] && pass "3o: frontend-slides installed" || fail "3p: frontend-slides canonical skill not installed"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/viewport-base.css" ]] && pass "3q: frontend-slides viewport-base.css" || fail "3r: frontend-slides extra file not copied"
+[[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/scripts/build-standalone.py" ]] && pass "3ao: frontend-slides build-standalone.py" || fail "3ap: frontend-slides build-standalone.py not copied"
 [[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/SKILL.md" ]] && pass "3s: drawio-skill installed" || fail "3t: drawio-skill canonical skill not installed"
 [[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/bin/run" ]] && pass "3u: drawio-skill bin/run" || fail "3v: drawio-skill extra file not copied"
 [[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/data/shape-index.json.gz" ]] && pass "3w: drawio-skill gzip index" || fail "3x: drawio-skill gzip index not copied"
@@ -2889,6 +2890,205 @@ OPENCODE_CONFIG_DIR="${td69b}" OPENCODE_AGENTS_PROFILE=personal-default bash "${
 [[ ! -e "${td69b}/skills/ivan-writing" ]] && pass "69b-c: leftover ivan-writing removed from OpenCode skills" || fail "69b-d: leftover ivan-writing remained"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "69b-e: ivan-writing installed to agents dir" || fail "69b-f: ivan-writing missing from agents dir"
 grep -Fqx 'keep-me-sentinel' "${td69b}/skills/keep-me/file.txt" && pass "69b-g: unmanaged skill preserved on personal install" || fail "69b-h: unmanaged skill removed on personal install"
+
+# ---------------------------------------------------------------------------
+# Frontend slides standalone packager
+# ---------------------------------------------------------------------------
+printf '\n=== Frontend slides standalone packager ===\n'
+packager="${BASELINE_PWD}/.apm/skills/frontend-slides/scripts/build-standalone.py"
+packager_fixture="${TMPDIR}/standalone-packager"
+mkdir -p "${packager_fixture}/deck/assets" "${packager_fixture}/outside"
+python3 - "${packager_fixture}" <<'PY'
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+deck = root / "deck"
+(deck / "pixel one.png").write_bytes(b"\x89PNG\r\nfixture")
+(deck / "shape(1).svg").write_bytes(b"<svg>quoted</svg>")
+(deck / "texture.png").write_bytes(b"unquoted whitespace")
+(deck / "assets" / "nested.png").write_bytes(b"nested relative path")
+(root / "outside" / "secret.bin").write_bytes(b"OUTSIDE_SECRET_BYTES")
+(deck / "source.html").write_text(
+    """<!doctype html>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter">
+<script>const FILE_NAME = "source.html";</script>
+<img src = "pixel%20one.png">
+<img src="assets/nested.png">
+<img src="HTTPS://example.test/remote.png">
+<style>
+.quoted { background: url("shape(1).svg"); }
+.unquoted { background: url( texture.png ); }
+.remote { background: url(HTTP://example.test/remote.svg); }
+</style>
+""",
+    encoding="utf-8",
+)
+PY
+
+packaged_output="${packager_fixture}/deck/packed-'slash\\name.html"
+if python3 "${packager}" "${packager_fixture}/deck/source.html" -o "${packaged_output}" --skip-fonts >"${packager_fixture}/success.out" 2>"${packager_fixture}/success.err"; then
+  pass "standalone packager handles supported local URL syntax"
+else
+  fail "standalone packager rejected supported local URL syntax: $(cat "${packager_fixture}/success.err")"
+fi
+if python3 - "${packaged_output}" <<'PY'
+import json
+import re
+import sys
+from pathlib import Path
+
+html = Path(sys.argv[1]).read_text(encoding="utf-8")
+assert len(re.findall(r"data:[^;]+;base64,", html)) == 4
+assert "pixel%20one.png" not in html
+assert "assets/nested.png" not in html
+assert "shape(1).svg" not in html
+assert "texture.png" not in html
+assert "HTTPS://example.test/remote.png" in html
+assert "HTTP://example.test/remote.svg" in html
+assert "https://fonts.googleapis.com/css2?family=Inter" in html
+match = re.search(r"const\s+FILE_NAME\s*=\s*(\"(?:\\.|[^\"\\])*\")\s*;", html)
+assert match
+assert json.loads(match.group(1)) == Path(sys.argv[1]).name
+PY
+then
+  pass "standalone output inlines locals and preserves remote URLs safely"
+else
+  fail "standalone output content or FILE_NAME was incorrect"
+fi
+
+repacked_output="${packager_fixture}/deck/repacked.html"
+if python3 "${packager}" "${packaged_output}" -o "${repacked_output}" --skip-fonts >"${packager_fixture}/repack.out" 2>"${packager_fixture}/repack.err" &&
+   python3 - "${repacked_output}" <<'PY'
+import sys
+from pathlib import Path
+
+html = Path(sys.argv[1]).read_text(encoding="utf-8")
+assert "pixel%20one.png" not in html
+assert "assets/nested.png" not in html
+assert "shape(1).svg" not in html
+assert "texture.png" not in html
+assert html.count(";base64,") == 4
+PY
+then
+  pass "standalone output repackages idempotently"
+else
+  fail "standalone output did not repackage idempotently: $(cat "${packager_fixture}/repack.err")"
+fi
+
+collision_source="${packager_fixture}/deck/collision.html"
+cp "${packager_fixture}/deck/source.html" "${collision_source}"
+collision_before="$(sha256sum "${collision_source}")"
+if ! python3 "${packager}" "${collision_source}" -o "${collision_source}" --skip-fonts >"${packager_fixture}/collision.out" 2>"${packager_fixture}/collision.err" &&
+   [[ "${collision_before}" == "$(sha256sum "${collision_source}")" ]]; then
+  pass "standalone source-output collision preserves source"
+else
+  fail "standalone source-output collision did not fail safely"
+fi
+
+missing_source="${packager_fixture}/deck/missing.html"
+missing_output="${packager_fixture}/deck/missing-output.html"
+printf '<img src="missing.png">\n' > "${missing_source}"
+if ! python3 "${packager}" "${missing_source}" -o "${missing_output}" --skip-fonts >"${packager_fixture}/missing.out" 2>"${packager_fixture}/missing.err" &&
+   [[ ! -e "${missing_output}" ]]; then
+  pass "standalone missing local asset produces no output"
+else
+  fail "standalone missing local asset did not fail safely"
+fi
+
+outside_secret="${packager_fixture}/outside/secret.bin"
+ln -s "${outside_secret}" "${packager_fixture}/deck/secret-link.bin"
+absolute_encoded="$(python3 - "${outside_secret}" <<'PY'
+import sys
+from urllib.parse import quote
+
+print(quote(sys.argv[1], safe=""))
+PY
+)"
+escape_labels=("plain traversal" "encoded traversal" "encoded absolute path" "symlink escape")
+escape_refs=("../outside/secret.bin" "%2e%2e/outside/secret.bin" "${absolute_encoded}" "secret-link.bin")
+for escape_index in "${!escape_refs[@]}"; do
+  escape_slug="${escape_index}"
+  escape_source="${packager_fixture}/deck/escape-${escape_slug}.html"
+  escape_output="${packager_fixture}/deck/escape-${escape_slug}-output.html"
+  printf '<img src="%s">\n' "${escape_refs[${escape_index}]}" > "${escape_source}"
+  if ! python3 "${packager}" "${escape_source}" -o "${escape_output}" --skip-fonts >"${packager_fixture}/escape-${escape_slug}.out" 2>"${packager_fixture}/escape-${escape_slug}.err" &&
+     [[ ! -e "${escape_output}" ]] &&
+     ! grep -q 'T1VUU0lERV9TRUNSRVRfQllURVM=' "${packager_fixture}/escape-${escape_slug}.err"; then
+    pass "standalone rejects ${escape_labels[${escape_index}]}"
+  else
+    fail "standalone did not safely reject ${escape_labels[${escape_index}]}"
+  fi
+done
+
+if python3 -B - "${packager}" "${packager_fixture}/deck" <<'PY'
+import contextlib
+import io
+import runpy
+import sys
+from pathlib import Path
+from unittest.mock import patch
+from urllib.error import URLError
+
+module = runpy.run_path(sys.argv[1])
+local = module['inline_local_assets']
+fonts = module['inline_google_fonts']
+untouched = '''<!-- <img src="missing.png"> -->
+<img data-src="missing.png" title='src="missing.png"'>
+<script>const template = '<img src="missing.png">'; const css = 'url(missing.png)';</script>
+<style>/* url(missing.png) */ .text::after { content: "url(missing.png)"; }</style>'''
+assert local(untouched, Path(sys.argv[2])) == (untouched, 0, [])
+html, count, missing = local(
+    '<IMG SRC = "shape(1).svg#symbol"><div STYLE="background: url(texture.png)"></div>',
+    Path(sys.argv[2]),
+)
+assert count == 2 and not missing
+assert ';base64,' in html and '#symbol"' in html
+assert 'texture.png' not in html
+
+for separator in ('\u2028', '\f'):
+    source = f'<p>one{separator}two</p>\n<img src="texture.png">'
+    html, count, missing = local(source, Path(sys.argv[2]))
+    data_uri = module['file_to_data_uri'](Path(sys.argv[2]) / 'texture.png')
+    assert html == source.replace('src="texture.png"', f'src="{data_uri}"')
+    assert count == 1 and not missing
+
+stylesheet = 'https://fonts.googleapis.com/css2?family=Test&display=swap'
+font = 'https://fonts.gstatic.com/test.woff2'
+css = '@font-face { src: url(' + font + '); }'
+link = '<LINK REL="stylesheet" HREF = "' + stylesheet.replace('&', '&amp;') + '">'
+preconnect = '<link rel="preconnect" href="https://fonts.gstatic.com">'
+script = '<script>const tag = ' + repr(link) + ';</script>'
+source = preconnect + link + script
+calls = []
+def fetch(url):
+    calls.append(url)
+    return {stylesheet: css.encode(), font: b'font fixture'}[url]
+
+with patch.dict(fonts.__globals__, fetch_url=fetch):
+    result, count = fonts(source)
+assert count == 1 and calls == [stylesheet, font]
+assert 'data:font/woff2;base64,' in result
+assert preconnect not in result and script in result
+
+for failed_url in (stylesheet, font):
+    def fail_fetch(url):
+        if url == failed_url:
+            raise URLError('deterministic fixture failure')
+        return fetch(url)
+    warning = io.StringIO()
+    with patch.dict(fonts.__globals__, fetch_url=fail_fetch), contextlib.redirect_stderr(warning):
+        result, count = fonts(source)
+    assert result == source and count == 0
+    assert 'Warning:' in warning.getvalue() and 'keeping original font link' in warning.getvalue()
+print('Markup contexts, fragments, font success and both failure paths passed')
+PY
+then
+  pass "standalone markup boundaries, fragments and mocked font outcomes"
+else
+  fail "standalone markup boundaries, fragments or mocked font outcomes"
+fi
 
 # ---------------------------------------------------------------------------
 # Summary

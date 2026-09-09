@@ -1,6 +1,6 @@
 # HTML runtime
 
-Single file. Inline CSS and JS. No npm, no build.
+One HTML file with inline CSS and JS, plus relative local assets when needed. No npm, no build.
 
 Include in the `<style>` block, in order:
 
@@ -314,4 +314,4 @@ Relative paths. Same directory or `assets/`. If an image is over ~1MB, resize wi
 uv run --with pillow python -c "from PIL import Image; im=Image.open('in.png'); im.thumbnail((1200,1200)); im.save('out.png')"
 ```
 
-Never overwrite originals.
+Never overwrite originals. When a single-file deliverable is needed, `scripts/build-standalone.py` inlines local `src` attributes and CSS `url()` references in `<style>` blocks and `style` attributes as data URIs, preserving resource fragments. It does not process `srcset`, JavaScript-loaded assets, SVG `href`, or linked stylesheets other than Google Fonts. Keep CSS and JS inline and review unsupported or remote references before claiming offline support. It inlines Google Fonts when reachable; a warning means the original font link remains and the output still depends on the network. `--skip-fonts` preserves that dependency intentionally.
