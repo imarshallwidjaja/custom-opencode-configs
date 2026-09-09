@@ -1663,7 +1663,7 @@ fi
 build_fixture
 
 # ---------------------------------------------------------------------------
-# 65. Repository payloads are OpenAI gpt-5.6 luna/sol only
+# 65. Repository payloads use the portable Luna/Sol/Astra Hive policy
 # ---------------------------------------------------------------------------
 printf '\n=== 65. Repository OpenAI-only payload contracts ===\n'
 if python3 - "${BASELINE_PWD}" <<'PY'
@@ -1694,7 +1694,7 @@ except json.JSONDecodeError as exc:
     print(f"invalid JSON: {exc}")
     raise SystemExit(1)
 
-allowed_models = {"openai/gpt-5.6-luna", "openai/gpt-5.6-sol"}
+allowed_models = {"openai/gpt-5.6-luna", "openai/gpt-5.6-sol", "openai/gpt-6-astra"}
 blocked_substrings = ("opencode-go/", "magic-compact", "opencode-go-multi-auth")
 for path, value in walk(hive):
     if not isinstance(value, str):
@@ -1721,8 +1721,6 @@ if "opencode-gpt-imagegen" not in plugin:
 required_custom = {
     "documentation-reviewer",
     "adversarial-documentation-reviewer",
-    "scout-researcher-capable",
-    "scout-researcher-code",
     "ui-reviewer",
 }
 custom = hive.get("customAgents") or {}
@@ -1762,40 +1760,78 @@ for group_name in ("design", "ui"):
     if "code-reviewer-ui" in members:
         errors.append(f"council.groups.{group_name} still references code-reviewer-ui")
 
-summarizer = hive.get("taskTraceSummarizer") or {}
-if summarizer.get("model") not in allowed_models:
-    errors.append(f"taskTraceSummarizer.model={summarizer.get('model')}")
-
+agents = hive.get("agents") or {}
 exact_seats = {
+    "forager-smart": ("openai/gpt-6-astra", "medium"),
     "forager-capable": ("openai/gpt-5.6-sol", "high"),
-    "forager-documents": ("openai/gpt-5.6-sol", "high"),
-    "forager-fast": ("openai/gpt-5.6-luna", "xhigh"),
-    "forager-ui": ("openai/gpt-5.6-sol", "max"),
-    "adversarial-plan-reviewer": ("openai/gpt-5.6-sol", "max"),
-    "adversarial-documentation-reviewer": ("openai/gpt-5.6-sol", "max"),
-    "adversarial-code-reviewer": ("openai/gpt-5.6-sol", "max"),
-    "adversarial-simplicity-reviewer": ("openai/gpt-5.6-sol", "max"),
-    "adversarial-approach-advisor": ("openai/gpt-5.6-sol", "max"),
-    "ui-design-advisor": ("openai/gpt-5.6-sol", "max"),
-    "scout-researcher-capable": ("openai/gpt-5.6-luna", "xhigh"),
-    "scout-researcher-code": ("openai/gpt-5.6-sol", "max"),
+    "forager-documents": ("openai/gpt-5.6-luna", "high"),
+    "forager-fast": ("openai/gpt-5.6-luna", "high"),
+    "forager-ui": ("openai/gpt-5.6-sol", "high"),
+    "adversarial-plan-reviewer": ("openai/gpt-5.6-sol", "high"),
+    "adversarial-documentation-reviewer": ("openai/gpt-5.6-luna", "high"),
+    "adversarial-code-reviewer": ("openai/gpt-5.6-sol", "high"),
+    "adversarial-simplicity-reviewer": ("openai/gpt-5.6-sol", "high"),
+    "adversarial-approach-advisor": ("openai/gpt-5.6-sol", "high"),
+    "ui-design-advisor": ("openai/gpt-5.6-sol", "high"),
+    "approach-advisor-xhigh-reasoning": ("openai/gpt-6-astra", "xhigh"),
+    "ui-reviewer": ("openai/gpt-6-astra", "low"),
+    "documentation-reviewer": ("openai/gpt-6-astra", "low"),
+    "hive-master": ("openai/gpt-5.6-sol", "high"),
+    "architect-planner": ("openai/gpt-6-astra", "high"),
+    "swarm-orchestrator": ("openai/gpt-6-astra", "medium"),
+    "scout-researcher": ("openai/gpt-5.6-luna", "high"),
     "forager-worker": ("openai/gpt-5.6-sol", "medium"),
-    "hive-helper": ("openai/gpt-5.6-sol", "max"),
-    "ui-reviewer": ("openai/gpt-5.6-sol", "xhigh"),
-    "vulnerability-reviewer": ("openai/gpt-5.6-sol", "max"),
+    "hive-helper": ("openai/gpt-5.6-luna", "medium"),
+    "plan-reviewer": ("openai/gpt-5.6-sol", "medium"),
+    "code-reviewer": ("openai/gpt-6-astra", "medium"),
+    "simplicity-reviewer": ("openai/gpt-6-astra", "low"),
+    "approach-advisor": ("openai/gpt-5.6-sol", "high"),
+    "vulnerability-reviewer": ("openai/gpt-6-astra", "high"),
+    "hive-builder": ("openai/gpt-6-astra", "medium"),
+    "taskTraceSummarizer": ("openai/gpt-5.6-luna", "medium"),
 }
+seats = {**agents, **custom, "taskTraceSummarizer": hive.get("taskTraceSummarizer") or {}}
+if set(seats) != set(exact_seats):
+    errors.append(f"unexpected role set: {sorted(set(seats) ^ set(exact_seats))}")
 for name, expected in exact_seats.items():
-    entry = custom.get(name) or (hive.get("agents") or {}).get(name) or {}
+    entry = seats.get(name) or {}
     actual = (entry.get("model"), entry.get("variant"))
     if actual != expected:
         errors.append(f"{name} model/variant={actual!r}, expected {expected!r}")
+for name, entry in custom.items():
+    if entry.get("baseAgent") not in agents:
+        errors.append(f"{name} has unsupported baseAgent {entry.get('baseAgent')!r}")
+for name, group in groups.items():
+    unknown = set(group.get("members") or []) - (set(agents) | set(custom))
+    if unknown:
+        errors.append(f"council.groups.{name} references unknown roles: {sorted(unknown)}")
 
-agents = hive.get("agents") or {}
-if (agents.get("forager-worker") or {}).get("autoLoadSkills") != ["verification"]:
-    errors.append("forager-worker must autoload canonical verification")
-builder_skills = (agents.get("hive-builder") or {}).get("autoLoadSkills") or []
-if not builder_skills or builder_skills[0] != "verification":
-    errors.append(f"hive-builder autoLoadSkills={builder_skills!r} must start with canonical verification")
+orchestration_skills = {
+    "hive-master": ["parallel-exploration"],
+    "architect-planner": ["brainstorming", "writing-plans", "parallel-exploration", "dispatching-parallel-agents", "background-delegation"],
+    "swarm-orchestrator": ["dispatching-parallel-agents", "parallel-exploration", "background-delegation", "executing-plans"],
+    "hive-builder": ["parallel-exploration", "dispatching-parallel-agents", "background-delegation"],
+    "scout-researcher": ["cymbal", "ast-grep", "context-mode"],
+    "forager-worker": ["verification"],
+}
+for name, expected in orchestration_skills.items():
+    if (agents.get(name) or {}).get("autoLoadSkills") != expected:
+        errors.append(f"{name} must autoload {expected!r}")
+for name, entry in custom.items():
+    if name.startswith("adversarial-"):
+        if "adversarial-review" not in (entry.get("autoLoadSkills") or []):
+            errors.append(f"{name} must autoload adversarial-review")
+        if "in addition to" not in entry.get("description", "") or "do not replace" not in entry.get("description", ""):
+            errors.append(f"{name} must supplement the first review pass")
+if "after every behavior-changing implementation" not in (custom.get("adversarial-code-reviewer") or {}).get("description", ""):
+    errors.append("adversarial code review must cover every behavior-changing implementation")
+for name, phrases in {
+    "forager-smart": ("Escalation-only", "failed, stalled", "Hard but already-defined work goes to forager-capable"),
+    "forager-capable": ("Pick this up front", "not a retry after failure"),
+    "scout-researcher": ("Sole research agent", "multi-hop", "parallel dispatches"),
+}.items():
+    if any(phrase not in (seats.get(name) or {}).get("description", "") for phrase in phrases):
+        errors.append(f"{name} is missing its dispatch boundary")
 
 for path, value in walk(hive):
     if value == "verification-before-completion":
@@ -1806,7 +1842,7 @@ for path, value in walk(hive):
 ui_skills = {
     "forager-ui": ("web-design-guidelines", "stop-design-slop"),
     "ui-reviewer": ("web-design-guidelines", "stop-design-slop"),
-    "ui-design-advisor": ("web-design-guidelines", "stop-design-slop"),
+    "ui-design-advisor": ("stop-design-slop", "web-design-guidelines"),
 }
 for name, expected in ui_skills.items():
     skills = tuple((custom.get(name) or {}).get("autoLoadSkills") or [])
@@ -1831,9 +1867,9 @@ if errors:
 print("ok")
 PY
 then
-  pass "65a: base payloads are OpenAI gpt-5.6 luna/sol with required Hive seats"
+  pass "65a: base payloads enforce portable Luna/Sol/Astra Hive roles and efforts"
 else
-  fail "65b: base payloads are OpenAI gpt-5.6 luna/sol with required Hive seats"
+  fail "65b: base payloads enforce portable Luna/Sol/Astra Hive roles and efforts"
 fi
 
 # ---------------------------------------------------------------------------

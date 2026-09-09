@@ -26,7 +26,7 @@ Base setup requires:
 - `git`
 - `curl`
 - `opencode`
-- OpenAI access for the non-fast `openai/gpt-5.6-sol` and `openai/gpt-5.6-luna` models used by the default `agent_hive.json` and the base `opencode.json` `explore` / `compaction` overrides
+- OpenAI access for the non-fast `openai/gpt-5.6-luna`, `openai/gpt-5.6-sol`, and `openai/gpt-6-astra` models used by the default `agent_hive.json`; the base `opencode.json` `explore` / `compaction` overrides use Luna
 - OpenAI auth also covers the base `opencode-gpt-imagegen` plugin when you want image generation tools
 - `railway` CLI plus Railway auth when you want the packaged `use-railway` skill to operate Railway infrastructure
 - `uv` plus the draw.io desktop CLI when you want the packaged `drawio-skill` to generate or export diagrams; Graphviz (`dot`) is optional for auto-layout
@@ -177,9 +177,17 @@ The two `*-context-improved` profiles require `jq`, `uvx`, and `CONTEXT7_API_KEY
 
 ### Agent Hive config
 
-The installer copies `profiles/base/agent_hive.json`. It is the sole canonical Hive config and uses only ChatGPT OAuth models a normal OpenAI login can see: non-fast `openai/gpt-5.6-sol` and `openai/gpt-5.6-luna`. Fast variants, `gpt-5.6-terra`, `opencode-go/*`, and personal `xai/*` models are not part of this profile. The target Opencode environment must resolve those two OpenAI models. The installer does not add provider credentials, local proxy plugins, or provider shims to `opencode.json`.
+The installer copies `profiles/base/agent_hive.json`, the sole canonical Hive config. It uses only non-fast `openai/gpt-5.6-luna`, `openai/gpt-5.6-sol`, and `openai/gpt-6-astra`. Confirm the target environment resolves all three with `opencode models openai --verbose`; model listing does not prove inference access. The installer adds no credentials, local proxies, or provider shims. Personal `ivan-writing` and `impeccable` skill auto-loads stay out of the portable Hive config.
 
-Sol is the default for planning, orchestration, review, UI, implementation, and other high-capability seats. Luna is reserved for scout, recovery, and explicitly fast mechanical work. Current routing uses Sol `medium` for `forager-worker`, Sol `high` for `forager-capable`, Luna `xhigh` for `forager-fast`, and Luna `xhigh` for `scout-researcher-capable`. Remapped seats preserve the live variant when Sol or Luna supports it: `forager-documents` remains Sol `high`, while `forager-ui`, `adversarial-plan-reviewer`, `adversarial-documentation-reviewer`, `adversarial-code-reviewer`, `adversarial-simplicity-reviewer`, `adversarial-approach-advisor`, `ui-design-advisor`, `scout-researcher-code`, `hive-helper`, and `vulnerability-reviewer` use Sol `max`. Other native OpenAI seats retain their intentional `high`, `xhigh`, or `max` effort. That split follows current [Artificial Analysis Intelligence Index](https://artificialanalysis.ai/#intelligence) and [DeepSWE](https://deepswe.datacurve.ai/) results.
+Routing uses cost-conscious effort defaults:
+
+- Luna `high`: the sole `scout-researcher`, mechanical `forager-fast`, `forager-documents`, and `adversarial-documentation-reviewer`. Luna `medium`: `hive-helper` and the task-trace summarizer. The `forager-fast` role name does not select a fast model ID.
+- Sol `medium`: ordinary `forager-worker` and `plan-reviewer`. Sol `high`: `hive-master`, `forager-capable`, `forager-ui`, `approach-advisor`, `ui-design-advisor`, and the adversarial plan, code, simplicity, and approach reviewers.
+- Astra `medium`: `forager-smart`, `swarm-orchestrator`, `code-reviewer`, and `hive-builder`. Astra `high`: `architect-planner` and `vulnerability-reviewer`. Astra `low`: UI, documentation, and simplicity first-pass reviewers. Astra `xhigh`: the boundary-changing `approach-advisor-xhigh-reasoning` seat.
+
+`forager-worker` owns ordinary defined work even across subsystems; choose `forager-capable` up front for hard defined work. Reserve `forager-smart` for failed, stalled, incomplete, or substantially unspecified work when no closer specialist fits. Research is consolidated into `scout-researcher`; plan and code review each have one first-pass role. Adversarial review supplements that first pass, including after every behavior-changing implementation. The planner, swarm, and builder load `background-delegation` alongside their orchestration skills; only the ordinary worker explicitly auto-loads `verification`.
+
+These defaults are a heuristic, not an experimentally optimal routing policy. The September 3, 2026 [DeepSWE](https://deepswe.datacurve.ai/) results supplied for this choice report Astra `xhigh` at 74 +/- 3% and $6.52, Sol `max` at 73 +/- 3% and $6.46, and Luna `max` at 67 +/- 4% and $0.61. Their confidence intervals overlap, and those runs do not establish performance at the lower efforts used here. Output tokens and steps are not wall-clock latency. Validate changes against representative repository tasks and mergeability criteria such as correctness, tests, scope, and style, as used by [FrontierCode](https://cognition.com/frontiercode), before promoting a default.
 
 ## VS Code companion extension
 
