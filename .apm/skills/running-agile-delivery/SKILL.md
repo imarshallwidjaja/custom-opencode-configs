@@ -1,15 +1,15 @@
 ---
 name: running-agile-delivery
-description: Use when running agile delivery with humans and agents, covering cadence, governance, and improvement. Includes human and agent role boundaries, backlog discipline and label taxonomy, prioritisation against the dependency graph, wave execution rules, review gates with terminal finding dispositions, retrospectives that audit prompts and specs, and a trimmed measurement core of spec quality, decomposition effectiveness, and governance health. Applies to sprint or wave cadence, backlog grooming, review process, retrospectives, delivery metrics, agent autonomy decisions, and process improvement.
+description: Use when the user or project explicitly adopts this agile delivery method for product delivery cadence, backlog governance, wave review gates, retrospectives, and delivery measurement. Also use for explicit requests to explain or assess the method without activating it. Ordinary local implementation plans, debugging, code review, and ad-hoc subagent handoffs do not trigger this skill; Jira use or backlog drafting alone does not adopt its governance.
 ---
 
 # Running Agile Delivery
 
-Decomposition (decomposing-work) and specification (writing-work-items) set up the work. This skill covers running it: who does what, how the backlog stays honest, how waves execute, how review gates govern quality, and how the system improves itself.
-
 ## Applicability
 
-Apply this governance only when the user or project has explicitly adopted it for the work. Reading it for advice or reference does not activate backlog items, waves, or human review gates for an otherwise ad-hoc task.
+Apply this governance only when the user or project has explicitly adopted it for the product delivery work. An explicit request to explain or assess the method permits advice, not activation. Jira use, backlog drafting, ordinary local implementation plans, debugging, code review, and ad-hoc subagent handoffs do not by themselves activate backlog items, waves, or human review gates.
+
+This skill covers delivery roles, backlog discipline, wave execution, review gates, and improvement. Load `decomposing-work` when designing the backlog breakdown and `writing-work-items` when authoring or reviewing its items; neither is a prerequisite for every cadence or reporting task.
 
 ## Roles
 
@@ -95,6 +95,8 @@ Cadence: count conflicts and first-pass acceptance per wave; assess trends per m
 
 ## Related Skills
 
-- decomposing-work: producing the dependency graph, waves, and ownership boundaries this cadence executes.
-- writing-work-items: authoring the specs that gates verify against and retrospectives audit.
-- Vendor implementation (boards, backlog tooling, automation) lives in the working-with-atlassian, managing-work-in-jira, and connecting-atlassian-tools skills.
+Load companions only when their task is in scope:
+
+- `decomposing-work`: producing or revising the product backlog dependency graph, waves, and ownership boundaries.
+- `writing-work-items`: authoring or reviewing the backlog specs that gates verify against and retrospectives audit.
+- `working-with-atlassian`: required foundation only when using Atlassian tools. Add `managing-work-in-jira` for Jira operations or `connecting-atlassian-tools` for cross-product, JPD, or Teamwork Graph work. This cadence does not require an Atlassian tracker.

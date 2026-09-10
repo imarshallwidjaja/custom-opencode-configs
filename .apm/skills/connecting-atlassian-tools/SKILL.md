@@ -1,13 +1,24 @@
 ---
 name: connecting-atlassian-tools
-description: Run cross-product workflows across Confluence, Jira, and Jira Product Discovery through the Atlassian MCP tools. Covers routing searches through Rovo cross-product search before targeted JQL or CQL, turning Confluence specs into Jira backlogs, publishing status reports back to Confluence, page-to-issue traceability, Jira Product Discovery idea intake, insights, and promotion to delivery work via discover and the execute-family, and Teamwork Graph relationship queries. Use when work spans more than one Atlassian product, when searching company knowledge without knowing the source system, when connecting specs or reports between Confluence and Jira, or when managing product discovery ideas and insights.
+description: Connect Confluence, Jira, and Jira Product Discovery through Atlassian MCP workflows, cross-product search, spec-to-backlog flows, reporting, traceability, idea intake, and Teamwork Graph queries. Use when work spans Atlassian products, searches knowledge known to be in Atlassian with the source product unresolved, or targets Jira Product Discovery or Teamwork Graph. Generic company-knowledge searches, product ideas, and local coding tasks do not trigger this skill without Atlassian context.
 ---
 
 # Connecting Atlassian Tools
 
-Cross-product workflows across Confluence, Jira, and Jira Product Discovery
-(JPD). Follow the tool model and safety policy in `working-with-atlassian`;
-Jira delivery mechanics live in `managing-work-in-jira`.
+## Applicability
+
+Use for workflows across Atlassian products, knowledge searches within a known
+Atlassian context whose source product is unresolved, Jira Product Discovery
+(JPD), or Teamwork Graph questions. Generic company-knowledge searches, product
+ideas, local implementation plans, debugging, code review, and ad-hoc subagent
+handoffs do not qualify without an Atlassian target.
+
+`working-with-atlassian` is the prerequisite for tool use and safety. Load
+`managing-work-in-jira` only for Jira operations, `decomposing-work` when designing
+a product backlog breakdown, and `writing-work-items` when drafting or reviewing
+its items. Cross-product search and reporting do not require those authoring
+methods. `running-agile-delivery` requires its own explicit adoption before its
+governance applies; a cross-product workflow does not activate it.
 
 ## Search Routing
 

@@ -1,9 +1,13 @@
 ---
 name: writing-work-items
-description: Use when authoring epics, stories, or subtasks for human or agent execution. Covers the epic-story-subtask hierarchy, story anatomy (outcome summary, context, scope, testable acceptance criteria, negative constraints, dependencies, ownership, sizing), Given/When/Then behavioural criteria, Definition of Done checklists, INVEST quality checks, and T-shirt sizing. Applies to writing user stories, drafting acceptance criteria, specifying tasks for agents, defining scope boundaries, breaking stories into subtasks, and reviewing work item quality.
+description: Use when authoring or reviewing product backlog epics, user stories, and subtasks, including drafts before tracker publication, or when the user explicitly requests this authoring method. Covers scope, acceptance criteria, ownership, and sizing. Generic acceptance criteria, local implementation plans, debugging, code review, and ad-hoc subagent handoffs do not trigger this skill.
 ---
 
 # Writing Work Items
+
+## Applicability
+
+Use this method to draft or review product backlog epics, stories, and subtasks, including drafts before tracker publication, or when the user explicitly requests the method. Writing acceptance criteria for local implementation, debugging, code review, or an ad-hoc subagent handoff does not qualify by itself. Do not impose a backlog hierarchy, sizing, or waves on those tasks.
 
 The spec is the program. When an agent or a teammate executes a work item, output quality is bounded by specification quality: vague items produce vague output, and a precise item lets the executor run to completion and self-verify without asking questions. Treat every work item as a contract, not a reminder.
 
@@ -119,6 +123,8 @@ Skeleton templates for epic, story, and subtask, plus filled examples: [referenc
 
 ## Related Skills
 
-- decomposing-work: deciding which items to create, mapping dependencies, and grouping into waves.
-- running-agile-delivery: backlog discipline, wave execution, review gates, and retrospectives that audit these items as artefacts.
-- Vendor implementation (creating items in a tracker, linking hierarchy) lives in the working-with-atlassian, managing-work-in-jira, and connecting-atlassian-tools skills.
+Load companions only when their task is in scope:
+
+- `decomposing-work`: deciding which product backlog items to create and how they depend on one another; unnecessary for an already bounded item.
+- `running-agile-delivery`: explaining or assessing its method, or applying its governance after explicit user or project adoption. Authoring an item does not adopt that governance.
+- `working-with-atlassian`: required foundation only when using Atlassian tools. Add `managing-work-in-jira` for Jira operations or `connecting-atlassian-tools` for cross-product, JPD, or Teamwork Graph work. Drafting an item does not require a tracker.

@@ -1,9 +1,13 @@
 ---
 name: decomposing-work
-description: Use when breaking an epic, feature, or large request into parallel-safe work items. Covers identifying independent components, mapping the dependency graph before creating items, assigning exclusive ownership boundaries, grouping items into waves separated by review gates, and freezing interface contracts so dependent items can run in parallel. Applies to decomposition, splitting work, breaking down epics, planning parallel execution for humans and agents, sequencing dependencies, and diagnosing coordination breakdown or over-decomposition.
+description: Use when decomposing product delivery epics or backlog initiatives into work items, including drafts before tracker publication, or when the user explicitly requests this decomposition method. Covers dependencies, ownership boundaries, and execution waves. Ordinary local implementation plans, debugging, code review, and ad-hoc subagent handoffs do not trigger this skill.
 ---
 
 # Decomposing Work
+
+## Applicability
+
+Use this method when the requested output is a product delivery backlog breakdown, including a draft before Jira or any other tracker is chosen, or when the user explicitly requests the method. A large local implementation request, debugging task, code review, or ad-hoc subagent handoff does not qualify by itself. Do not turn those tasks into backlog items or execution waves without that scope.
 
 Teams of humans and agents rarely fail because a single contributor lacked capability. They fail because parallel contributors collided: two items edited the same artefact, an unstated dependency stalled a batch, or an ambiguous boundary let scope drift between items. The specification is the primary control surface, and decomposition is the primary coordination mechanism. Get the decomposition right and most coordination problems never occur.
 
@@ -90,6 +94,8 @@ The shape to remember: one foundation story alone in wave 1, two parallel pairs 
 
 ## Related Skills
 
-- writing-work-items: authoring the items this decomposition produces, including ownership, acceptance criteria, and negative constraints.
-- running-agile-delivery: executing waves, running review gates, retrospectives, and measurement.
-- Vendor implementation (tracker setup, item creation, linking) lives in the working-with-atlassian, managing-work-in-jira, and connecting-atlassian-tools skills.
+Load companions only when their task is in scope:
+
+- `writing-work-items`: authoring or reviewing the product backlog items this decomposition produces.
+- `running-agile-delivery`: explaining or assessing its method, or executing its cadence after explicit user or project adoption.
+- `working-with-atlassian`: required foundation only when using Atlassian tools. Add `managing-work-in-jira` for Jira operations or `connecting-atlassian-tools` for cross-product, JPD, or Teamwork Graph work. A backlog draft needs none of these vendor skills.

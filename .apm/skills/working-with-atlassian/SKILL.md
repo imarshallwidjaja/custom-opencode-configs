@@ -1,13 +1,33 @@
 ---
 name: working-with-atlassian
-description: Operate the Atlassian MCP tools safely and efficiently across Jira, Confluence, and the wider Atlassian platform. Teaches the three-layer tool model (primary tools, discover, execute-family by risk tier), cloudId bootstrap and pinning, response slimming, custom field behaviour, JQL essentials, and the suite-wide safety policy of read-before-write, propose-approve-execute, and destructive gates. Use whenever a task touches Jira issues, tickets, epics, sprints, backlogs, JQL queries, Confluence pages, Atlassian search, or any Atlassian MCP tool call, including setup questions like resolving cloudId or finding the right operation.
+description: Operate Atlassian MCP tools with tool discovery, cloudId setup, bounded queries, and read-before-write, approval, and destructive-action safety. Use for tasks involving actual Jira, Confluence, Jira Product Discovery, Atlassian search, or Atlassian MCP context, including setup questions. Generic tickets, epics, backlogs, company knowledge, and local coding tasks do not trigger this skill without an Atlassian target. Load task-specific companion skills only as needed.
 ---
 
 # Working With Atlassian
 
-Foundation skill for the Atlassian MCP tools. `managing-work-in-jira` and
-`connecting-atlassian-tools` build on the rules here; read this first when any
-Atlassian work is in scope.
+## Applicability
+
+Use this foundation when the task involves an actual Atlassian target or
+Atlassian MCP setup or operations. The target may come from the request or
+established project context. Generic tickets, epics, backlogs, company-knowledge
+searches, and local implementation, debugging, review, or subagent handoffs do
+not qualify without that context. An incidental Atlassian reference does not
+authorize extra tracker work.
+
+## Conditional Skill Routing
+
+Read this foundation before using Atlassian MCP tools. Load only the companion
+skills needed for the requested task; this is not an all-six loading sequence.
+
+- `managing-work-in-jira`: Jira issue operations, backlog creation, triage, or sprint and board reporting.
+- `connecting-atlassian-tools`: cross-product workflows or search, Jira Product Discovery, or Teamwork Graph questions.
+- `decomposing-work`: designing a product backlog breakdown; no Atlassian tools are required for a draft.
+- `writing-work-items`: authoring or reviewing product backlog items; no Atlassian tools are required for a draft.
+- `running-agile-delivery`: explicit requests to explain or assess its method, or product delivery work where the user or project has explicitly adopted its governance.
+
+A single Confluence read can use this foundation alone. Jira operations do not
+require delivery methodology skills unless their separate applicability gates
+are met.
 
 The MCP server handles all transport, authentication, and payload formatting.
 Never bypass it with direct HTTP calls or hand-built credentials; if a

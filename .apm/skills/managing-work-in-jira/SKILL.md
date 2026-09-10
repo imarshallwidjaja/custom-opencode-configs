@@ -1,15 +1,23 @@
 ---
 name: managing-work-in-jira
-description: Implement agile delivery in Jira through the Atlassian MCP tools. Covers epic, story, and subtask hierarchy across team-managed and company-managed projects, the metadata-first backlog creation flow (epic before children), editing issues, querying and running workflow transitions, sprint and board reporting with scope-first paginated queries, bug triage with duplicate detection and confidence bands, and honest evidence-based reporting. Use when creating or breaking down Jira issues, epics, stories, tickets, or a backlog, transitioning or updating work items, planning or reviewing sprints, triaging bugs or errors, or reporting on Jira delivery status.
+description: Manage Jira issues, backlog creation, workflow transitions, sprint and board reporting, and Jira bug triage through the Atlassian MCP tools. Use when the task explicitly targets Jira or established project context identifies Jira as the requested tracker. Generic tickets, bugs, errors, local debugging, implementation plans, code review, and ad-hoc subagent handoffs do not trigger this skill without Jira work in scope.
 ---
 
 # Managing Work In Jira
 
-Implements agile delivery in Jira via the Atlassian MCP tools. Follow the tool
-model, safety policy, and JQL guidance in `working-with-atlassian`; this skill
-assumes them. For what makes a good breakdown or well-written work item, defer
-to the `decomposing-work` and `writing-work-items` theory skills; this skill
-covers how to execute those decisions in Jira.
+## Applicability
+
+Use for work that targets Jira explicitly or through established project
+context. A generic ticket, bug report, or error does not make local debugging,
+implementation planning, code review, or an ad-hoc subagent handoff a Jira task.
+A Jira reference alone does not authorize tracker work beyond the request.
+
+`working-with-atlassian` is the prerequisite for the tool model, safety policy,
+and JQL guidance. Load `decomposing-work` only when designing a product backlog
+breakdown, and `writing-work-items` only when authoring or reviewing its items.
+Routine reads, edits, transitions, and reports do not require those methods.
+Jira work does not adopt `running-agile-delivery`; its governance requires
+explicit user or project adoption.
 
 ## Hierarchy And Project Style
 
