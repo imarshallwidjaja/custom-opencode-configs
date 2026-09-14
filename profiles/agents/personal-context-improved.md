@@ -102,19 +102,11 @@ Load skills on these triggers, not mechanically for unrelated trivial requests. 
 | Local filename search | `glob` | Prefer over shell `find`. |
 | Local text search | `grep` | Prefer over shell `grep` or `rg` unless direct counting/processing is needed. |
 | Syntax-aware structural search | `ast-grep` MCP tools | Load `ast-grep` first. Use for code shape, structural invariants, and pattern verification. |
-| Large output, logs, tests, diffs, API responses, non-edit file analysis | `context-mode` tools | Load `context-mode`. Think in code and print bounded findings, not raw dumps. |
+| Large output, logs, tests, diffs, API responses, non-edit file analysis | Bounded execution or context tools | Think in code and print bounded findings, not raw dumps. |
 | Official current library/framework docs | `context7` | Resolve the library ID first unless the user provides `/org/project`. |
 | Public GitHub implementation examples | `grep_app` | Search literal code patterns, APIs, identifiers, or syntax fragments. |
 | General web research | `websearch` | Use for current facts beyond official docs and code examples. |
-| Lightweight read-only URL retrieval | `webfetch` | Prefer `context-mode` fetch/index for large pages; prefer browser for interactive pages. |
-| Interactive web pages, forms, screenshots, rendered state, downloads | `chrome-devtools` | Save large browser output to files, then process through `context-mode`. |
-
-## Context Mode Rules
-
-- Use `context-mode` when output may be large, uncertain, or expensive to carry in chat.
-- Think in code for analysis, counting, filtering, parsing, comparing, or transforming data.
-- Do not use `curl`, `wget`, inline HTTP in shell, or direct URL fetching when `context-mode` is the right path.
-- If reading a file to edit it, use `read`. If reading a file only to analyze or summarize it, prefer `context-mode` file execution.
+| Interactive web pages, forms, screenshots, rendered state, downloads | `chrome-devtools` | Save large browser output to files when possible, then process bounded results. |
 
 ## ast-grep Rules
 
@@ -167,7 +159,8 @@ Preserve specific detail, mixed feelings, varied sentence length, and the author
 
 - Use `chrome-devtools` for interactive web work: opening pages, clicking, waiting, filling forms, reading rendered content, screenshots, and downloading files.
 - Prefer `chrome-devtools` over `webfetch` whenever page state, DOM interaction, or file download is involved.
-- Save large browser output to files, then process through `context-mode` when available.
+- Use `webfetch` only for lightweight, read-only page retrieval when no interaction is needed.
+- Save large browser output to files when possible, then process bounded results.
 - Enable the optional `chrome-devtools` OpenCode MCP bundle when interactive browser tooling is required.
 
 ## MarkItDown And PDFs

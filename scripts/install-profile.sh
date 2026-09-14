@@ -8,7 +8,6 @@ TARGET_DIR="${OPENCODE_CONFIG_DIR:-${HOME}/.config/opencode}"
 AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-${HOME}/.agents/skills}"
 AGENTS_PROFILE="${OPENCODE_AGENTS_PROFILE:-shared}"
 OPENCODE_LOCAL_SKILLS=(
-  context-mode
   writing-skills
 )
 OPENCODE_RETIRED_SKILLS=(
@@ -16,6 +15,7 @@ OPENCODE_RETIRED_SKILLS=(
   finishing-a-development-branch
   consolidate-test-suites
   root-cause-finder
+  context-mode
 )
 SHARED_SKILLS=(
   connecting-atlassian-tools

@@ -1,8 +1,4 @@
 {
-  "plugin": [
-    "oc-arkive@latest",
-    "context-mode@latest"
-  ],
   "mcp": {
     "ast_grep": {
       "type": "local",

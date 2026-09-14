@@ -63,7 +63,7 @@ build_fixture() {
   mkdir -p "${REPO_FIXTURE}"
 
   # Canonical skills (.apm/skills/)
-  for skill in humanizer stop-slop writing-for-humans context-mode cymbal hard-cut web-design-guidelines writing-skills; do
+  for skill in humanizer stop-slop writing-for-humans cymbal hard-cut web-design-guidelines writing-skills; do
     mkdir -p "${REPO_FIXTURE}/.apm/skills/${skill}"
     cat > "${REPO_FIXTURE}/.apm/skills/${skill}/SKILL.md" <<SKILL
 ---
@@ -685,10 +685,6 @@ chmod +x "${optional_bin}/uvx" "${optional_bin}/cymbal"
 cat > "${optional_target}/opencode.json" <<'JSON'
 {
   "mcp": {
-    "context-mode": {
-      "type": "local",
-      "command": ["context-mode", "--mcp"]
-    },
     "unrelated": {
       "type": "local",
       "command": ["unrelated-server"]
@@ -706,10 +702,10 @@ if PATH="${optional_bin}:/usr/bin:/bin" CYMBAL_HOOK_LOG="${TMPDIR}/cymbal-hook.l
 else
   fail "0a: context-improved install with Cymbal should succeed"
 fi
-if jq -e '(.plugin | index("context-mode@latest") != null) and (.mcp["context-mode"] == null) and (.mcp.unrelated.command == ["unrelated-server"]) and (.mcp.ast_grep.command == ["uvx", "--from", "git+https://github.com/ast-grep/ast-grep-mcp", "--with", "fastmcp", "ast-grep-server"]) and (.mcp.context7.enabled == true)' "${optional_target}/opencode.json" >/dev/null; then
-  pass "0b: context-improved removes stale MCP and preserves unrelated MCPs"
+if jq -e '(.mcp.unrelated.command == ["unrelated-server"]) and (.mcp.ast_grep.command == ["uvx", "--from", "git+https://github.com/ast-grep/ast-grep-mcp", "--with", "fastmcp", "ast-grep-server"]) and (.mcp.context7.enabled == true)' "${optional_target}/opencode.json" >/dev/null; then
+  pass "0b: context-improved preserves unrelated MCPs and adds context tools"
 else
-  fail "0b: context-improved removes stale MCP and preserves unrelated MCPs"
+  fail "0b: context-improved preserves unrelated MCPs and adds context tools"
 fi
 cat > "${optional_bin}/cymbal" <<'SH'
 #!/bin/sh
@@ -717,7 +713,7 @@ exit 23
 SH
 printf '{}\n' > "${optional_target_failing_cymbal}/opencode.json"
 printf '{}\n' > "${optional_target_failing_cymbal}/agent_hive.json"
-if PATH="${optional_bin}:/usr/bin:/bin" CONTEXT7_API_KEY=test OPENCODE_CONFIG_DIR="${optional_target_failing_cymbal}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null 2>"${TMPDIR}/optional-failing-cymbal.err" && grep -q 'Warning: failed to install optional Cymbal OpenCode hook.' "${TMPDIR}/optional-failing-cymbal.err" && jq -e '(.plugin | index("context-mode@latest") != null) and (.mcp["context-mode"] == null)' "${optional_target_failing_cymbal}/opencode.json" >/dev/null; then
+if PATH="${optional_bin}:/usr/bin:/bin" CONTEXT7_API_KEY=test OPENCODE_CONFIG_DIR="${optional_target_failing_cymbal}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null 2>"${TMPDIR}/optional-failing-cymbal.err" && grep -q 'Warning: failed to install optional Cymbal OpenCode hook.' "${TMPDIR}/optional-failing-cymbal.err" && jq -e '(.mcp.ast_grep.command == ["uvx", "--from", "git+https://github.com/ast-grep/ast-grep-mcp", "--with", "fastmcp", "ast-grep-server"]) and (.mcp.context7.enabled == true)' "${optional_target_failing_cymbal}/opencode.json" >/dev/null; then
   pass "0c: failed Cymbal hook warns without failing or rolling back bundle"
 else
   fail "0c: failed Cymbal hook should warn without failing or rolling back bundle"
@@ -947,10 +943,9 @@ cmp -s "${REPO_FIXTURE}/profiles/base/agent_hive.json" "${td12}/agent_hive.json"
 [[ -f "${AGENTS_SKILLS_DIR}/stop-design-slop/SKILL.md" ]] && pass "12k: shared stop-design-slop installed" || fail "12l: shared stop-design-slop missing"
 [[ -f "${AGENTS_SKILLS_DIR}/writing-for-humans/SKILL.md" ]] && pass "12m: shared writing-for-humans installed" || fail "12n: shared writing-for-humans missing"
 [[ ! -e "${td12}/skills/writing-for-humans" ]] && pass "12m2: writing-for-humans absent from OpenCode skills" || fail "12n2: writing-for-humans leaked into OpenCode skills"
-[[ -f "${td12}/skills/context-mode/SKILL.md" ]] && pass "12u: OpenCode-local context-mode installed" || fail "12v: OpenCode-local context-mode missing"
 [[ -f "${td12}/skills/writing-skills/SKILL.md" ]] && pass "12w: OpenCode-local writing-skills installed" || fail "12x: OpenCode-local writing-skills missing"
 retired12=""
-for skill12 in using-git-worktrees finishing-a-development-branch consolidate-test-suites root-cause-finder; do
+for skill12 in using-git-worktrees finishing-a-development-branch consolidate-test-suites root-cause-finder context-mode; do
   if [[ -e "${td12}/skills/${skill12}" ]]; then
     retired12="${retired12} ${skill12}"
   fi
@@ -1811,7 +1806,7 @@ orchestration_skills = {
     "architect-planner": ["brainstorming", "writing-plans", "parallel-exploration", "dispatching-parallel-agents", "background-delegation"],
     "swarm-orchestrator": ["dispatching-parallel-agents", "parallel-exploration", "background-delegation", "executing-plans"],
     "hive-builder": ["parallel-exploration", "dispatching-parallel-agents", "background-delegation"],
-    "scout-researcher": ["cymbal", "ast-grep", "context-mode"],
+    "scout-researcher": ["cymbal", "ast-grep"],
     "forager-worker": ["verification"],
 }
 for name, expected in orchestration_skills.items():
@@ -2446,7 +2441,7 @@ target = Path(sys.argv[1])
 agents = Path(sys.argv[2])
 skills = target / 'skills'
 errors = []
-for name in ('brainstorming', 'systematic-debugging', 'test-driven-development', 'ast-grep', 'using-git-worktrees', 'finishing-a-development-branch', 'consolidate-test-suites', 'root-cause-finder'):
+for name in ('brainstorming', 'systematic-debugging', 'test-driven-development', 'ast-grep', 'using-git-worktrees', 'finishing-a-development-branch', 'consolidate-test-suites', 'root-cause-finder', 'context-mode'):
     if (skills / name).exists():
         errors.append(f'installed OpenCode skill {name}')
     if name in ('brainstorming', 'systematic-debugging', 'test-driven-development', 'ast-grep') and (agents / name).exists():
@@ -2455,8 +2450,8 @@ if (skills / 'writing-for-humans' / 'SKILL.md').is_file():
     errors.append('writing-for-humans must not be copied into OpenCode skills')
 if not (agents / 'writing-for-humans' / 'SKILL.md').is_file():
     errors.append('missing shared skill writing-for-humans in agents dir')
-if not (skills / 'context-mode' / 'SKILL.md').is_file():
-    errors.append('missing OpenCode-local skill context-mode')
+if not (skills / 'writing-skills' / 'SKILL.md').is_file():
+    errors.append('missing OpenCode-local skill writing-skills')
 if errors:
     raise SystemExit('\n'.join(errors))
 PY
@@ -2893,12 +2888,12 @@ if grep -Fqx 'impeccable-sentinel-keep' "${td69}/skills/impeccable/SENTINEL"; th
 else
   fail "69d: unmanaged impeccable was deleted or changed"
 fi
-cmp -s "${REPO_FIXTURE}/.apm/skills/context-mode/SKILL.md" "${td69}/skills/context-mode/SKILL.md" && pass "69e: stale context-mode replaced from fixture" || fail "69f: stale context-mode was not replaced"
+[[ ! -e "${td69}/skills/context-mode" ]] && pass "69e: stale context-mode removed as retired skill" || fail "69f: stale context-mode was not removed"
 [[ ! -e "${td69}/skills/cymbal" ]] && pass "69g: leftover shared cymbal removed from OpenCode skills" || fail "69h: leftover shared cymbal remained in OpenCode skills"
 cmp -s "${REPO_FIXTURE}/.apm/skills/cymbal/SKILL.md" "${AGENTS_SKILLS_DIR}/cymbal/SKILL.md" && pass "69i: shared cymbal installed into agents dir" || fail "69j: shared cymbal missing or wrong in agents dir"
 [[ ! -e "${td69}/skills/brainstorming" ]] && pass "69k: leftover Hive brainstorming removed" || fail "69l: leftover Hive brainstorming remained"
 retired69=""
-for skill69r in using-git-worktrees finishing-a-development-branch consolidate-test-suites root-cause-finder; do
+for skill69r in using-git-worktrees finishing-a-development-branch consolidate-test-suites root-cause-finder context-mode; do
   if [[ -e "${td69}/skills/${skill69r}" ]]; then
     retired69="${retired69} ${skill69r}"
   fi
@@ -2907,12 +2902,12 @@ done
 grep -Fqx 'unowned-ivan-writing' "${td69}/skills/ivan-writing/SKILL.md" && pass "69m: unowned ivan-writing preserved on shared install" || fail "69n: unowned ivan-writing was stripped on shared install"
 grep -Fqx 'keep-file' "${td69}/skills/keep.txt" && pass "69o: unmanaged skills file survived" || fail "69p: unmanaged skills file was deleted"
 missing69=""
-for skill69 in context-mode writing-skills; do
+for skill69 in writing-skills; do
   if [[ ! -f "${td69}/skills/${skill69}/SKILL.md" ]]; then
     missing69="${missing69} ${skill69}"
   fi
 done
-[[ -z "${missing69}" ]] && pass "69q: two OpenCode-local skills present" || fail "69r: missing OpenCode-local skills:${missing69}"
+[[ -z "${missing69}" ]] && pass "69q: OpenCode-local writing-skills present" || fail "69r: missing OpenCode-local skills:${missing69}"
 ls "${td69}/.backup/"*"/skills/impeccable/SENTINEL" >/dev/null 2>&1 && pass "69s: whole-skills backup includes unmanaged skill" || fail "69t: no whole-skills backup of unmanaged skill"
 
 printf '\n=== 69b. Personal OpenCode install strips leftover ivan-writing ===\n'

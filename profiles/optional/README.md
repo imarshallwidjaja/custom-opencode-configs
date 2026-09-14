@@ -24,10 +24,9 @@ Purpose: Enables the portable context-improved overlay in one merge.
 
 It adds:
 
-- the published `context-mode` native OpenCode plugin, which registers `ctx_*` tools in-process, while preserving the base plugins, including `oc-arkive@latest` and `opencode-gpt-imagegen`
 - a local `ast_grep` MCP launched through `uvx`
 - the bundled remote `context7` MCP entry already present in the base profile
-- the matching `agent_hive.context-improved.json` overlay, which keeps `ast_grep` and `context7` disabled for Hive workers while loading `cymbal`, `ast-grep`, and `context-mode` for Scout research
+- the matching `agent_hive.context-improved.json` overlay, which keeps `ast_grep` and `context7` disabled for Hive workers while loading `cymbal` and `ast-grep` for Scout research
 
 Prerequisites:
 

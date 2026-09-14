@@ -240,8 +240,7 @@
       "description": "Sole research agent for local code lookup, codebase exploration, multi-hop symbol or call tracing, architecture mapping, and external docs or data retrieval. Independent questions should be fanned out across parallel dispatches rather than folded into one call.",
       "autoLoadSkills": [
         "cymbal",
-        "ast-grep",
-        "context-mode"
+        "ast-grep"
       ],
       "variant": "high"
     },

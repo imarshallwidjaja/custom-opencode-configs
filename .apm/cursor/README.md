@@ -84,6 +84,6 @@ When opt-in installs `ivan-writing`, the helper writes a marker file `ivan-writi
 
 ## Opencode install isolation
 
-`scripts/install-profile.sh` copies the two OpenCode-local skills (`context-mode`, `writing-skills`) from `.apm/skills/` into the Opencode config `skills/` directory, upserts the eighteen shared canonical skills into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`, removes leftover retired OpenCode-local skill names, and copies `.apm/agents/` and `.apm/prompts/*.prompt.md` into the Opencode config directory. It does not copy `.apm/cursor/**`, including the Cursor-specific `agents-md-mastery` adaptation. Opencode prompt-backed commands come only from `.apm/prompts/`, currently `interview-drill-down`, `planning-prompt`, and `reflect`.
+`scripts/install-profile.sh` copies the OpenCode-local skill (`writing-skills`) from `.apm/skills/` into the Opencode config `skills/` directory, upserts the eighteen shared canonical skills into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`, removes leftover retired OpenCode-local skill names, and copies `.apm/agents/` and `.apm/prompts/*.prompt.md` into the Opencode config directory. It does not copy `.apm/cursor/**`, including the Cursor-specific `agents-md-mastery` adaptation. Opencode prompt-backed commands come only from `.apm/prompts/`, currently `interview-drill-down`, `planning-prompt`, and `reflect`.
 
 For personal profiles (`personal-default`, `personal-context-improved`), `scripts/install-profile.sh` copies from `profiles/personal/skills/` into the agents dir, not into the OpenCode `skills/` directory.

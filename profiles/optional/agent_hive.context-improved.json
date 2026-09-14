@@ -7,8 +7,7 @@
     "scout-researcher": {
       "autoLoadSkills": [
         "cymbal",
-        "ast-grep",
-        "context-mode"
+        "ast-grep"
       ]
     }
   }

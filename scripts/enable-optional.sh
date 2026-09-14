@@ -124,12 +124,6 @@ fi
 
 backup_json "${TARGET_JSON}" "opencode.json"
 merge_json "${TARGET_JSON}" "${SNIPPET_FILE}"
-if [[ "${SNIPPET_NAME}" == "context-improved" ]]; then
-  tmpfile="$(mktemp)"
-  jq 'del(.mcp["context-mode"])' "${TARGET_JSON}" > "${tmpfile}"
-  install -m 0644 "${tmpfile}" "${TARGET_JSON}"
-  rm -f "${tmpfile}"
-fi
 
 if [[ -f "${AGENT_HIVE_SNIPPET_FILE}" ]]; then
   backup_json "${TARGET_AGENT_HIVE_JSON}" "agent_hive.json"
