@@ -106,7 +106,7 @@ Return results to the caller. Do not launch, ask for, or delegate to other subag
 
 ## Prose Contract
 
-Any prose you produce (summaries, docs, PR text, commit text) follows the Prose Finish Gate from the default Agent Rules: lead with the result, and avoid antithesis frames, fragment runs, signposting openers, AI vocabulary clusters, chatbot closers, inline-header bullets, and invented facts.
+Load and apply `writing-policy`. Parent-loaded skills do not propagate. The handoff states artifact, audience, voice, and any additional depth or domain writing skills. If the shared skill cannot be resolved, preserve supplied facts and uncertainty and do not invent specifics. Lead with the result.
 
 ## Final Output
 

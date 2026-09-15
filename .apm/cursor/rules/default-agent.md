@@ -67,7 +67,7 @@ Ad-hoc orchestration is the default. A formal plan is optional and belongs only 
 - If a check cannot run, state why and name the command that should be run.
 - Separate expected behavior from validated behavior. Do not claim live Cursor, runtime, or integration parity when only static validation was run.
 - When changes affect install flow, setup choices, profile selection, optional components, dependency expectations, or Cursor Rules guidance, update the operator-facing docs and agent instructions in the same change.
-- Name durable artifacts by purpose or domain meaning, not by Phase 1, Option B, workstream, ticket, or other planning context. A name should still make sense in isolation. See `writing-for-humans`.
+- Name durable artifacts by purpose or domain meaning, not by Phase 1, Option B, workstream, ticket, or other planning context. A name should still make sense in isolation. See `writing-policy`.
 - Place each test invariant in the same change: name it, choose one owning layer (unit, integration, or end-to-end), reuse that layer's existing canonical suite, prefer editing an existing test, and fold weaker duplicates before finishing. Do not leave a later test-cleanup pass.
 
 ## Editing Rules
@@ -93,7 +93,7 @@ Use named Cursor subagents for every delegated lane:
 - `code-reviewer`: read-only correctness and risk review of completed non-trivial changes.
 - `simplicity-reviewer`: read-only proportional final YAGNI, dead code, ownership, and unnecessary-complexity pass.
 
-Each direct child gets one primary goal in a fresh separate context. Its self-contained Cursor-native handoff must include the objective, expected output, in scope and out of scope areas, known evidence, prior failures, dependencies, constraints, file ownership, done criteria, verification expectations, blocker behavior, and final summary contract. Critical child instructions belong in the handoff or agent definition because Cursor documents User Rules for the parent Agent but does not guarantee propagation to every child. The parent must not duplicate delegated work.
+Each direct child gets one primary goal in a fresh separate context. Its self-contained Cursor-native handoff must include the objective, expected output, in scope and out of scope areas, known evidence, prior failures, dependencies, constraints, file ownership, done criteria, verification expectations, blocker behavior, and final summary contract. Parent-loaded skills do not propagate. A prose handoff must also state artifact, audience, voice, and any additional depth or domain writing skills; the child loads and applies `writing-policy` itself. Critical child instructions belong in the handoff or agent definition because Cursor documents User Rules for the parent Agent but does not guarantee propagation to every child. The parent must not duplicate delegated work.
 
 Separate context is not filesystem isolation. A separate assistant session or Git branch does not isolate files in a shared checkout. True write isolation requires a separate worktree, isolated project copy, cloud environment, or other separate working directory. Children writing in the shared checkout must own disjoint paths or run serially, with one writing lane per owned path and no overlapping writers. Independent read-only lanes may run in parallel; dependent work is serial. Track lane state, ownership, dependencies, and verification in the parent working context. Resolve all lanes before review, integration, cleanup, or final reporting.
 
@@ -113,9 +113,7 @@ Use installed Cursor skills or equivalent written guidance when the trigger appl
 | Before claiming work is complete, fixed, or passing | `verification` |
 | Starting isolated work | `using-git-worktrees` |
 | Bootstrapping, reviewing, or pruning AGENTS.md and other durable instructions | `agents-md-mastery` |
-| Drafting or explaining code, architecture, systems, processes, decisions, requirements, PRDs, plans, docs, or reviews | `writing-for-humans` |
-| Human-facing prose representing Ivan (technical docs, resumes, reports, PRs, commit messages when voice is Ivan's) | `ivan-writing` (when installed) |
-| Rewriting existing text that is already slop-heavy | `stop-slop` for cadence and structure, `humanizer` for vocabulary, register, and formatting tells |
+| Human-facing prose or delegated prose work | `writing-policy` |
 | Generic, template-like, or AI-convergent UI | `stop-design-slop` |
 | HTML slide decks, briefings, PPT-to-web conversions | `frontend-slides` |
 | Draw.io diagrams, flowcharts, architecture, ER, or UML figures | `drawio-skill` |
@@ -156,7 +154,7 @@ For ad-hoc branch integration, prefer squash-style integration when it keeps mai
 
 Run this gate on any human-facing prose before delivering it: documentation, PR and commit text, review write-ups, plans, summaries, and chat replies longer than a short paragraph. Do not announce the gate.
 
-1. Draft with `writing-for-humans` for structure, naming, and what to leave out. Name discarded options only when the reader would otherwise reopen them.
+1. Draft for the reader. Keep names stable. Leave out decoration. Name discarded options only when the reader would otherwise reopen them.
 2. Audit the draft with two questions. What makes this read as machine-written? Does it state any fact, name, number, date, quote, or citation that is not in the source or the conversation? A rewrite never adds one.
 3. Fix the hits, then check again.
 
@@ -172,9 +170,9 @@ Tells to look for (clusters matter more than a single hit):
 - forced rule-of-three, false ranges ("from X to Y and everything in between"), aphorism formulas
 - em dashes used as the default connector
 
-Preserve specific detail, mixed feelings, varied sentence length, and the author's own voice. A user-supplied writing sample outranks these defaults. Load `stop-slop` and `humanizer` when rewriting existing text that is already slop-heavy; the gate above is enough for ordinary drafting.
+Preserve specific detail, mixed feelings, varied sentence length, and the author's own voice. A user-supplied writing sample outranks these defaults. Load depth skills only through `writing-policy`.
 
-Write in Ivan's operator voice when representing Ivan: direct, process-first, technically grounded, and pragmatic.
+When `ivan-writing` is installed or configured, load it for prose intended to be published, submitted, or sent as Ivan, whether or not first-person. Internal worker reports stay neutral unless requested. Neutral, team, or third-party voice still overrides when explicit. Casual remains opt-in.
 
 ## Reviews
 

@@ -39,7 +39,7 @@ Each Cursor subagent or lane prompt must be self-contained and Cursor-native. Do
 - Constraints and file ownership
 - Verification commands expected for that lane
 - Required final summary format
-- Prose contract: any human-facing prose the lane produces follows the Prose Finish Gate from the default Agent Rules; include that line in the handoff because rules do not propagate to children
+- Prose contract: require the child to load and apply `writing-policy`. Parent-loaded skills do not propagate. State artifact, audience, voice, and any additional depth or domain writing skills. Include this because rules do not propagate to children.
 - Instruction to stop and report blockers rather than guessing on unsafe decisions
 
 ## File Ownership

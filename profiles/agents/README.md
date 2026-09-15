@@ -2,7 +2,7 @@
 
 This directory contains installable `AGENTS.md` profiles for Opencode.
 
-All four profiles share the same baseline quality, delegation, verification, search, browser, handoff, worktree, and document-conversion rules. Interactive browser work routes to `chrome-devtools`. Portable writing clarity is handled by `writing-for-humans`, and all four profiles carry the same `## Prose Finish Gate` section: an always-on draft, audit, fix loop for human-facing prose. `stop-slop` (cadence and structure) and `humanizer` (vocabulary, register, formatting tells) are depth skills on top of `writing-for-humans`; the `## Skill Triggers` table in each profile routes slop-heavy rewrites to them in one row. The `personal-*` profiles add the author's operator-writing style via the `ivan-writing` personal skill (loaded from `profiles/personal/skills/ivan-writing/`); the `shared*` profiles intentionally omit that voice layer. The `*-context-improved` profiles add strong explicit routing rules for the optional context-improved toolchain; the plain profiles use the baseline routing without those explicit assumptions.
+All four profiles share the same baseline quality, delegation, verification, search, browser, handoff, worktree, and document-conversion rules. Interactive browser work routes to `chrome-devtools`. `writing-policy` owns prose routing and delegated propagation. All four profiles keep the same `## Prose Finish Gate` section: an always-on draft, audit, fix loop for human-facing prose. `writing-for-humans`, `stop-slop`, and `humanizer` remain conditional depth skills. The `personal-*` profiles install Ivan's voice skill and load `ivan-writing` only for prose published, submitted, or sent as Ivan; internal worker reports stay neutral unless requested. The `shared*` profiles omit that voice layer. The `*-context-improved` profiles add strong explicit routing rules for the optional context-improved toolchain; the plain profiles use the baseline routing without those explicit assumptions.
 
 All four profiles also share `Request And Skill Precedence`: explicit user intent overrides skill defaults within higher-priority instructions, tool permissions, and project requirements. Clear implementation requests proceed, advice-only scope stays read-only, skill-driven pauses cite the instruction, and verification stops after acceptance and required gates absent new changes, failures, or concrete unresolved risk. Preserve this section when merging a profile into an existing `AGENTS.md`.
 
@@ -26,15 +26,15 @@ Use this when:
 
 ### `personal-default.md`
 
-Purpose: The shared profile plus the author's operator-writing voice, driven by the personal `ivan-writing` skill.
+Purpose: The shared profile plus Ivan's voice skill. That voice is selected only for prose published, submitted, or sent as Ivan; internal worker reports stay neutral unless requested.
 
 Use this when:
 
-- you want the agent to default to the author's operator-style writing profile
+- you want Ivan's voice available for prose published, submitted, or sent as Ivan
 - you are comfortable with a more opinionated `AGENTS.md`
 - you want a ready-made profile instead of writing a personal one from scratch
 
-The `ivan-writing` skill is installed automatically by `scripts/install-profile.sh` when this profile is selected. It provides register-specific guidance (technical/operator, professional/application, casual/informal) and voice/cadence/word-choice rules.
+The `ivan-writing` skill is installed automatically by `scripts/install-profile.sh` when this profile is selected. It provides register-specific guidance (technical/operator, professional/application, casual/informal) and voice/cadence/word-choice rules. It is not the default for internal worker reports.
 
 ### `shared-context-improved.md`
 
@@ -54,7 +54,7 @@ Purpose: The personal-default profile plus strong routing rules for the optional
 
 Use this when:
 
-- you want the agent to default to the operator-style writing profile, with the personal writing voice and an opt-in casual register (same as personal-default)
+- you want the same Ivan-voice selection as personal-default: published, submitted, or sent as Ivan, with internal reports remaining neutral unless requested
 - you have enabled `profiles/optional/opencode.context-improved.json`
 - you have also applied the matching `agent_hive.context-improved.json` overlay, either through `./scripts/enable-optional.sh context-improved` or automatically through `./scripts/install-profile.sh`
 - you want the AGENTS policy to assume the context-improved tool bundle is present

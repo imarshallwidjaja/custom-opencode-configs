@@ -49,10 +49,8 @@ Load skills on these triggers, not mechanically for unrelated trivial requests. 
 | Generic, template-like, or AI-convergent UI | `stop-design-slop` |
 | HTML slide decks, briefings, PPT-to-web conversions | `frontend-slides` |
 | Draw.io diagrams, flowcharts, architecture, ER, or UML figures | `drawio-skill` |
-| Drafting or explaining code, architecture, systems, processes, decisions, requirements, PRDs, plans, docs, or reviews | `writing-for-humans` |
-| Prose written as Ivan (first-person ownership, personal voice) | `ivan-writing` |
-| Rewriting existing text that is already slop-heavy | `stop-slop` for cadence and structure, `humanizer` for vocabulary, register, and formatting tells |
-| Resumes, CVs, cover letters | `ivan-writing` and `resume-tailoring` |
+| Human-facing prose or delegated prose work | `writing-policy` |
+| Resumes, CVs, cover letters | `resume-tailoring` |
 | AGENTS.md bootstrap, review, pruning, or update | Hive skill `agents-md-mastery` |
 
 ## Quality Gates
@@ -64,7 +62,7 @@ Load skills on these triggers, not mechanically for unrelated trivial requests. 
 - Before claiming completion, load `verification` and verify with command output or explicit evidence.
 - When discussing parity or readiness, separate expected parity from validated parity.
 - When changes affect install flow, setup choices, profile selection, optional components, or dependency expectations, update the operator-facing docs and agent instructions for that workflow in the same change.
-- Name durable artifacts by purpose or domain meaning, not by Phase 1, Option B, workstream, ticket, or other planning context. A name should still make sense in isolation. See `writing-for-humans`.
+- Name durable artifacts by purpose or domain meaning, not by Phase 1, Option B, workstream, ticket, or other planning context. A name should still make sense in isolation. See `writing-policy`.
 - Place each test invariant in the same change: name it, choose one owning layer (unit, integration, or end-to-end), reuse that layer's existing canonical suite, prefer editing an existing test, and fold weaker duplicates before finishing. Do not leave a later test-cleanup pass.
 
 ## Editing Rules
@@ -90,6 +88,7 @@ Load skills on these triggers, not mechanically for unrelated trivial requests. 
 - If you are a delegated subagent, always return the requested final summary before finishing, including blockers and errors.
 - If a subagent fails, start a fresh subagent with concise failure context instead of resuming the failed session.
 - If a task provides `worker_prompt.md`, pass it verbatim and instruct the worker to follow it exactly.
+- Parent-loaded skills do not imply child loading. Permitted delegated or fresh-retry prose handoffs must state artifact, audience, voice, and required writing skills; descendants preserve that contract where nested delegation is permitted. See `writing-policy`.
 - When `todowrite` is available, keep it current at each task transition.
 
 ## Search And Context Routing
@@ -123,7 +122,7 @@ Load skills on these triggers, not mechanically for unrelated trivial requests. 
 
 Run this gate on any human-facing prose before delivering it: documentation, PR and commit text, review write-ups, plans, summaries, and chat replies longer than a short paragraph. Do not announce the gate.
 
-1. Draft with `writing-for-humans` for structure, naming, and what to leave out. Name discarded options only when the reader would otherwise reopen them.
+1. Draft for the reader. Keep names stable. Leave out decoration. Name discarded options only when the reader would otherwise reopen them.
 2. Audit the draft with two questions. What makes this read as machine-written? Does it state any fact, name, number, date, quote, or citation that is not in the source or the conversation? A rewrite never adds one.
 3. Fix the hits, then check again.
 
@@ -139,13 +138,9 @@ Tells to look for (clusters matter more than a single hit):
 - forced rule-of-three, false ranges ("from X to Y and everything in between"), aphorism formulas
 - em dashes used as the default connector
 
-Preserve specific detail, mixed feelings, varied sentence length, and the author's own voice. A user-supplied writing sample outranks these defaults. Load `stop-slop` and `humanizer` when rewriting existing text that is already slop-heavy; the gate above is enough for ordinary drafting.
+Preserve specific detail, mixed feelings, varied sentence length, and the author's own voice. A user-supplied writing sample outranks these defaults. Load depth skills only through `writing-policy`.
 
-- Load `ivan-writing` when writing as Ivan: technical/operator, professional/application, and casual/informal registers.
-- Load `ivan-writing` with `resume-tailoring` for resumes, CVs, and cover letters.
-- Write in Ivan's voice by default: direct, process-first, technically grounded, pragmatic.
-- Neutral/team/third-party voice overrides Ivan voice when explicitly requested.
-- Casual register is opt-in. Default remains operator voice. Trigger only when task is a casual email, informal message, class assignment, or the user explicitly asks for casual tone.
+Load `ivan-writing` for prose intended to be published, submitted, or sent as Ivan, whether or not first-person. Internal worker reports stay neutral unless requested. Neutral, team, or third-party voice still overrides when explicit. Casual remains opt-in.
 
 ## Browser Usage
 

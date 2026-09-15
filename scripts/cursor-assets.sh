@@ -58,6 +58,7 @@ CANONICAL_SKILLS=(
   web-design-guidelines
   working-with-atlassian
   writing-for-humans
+  writing-policy
   writing-work-items
 )
 
@@ -561,6 +562,13 @@ source_manifests = (
             'references/examples.md',
             'references/sources.md',
         ),
+        WRITING_ALLOWED_KEYS,
+        True,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'writing-policy',
+        'writing-policy',
+        ('SKILL.md',),
         WRITING_ALLOWED_KEYS,
         True,
     ),

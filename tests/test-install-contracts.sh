@@ -63,7 +63,7 @@ build_fixture() {
   mkdir -p "${REPO_FIXTURE}"
 
   # Canonical skills (.apm/skills/)
-  for skill in humanizer stop-slop writing-for-humans cymbal hard-cut web-design-guidelines writing-skills; do
+  for skill in humanizer stop-slop writing-for-humans writing-policy cymbal hard-cut web-design-guidelines writing-skills; do
     mkdir -p "${REPO_FIXTURE}/.apm/skills/${skill}"
     cat > "${REPO_FIXTURE}/.apm/skills/${skill}/SKILL.md" <<SKILL
 ---
@@ -557,7 +557,23 @@ def validate(rule, skill, agents, docs):
     require_terms(errors, "skill handoff procedure", lane_prompt, (
         "objective", "expected output", "in scope", "out of scope", "evidence",
         "prior failures", "dependencies", "file ownership", "verification", "blockers", "final summary",
+        "artifact", "audience", "voice", "writing-policy", "parent-loaded",
     ))
+    for name, text in agents.items():
+        lowered_agent = text.casefold()
+        require_terms(errors, f"{name} prose contract", lowered_agent, (
+            "load and apply", "writing-policy", "parent-loaded",
+            "artifact", "audience", "voice",
+        ))
+        policy_text = " ".join(line for line in lowered_agent.splitlines() if "writing-policy" in line)
+        if not re.search(r"cannot be resolved", policy_text):
+            errors.append(f"{name} writing-policy fallback missing unresolved-skill clause")
+        if not re.search(r"preserv\w*.{0,60}(?:supplied )?facts", policy_text) or "uncertainty" not in policy_text:
+            errors.append(f"{name} writing-policy fallback must preserve supplied facts and uncertainty")
+        if not re.search(r"(?:do not|don't|forbids?).{0,40}invent", policy_text):
+            errors.append(f"{name} writing-policy fallback must forbid invented specifics")
+        if "what makes this read as machine-written" in lowered_agent:
+            errors.append(f"{name} copied the full finish gate into the agent definition")
     if not re.search(r"fresh (?:named )?(?:subagent|child|session).{0,120}(?:failed|failure)", f"{routing}\n{failure}", re.DOTALL):
         errors.append("failed child recovery does not require a fresh child")
     require_terms(errors, "default-rule integration gates", routing, (
@@ -590,6 +606,8 @@ def validate(rule, skill, agents, docs):
     direct_first = re.compile(r"(?:handle|work|implement).{0,50}(?:directly|itself).{0,40}(?:first|by default)|subagents?.{0,30}(?:optional|only when useful)", re.DOTALL)
     if direct_first.search(lowered_rule):
         errors.append("default Agent Rules contain direct-first policy wording")
+    if "draft with `writing-for-humans`" in lowered_rule:
+        errors.append("default Agent Rules still draft with writing-for-humans")
     if "delegation-first" not in lowered_rule or "parent coordinates" not in lowered_rule:
         errors.append("default Agent Rules no longer establish delegation-first parent coordination")
     combined = f"{lowered_rule}\n{lowered_skill}"
@@ -789,6 +807,8 @@ CURSOR_CONFIG_DIR="${td3}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}"
 [[ -f "${AGENTS_SKILLS_DIR}/humanizer/SKILL.md" ]] && pass "3k: humanizer installed" || fail "3l: canonical skill not installed"
 [[ -f "${AGENTS_SKILLS_DIR}/writing-for-humans/SKILL.md" ]] && pass "3ac: writing-for-humans installed" || fail "3ad: writing-for-humans canonical skill not installed"
 [[ -f "${AGENTS_SKILLS_DIR}/writing-for-humans/references/sources.md" ]] && pass "3ae: writing-for-humans sources" || fail "3af: writing-for-humans extra file not copied"
+[[ -f "${AGENTS_SKILLS_DIR}/writing-policy/SKILL.md" ]] && pass "3ag: writing-policy installed" || fail "3ah: writing-policy canonical skill not installed"
+[[ ! -e "${td3}/skills/writing-policy" ]] && pass "3ag2: writing-policy absent from Cursor skills" || fail "3ah2: writing-policy leaked into Cursor skills"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/SKILL.md" ]] && pass "3o: frontend-slides installed" || fail "3p: frontend-slides canonical skill not installed"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/viewport-base.css" ]] && pass "3q: frontend-slides viewport-base.css" || fail "3r: frontend-slides extra file not copied"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/scripts/build-standalone.py" ]] && pass "3ao: frontend-slides build-standalone.py" || fail "3ap: frontend-slides build-standalone.py not copied"
@@ -943,6 +963,8 @@ cmp -s "${REPO_FIXTURE}/profiles/base/agent_hive.json" "${td12}/agent_hive.json"
 [[ -f "${AGENTS_SKILLS_DIR}/stop-design-slop/SKILL.md" ]] && pass "12k: shared stop-design-slop installed" || fail "12l: shared stop-design-slop missing"
 [[ -f "${AGENTS_SKILLS_DIR}/writing-for-humans/SKILL.md" ]] && pass "12m: shared writing-for-humans installed" || fail "12n: shared writing-for-humans missing"
 [[ ! -e "${td12}/skills/writing-for-humans" ]] && pass "12m2: writing-for-humans absent from OpenCode skills" || fail "12n2: writing-for-humans leaked into OpenCode skills"
+[[ -f "${AGENTS_SKILLS_DIR}/writing-policy/SKILL.md" ]] && pass "12o: shared writing-policy installed" || fail "12p: shared writing-policy missing"
+[[ ! -e "${td12}/skills/writing-policy" ]] && pass "12o2: writing-policy absent from OpenCode skills" || fail "12p2: writing-policy leaked into OpenCode skills"
 [[ -f "${td12}/skills/writing-skills/SKILL.md" ]] && pass "12w: OpenCode-local writing-skills installed" || fail "12x: OpenCode-local writing-skills missing"
 retired12=""
 for skill12 in using-git-worktrees finishing-a-development-branch consolidate-test-suites root-cause-finder context-mode; do
@@ -1624,6 +1646,28 @@ fi
 build_fixture
 
 # ---------------------------------------------------------------------------
+# 63f. Malformed writing-policy source fails before OpenCode target mutation
+# ---------------------------------------------------------------------------
+printf '\n=== 63f. Malformed writing-policy fails before mutation ===\n'
+td63f="${TMPDIR}/test63f"; mkdir -p "${td63f}"
+printf '{"existing":"opencode"}\n' > "${td63f}/opencode.json"
+printf '{"existing":"agent_hive"}\n' > "${td63f}/agent_hive.json"
+cp "${td63f}/opencode.json" "${td63f}/opencode.json.before"
+cp "${td63f}/agent_hive.json" "${td63f}/agent_hive.json.before"
+printf 'not a skill\n' > "${REPO_FIXTURE}/.apm/skills/writing-policy/SKILL.md"
+if ! OPENCODE_CONFIG_DIR="${td63f}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td63f}/err"; then
+  grep -q 'writing-policy' "${td63f}/err" && pass "63f-a: malformed writing-policy exits non-zero" || fail "63f-b: wrong error: $(cat "${td63f}/err")"
+  if cmp -s "${td63f}/opencode.json" "${td63f}/opencode.json.before" && cmp -s "${td63f}/agent_hive.json" "${td63f}/agent_hive.json.before"; then
+    pass "63f-c: existing target config unmodified"
+  else
+    fail "63f-d: existing target config mutated"
+  fi
+else
+  fail "63f-e: install should have failed when writing-policy source is malformed"
+fi
+build_fixture
+
+# ---------------------------------------------------------------------------
 # 64. Base install wires Cymbal hook when cymbal is on PATH
 # ---------------------------------------------------------------------------
 printf '\n=== 64. Base install Cymbal hook ===\n'
@@ -1663,6 +1707,7 @@ build_fixture
 printf '\n=== 65. Repository OpenAI-only payload contracts ===\n'
 if python3 - "${BASELINE_PWD}" <<'PY'
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -1719,6 +1764,7 @@ required_custom = {
     "ui-reviewer",
 }
 custom = hive.get("customAgents") or {}
+agents = hive.get("agents") or {}
 missing = sorted(required_custom - set(custom))
 if missing:
     errors.append(f"missing customAgents: {missing}")
@@ -1727,16 +1773,30 @@ if "code-reviewer-documentation" in custom:
 if "code-reviewer-ui" in custom:
     errors.append("legacy customAgents.code-reviewer-ui still present")
 
-docs_autoload = {
-    "forager-documents": ("writing-for-humans",),
-    "documentation-reviewer": ("writing-for-humans",),
-    "adversarial-documentation-reviewer": ("adversarial-review", "writing-for-humans"),
+def declared_skills(entry):
+    return list((entry or {}).get("autoLoadSkills") or [])
+
+def configured_inherited_skills(name):
+    # Repository-controlled base+custom merge/dedup. Not the runtime-effective Hive list.
+    if name in custom:
+        merged = declared_skills(agents.get((custom[name] or {}).get("baseAgent"))) + declared_skills(custom[name])
+    else:
+        merged = declared_skills(agents.get(name))
+    seen = set()
+    out = []
+    for skill in merged:
+        if skill in seen:
+            continue
+        seen.add(skill)
+        out.append(skill)
+    return out
+
+docs_depth = ("writing-for-humans", "humanizer", "stop-slop")
+docs_specialists = {
+    "forager-documents": docs_depth,
+    "documentation-reviewer": docs_depth,
+    "adversarial-documentation-reviewer": ("adversarial-review",) + docs_depth,
 }
-for name, prefix in docs_autoload.items():
-    agent = custom.get(name) or {}
-    skills = tuple(agent.get("autoLoadSkills") or [])
-    if skills[: len(prefix)] != prefix:
-        errors.append(f"{name} autoLoadSkills={list(skills)!r} does not start with {list(prefix)!r}")
 
 docs_members = (((hive.get("council") or {}).get("groups") or {}).get("documents") or {}).get("members") or []
 if "documentation-reviewer" not in docs_members:
@@ -1755,7 +1815,6 @@ for group_name in ("design", "ui"):
     if "code-reviewer-ui" in members:
         errors.append(f"council.groups.{group_name} still references code-reviewer-ui")
 
-agents = hive.get("agents") or {}
 exact_seats = {
     "forager-smart": ("openai/gpt-6-astra", "medium"),
     "forager-capable": ("openai/gpt-5.6-sol", "high"),
@@ -1802,12 +1861,12 @@ for name, group in groups.items():
         errors.append(f"council.groups.{name} references unknown roles: {sorted(unknown)}")
 
 orchestration_skills = {
-    "hive-master": ["parallel-exploration"],
-    "architect-planner": ["brainstorming", "writing-plans", "parallel-exploration", "dispatching-parallel-agents", "background-delegation"],
-    "swarm-orchestrator": ["dispatching-parallel-agents", "parallel-exploration", "background-delegation", "executing-plans"],
-    "hive-builder": ["parallel-exploration", "dispatching-parallel-agents", "background-delegation"],
-    "scout-researcher": ["cymbal", "ast-grep"],
-    "forager-worker": ["verification"],
+    "hive-master": ["parallel-exploration", "writing-policy"],
+    "architect-planner": ["brainstorming", "writing-plans", "parallel-exploration", "dispatching-parallel-agents", "background-delegation", "writing-policy"],
+    "swarm-orchestrator": ["dispatching-parallel-agents", "parallel-exploration", "background-delegation", "executing-plans", "writing-policy"],
+    "hive-builder": ["parallel-exploration", "dispatching-parallel-agents", "background-delegation", "writing-policy"],
+    "scout-researcher": ["cymbal", "ast-grep", "writing-policy"],
+    "forager-worker": ["verification", "writing-policy"],
 }
 for name, expected in orchestration_skills.items():
     if (agents.get(name) or {}).get("autoLoadSkills") != expected:
@@ -1834,20 +1893,152 @@ for path, value in walk(hive):
     if value in {"ivan-writing", "impeccable"}:
         errors.append(f"shared Agent Hive config contains personal-only skill {value} at {path}")
 
-ui_skills = {
-    "forager-ui": ("web-design-guidelines", "stop-design-slop"),
-    "ui-reviewer": ("web-design-guidelines", "stop-design-slop"),
-    "ui-design-advisor": ("stop-design-slop", "web-design-guidelines"),
-}
-for name, expected in ui_skills.items():
-    skills = tuple((custom.get(name) or {}).get("autoLoadSkills") or [])
-    if skills != expected:
-        errors.append(f"{name} autoLoadSkills={list(skills)!r}, expected {list(expected)!r}")
+depth = {"writing-for-humans", "humanizer", "stop-slop"}
+router = "writing-policy"
+configured_no_skills = {"hive-helper"}
+for name, expected in docs_specialists.items():
+    skills = configured_inherited_skills(name)
+    missing_docs = [skill for skill in expected if skill not in skills]
+    if missing_docs:
+        errors.append(f"{name} configured inherited skills missing {missing_docs}")
+    depth_indexes = [skills.index(skill) for skill in depth if skill in skills]
+    if router not in skills or (depth_indexes and skills.index(router) > min(depth_indexes)):
+        errors.append(f"{name} must keep inherited {router} ahead of prose depth skills")
+for name in ("forager-ui", "ui-reviewer", "ui-design-advisor"):
+    skills = configured_inherited_skills(name)
+    if "web-design-guidelines" not in skills or "stop-design-slop" not in skills:
+        errors.append(f"{name} configured inherited skills missing UI guidance")
+for name in list(agents) + list(custom):
+    skills = configured_inherited_skills(name)
+    declared = declared_skills(custom.get(name) if name in custom else agents.get(name))
+    if name in configured_no_skills:
+        if skills:
+            errors.append(f"{name} must have no configured auto-loaded skills")
+        continue
+    if router not in skills:
+        errors.append(f"{name} configured inherited skills must include {router}")
+    if name not in docs_specialists and depth.intersection(skills):
+        errors.append(f"{name} must not auto-load prose depth skills {sorted(depth.intersection(skills))}")
+    if name in custom and router in declared:
+        errors.append(f"{name} restates {router} instead of inheriting it")
+if declared_skills(agents.get("forager-worker"))[:2] != ["verification", router]:
+    errors.append("forager-worker autoLoadSkills must start with verification then writing-policy")
+if configured_inherited_skills("forager-documents")[:2] != ["verification", router]:
+    errors.append("forager-documents configured inherited skills must start with verification then writing-policy")
+
+skill_path = root / ".apm/skills/writing-policy/SKILL.md"
+if not skill_path.is_file():
+    errors.append("missing .apm/skills/writing-policy/SKILL.md")
+else:
+    skill_text = skill_path.read_text(encoding="utf-8")
+    if not skill_text.startswith("---\n"):
+        errors.append("writing-policy missing YAML frontmatter")
+    else:
+        closing = skill_text.find("\n---\n", 4)
+        if closing < 0:
+            errors.append("writing-policy frontmatter is not closed")
+        else:
+            front = skill_text[4:closing]
+            body = skill_text[closing + 5 :]
+            if "name: writing-policy" not in front:
+                errors.append("writing-policy frontmatter name is wrong")
+            desc = ""
+            for line in front.splitlines():
+                if line.startswith("description:"):
+                    desc = line.split(":", 1)[1].strip()
+                    break
+            if not desc.startswith("Use when"):
+                errors.append("writing-policy description must begin with Use when")
+            lowered_desc = desc.casefold()
+            if "human-facing prose" not in lowered_desc or "delegat" not in lowered_desc:
+                errors.append("writing-policy description must trigger for human-facing and delegated prose")
+            words = len(body.split())
+            if words > 220:
+                errors.append(f"writing-policy instructional body is {words} words, expected at most 220")
+            lowered_body = body.casefold()
+            if "ivan-writing" in lowered_body:
+                errors.append("portable writing-policy must not name ivan-writing")
+            for phrase in (
+                "parent-loaded skills do not imply child loading",
+                "artifact",
+                "audience",
+                "voice",
+            ):
+                if phrase not in lowered_body:
+                    errors.append(f"writing-policy body missing {phrase!r}")
+            route_lines = [
+                line.strip().lstrip("- ").strip()
+                for line in lowered_body.splitlines()
+                if line.strip().startswith("-")
+            ]
+
+            def route_matching(*needles):
+                return [line for line in route_lines if all(needle in line for needle in needles)]
+
+            cadence = route_matching("cadence", "structure", "rewrite")
+            if not cadence or "writing-for-humans" not in cadence[0] or "stop-slop" not in cadence[0]:
+                errors.append("cadence/structure rewrite must load writing-for-humans plus stop-slop")
+            vocab = route_matching("vocabulary", "register")
+            if not vocab:
+                errors.append("writing-policy missing vocabulary/register rewrite route")
+            else:
+                missing_vocab = [
+                    term for term in (
+                        "attribution", "formatting", "chat-artifact", "writing-for-humans", "humanizer",
+                    ) if term not in vocab[0]
+                ]
+                if missing_vocab:
+                    errors.append(f"vocabulary/register rewrite must load writing-for-humans plus humanizer; missing {missing_vocab}")
+            broad = [line for line in route_lines if "slop-heavy" in line]
+            if not broad or "writing-for-humans" not in broad[0] or "both" not in broad[0]:
+                errors.append("broadly slop-heavy rewrite must load writing-for-humans plus both overlays")
+            voice_routes = [line for line in route_lines if "personal voice" in line]
+            if not voice_routes:
+                errors.append("writing-policy missing personal voice overlay route")
+            else:
+                voice = " ".join(voice_routes)
+                for required in ("personal agents profile", "cursor rules", "handoff"):
+                    if required not in voice:
+                        errors.append(f"writing-policy personal-voice route missing {required!r}")
+                if not re.search(r"do not activate.{0,80}(?:discoverable|installed)", voice):
+                    errors.append("writing-policy must not activate personal voice merely because it is discoverable or installed")
+
+overlay = json.loads((root / "profiles/optional/agent_hive.context-improved.json").read_text(encoding="utf-8"))
+if ((overlay.get("agents") or {}).get("scout-researcher") or {}).get("autoLoadSkills"):
+    errors.append("context-improved overlay must not restate scout autoLoadSkills")
+if overlay.get("disableMcps") != ["context7", "ast_grep"]:
+    errors.append(f"context-improved overlay disableMcps={overlay.get('disableMcps')!r}")
 
 for profile_path in sorted((root / "profiles/agents").glob("*.md")):
     text = profile_path.read_text(encoding="utf-8")
     if "verification-before-completion" in text:
         errors.append(f"{profile_path.relative_to(root)} still references verification-before-completion")
+    rel = str(profile_path.relative_to(root))
+    if profile_path.name == "README.md":
+        continue
+    if "`writing-policy`" not in text:
+        errors.append(f"{rel} must reference writing-policy")
+    if "Draft with `writing-for-humans`" in text:
+        errors.append(f"{rel} still drafts with writing-for-humans")
+    if "Parent-loaded skills do not imply child loading" not in text:
+        errors.append(f"{rel} must state parent-loaded skills do not imply child loading")
+    if "Write in Ivan's voice by default" in text:
+        errors.append(f"{rel} still defaults to Ivan voice")
+    if rel.startswith("profiles/agents/personal-"):
+        if "published, submitted, or sent as Ivan" not in text:
+            errors.append(f"{rel} must load ivan-writing for published/submitted/sent prose")
+        if "Internal worker reports stay neutral" not in text:
+            errors.append(f"{rel} must keep internal worker reports neutral unless requested")
+    elif "ivan-writing" in text:
+        errors.append(f"{rel} must not reference ivan-writing")
+
+cursor_rules = (root / ".apm/cursor/rules/default-agent.md").read_text(encoding="utf-8")
+if "ivan-writing" not in cursor_rules:
+    errors.append("default-agent.md must mention ivan-writing")
+elif "installed or configured" not in cursor_rules:
+    errors.append("default-agent.md must load ivan-writing only when installed or configured")
+if "published, submitted, or sent as Ivan" not in cursor_rules:
+    errors.append("default-agent.md must load ivan-writing for published/submitted/sent prose")
 
 if not plugin_path.is_file():
     errors.append("profiles/base/plugins/dcg-guard.js missing")
@@ -2356,15 +2547,15 @@ for relative in docs:
     text = (root / relative).read_text(encoding='utf-8')
     lowered = text.casefold()
     required = (
-        ('current npm `oc-arkive@latest` is 2.3.5', 'published npm version'),
-        ('includes engineering judgment', 'published plugin contents'),
+        ('provenance-pinned to oc-arkive 2.3.5', 'Engineering Judgment provenance pin'),
         ('opencode receives engineering judgment from the installed plugin', 'OpenCode delivery'),
-        ('provenance-pinned vendored snapshot', 'Cursor delivery'),
         ('cursor cannot load the plugin prompt directly', 'Cursor plugin limitation'),
     )
     for phrase, label in required:
         if phrase.casefold() not in lowered:
             errors.append(f'{relative} is missing {label}: {phrase}')
+    if 'oc-arkive@latest` is 2.3.5' in lowered or 'oc-arkive@latest is 2.3.5' in lowered:
+        errors.append(f'{relative} still claims oc-arkive@latest equals a fixed version')
     for obsolete in ('2.3.4', 'postdates tag', 'does not contain engineering judgment', 'does not contain it'):
         if obsolete in lowered:
             errors.append(f'{relative} retains obsolete unpublished-release wording: {obsolete}')
@@ -2386,9 +2577,9 @@ if errors:
     raise SystemExit('\n'.join(errors))
 PY
 then
-  pass "67s: published oc-arkive 2.3.5 documentation and provenance boundary"
+  pass "67s: Engineering Judgment provenance pin and documentation boundary"
 else
-  fail "67s: published oc-arkive 2.3.5 documentation and provenance boundary"
+  fail "67s: Engineering Judgment provenance pin and documentation boundary"
 fi
 
 # ---------------------------------------------------------------------------

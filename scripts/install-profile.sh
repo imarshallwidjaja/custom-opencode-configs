@@ -35,6 +35,7 @@ SHARED_SKILLS=(
   web-design-guidelines
   working-with-atlassian
   writing-for-humans
+  writing-policy
   writing-work-items
 )
 HIVE_OWNED_SKILLS=(
@@ -357,7 +358,7 @@ validate_skill_source() {
       return 1
     fi
     if [[ -d "${entry}" ]]; then
-      if [[ "${base}" != "references" ]]; then
+      if [[ "${base}" != "references" || -z "${allowed_reference_files}" ]]; then
         printf 'ERROR: %s/%s is not in the source manifest\n' "${label}" "${base}" >&2
         return 1
       fi
@@ -381,7 +382,9 @@ validate_skill_source() {
       return 1
     fi
   done
-  validate_reference_manifest "${source}/references" "${label}" "${allowed_reference_files}" || return 1
+  if [[ -n "${allowed_reference_files}" ]]; then
+    validate_reference_manifest "${source}/references" "${label}" "${allowed_reference_files}" || return 1
+  fi
   validate_skill_frontmatter "${source}/SKILL.md" "${expected_name}" "${label}" || return 1
 }
 
@@ -389,6 +392,7 @@ validate_skill_source "${REPO_ROOT}/.apm/skills/decomposing-work" decomposing-wo
 validate_skill_source "${REPO_ROOT}/.apm/skills/humanizer" humanizer ".apm/skills/humanizer" "SKILL.md" "patterns.md" || exit 1
 validate_skill_source "${REPO_ROOT}/.apm/skills/stop-slop" stop-slop ".apm/skills/stop-slop" "SKILL.md README.md LICENSE" "examples.md phrases.md structures.md" || exit 1
 validate_skill_source "${REPO_ROOT}/.apm/skills/writing-for-humans" writing-for-humans ".apm/skills/writing-for-humans" "SKILL.md" "examples.md sources.md" || exit 1
+validate_skill_source "${REPO_ROOT}/.apm/skills/writing-policy" writing-policy ".apm/skills/writing-policy" "SKILL.md" "" || exit 1
 validate_skill_source "${REPO_ROOT}/.apm/skills/writing-work-items" writing-work-items ".apm/skills/writing-work-items" "SKILL.md" "work-item-templates.md" || exit 1
 case "${AGENTS_PROFILE}" in
   personal-default|personal-context-improved)

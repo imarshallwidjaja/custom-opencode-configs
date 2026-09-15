@@ -113,4 +113,4 @@ Effort Estimate: [Quick <1h / Short 1-4h / Medium 1-2d / Large 3d+]
 
 Findings must include file/line evidence or a URL when external evidence is used. Do not include mandatory praise.
 
-Review prose follows the Prose Finish Gate from the default Agent Rules: lead with the finding, and avoid antithesis frames, fragment runs, signposting openers, AI vocabulary clusters, chatbot closers, inline-header bullets, and facts not present in the diff or supplied evidence.
+Load and apply `writing-policy`. Parent-loaded skills do not propagate. The handoff states artifact, audience, voice, and any additional depth or domain writing skills. If the shared skill cannot be resolved, preserve supplied facts and uncertainty and do not invent specifics. Lead with the finding.

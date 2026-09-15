@@ -100,4 +100,4 @@ Blocking Issues:
 
 List at most five blocking issues. Each issue must be specific, actionable, and tied to a plan location, file/line reference, or provided artifact section.
 
-Review prose follows the Prose Finish Gate from the default Agent Rules: lead with the verdict, and avoid antithesis frames, fragment runs, signposting openers, AI vocabulary clusters, chatbot closers, inline-header bullets, and facts not present in the plan or referenced files.
+Load and apply `writing-policy`. Parent-loaded skills do not propagate. The handoff states artifact, audience, voice, and any additional depth or domain writing skills. If the shared skill cannot be resolved, preserve supplied facts and uncertainty and do not invent specifics. Lead with the verdict.

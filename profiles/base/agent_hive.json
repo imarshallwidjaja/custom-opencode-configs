@@ -210,7 +210,8 @@
     "hive-master": {
       "model": "openai/gpt-5.6-sol",
       "autoLoadSkills": [
-        "parallel-exploration"
+        "parallel-exploration",
+        "writing-policy"
       ],
       "variant": "high"
     },
@@ -221,7 +222,8 @@
         "writing-plans",
         "parallel-exploration",
         "dispatching-parallel-agents",
-        "background-delegation"
+        "background-delegation",
+        "writing-policy"
       ],
       "variant": "high"
     },
@@ -231,7 +233,8 @@
         "dispatching-parallel-agents",
         "parallel-exploration",
         "background-delegation",
-        "executing-plans"
+        "executing-plans",
+        "writing-policy"
       ],
       "variant": "medium"
     },
@@ -240,7 +243,8 @@
       "description": "Sole research agent for local code lookup, codebase exploration, multi-hop symbol or call tracing, architecture mapping, and external docs or data retrieval. Independent questions should be fanned out across parallel dispatches rather than folded into one call.",
       "autoLoadSkills": [
         "cymbal",
-        "ast-grep"
+        "ast-grep",
+        "writing-policy"
       ],
       "variant": "high"
     },
@@ -248,7 +252,8 @@
       "model": "openai/gpt-5.6-sol",
       "description": "Default for ordinary implementation, bug fixes, and refactoring in an isolated worktree, including work that crosses files, packages, or subsystem boundaries when the task already defines the change. Pick forager-capable up front when that defined work is hard enough that this worker is likely to under-think it. Escalate to forager-smart only after failure or when the path is unspecified.",
       "autoLoadSkills": [
-        "verification"
+        "verification",
+        "writing-policy"
       ],
       "variant": "medium"
     },
@@ -260,31 +265,41 @@
     "plan-reviewer": {
       "model": "openai/gpt-5.6-sol",
       "description": "Sole first-pass plan review covering worker readiness, references, dependencies, executable verification, cross-system sequencing, and irreversible migration risk. Returns plan blockers; does not give architecture advice or review code. When the plan has irreversible steps, conflicting requirements, or a likely worker misdirect, also dispatch adversarial-plan-reviewer; do not replace this pass.",
-      "autoLoadSkills": [],
+      "autoLoadSkills": [
+        "writing-policy"
+      ],
       "variant": "medium"
     },
     "code-reviewer": {
       "model": "openai/gpt-6-astra",
       "description": "Sole first-pass implementation review covering correctness, tests, risk, scope creep, YAGNI, dead code, and high-risk concerns such as security boundaries, data loss, concurrency races, migration correctness, and public API breakage. Reviews against the task; does not redesign the approach. After a behavior-changing diff, also dispatch adversarial-code-reviewer; do not replace this pass. Skip the second pass only for mechanical edits or diffs with no behavior change.",
-      "autoLoadSkills": [],
+      "autoLoadSkills": [
+        "writing-policy"
+      ],
       "variant": "medium"
     },
     "simplicity-reviewer": {
       "model": "openai/gpt-6-astra",
       "description": "Default first-pass post-implementation simplicity review covering unnecessary abstractions, duplication, dead code, and safe deletion. When the change added layers, flags, adapters, or extra defensive branches, also dispatch adversarial-simplicity-reviewer; do not replace this pass.",
-      "autoLoadSkills": [],
+      "autoLoadSkills": [
+        "writing-policy"
+      ],
       "variant": "low"
     },
     "approach-advisor": {
       "model": "openai/gpt-5.6-sol",
       "description": "Default first-pass read-only approach advice on technical direction, architecture, debugging, and tradeoffs. When the route is costly to reverse or competing routes remain, also dispatch adversarial-approach-advisor; do not replace this pass.",
-      "autoLoadSkills": [],
+      "autoLoadSkills": [
+        "writing-policy"
+      ],
       "variant": "high"
     },
     "vulnerability-reviewer": {
       "model": "openai/gpt-6-astra",
       "description": "Default for application-security review focused on evidenced attacker-to-impact paths and root-cause triage.",
-      "autoLoadSkills": [],
+      "autoLoadSkills": [
+        "writing-policy"
+      ],
       "variant": "high"
     },
     "hive-builder": {
@@ -292,7 +307,8 @@
       "autoLoadSkills": [
         "parallel-exploration",
         "dispatching-parallel-agents",
-        "background-delegation"
+        "background-delegation",
+        "writing-policy"
       ],
       "variant": "medium"
     }
