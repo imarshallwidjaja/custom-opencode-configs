@@ -6,7 +6,9 @@ This repo is for installing a ready-to-use Opencode profile. It keeps secrets, l
 
 ## What gets installed
 
-`./scripts/install-profile.sh` installs these files into your Opencode config directory:
+Running `./scripts/install-profile.sh` with no arguments previews the install without changes or hooks. Add `--apply` to install immediately, or `--help` for usage.
+
+`./scripts/install-profile.sh --apply` installs these files into your Opencode config directory:
 
 - `profiles/base/opencode.json` -> `opencode.json`: base Opencode config with `oc-arkive@latest`
 - `profiles/base/agent_hive.json` -> `agent_hive.json`: Agent Hive role and model configuration
@@ -65,7 +67,7 @@ curl -fsSL https://opencode.ai/install | bash
 git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
 cd custom-opencode-configs
 opencode auth login -p openai
-./scripts/install-profile.sh
+./scripts/install-profile.sh --apply
 opencode
 ```
 
@@ -76,7 +78,7 @@ curl -fsSL https://opencode.ai/install | bash
 git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
 cd custom-opencode-configs
 opencode auth login -p openai
-OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
+OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh --apply
 opencode
 ```
 
@@ -88,7 +90,7 @@ brew install 1broseidon/tap/cymbal
 git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
 cd custom-opencode-configs
 opencode auth login -p openai
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --apply
 opencode
 ```
 
@@ -105,21 +107,21 @@ To update an older install in place, update this repository clone and rerun the 
 
 ```bash
 git pull
-./scripts/install-profile.sh
+./scripts/install-profile.sh --apply
 ```
 
 Use the same profile environment variables the install should keep, for example:
 
 ```bash
 git pull
-OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
+OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh --apply
 ```
 
 Use `OPENCODE_AGENTS_MODE=skip` when the target already has a hand-maintained `AGENTS.md` that should stay as the base document for a manual merge:
 
 ```bash
 git pull
-OPENCODE_AGENTS_MODE=skip ./scripts/install-profile.sh
+OPENCODE_AGENTS_MODE=skip ./scripts/install-profile.sh --apply
 ```
 
 Some notes:
@@ -137,13 +139,13 @@ Some notes:
 Install into the default Opencode config directory:
 
 ```bash
-./scripts/install-profile.sh
+./scripts/install-profile.sh --apply
 ```
 
 Install into a custom config directory:
 
 ```bash
-OPENCODE_CONFIG_DIR=/path/to/opencode-config AGENTS_SKILLS_DIR=/path/to/agents-skills ./scripts/install-profile.sh
+OPENCODE_CONFIG_DIR=/path/to/opencode-config AGENTS_SKILLS_DIR=/path/to/agents-skills ./scripts/install-profile.sh --apply
 ```
 
 Shared canonical skills default to `$HOME/.agents/skills`. Set `AGENTS_SKILLS_DIR` when the installer must not write that live directory.
@@ -162,15 +164,15 @@ Available profiles:
 Install examples:
 
 ```bash
-OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
+OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh --apply
 ```
 
 ```bash
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --apply
 ```
 
 ```bash
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh --apply
 ```
 
 The two `*-context-improved` profiles require `jq`, `uvx`, and `CONTEXT7_API_KEY`. The installer preflights those dependencies and applies the matching `context-improved` overlay automatically.

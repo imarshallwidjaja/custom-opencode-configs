@@ -2,6 +2,33 @@
 
 set -euo pipefail
 
+usage() {
+  printf '%s\n' 'Usage: ./scripts/install-profile.sh [--apply | --help]' \
+    'No arguments previews the install without changes or hooks.' \
+    '--apply installs immediately; --help prints this usage.'
+}
+
+if (( $# > 1 )); then
+  usage >&2
+  exit 2
+fi
+case "${1:-}" in
+  --apply) ;;
+  --help) usage; exit 0 ;;
+  *)
+    if (( $# != 0 )); then
+      printf 'Unknown argument: %s\n' "$1" >&2
+      usage >&2
+      exit 2
+    fi
+    printf 'Would install Opencode profile into %s\n' "${OPENCODE_CONFIG_DIR:-${HOME}/.config/opencode}"
+    printf 'Would install shared skills into %s\n' "${AGENTS_SKILLS_DIR:-${HOME}/.agents/skills}"
+    printf 'AGENTS profile: %s; mode: %s\n' "${OPENCODE_AGENTS_PROFILE:-shared}" "${OPENCODE_AGENTS_MODE:-install}"
+    printf 'Run with --apply to install.\n'
+    exit 0
+    ;;
+esac
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TARGET_DIR="${OPENCODE_CONFIG_DIR:-${HOME}/.config/opencode}"

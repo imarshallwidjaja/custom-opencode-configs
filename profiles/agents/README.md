@@ -10,6 +10,8 @@ All four profiles also share `Request And Skill Precedence`: explicit user inten
 
 The repository root `AGENTS.md` governs work on this repository itself. The files in this directory are the profiles that get copied into `~/.config/opencode/AGENTS.md` by `scripts/install-profile.sh`; the base JSON payloads installed alongside them live under `profiles/base/`.
 
+Running `./scripts/install-profile.sh` with no arguments previews without changes or hooks. Use `--apply` to install immediately, or `--help` for usage.
+
 These Opencode AGENTS profiles are not Cursor global Rules. Cursor default-Agent guidance lives in the Cursor asset root and is printed by the helper. Use `./scripts/cursor-assets.sh print-rules` and paste the output into Cursor Customize -> Rules -> User Rules.
 
 ## Profiles
@@ -43,7 +45,7 @@ Purpose: The shared profile plus strong routing rules for the optional context-i
 Use this when:
 
 - you have enabled `profiles/optional/opencode.context-improved.json`
-- you have also applied the matching `agent_hive.context-improved.json` overlay, either through `./scripts/enable-optional.sh context-improved` or automatically through `./scripts/install-profile.sh`
+- you have also applied the matching `agent_hive.context-improved.json` overlay, either through `./scripts/enable-optional.sh context-improved` or automatically through `./scripts/install-profile.sh --apply`
 - local `ast_grep` and enabled `context7` are actually available in the running environment
 - `cymbal` is available on `PATH` when you want agents to start unfamiliar-code navigation there; the context-improved install attempts to wire its OpenCode hook when present, without making hook success a bundle requirement
 - you want agents to prefer the richer context and navigation workflow explicitly
@@ -56,7 +58,7 @@ Use this when:
 
 - you want the same Ivan-voice selection as personal-default: published, submitted, or sent as Ivan, with internal reports remaining neutral unless requested
 - you have enabled `profiles/optional/opencode.context-improved.json`
-- you have also applied the matching `agent_hive.context-improved.json` overlay, either through `./scripts/enable-optional.sh context-improved` or automatically through `./scripts/install-profile.sh`
+- you have also applied the matching `agent_hive.context-improved.json` overlay, either through `./scripts/enable-optional.sh context-improved` or automatically through `./scripts/install-profile.sh --apply`
 - you want the AGENTS policy to assume the context-improved tool bundle is present
 - `cymbal` is available on `PATH` when you want agents to start unfamiliar-code navigation there; the context-improved install attempts to wire its OpenCode hook when present, without making hook success a bundle requirement
 
@@ -69,32 +71,32 @@ By default, the installer replaces the selected `AGENTS.md` after backing it up.
 Install the shared profile:
 
 ```bash
-./scripts/install-profile.sh
+./scripts/install-profile.sh --apply
 ```
 
 Install the sanitized personal-default profile:
 
 ```bash
-OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
+OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh --apply
 ```
 
 Install the shared context-improved profile:
 
 ```bash
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --apply
 ```
 
 Install the personal context-improved profile:
 
 ```bash
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh --apply
 ```
 
 Some notes:
 
-- the `*-context-improved` AGENTS profiles auto-apply `context-improved` during `./scripts/install-profile.sh`; use `./scripts/enable-optional.sh context-improved` when you want to add the bundle after a plain install
+- the `*-context-improved` AGENTS profiles auto-apply `context-improved` during `./scripts/install-profile.sh --apply`; use `./scripts/enable-optional.sh context-improved` when you want to add the bundle after a plain install
 - the `*-context-improved` install commands require `jq`, `uvx`, and `CONTEXT7_API_KEY` because the installer preflights and auto-applies the matching bundle; `cymbal` remains optional
-- `cymbal hook install opencode --scope user` also runs during a plain `./scripts/install-profile.sh` when `cymbal` is already on `PATH`
+- `cymbal hook install opencode --scope user` also runs during a plain `./scripts/install-profile.sh --apply` when `cymbal` is already on `PATH`
 - the plain `shared` and `personal-default` profiles are the capability-safe defaults for the base install
 - `skip` is the preservation path for an existing `AGENTS.md`; it leaves the file untouched so the agent can fold in the new guidance structurally afterward
 

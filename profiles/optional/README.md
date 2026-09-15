@@ -14,7 +14,9 @@ Purpose:
 - make local dependencies explicit
 - let a human or agent enable only the integrations that the machine can actually support
 
-These snippets are usually applied manually. The exception is `context-improved`, which `scripts/install-profile.sh` now auto-applies when the selected AGENTS profile is `shared-context-improved` or `personal-context-improved` and the listed prerequisites are present.
+These snippets are usually applied manually. The exception is `context-improved`, which `scripts/install-profile.sh --apply` auto-applies when the selected AGENTS profile is `shared-context-improved` or `personal-context-improved` and the listed prerequisites are present.
+
+Running `./scripts/install-profile.sh` with no arguments previews without changes or hooks. Use `--apply` to install immediately, or `--help` for usage.
 
 ## Bundles
 

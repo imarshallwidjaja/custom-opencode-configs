@@ -326,6 +326,50 @@ PY
 # Ensure fresh fixture
 build_fixture
 
+# CLI entry points must not reach installation, validation, or hooks.
+printf '=== OpenCode installer argument safety ===\n'
+cli_scope="${TMPDIR}/installer-cli"
+mkdir -p "${cli_scope}/target/skills" "${cli_scope}/shared" "${cli_scope}/home" "${TMPDIR}/cli-bin"
+printf 'existing config\n' > "${cli_scope}/target/opencode.json"
+printf 'keep\n' > "${cli_scope}/target/skills/sentinel"
+printf 'keep\n' > "${cli_scope}/shared/sentinel"
+cat > "${TMPDIR}/cli-bin/cymbal" <<'HOOK'
+#!/usr/bin/env bash
+printf 'called\n' >> "${HOME}/hook-called"
+exit 1
+HOOK
+chmod +x "${TMPDIR}/cli-bin/cymbal"
+cli_before="$(snapshot_tree "${cli_scope}")"
+for cli_case in preview help unknown positional empty duplicate-apply duplicate-help conflict reverse-conflict extra; do
+  case "${cli_case}" in
+    preview) set -- ; expected=0; marker='Would install' ;;
+    help) set -- --help; expected=0; marker='Usage:' ;;
+    unknown) set -- --unknown; expected=2; marker='Usage:' ;;
+    positional) set -- install; expected=2; marker='Usage:' ;;
+    empty) set -- ''; expected=2; marker='Usage:' ;;
+    duplicate-apply) set -- --apply --apply; expected=2; marker='Usage:' ;;
+    duplicate-help) set -- --help --help; expected=2; marker='Usage:' ;;
+    conflict) set -- --help --apply; expected=2; marker='Usage:' ;;
+    reverse-conflict) set -- --apply --help; expected=2; marker='Usage:' ;;
+    extra) set -- --apply extra; expected=2; marker='Usage:' ;;
+  esac
+  # Invalid settings prove argument handling precedes profile validation.
+  for cli_profile in shared missing-profile; do
+    cli_status=0
+    HOME="${cli_scope}/home" PATH="${TMPDIR}/cli-bin:/usr/bin:/bin" \
+      OPENCODE_CONFIG_DIR="${cli_scope}/target" AGENTS_SKILLS_DIR="${cli_scope}/shared" \
+      OPENCODE_AGENTS_PROFILE="${cli_profile}" bash "${INSTALL_HELPER}" "$@" \
+      >"${TMPDIR}/cli-output" 2>&1 || cli_status=$?
+    if [[ "${cli_status}" -eq "${expected}" ]] && grep -q "${marker}" "${TMPDIR}/cli-output" \
+      && [[ "${cli_before}" == "$(snapshot_tree "${cli_scope}")" ]]; then
+      pass "CLI ${cli_case} (${cli_profile}): expected exit, unchanged targets, no hook"
+    else
+      fail "CLI ${cli_case} (${cli_profile}): status/output or mutation mismatch"
+    fi
+  done
+done
+set --
+
 # Preflight: helpers exist
 # ---------------------------------------------------------------------------
 printf '=== Preflight: helpers exist ===\n'
@@ -942,7 +986,7 @@ build_fixture
 printf '\n=== 11. OpenCode personal source preflight ===\n'
 td11="${TMPDIR}/test11"; mkdir -p "${td11}"
 rm -rf "${REPO_FIXTURE}/profiles/personal/skills/ivan-writing"
-! OPENCODE_CONFIG_DIR="${td11}" OPENCODE_AGENTS_PROFILE=personal-default bash "${INSTALL_HELPER}" 2>"${td11}/err" || fail "11a: should have failed"
+! OPENCODE_CONFIG_DIR="${td11}" OPENCODE_AGENTS_PROFILE=personal-default bash "${INSTALL_HELPER}" --apply 2>"${td11}/err" || fail "11a: should have failed"
 grep -q 'ERROR' "${td11}/err" && pass "11b: personal preflight detected" || fail "11c: wrong error: $(cat ${td11}/err)"
 opencode_target_unmodified "${td11}" && pass "11d: no managed paths created" || fail "11e: target mutated"
 build_fixture
@@ -954,7 +998,7 @@ printf '\n=== 12. Shared install independent of personal source ===\n'
 td12="${TMPDIR}/test12"; mkdir -p "${td12}"
 sandbox_agents_skills
 rm -rf "${REPO_FIXTURE}/profiles/personal/skills/ivan-writing"
-OPENCODE_CONFIG_DIR="${td12}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td12}/err" && pass "12a: shared install succeeded" || fail "12b: shared install failed"
+OPENCODE_CONFIG_DIR="${td12}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td12}/err" && pass "12a: shared install succeeded" || fail "12b: shared install failed"
 cmp -s "${REPO_FIXTURE}/profiles/base/opencode.json" "${td12}/opencode.json" && pass "12c: base opencode payload installed" || fail "12d: installed opencode payload did not come from profiles/base"
 cmp -s "${REPO_FIXTURE}/profiles/base/agent_hive.json" "${td12}/agent_hive.json" && pass "12e: base Agent Hive payload installed" || fail "12f: installed Agent Hive payload did not come from profiles/base"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/SKILL.md" ]] && pass "12g: shared frontend-slides installed" || fail "12h: shared frontend-slides missing"
@@ -989,7 +1033,7 @@ cp "${td12b}/opencode.json" "${td12b}/opencode.json.before"
 cp "${td12b}/agent_hive.json" "${td12b}/agent_hive.json.before"
 rm -f "${REPO_FIXTURE}/profiles/base/opencode.json"
 [[ -f "${REPO_FIXTURE}/opencode.json" && -f "${REPO_FIXTURE}/agent_hive.json" && -f "${REPO_FIXTURE}/profiles/base/agent_hive.json" ]] || fail "12b-setup: root decoys or remaining base payload missing"
-if ! OPENCODE_CONFIG_DIR="${td12b}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td12b}/err"; then
+if ! OPENCODE_CONFIG_DIR="${td12b}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td12b}/err"; then
   grep -q 'ERROR' "${td12b}/err" && pass "12b-a: missing base opencode exits non-zero" || fail "12b-b: wrong error: $(cat "${td12b}/err")"
   if cmp -s "${td12b}/opencode.json" "${td12b}/opencode.json.before" && cmp -s "${td12b}/agent_hive.json" "${td12b}/agent_hive.json.before"; then
     pass "12b-c: existing target config unmodified"
@@ -1014,7 +1058,7 @@ cp "${td12c}/opencode.json" "${td12c}/opencode.json.before"
 cp "${td12c}/agent_hive.json" "${td12c}/agent_hive.json.before"
 rm -f "${REPO_FIXTURE}/profiles/base/agent_hive.json"
 [[ -f "${REPO_FIXTURE}/opencode.json" && -f "${REPO_FIXTURE}/agent_hive.json" && -f "${REPO_FIXTURE}/profiles/base/opencode.json" ]] || fail "12c-setup: root decoys or remaining base payload missing"
-if ! OPENCODE_CONFIG_DIR="${td12c}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td12c}/err"; then
+if ! OPENCODE_CONFIG_DIR="${td12c}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td12c}/err"; then
   grep -q 'ERROR' "${td12c}/err" && pass "12c-a: missing base agent_hive exits non-zero" || fail "12c-b: wrong error: $(cat "${td12c}/err")"
   if cmp -s "${td12c}/opencode.json" "${td12c}/opencode.json.before" && cmp -s "${td12c}/agent_hive.json" "${td12c}/agent_hive.json.before"; then
     pass "12c-c: existing target config unmodified"
@@ -1137,7 +1181,7 @@ printf '\n=== 17c. Personal OpenCode ivan-writing goes to agents dir ===\n'
 td17c="${TMPDIR}/test17c"; mkdir -p "${td17c}"
 build_fixture
 sandbox_agents_skills
-OPENCODE_CONFIG_DIR="${td17c}" OPENCODE_AGENTS_PROFILE=personal-default bash "${INSTALL_HELPER}" 2>"${td17c}/err" && pass "17c-a: personal install succeeded" || fail "17c-b: personal install failed: $(cat "${td17c}/err")"
+OPENCODE_CONFIG_DIR="${td17c}" OPENCODE_AGENTS_PROFILE=personal-default bash "${INSTALL_HELPER}" --apply 2>"${td17c}/err" && pass "17c-a: personal install succeeded" || fail "17c-b: personal install failed: $(cat "${td17c}/err")"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "17c-c: ivan-writing in agents dir" || fail "17c-d: ivan-writing missing from agents dir"
 [[ ! -e "${td17c}/skills/ivan-writing" ]] && pass "17c-e: ivan-writing absent from OpenCode skills" || fail "17c-f: ivan-writing leaked into OpenCode skills"
 
@@ -1150,7 +1194,7 @@ echo "keep-opencode" > "${td17d}/skills/sentinel.txt"
 build_fixture
 AGENTS_SKILLS_DIR="${td17d}/skills"
 export AGENTS_SKILLS_DIR
-if ! OPENCODE_CONFIG_DIR="${td17d}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td17d}/err"; then
+if ! OPENCODE_CONFIG_DIR="${td17d}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td17d}/err"; then
   grep -q 'AGENTS_SKILLS_DIR resolves to the same directory' "${td17d}/err" && pass "17d-a: OpenCode alias aborted" || fail "17d-b: wrong OpenCode alias error: $(cat "${td17d}/err")"
   [[ -f "${td17d}/skills/sentinel.txt" ]] && pass "17d-c: OpenCode skills sentinel preserved" || fail "17d-d: OpenCode skills dir mutated before alias abort"
   [[ ! -f "${td17d}/opencode.json" ]] && pass "17d-e: OpenCode target not installed after alias abort" || fail "17d-f: OpenCode install continued after alias abort"
@@ -1267,7 +1311,7 @@ build_fixture
 printf '\n=== 30. Nested subdirectory under references/ (personal, OpenCode) ===\n'
 td30="${TMPDIR}/test30"; mkdir -p "${td30}"
 mkdir -p "${REPO_FIXTURE}/profiles/personal/skills/ivan-writing/references/subdir"
-! OPENCODE_CONFIG_DIR="${td30}" OPENCODE_AGENTS_PROFILE=personal-default bash "${INSTALL_HELPER}" 2>"${td30}/err" || fail "30a: should have failed"
+! OPENCODE_CONFIG_DIR="${td30}" OPENCODE_AGENTS_PROFILE=personal-default bash "${INSTALL_HELPER}" --apply 2>"${td30}/err" || fail "30a: should have failed"
 grep -q 'subdir\|unsupported' "${td30}/err" && pass "30b: OpenCode personal nested subdir rejected" || fail "30c: wrong error: $(cat ${td30}/err)"
 opencode_target_unmodified "${td30}" && pass "30d: no managed paths created" || fail "30e: target mutated"
 build_fixture
@@ -1278,7 +1322,7 @@ build_fixture
 printf '\n=== 31. Nested unsupported file under references/ (canonical, OpenCode install) ===\n'
 td31="${TMPDIR}/test31"; mkdir -p "${td31}"
 touch "${REPO_FIXTURE}/.apm/skills/stop-slop/references/rando.txt"
-! OPENCODE_CONFIG_DIR="${td31}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td31}/err" || fail "31a: should have failed"
+! OPENCODE_CONFIG_DIR="${td31}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td31}/err" || fail "31a: should have failed"
 grep -q 'rando\|unsupported' "${td31}/err" && pass "31b: canonical nested extra file rejected in OpenCode" || fail "31c: wrong error: $(cat ${td31}/err)"
 opencode_target_unmodified "${td31}" && pass "31d: no managed paths created" || fail "31e: target mutated"
 build_fixture
@@ -1365,7 +1409,7 @@ printf '\n=== 38. OpenCode wrong canonical source rejected ===\n'
 td38="${TMPDIR}/test38"; mkdir -p "${td38}"
 build_fixture
 replace_fixture_text "${REPO_FIXTURE}/.apm/skills/stop-slop/SKILL.md" 'name: stop-slop' 'name: wrong-name'
-! OPENCODE_CONFIG_DIR="${td38}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${TMPDIR}/test38-err" || fail "38a: should have failed"
+! OPENCODE_CONFIG_DIR="${td38}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${TMPDIR}/test38-err" || fail "38a: should have failed"
 grep -q 'wrong-name\|frontmatter name\|expected stop-slop' "${TMPDIR}/test38-err" && pass "38b: wrong canonical name rejected" || fail "38c: wrong error: $(cat "${TMPDIR}/test38-err")"
 opencode_target_unmodified "${td38}" && pass "38d: no managed paths created" || fail "38e: target mutated"
 
@@ -1377,7 +1421,7 @@ td39="${TMPDIR}/test39"; mkdir -p "${td39}"
 build_fixture
 mkdir -p "${REPO_FIXTURE}/.apm/skills/stop-slop/references/nested"
 printf 'extra\n' > "${REPO_FIXTURE}/.apm/skills/stop-slop/references/nested/extra.md"
-! OPENCODE_CONFIG_DIR="${td39}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${TMPDIR}/test39-err" || fail "39a: should have failed"
+! OPENCODE_CONFIG_DIR="${td39}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${TMPDIR}/test39-err" || fail "39a: should have failed"
 grep -q 'nested\|extra.md\|unsupported' "${TMPDIR}/test39-err" && pass "39b: nested extra entry rejected" || fail "39c: wrong error: $(cat "${TMPDIR}/test39-err")"
 opencode_target_unmodified "${td39}" && pass "39d: no managed paths created" || fail "39e: target mutated"
 
@@ -1417,7 +1461,7 @@ fi
 printf '\n=== 42. OpenCode unreadable canonical reference fails before mutation ===\n'
 td42="${TMPDIR}/test42"; mkdir -p "${td42}"
 chmod 000 "${REPO_FIXTURE}/.apm/skills/stop-slop/references/examples.md"
-! OPENCODE_CONFIG_DIR="${td42}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${TMPDIR}/test42-err" || fail "42a: should have failed"
+! OPENCODE_CONFIG_DIR="${td42}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${TMPDIR}/test42-err" || fail "42a: should have failed"
 grep -q 'not readable' "${TMPDIR}/test42-err" && pass "42b: unreadable reference detected" || fail "42c: wrong error: $(cat "${TMPDIR}/test42-err")"
 opencode_target_unmodified "${td42}" && pass "42d: no managed paths created" || fail "42e: target mutated"
 chmod -R +rwX "${REPO_FIXTURE}/.apm/skills/stop-slop" 2>/dev/null || true
@@ -1503,7 +1547,7 @@ run_td_frontmatter_test() {
       cursor_target_unmodified "${td}" && pass "${tn}d: ${label} no managed paths" || fail "${tn}e: ${label} target mutated"
       ;;
     opencode)
-      ! OPENCODE_CONFIG_DIR="${td}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td}/err" || { fail "${tn}a: ${label} should have failed"; return; }
+      ! OPENCODE_CONFIG_DIR="${td}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td}/err" || { fail "${tn}a: ${label} should have failed"; return; }
       opencode_target_unmodified "${td}" && pass "${tn}d: ${label} no managed paths" || fail "${tn}e: ${label} target mutated"
       ;;
   esac
@@ -1618,7 +1662,7 @@ build_fixture
 printf '\n=== 62. Shared install copies dcg-guard plugin ===\n'
 td62="${TMPDIR}/test62"; mkdir -p "${td62}/plugins"
 printf '%s\n' '// keep me' > "${td62}/plugins/unrelated.js"
-OPENCODE_CONFIG_DIR="${td62}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td62}/err" && pass "62a: shared install succeeded" || fail "62b: shared install failed: $(cat "${td62}/err")"
+OPENCODE_CONFIG_DIR="${td62}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td62}/err" && pass "62a: shared install succeeded" || fail "62b: shared install failed: $(cat "${td62}/err")"
 cmp -s "${REPO_FIXTURE}/profiles/base/plugins/dcg-guard.js" "${td62}/plugins/dcg-guard.js" && pass "62c: dcg-guard plugin installed" || fail "62d: dcg-guard plugin not copied from profiles/base/plugins"
 [[ -f "${td62}/plugins/unrelated.js" ]] && pass "62e: existing unrelated plugin preserved" || fail "62f: existing plugins directory was wiped"
 build_fixture
@@ -1633,7 +1677,7 @@ printf '{"existing":"agent_hive"}\n' > "${td63}/agent_hive.json"
 cp "${td63}/opencode.json" "${td63}/opencode.json.before"
 cp "${td63}/agent_hive.json" "${td63}/agent_hive.json.before"
 rm -f "${REPO_FIXTURE}/profiles/base/plugins/dcg-guard.js"
-if ! OPENCODE_CONFIG_DIR="${td63}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td63}/err"; then
+if ! OPENCODE_CONFIG_DIR="${td63}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td63}/err"; then
   grep -q 'ERROR' "${td63}/err" && pass "63a: missing dcg-guard plugin exits non-zero" || fail "63b: wrong error: $(cat "${td63}/err")"
   if cmp -s "${td63}/opencode.json" "${td63}/opencode.json.before" && cmp -s "${td63}/agent_hive.json" "${td63}/agent_hive.json.before"; then
     pass "63c: existing target config unmodified"
@@ -1655,7 +1699,7 @@ printf '{"existing":"agent_hive"}\n' > "${td63f}/agent_hive.json"
 cp "${td63f}/opencode.json" "${td63f}/opencode.json.before"
 cp "${td63f}/agent_hive.json" "${td63f}/agent_hive.json.before"
 printf 'not a skill\n' > "${REPO_FIXTURE}/.apm/skills/writing-policy/SKILL.md"
-if ! OPENCODE_CONFIG_DIR="${td63f}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td63f}/err"; then
+if ! OPENCODE_CONFIG_DIR="${td63f}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td63f}/err"; then
   grep -q 'writing-policy' "${td63f}/err" && pass "63f-a: malformed writing-policy exits non-zero" || fail "63f-b: wrong error: $(cat "${td63f}/err")"
   if cmp -s "${td63f}/opencode.json" "${td63f}/opencode.json.before" && cmp -s "${td63f}/agent_hive.json" "${td63f}/agent_hive.json.before"; then
     pass "63f-c: existing target config unmodified"
@@ -1681,7 +1725,7 @@ printf '%s\n' "${OPENCODE_CONFIG_DIR}" > "${CYMBAL_HOOK_LOG}"
 printf '%s\n' "$*" >> "${CYMBAL_HOOK_LOG}"
 SH
 chmod +x "${cymbal_bin}/cymbal"
-if PATH="${cymbal_bin}:/usr/bin:/bin" CYMBAL_HOOK_LOG="${TMPDIR}/install-cymbal-hook.log" OPENCODE_CONFIG_DIR="${td64}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" >/dev/null; then
+if PATH="${cymbal_bin}:/usr/bin:/bin" CYMBAL_HOOK_LOG="${TMPDIR}/install-cymbal-hook.log" OPENCODE_CONFIG_DIR="${td64}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply >/dev/null; then
   if [[ "$(sed -n '1p' "${TMPDIR}/install-cymbal-hook.log" 2>/dev/null)" == "${td64}" && "$(sed -n '2p' "${TMPDIR}/install-cymbal-hook.log" 2>/dev/null)" == "hook install opencode --scope user" ]]; then
     pass "64a: base install installs Cymbal hook for selected config dir"
   else
@@ -1694,7 +1738,7 @@ cat > "${cymbal_bin}/cymbal" <<'SH'
 #!/bin/sh
 exit 23
 SH
-if PATH="${cymbal_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td64_fail}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" >/dev/null 2>"${TMPDIR}/install-failing-cymbal.err" && grep -q 'Warning: failed to install optional Cymbal OpenCode hook.' "${TMPDIR}/install-failing-cymbal.err" && [[ -f "${td64_fail}/opencode.json" ]]; then
+if PATH="${cymbal_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td64_fail}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply >/dev/null 2>"${TMPDIR}/install-failing-cymbal.err" && grep -q 'Warning: failed to install optional Cymbal OpenCode hook.' "${TMPDIR}/install-failing-cymbal.err" && [[ -f "${td64_fail}/opencode.json" ]]; then
   pass "64c: failed Cymbal hook warns without failing base install"
 else
   fail "64c: failed Cymbal hook should warn without failing base install"
@@ -2623,7 +2667,7 @@ fi
 td68b="${TMPDIR}/opencode68b"
 mkdir -p "${td68b}"
 sandbox_agents_skills
-if OPENCODE_CONFIG_DIR="${td68b}" OPENCODE_AGENTS_PROFILE=shared bash "${BASELINE_PWD}/scripts/install-profile.sh" >"${TMPDIR}/install68b.out" 2>"${TMPDIR}/install68b.err"; then
+if OPENCODE_CONFIG_DIR="${td68b}" OPENCODE_AGENTS_PROFILE=shared bash "${BASELINE_PWD}/scripts/install-profile.sh" --apply >"${TMPDIR}/install68b.out" 2>"${TMPDIR}/install68b.err"; then
   if python3 - "${td68b}" "${AGENTS_SKILLS_DIR}" <<'PY'
 import sys
 from pathlib import Path
@@ -3073,7 +3117,7 @@ printf '%s\n' 'stale leftover finishing-a-development-branch' > "${td69}/skills/
 printf '%s\n' 'stale leftover consolidate-test-suites' > "${td69}/skills/consolidate-test-suites/SKILL.md"
 printf '%s\n' 'stale leftover root-cause-finder' > "${td69}/skills/root-cause-finder/SKILL.md"
 printf '%s\n' 'keep-file' > "${td69}/skills/keep.txt"
-OPENCODE_CONFIG_DIR="${td69}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" 2>"${td69}/err" && pass "69a: shared install succeeded" || fail "69b: shared install failed: $(cat "${td69}/err")"
+OPENCODE_CONFIG_DIR="${td69}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td69}/err" && pass "69a: shared install succeeded" || fail "69b: shared install failed: $(cat "${td69}/err")"
 if grep -Fqx 'impeccable-sentinel-keep' "${td69}/skills/impeccable/SENTINEL"; then
   pass "69c: unmanaged impeccable survived"
 else
@@ -3108,7 +3152,7 @@ td69b="${TMPDIR}/test69b"
 mkdir -p "${td69b}/skills/ivan-writing" "${td69b}/skills/keep-me"
 printf '%s\n' 'stale leftover ivan-writing' > "${td69b}/skills/ivan-writing/SKILL.md"
 printf '%s\n' 'keep-me-sentinel' > "${td69b}/skills/keep-me/file.txt"
-OPENCODE_CONFIG_DIR="${td69b}" OPENCODE_AGENTS_PROFILE=personal-default bash "${INSTALL_HELPER}" 2>"${td69b}/err" && pass "69b-a: personal install succeeded" || fail "69b-b: personal install failed: $(cat "${td69b}/err")"
+OPENCODE_CONFIG_DIR="${td69b}" OPENCODE_AGENTS_PROFILE=personal-default bash "${INSTALL_HELPER}" --apply 2>"${td69b}/err" && pass "69b-a: personal install succeeded" || fail "69b-b: personal install failed: $(cat "${td69b}/err")"
 [[ ! -e "${td69b}/skills/ivan-writing" ]] && pass "69b-c: leftover ivan-writing removed from OpenCode skills" || fail "69b-d: leftover ivan-writing remained"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "69b-e: ivan-writing installed to agents dir" || fail "69b-f: ivan-writing missing from agents dir"
 grep -Fqx 'keep-me-sentinel' "${td69b}/skills/keep-me/file.txt" && pass "69b-g: unmanaged skill preserved on personal install" || fail "69b-h: unmanaged skill removed on personal install"

@@ -48,7 +48,7 @@ Do not invent extra setup questions. This repository exposes the following real 
 
 Some setup facts are not user choices:
 
-- The default full install path is `./scripts/install-profile.sh`.
+- Running `./scripts/install-profile.sh` with no arguments previews without changes or hooks. Use `--apply` for the full install, or `--help` for usage.
 - The default repo profile uses only non-fast `openai/gpt-5.6-luna`, `openai/gpt-5.6-sol`, and `openai/gpt-6-astra` in `agent_hive.json`. The base Opencode `explore` override is `openai/gpt-5.6-luna` with `variant: max`, and `agent.compaction` is `openai/gpt-5.6-luna` with `variant: medium`. Top-level compaction `auto` and `prune` stay disabled.
 - The installer copies `plugins/dcg-guard.js`. Opencode auto-loads it. The plugin is a no-op until the `dcg` CLI is on `PATH`; install it from [destructive_command_guard](https://github.com/dicklesworthstone/destructive_command_guard) with `curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh?$(date +%s)" | bash -s -- --easy-mode`.
 - Hive routing follows the cost-conscious role/effort policy in [README.md](README.md#agent-hive-config): Luna for research, documents, mechanical work, and helper/summarizer seats; Sol for ordinary defined implementation, hard defined work, plan review, UI work, and most adversarial passes; Astra for escalation, architecture, orchestration, code/security review, and low-effort specialist first passes. No Hive seat uses `max`; only the difficult approach advisor uses `xhigh`. Do not mechanically preserve another provider's maximum effort when remapping roles. The cited benchmark results do not establish optimal lower-effort defaults or wall-clock latency.
@@ -107,21 +107,21 @@ Clean replacement example:
 
 ```bash
 git pull
-./scripts/install-profile.sh
+./scripts/install-profile.sh --apply
 ```
 
 Preserve and manually merge an existing `AGENTS.md`:
 
 ```bash
 git pull
-OPENCODE_AGENTS_MODE=skip ./scripts/install-profile.sh
+OPENCODE_AGENTS_MODE=skip ./scripts/install-profile.sh --apply
 ```
 
 Custom directory and selected profiles:
 
 ```bash
 git pull
-OPENCODE_CONFIG_DIR=/path/to/opencode-config OPENCODE_AGENTS_PROFILE=personal-default AGENTS_SKILLS_DIR=/path/to/agents-skills ./scripts/install-profile.sh
+OPENCODE_CONFIG_DIR=/path/to/opencode-config OPENCODE_AGENTS_PROFILE=personal-default AGENTS_SKILLS_DIR=/path/to/agents-skills ./scripts/install-profile.sh --apply
 ```
 
 Some notes:
@@ -274,19 +274,19 @@ Explain this before running the installer: it replaces the target directory's `o
 Run one of these:
 
 ```bash
-./scripts/install-profile.sh
+./scripts/install-profile.sh --apply
 ```
 
 ```bash
-OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
+OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh --apply
 ```
 
 ```bash
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --apply
 ```
 
 ```bash
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh --apply
 ```
 
 If a custom config directory was chosen, include `OPENCODE_CONFIG_DIR=/path/to/dir` as well.
@@ -297,7 +297,7 @@ Do not use the APM-only install path for first-time setup unless the operator ex
 
 When the target already has an `AGENTS.md`, follow this order:
 
-1. Run `OPENCODE_AGENTS_MODE=skip ./scripts/install-profile.sh` so the installer does not replace the user's file.
+1. Run `OPENCODE_AGENTS_MODE=skip ./scripts/install-profile.sh --apply` so the installer does not replace the user's file.
 2. Read the user's current `AGENTS.md` and the selected profile from this repository.
 3. Map the sections and instruction intent in both documents.
 4. Add compatible missing guidance into the user's structure without overwriting user content by default. That includes the profile's parity-validation wording, failed-subagent retry policy, subagent final-response instructions, and `resume-tailoring` guidance when the selected profile includes it.
@@ -558,31 +558,31 @@ Use this as the source of truth for the interview.
 Base install:
 
 ```bash
-./scripts/install-profile.sh
+./scripts/install-profile.sh --apply
 ```
 
 Base install with the personal profile:
 
 ```bash
-OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh
+OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh --apply
 ```
 
 Base install with the shared context-improved profile:
 
 ```bash
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --apply
 ```
 
 Base install with the personal context-improved profile:
 
 ```bash
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh
+CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh --apply
 ```
 
 Base install into a custom config directory:
 
 ```bash
-OPENCODE_CONFIG_DIR=/path/to/opencode-config ./scripts/install-profile.sh
+OPENCODE_CONFIG_DIR=/path/to/opencode-config ./scripts/install-profile.sh --apply
 ```
 
 Enable the context-improved bundle:
