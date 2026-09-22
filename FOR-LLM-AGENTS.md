@@ -60,7 +60,7 @@ Some setup facts are not user choices:
 - The optional context-improved bundle enables local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay. The base Agent Hive config disables `context7` and `ast_grep` for Hive workers.
 - `context7` is present in the base config but disabled by default.
 - `cymbal` is a separate optional CLI tool. When it is available on `PATH`, both the base installer and the context-improved bundle attempt to install its supported OpenCode hook into the selected `OPENCODE_CONFIG_DIR` with `cymbal hook install opencode --scope user`; a hook failure warns without failing the install. Do not copy `cymbal-opencode.js` by hand unless the CLI is unavailable.
-- The packaged `use-railway` skill needs the Railway CLI and Railway auth; without them it is unused.
+- The Railway CLI, with auth, installs and maintains its own `use-railway` agent skill via `railway setup agent` / `railway skills`; this repository does not package or install it.
 - The packaged `drawio-skill` needs `uv` and the draw.io desktop CLI; Graphviz (`dot`) is optional for auto-layout. Without those tools it is unused.
 - The packaged `frontend-slides` skill needs `uv` for PPTX conversion and Node.js for PDF export or Vercel deploy. Without those tools the authoring guidance still applies.
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
@@ -458,7 +458,7 @@ Verify the installed layout by checking for:
 - six files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/agents/`
 - eight files under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/commands/`, including `reflect.md` sourced from the shared canonical prompt
 - the eight managed Cursor skills under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}/skills/`: `agents-md-mastery`, `brainstorming`, `finishing-a-development-branch`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, and `verification`
-- the nineteen shared canonical skills under `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: `connecting-atlassian-tools`, `cymbal`, `decomposing-work`, `drawio-skill`, `frontend-slides`, `hard-cut`, `humanizer`, `managing-work-in-jira`, `react-best-practices`, `resume-tailoring`, `running-agile-delivery`, `stop-design-slop`, `stop-slop`, `use-railway`, `web-design-guidelines`, `working-with-atlassian`, `writing-for-humans`, `writing-policy`, and `writing-work-items`
+- the eighteen shared canonical skills under `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: `connecting-atlassian-tools`, `cymbal`, `decomposing-work`, `drawio-skill`, `frontend-slides`, `hard-cut`, `humanizer`, `managing-work-in-jira`, `react-best-practices`, `resume-tailoring`, `running-agile-delivery`, `stop-design-slop`, `stop-slop`, `web-design-guidelines`, `working-with-atlassian`, `writing-for-humans`, `writing-policy`, and `writing-work-items`
 - `ivan-writing` under the agents dir when installed via `CURSOR_INSTALL_IVAN_WRITING=1`
 
 If `CURSOR_CONFIG_DIRS` was used, check those three layout conditions under every target in the semicolon-separated list.

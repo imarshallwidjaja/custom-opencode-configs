@@ -96,7 +96,6 @@ SKILL
   stub_canonical_skill_tree stop-design-slop
   stub_canonical_skill_tree react-best-practices
   stub_canonical_skill_tree resume-tailoring
-  stub_canonical_skill_tree use-railway
   stub_canonical_skill_tree connecting-atlassian-tools
   stub_canonical_skill_tree decomposing-work
   stub_canonical_skill_tree managing-work-in-jira
@@ -1163,16 +1162,16 @@ CURSOR_CONFIG_DIR="${td17}" bash "${CURSOR_HELPER}" install 2>"${td17}/log2" || 
 # 17b. Stale Cursor copy of a shared skill is removed on install
 # ---------------------------------------------------------------------------
 printf '\n=== 17b. Stale Cursor shared skill is removed ===\n'
-td17b="${TMPDIR}/test17b"; mkdir -p "${td17b}/skills/stop-slop" "${td17b}/skills/use-railway"
+td17b="${TMPDIR}/test17b"; mkdir -p "${td17b}/skills/stop-slop" "${td17b}/skills/hard-cut"
 echo "stale stop-slop" > "${td17b}/skills/stop-slop/SKILL.md"
-echo "stale use-railway" > "${td17b}/skills/use-railway/SKILL.md"
+echo "stale hard-cut" > "${td17b}/skills/hard-cut/SKILL.md"
 build_fixture
 sandbox_agents_skills
 CURSOR_CONFIG_DIR="${td17b}" bash "${CURSOR_HELPER}" install 2>"${td17b}/install.log" && pass "17b-a: install succeeded" || fail "17b-b: install failed"
 [[ ! -e "${td17b}/skills/stop-slop" ]] && pass "17b-c: stale stop-slop removed from Cursor skills" || fail "17b-d: stale stop-slop remained"
-[[ ! -e "${td17b}/skills/use-railway" ]] && pass "17b-e: stale use-railway removed from Cursor skills" || fail "17b-f: stale use-railway remained"
+[[ ! -e "${td17b}/skills/hard-cut" ]] && pass "17b-e: stale hard-cut removed from Cursor skills" || fail "17b-f: stale hard-cut remained"
 [[ -f "${AGENTS_SKILLS_DIR}/stop-slop/SKILL.md" ]] && pass "17b-g: stop-slop installed to agents dir" || fail "17b-h: stop-slop missing from agents dir"
-[[ -f "${AGENTS_SKILLS_DIR}/use-railway/SKILL.md" ]] && pass "17b-i: use-railway installed to agents dir" || fail "17b-j: use-railway missing from agents dir"
+[[ -f "${AGENTS_SKILLS_DIR}/hard-cut/SKILL.md" ]] && pass "17b-i: hard-cut installed to agents dir" || fail "17b-j: hard-cut missing from agents dir"
 
 # ---------------------------------------------------------------------------
 # 17c. Personal OpenCode profile installs ivan-writing into the agents dir

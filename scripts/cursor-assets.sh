@@ -54,7 +54,6 @@ CANONICAL_SKILLS=(
   running-agile-delivery
   stop-design-slop
   stop-slop
-  use-railway
   web-design-guidelines
   working-with-atlassian
   writing-for-humans
@@ -590,38 +589,6 @@ source_manifests = (
         repo_root / '.apm' / 'skills' / 'web-design-guidelines',
         'web-design-guidelines',
         ('SKILL.md',),
-        None,
-        False,
-    ),
-    (
-        repo_root / '.apm' / 'skills' / 'use-railway',
-        'use-railway',
-        (
-            'SKILL.md',
-            'references',
-            'references/analyze-db-mongo.md',
-            'references/analyze-db-mysql.md',
-            'references/analyze-db-postgres.md',
-            'references/analyze-db-redis.md',
-            'references/analyze-db.md',
-            'references/configure.md',
-            'references/deploy.md',
-            'references/feature-flags.md',
-            'references/iac.md',
-            'references/operate.md',
-            'references/request.md',
-            'references/sandbox.md',
-            'references/setup.md',
-            'scripts',
-            'scripts/analyze-mongo.py',
-            'scripts/analyze-mysql.py',
-            'scripts/analyze-postgres.py',
-            'scripts/analyze-redis.py',
-            'scripts/dal.py',
-            'scripts/enable-pg-stats.py',
-            'scripts/pg-extensions.py',
-            'scripts/railway-api.sh',
-        ),
         None,
         False,
     ),

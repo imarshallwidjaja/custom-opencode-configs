@@ -58,7 +58,6 @@ SHARED_SKILLS=(
   running-agile-delivery
   stop-design-slop
   stop-slop
-  use-railway
   web-design-guidelines
   working-with-atlassian
   writing-for-humans
