@@ -25,6 +25,7 @@ Use this repository as the source of truth for the portable Opencode profile.
 - When migrating content from another tool-specific layout, normalize it to the current Opencode directory conventions.
 - When changing install choices, AGENTS profile options, optional bundle behavior, or dependency requirements, update the operator-facing setup docs in the same change. At minimum, review `README.md`, `profiles/agents/README.md`, `profiles/optional/README.md`, and `FOR-LLM-AGENTS.md` together. Include `CURSOR.md` when Cursor asset roots, install flow, or Rules guidance changes.
 - When prompt-backed commands or agents delegate worker or subagent tasks, require retries to run in a new session instead of resuming a failed one. Pass concise context from prior failed sessions, including what was attempted, where it failed, relevant errors, and the most likely cause, so the retried worker can avoid repeating the same path.
+- Do not add per-skill trigger rows to AGENTS profiles or Cursor Rules; skill descriptions are the trigger source. Add a line only for pairing, precedence, or a deliberate override of a skill's description.
 
 ## Verification
 

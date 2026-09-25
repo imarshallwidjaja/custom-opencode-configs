@@ -2971,6 +2971,7 @@ from pathlib import Path
 root = Path(sys.argv[1])
 old_cursor = '| Implementing a feature or bugfix | `test-driven-development` and `consolidate-test-suites` |'
 old_profile = '| Implementing a feature or bugfix in code | `test-driven-development` and `consolidate-test-suites` |'
+selected_tdd = 'Loading `test-driven-development` means TDD was selected.'
 errors = []
 cursor_rules = (root / '.apm/cursor/rules/default-agent.md').read_text(encoding='utf-8')
 if old_cursor in cursor_rules:
@@ -2998,7 +2999,7 @@ for relative in (
         errors.append(f'{relative} still mentions consolidate-test-suites')
     if '| Starting isolated feature work' in text or '| Starting isolated feature work or executing an approved implementation plan |' in text:
         errors.append(f'{relative} still loads using-git-worktrees for isolated work')
-    if 'test-driven-development' not in text or 'TDD is selected' not in text:
+    if selected_tdd not in text:
         errors.append(f'{relative} must load TDD only when TDD is selected')
 tdd = (root / '.apm/cursor/skills/test-driven-development/SKILL.md').read_text(encoding='utf-8')
 if not tdd.startswith('---\n'):

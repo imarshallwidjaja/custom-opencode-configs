@@ -74,7 +74,7 @@ Some setup facts are not user choices:
 - Windows Cursor with WSL projects should normally install into both the WSL config root and the Windows config root, for example `CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor"` from WSL.
 - If the operator asks only for Cursor assets, skip Opencode install, Opencode startup, and final Opencode verification. Stop after Cursor validation, optional install, Rules paste or paste instructions, and target-layout verification.
 - When merging into an existing `AGENTS.md`, start from the user's file and reconcile the selected profile into it instead of replacing it by default.
-- AGENTS profile selection changes operating rules, not just tool routing. Preserve the selected profile's parity-validation wording, failed-subagent retry policy, subagent final-response instructions, resume-work guidance, and `Request And Skill Precedence` section when merging. That section keeps explicit user intent above skill defaults within higher-priority instructions and permissions, respects advice-only scope, requires source quotes for skill-driven pauses, and bounds verification after required gates. Cursor carries the same precedence guidance in its manually pasted Rules; after an update, reprint and repaste Rules and reinstall changed managed skills.
+- AGENTS profile selection changes operating rules, not just tool routing. Preserve the selected profile's parity-validation wording, failed-subagent retry policy, subagent final-response instructions, and `Request And Skill Precedence` section when merging. That section keeps explicit user intent above skill defaults within higher-priority instructions and permissions, respects advice-only scope, requires source quotes for skill-driven pauses, and bounds verification after required gates. Cursor carries the same precedence guidance in its manually pasted Rules; after an update, reprint and repaste Rules and reinstall changed managed skills.
 
 To make it simple: use the repo scripts for the normal setup path, then offer the optional bundles only after the base profile is installed.
 
@@ -162,7 +162,7 @@ Before making changes, read these files from this repository:
 - When the operator wants `cymbal`, install it with Homebrew using `brew install 1broseidon/tap/cymbal` if Homebrew is available on the machine.
 - Keep the operator informed about what you are about to run.
 - Treat AGENTS profile choice as an operating-policy choice too, not only a toolchain choice.
-- During AGENTS merges, preserve the selected profile's parity-validation wording, new-session retry rule for failed subagents, explicit subagent final-response instructions, and resume-work guidance.
+- During AGENTS merges, preserve the selected profile's parity-validation wording, new-session retry rule for failed subagents, and explicit subagent final-response instructions.
 
 ## Recommended Defaults
 
@@ -300,7 +300,7 @@ When the target already has an `AGENTS.md`, follow this order:
 1. Run `OPENCODE_AGENTS_MODE=skip ./scripts/install-profile.sh --apply` so the installer does not replace the user's file.
 2. Read the user's current `AGENTS.md` and the selected profile from this repository.
 3. Map the sections and instruction intent in both documents.
-4. Add compatible missing guidance into the user's structure without overwriting user content by default. That includes the profile's parity-validation wording, failed-subagent retry policy, subagent final-response instructions, and `resume-tailoring` guidance when the selected profile includes it.
+4. Add compatible missing guidance into the user's structure without overwriting user content by default. That includes the profile's parity-validation wording, failed-subagent retry policy, and subagent final-response instructions.
 5. Stop when you find a real conflict and present it to the user.
 6. Only consolidate, rewrite, or delete conflicting instructions after explicit approval.
 7. Back up the user's `AGENTS.md` before writing the merged result.

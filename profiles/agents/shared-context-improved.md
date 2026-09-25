@@ -34,23 +34,9 @@ Stop expanding verification after acceptance criteria and required gates pass, i
 
 ## Skill Triggers
 
-Load skills on these triggers, not mechanically for unrelated trivial requests. Loading `test-driven-development` means TDD was selected.
+Load a skill whenever the work matches its description; do not load skills mechanically for trivial requests. Loading `test-driven-development` means TDD was selected.
 
-| Trigger | Required skill |
-| --- | --- |
-| Finding and reading code, tests or documentation in a codebase you are unfamiliar with | `cymbal` |
-| Creative work: features, components, behavior changes, UX changes | `brainstorming` |
-| Bug, test failure, unexpected behavior, protocol/state/hydration issue | `systematic-debugging` |
-| Implementing a feature or bugfix in code | load `test-driven-development` only when TDD is selected by operator, plan, repository policy, or design need |
-| Before claiming work is complete, fixed, or passing | Hive skill `verification` |
-| React or Next.js UI/performance work | `react-best-practices` |
-| UI review, accessibility audit, visual/UX critique | `web-design-guidelines` |
-| Generic, template-like, or AI-convergent UI | `stop-design-slop` |
-| HTML slide decks, briefings, PPT-to-web conversions | `frontend-slides` |
-| Draw.io diagrams, flowcharts, architecture, ER, or UML figures | `drawio-skill` |
-| Human-facing prose or delegated prose work | `writing-policy` |
-| Resumes, CVs, cover letters | `resume-tailoring` |
-| AGENTS.md bootstrap, review, pruning, or update | Hive skill `agents-md-mastery` |
+Load `agents-md-mastery` for any AGENTS.md edit, including additions.
 
 ## Quality Gates
 
