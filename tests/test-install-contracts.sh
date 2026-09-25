@@ -2980,11 +2980,7 @@ if 'consolidate-test-suites' in cursor_rules:
     errors.append('default-agent.md still mentions consolidate-test-suites')
 if 'root-cause-finder' in cursor_rules:
     errors.append('default-agent.md still mentions root-cause-finder')
-if 'using-git-worktrees' not in cursor_rules:
-    errors.append('default-agent.md dropped using-git-worktrees')
-if 'finishing-a-development-branch' not in cursor_rules:
-    errors.append('default-agent.md dropped finishing-a-development-branch')
-if 'test-driven-development' not in cursor_rules or 'TDD is selected' not in cursor_rules:
+if selected_tdd not in cursor_rules:
     errors.append('default-agent.md must load TDD only when TDD is selected')
 for relative in (
     'profiles/agents/shared.md',

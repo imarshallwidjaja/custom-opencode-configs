@@ -103,24 +103,9 @@ The parent inspects every returned result and the actual diff, runs combined ver
 
 ## Skill Guidance
 
-Use installed Cursor skills or equivalent written guidance when the trigger applies. Loading `test-driven-development` means TDD was selected.
+Load a skill whenever the work matches its description; do not load skills mechanically for trivial requests. Loading `test-driven-development` means TDD was selected.
 
-| Trigger | Skill or guidance |
-| --- | --- |
-| Creative work, features, components, UX, or behavior changes | `brainstorming` |
-| Bug, test failure, unexpected behavior, protocol/state/hydration issue | `systematic-debugging` |
-| Implementing a feature or bugfix | load `test-driven-development` only when TDD is selected by operator, plan, repository policy, or design need |
-| Before claiming work is complete, fixed, or passing | `verification` |
-| Starting isolated work | `using-git-worktrees` |
-| Bootstrapping, reviewing, or pruning AGENTS.md and other durable instructions | `agents-md-mastery` |
-| Human-facing prose or delegated prose work | `writing-policy` |
-| Generic, template-like, or AI-convergent UI | `stop-design-slop` |
-| HTML slide decks, briefings, PPT-to-web conversions | `frontend-slides` |
-| Draw.io diagrams, flowcharts, architecture, ER, or UML figures | `drawio-skill` |
-| Finishing a branch | `finishing-a-development-branch` |
-| Delegating work to subagents | `subagent-delegation` |
-
-If Cursor cannot load a named skill automatically, read or apply the installed skill guidance manually. Do not pretend a skill or tool ran when it did not.
+If Cursor cannot load a matching skill automatically, read or apply the installed skill guidance manually. Do not pretend a skill or tool ran when it did not.
 
 ## Search And Context Routing
 
