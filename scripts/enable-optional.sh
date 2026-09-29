@@ -52,7 +52,7 @@ check_command() {
 check_secret_file() {
   local secret_path="${TARGET_DIR}/secrets/$1"
   if [[ ! -f "${secret_path}" || ! -r "${secret_path}" ]] || ! LC_ALL=C grep -q '[^[:space:]]' "${secret_path}"; then
-    printf 'Secret file is missing, unreadable, or empty: %s\n' "${secret_path}" >&2
+    printf 'Secret file is missing, unreadable, or blank: %s\n' "${secret_path}" >&2
     exit 1
   fi
 }

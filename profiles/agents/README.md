@@ -83,6 +83,7 @@ OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh --apply
 Install the shared context-improved profile after writing the Context7 key to `secrets/context7` in the target config directory (see the README's MCP API keys section):
 
 ```bash
+./scripts/write-secret.sh context7
 OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --apply
 ```
 
@@ -95,7 +96,7 @@ OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh -
 Some notes:
 
 - the `*-context-improved` AGENTS profiles auto-apply `context-improved` during `./scripts/install-profile.sh --apply`; use `./scripts/enable-optional.sh context-improved` when you want to add the bundle after a plain install
-- the `*-context-improved` install commands require `jq`, `uvx`, and a non-empty `secrets/context7` file under the selected `OPENCODE_CONFIG_DIR` because the installer preflights and auto-applies the matching bundle; `cymbal` remains optional
+- the `*-context-improved` install commands require `jq`, `uvx`, and a non-blank `secrets/context7` file under the selected `OPENCODE_CONFIG_DIR` because the installer preflights and auto-applies the matching bundle; `cymbal` remains optional
 - `cymbal hook install opencode --scope user` also runs during a plain `./scripts/install-profile.sh --apply` when `cymbal` is already on `PATH`
 - the plain `shared` and `personal-default` profiles are the capability-safe defaults for the base install
 - `skip` is the preservation path for an existing `AGENTS.md`; it leaves the file untouched so the agent can fold in the new guidance structurally afterward

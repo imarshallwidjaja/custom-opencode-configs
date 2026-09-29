@@ -33,18 +33,18 @@ Prerequisites:
 
 - `uvx` available on `PATH`
 - network access to `https://mcp.context7.com/mcp`
-- a non-empty `secrets/context7` file in the target Opencode config directory
+- a non-blank `secrets/context7` file in the target Opencode config directory; write it with `./scripts/write-secret.sh context7`
 
 Verification:
 
 - `uvx --help`
-- `test -s "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/context7" && echo present`
+- `LC_ALL=C grep -q '[^[:space:]]' "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/context7" && echo present`
 
 Some notes:
 
 - this bundle normalizes the live local setup into portable `PATH`-based commands and config-relative secret files
-- this bundle updates `opencode.json`; Hive Scout skill loading comes from the base Hive config. Hive's optional research MCPs are allowed, and any same-named Hive MCP may take precedence over the OpenCode MCP entry at runtime
-- if an earlier install set `disableMcps` in `agent_hive.json`, rerun `./scripts/install-profile.sh --apply` to replace that config with the current base profile; applying this bundle alone leaves an existing Hive config untouched
+- this bundle updates `opencode.json`; Hive Scout skill loading comes from the base Hive config. `oc-arkive` releases newer than 2.5.0 bundle no research MCPs, so these entries are the only `ast_grep` and `context7` servers loaded
+- if an earlier install set `disableMcps` in `agent_hive.json`, rerun `./scripts/install-profile.sh --apply` to replace that config with the current base profile. Newer `oc-arkive` releases ignore an `agent_hive.json` that still has `disableMcps`, and applying this bundle alone leaves an existing Hive config untouched
 - the installer auto-applies this bundle for the `shared-context-improved` and `personal-context-improved` AGENTS profiles after preflighting the same prerequisites
 - install `cymbal` with `brew install 1broseidon/tap/cymbal` when the machine uses Homebrew and you want the full local navigation workflow
 - `cymbal` is a separate optional CLI tool for local code navigation; when it is on `PATH`, both `scripts/install-profile.sh` and this bundle attempt to install its supported OpenCode hook into the selected `OPENCODE_CONFIG_DIR`, and a hook failure warns without failing the install
@@ -64,11 +64,11 @@ Purpose: Enables the remote `context7` MCP entry already defined in the base pro
 Prerequisites:
 
 - network access to `https://mcp.context7.com/mcp`
-- a non-empty `secrets/context7` file in the target Opencode config directory
+- a non-blank `secrets/context7` file in the target Opencode config directory; write it with `./scripts/write-secret.sh context7`
 
 Verification:
 
-- `test -s "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/context7" && echo present`
+- `LC_ALL=C grep -q '[^[:space:]]' "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/context7" && echo present`
 
 Portability:
 
@@ -120,12 +120,16 @@ It adds:
 Prerequisites:
 
 - network access to `https://api.keenable.ai/mcp`
-- a Keenable API key in a non-empty `secrets/keenable` file in the target Opencode config directory
+- a Keenable API key in a non-blank `secrets/keenable` file in the target Opencode config directory; write it with `./scripts/write-secret.sh keenable`
 
 Verification:
 
-- `test -s "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/keenable" && echo present`
+- `LC_ALL=C grep -q '[^[:space:]]' "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/keenable" && echo present`
 - after enable, confirm `mcp.keenable.headers["X-API-Key"]` is `{file:secrets/keenable}`
+
+Some notes:
+
+- Keenable also answers without a key on a shared public tier limited per IP address. This bundle requires a key on purpose so agent traffic uses your account's limits instead of that shared pool
 
 Portability:
 
@@ -163,7 +167,8 @@ Some notes:
 - the script requires `jq`
 - it creates a timestamped backup of the current `opencode.json` before replacing it
 - it refuses to apply a snippet if a listed binary is missing, or if a secret file the snippet references is missing, unreadable, or blank; it checks secret files under the selected `OPENCODE_CONFIG_DIR`
-- it never creates, copies, or backs up `secrets/`
+- it never creates, copies, or backs up `secrets/`; `scripts/write-secret.sh` writes key files
+- installing the base profile again replaces `opencode.json` and drops merged snippets, so reapply them after each base reinstall
 
 ## Recommended policy
 

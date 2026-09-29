@@ -131,7 +131,7 @@ preflight_context_improved() {
   check_command uvx
   local secret_path="${TARGET_DIR}/secrets/context7"
   if [[ ! -f "${secret_path}" || ! -r "${secret_path}" ]] || ! LC_ALL=C grep -q '[^[:space:]]' "${secret_path}"; then
-    printf 'Context7 secret file is missing, unreadable, or empty: %s. It is required for %s.\n' "${secret_path}" "${AGENTS_PROFILE}" >&2
+    printf 'Context7 secret file is missing, unreadable, or blank: %s. It is required for %s.\n' "${secret_path}" "${AGENTS_PROFILE}" >&2
     exit 1
   fi
 }
@@ -655,6 +655,10 @@ fi
 if ! command -v dcg >/dev/null 2>&1; then
   printf 'Warning: dcg is not on PATH. The installed dcg-guard plugin stays inactive until Destructive Command Guard is installed.\n' >&2
   printf '%s\n' 'Install: curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh?$(date +%s)" | bash -s -- --easy-mode' >&2
+fi
+
+if ! same_resolved_path "${TARGET_DIR}" "${HOME}/.config/opencode"; then
+  printf 'Warning: Agent Hive reads %s regardless of OPENCODE_CONFIG_DIR; it does not read %s.\n' "${HOME}/.config/opencode/agent_hive.json" "${TARGET_DIR}/agent_hive.json" >&2
 fi
 
 printf 'Installed Opencode profile into %s\n' "${TARGET_DIR}"

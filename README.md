@@ -91,7 +91,7 @@ brew install 1broseidon/tap/cymbal
 git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
 cd custom-opencode-configs
 opencode auth login -p openai
-(umask 077 && mkdir -p "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets" && read -rs -p 'Context7 API key: ' key && printf '%s\n' "$key" > "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/context7")
+./scripts/write-secret.sh context7
 OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --apply
 opencode
 ```
@@ -128,6 +128,10 @@ OPENCODE_AGENTS_MODE=skip ./scripts/install-profile.sh --apply
 
 Some notes:
 
+- the installer replaces `opencode.json` with the base profile, which drops any optional bundle you enabled earlier. Reapply each one with `./scripts/enable-optional.sh <name>`; the `*-context-improved` profiles reapply `context-improved` themselves
+- this profile no longer reads the Context7 key from the `CONTEXT7_API_KEY` environment variable. If you set it that way, move the value into `secrets/context7` before reinstalling or reapplying a Context7 bundle: `printf '%s\n' "$CONTEXT7_API_KEY" | ./scripts/write-secret.sh context7`, then remove the variable from your shell profile
+- restart every Opencode process that uses this config directory, including a long-lived `opencode serve`; Opencode reads config and plugins only at startup
+- with a custom `OPENCODE_CONFIG_DIR`, Agent Hive still reads `$HOME/.config/opencode/agent_hive.json` (see [Target config directory](#target-config-directory))
 - `curl -fsSL https://opencode.ai/install | bash` updates or installs the Opencode binary; it does not update this profile
 - Opencode may keep using a cached copy of `oc-arkive@latest` after these files are updated; restart Opencode after installing the profile, and if the command surface still matches an older release, remove or refresh the cached `oc-arkive` plugin entry according to the local Opencode cache layout before starting Opencode again
 - after restart, verify the loaded plugin manifest or available Agent Hive commands match the expected latest `oc-arkive` release
@@ -151,6 +155,8 @@ OPENCODE_CONFIG_DIR=/path/to/opencode-config AGENTS_SKILLS_DIR=/path/to/agents-s
 ```
 
 Shared canonical skills default to `$HOME/.agents/skills`. Set `AGENTS_SKILLS_DIR` when the installer must not write that live directory.
+
+Agent Hive reads its config only from `$HOME/.config/opencode/agent_hive.json`, whatever `OPENCODE_CONFIG_DIR` says, and writes a default file there when none exists. A custom-directory install still copies `agent_hive.json` into that directory, but Hive does not read that copy, and the installer prints a warning saying so. To use this profile's Hive models with a custom config directory, copy the installed `agent_hive.json` to `$HOME/.config/opencode/` yourself, keeping in mind that every Opencode config on the machine shares that file.
 
 ### AGENTS profiles
 
@@ -177,7 +183,7 @@ OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --a
 OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh --apply
 ```
 
-The two `*-context-improved` profiles require `jq`, `uvx`, and a non-empty `secrets/context7` file in the target Opencode config directory (see [MCP API keys](#mcp-api-keys)). The installer preflights those dependencies before changing anything and applies the matching `context-improved` overlay automatically.
+The two `*-context-improved` profiles require `jq`, `uvx`, and a non-blank `secrets/context7` file in the target Opencode config directory (see [MCP API keys](#mcp-api-keys)). The installer preflights those dependencies before changing anything and applies the matching `context-improved` overlay automatically.
 
 ### Agent Hive config
 
@@ -192,7 +198,7 @@ Routing uses cost-conscious effort defaults:
 
 `forager-worker` is the default for features, fixes, refactors, and integrations that follow established patterns. Choose `forager-capable` up front for coupled invariants, subtle state or concurrency behavior, and difficult cross-component diagnosis, and prefer it when genuinely unsure between the two. `forager-smart` is the rescue worker after a prior attempt hits a substantive technical dead end. Research is consolidated into `scout-researcher`; plan and code review each have one first-pass role. Adversarial passes supplement that first pass when the risk calls for them: `adversarial-code-reviewer` when a change touches public contracts, persistence, authorization, concurrency, state transitions, destructive behavior, or other failure-sensitive logic, or when the first review leaves correctness risk unresolved; `adversarial-simplicity-reviewer` when a change introduces or expands abstractions, configuration, flags, adapters, validation layers, fallback paths, or branching, or is materially larger than the request needs. Routine, localized changes with focused verification skip the adversarial code pass. The `minimal-change` council group pairs `simplicity-reviewer` with `adversarial-simplicity-reviewer`. The planner, swarm, and builder load `background-delegation` alongside their orchestration skills; only the ordinary worker's configured `autoLoadSkills` in this profile include `verification`. Agent Hive may prepend built-in defaults before these configured additions. Only the document-focused roles (`forager-documents`, `documentation-reviewer`, and `adversarial-documentation-reviewer`) auto-load `writing-policy`, together with `writing-for-humans`, `humanizer`, and `stop-slop`. Other seats load `writing-policy` on demand from its skill description and the AGENTS profile references. `hive-helper` is hardcoded to no auto-loaded skills. Personal `ivan-writing` stays out of this portable config.
 
-The base Hive config omits `sandbox` and does not disable Hive's optional research MCPs. The context-improved bundle adds OpenCode MCP entries without changing the Hive config; a same-named Hive MCP may take precedence at runtime.
+This profile needs an `oc-arkive` release newer than 2.5.0. Those releases no longer bundle research MCPs, so the MCP entries in `opencode.json` and the optional bundles are the only ones loaded. They also ignore an `agent_hive.json` that still contains the removed `disableMcps` or `sandbox` keys; the base Hive config omits both. With 2.5.0 or older, Hive registers its own research MCPs as well.
 
 These defaults are a heuristic, not an experimentally optimal routing policy. The September 3, 2026 [DeepSWE](https://deepswe.datacurve.ai/) results supplied for this choice report Astra `xhigh` at 74 +/- 3% and $6.52, Sol `max` at 73 +/- 3% and $6.46, and Luna `max` at 67 +/- 4% and $0.61. Their confidence intervals overlap, and those runs do not establish performance at the lower efforts used here. Output tokens and steps are not wall-clock latency. Validate changes against representative repository tasks and mergeability criteria such as correctness, tests, scope, and style, as used by [FrontierCode](https://cognition.com/frontiercode), before promoting a default.
 
@@ -280,7 +286,7 @@ Prerequisites:
 
 - `jq`
 - `uvx` available on `PATH`
-- a non-empty `secrets/context7` file in the Opencode config directory
+- a non-blank `secrets/context7` file in the Opencode config directory
 - `cymbal` on `PATH` if you want that navigation tool available to agents
 
 Install `cymbal` with Homebrew when you want that tool:
@@ -318,7 +324,7 @@ The script validates prerequisites, backs up the current config file, and merges
 
 `chrome-devtools` is the canonical interactive browser solution. It requires `npx` on `PATH` and launches `chrome-devtools-mcp@latest` with a non-absolute command, `--isolated=true` (a temporary browser profile that is deleted when the browser closes), and `--category-extensions=true` (browser-extension tools). It does not pass `--headless`, so Chrome opens a visible window.
 
-`keenable` adds the remote Keenable web search and page-fetch MCP at `https://api.keenable.ai/mcp`. It sends the key from `secrets/keenable` as the `X-API-Key` header.
+`keenable` adds the remote Keenable web search and page-fetch MCP at `https://api.keenable.ai/mcp`. It sends the key from `secrets/keenable` as the `X-API-Key` header. Keenable also answers without a key on a shared public tier limited per IP address; this profile requires a key on purpose so agent traffic runs on your account's limits instead of that shared pool.
 
 Useful checks:
 
@@ -329,23 +335,26 @@ jq '.mcp["chrome-devtools"]' "$OPENCODE_CONFIG_DIR/opencode.json"
 
 ### MCP API keys
 
-Optional MCP bundles read API keys from files under `secrets/` in the Opencode config directory. Their snippets use `{file:secrets/<name>}`, which Opencode resolves relative to the directory that holds `opencode.json`, so a custom `OPENCODE_CONFIG_DIR` keeps its own keys. Opencode refuses to start when a referenced file is missing. For that reason the base `opencode.json` references no secret file, and `scripts/enable-optional.sh` and the context-improved install stop before changing any config unless the file exists, is readable, and is not blank. The installers never create, copy, or back up `secrets/`, and this repository ignores `secrets/` so a key cannot be committed by accident.
+Optional MCP bundles read API keys from files under `secrets/` in the Opencode config directory. Their snippets use `{file:secrets/<name>}`, which Opencode resolves relative to the directory that holds `opencode.json`, so a custom `OPENCODE_CONFIG_DIR` keeps its own keys. Opencode refuses to start when a referenced file is missing. For that reason the base `opencode.json` references no secret file, and `scripts/enable-optional.sh` and the context-improved install stop before changing any config unless the file exists, is readable, and is not blank. The installers never create, copy, or back up `secrets/`; only `scripts/write-secret.sh` writes there. This repository ignores `secrets/` so a key cannot be committed by accident.
 
 | Bundle | Secret file | Sent as |
 | --- | --- | --- |
 | `context-improved`, `mcp-context7-enabled` | `secrets/context7` | `CONTEXT7_API_KEY` header |
 | `keenable` | `secrets/keenable` | `X-API-Key` header |
 
-Create a key file without echoing the key or leaving it in shell history (swap `context7` for `keenable` as needed):
+Write a key file from the repository root:
 
 ```bash
-(umask 077 && mkdir -p "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets" && read -rs -p 'Context7 API key: ' key && printf '%s\n' "$key" > "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/context7")
+./scripts/write-secret.sh context7
+./scripts/write-secret.sh keenable
 ```
 
-Check it without printing the key:
+The script prompts without echoing the key, so the key stays out of shell history, and it runs under Bash whatever your login shell is. It writes to `secrets/<name>` under `${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}`, sets the `secrets/` directory to mode 700, writes the key to a new mode-600 file, and renames that file over any existing one, so rotating a key never leaves the new value in a file with looser permissions. It refuses a blank key and leaves the old file in place. When stdin is not a terminal, it reads the first line of stdin instead, for example to move a key out of an environment variable.
+
+Check a key file the same way the installers do, without printing the key:
 
 ```bash
-test -s "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/context7" && echo present
+LC_ALL=C grep -q '[^[:space:]]' "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/context7" && echo present
 ```
 
 ## Base plugins

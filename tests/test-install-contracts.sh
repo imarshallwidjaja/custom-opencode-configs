@@ -859,6 +859,59 @@ else
   fail "0f: keenable enables the remote MCP with a relative secret-file header"
 fi
 
+td_write_secret="${TMPDIR}/test-write-secret"
+mkdir -p "${td_write_secret}/secrets"
+chmod 755 "${td_write_secret}/secrets"
+printf 'old-key\n' > "${td_write_secret}/secrets/keenable"
+chmod 644 "${td_write_secret}/secrets/keenable"
+mode_of() { python3 -c 'import os, sys; print(format(os.stat(sys.argv[1]).st_mode & 0o777, "o"))' "$1"; }
+inode_of() { python3 -c 'import os, sys; print(os.stat(sys.argv[1]).st_ino)' "$1"; }
+old_inode="$(inode_of "${td_write_secret}/secrets/keenable")"
+if printf 'rotated-key\n' | OPENCODE_CONFIG_DIR="${td_write_secret}" "${BASELINE_PWD}/scripts/write-secret.sh" keenable >/dev/null \
+  && [[ "$(cat "${td_write_secret}/secrets/keenable")" == "rotated-key" ]] \
+  && [[ "$(mode_of "${td_write_secret}/secrets/keenable")" == "600" && "$(mode_of "${td_write_secret}/secrets")" == "700" ]] \
+  && [[ "$(inode_of "${td_write_secret}/secrets/keenable")" != "${old_inode}" ]] \
+  && [[ "$(ls -A "${td_write_secret}/secrets")" == "keenable" ]]; then
+  pass "0f: write-secret replaces a permissive key file with a new mode-600 file"
+else
+  fail "0f: write-secret must replace a permissive key file with a new mode-600 file"
+fi
+if ! printf ' \t\n' | OPENCODE_CONFIG_DIR="${td_write_secret}" "${BASELINE_PWD}/scripts/write-secret.sh" keenable >/dev/null 2>&1 \
+  && [[ "$(cat "${td_write_secret}/secrets/keenable")" == "rotated-key" ]] \
+  && ! OPENCODE_CONFIG_DIR="${td_write_secret}" "${BASELINE_PWD}/scripts/write-secret.sh" ../keenable </dev/null >/dev/null 2>&1; then
+  pass "0f: write-secret rejects blank keys and path-like names without changing the key"
+else
+  fail "0f: write-secret must reject blank keys and path-like names without changing the key"
+fi
+
+if python3 - "${BASELINE_PWD}" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+errors = []
+docs = ["README.md", "FOR-LLM-AGENTS.md", "profiles/optional/README.md", "profiles/agents/README.md"]
+for name in docs:
+    text = (root / name).read_text(encoding="utf-8")
+    if re.search(r"read -r?s -p|umask 077", text):
+        errors.append(f"{name} has a shell-specific inline secret writer; use scripts/write-secret.sh")
+    if re.search(r"test -s [^\n]*secrets/", text):
+        errors.append(f"{name} checks secrets with test -s; installers reject whitespace-only files")
+readme = (root / "README.md").read_text(encoding="utf-8")
+for secret in ("context7", "keenable"):
+    if f"./scripts/write-secret.sh {secret}" not in readme:
+        errors.append(f"README.md must show ./scripts/write-secret.sh {secret}")
+if errors:
+    print("\n".join(errors))
+    raise SystemExit(1)
+PY
+then
+  pass "0f: docs write secrets with write-secret.sh and check presence the way installers do"
+else
+  fail "0f: docs write secrets with write-secret.sh and check presence the way installers do"
+fi
+
 td_ci_install="${TMPDIR}/test-context-improved-install"
 if ! PATH="${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_ci_install}" OPENCODE_AGENTS_PROFILE=shared-context-improved bash "${INSTALL_HELPER}" --apply >/dev/null 2>"${TMPDIR}/ci-install.err" \
   && grep -q "${td_ci_install}/secrets/context7" "${TMPDIR}/ci-install.err" \
@@ -1350,6 +1403,16 @@ if PATH="${no_realpath_bin}:${PATH}" OPENCODE_CONFIG_DIR="${td17e}/link/opencode
   pass "17e-d: non-aliased install succeeds without realpath"
 else
   fail "17e-d: non-aliased install failed without realpath: $(cat "${td17e}/err")"
+fi
+grep -Fq "Warning: Agent Hive reads ${HOME}/.config/opencode/agent_hive.json regardless of OPENCODE_CONFIG_DIR" "${td17e}/err" \
+  && pass "17e-e: custom config root warns that Agent Hive ignores its agent_hive.json" \
+  || fail "17e-e: custom config root did not warn about Agent Hive config location"
+mkdir -p "${td17e}/home/.config"
+if HOME="${td17e}/home" OPENCODE_CONFIG_DIR="${td17e}/home/.config/../.config/opencode" bash "${INSTALL_HELPER}" --apply >/dev/null 2>"${td17e}/err" \
+  && ! grep -q 'Agent Hive reads' "${td17e}/err"; then
+  pass "17e-f: default config root does not warn about Agent Hive config location"
+else
+  fail "17e-f: default config root warned or failed: $(cat "${td17e}/err")"
 fi
 
 # ---------------------------------------------------------------------------
