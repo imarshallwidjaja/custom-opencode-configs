@@ -48,6 +48,16 @@ check_command() {
   fi
 }
 
+# Snippets reference API keys as {file:secrets/<name>}, which Opencode resolves
+# relative to the config directory and refuses to start without.
+check_secret_file() {
+  local secret_path="${TARGET_DIR}/secrets/$1"
+  if [[ ! -f "${secret_path}" || ! -r "${secret_path}" ]] || ! LC_ALL=C grep -q '[^[:space:]]' "${secret_path}"; then
+    printf 'Secret file is missing, unreadable, or empty: %s\n' "${secret_path}" >&2
+    exit 1
+  fi
+}
+
 BACKUP_DIR=""
 
 backup_json() {
@@ -90,19 +100,16 @@ merge_json() {
 case "${SNIPPET_NAME}" in
   context-improved)
     check_command uvx
-    if [[ -z "${CONTEXT7_API_KEY:-}" ]]; then
-      printf 'CONTEXT7_API_KEY is not set.\n' >&2
-      exit 1
-    fi
+    check_secret_file context7
     ;;
   chrome-devtools)
     check_command npx
     ;;
   mcp-context7-enabled)
-    if [[ -z "${CONTEXT7_API_KEY:-}" ]]; then
-      printf 'CONTEXT7_API_KEY is not set.\n' >&2
-      exit 1
-    fi
+    check_secret_file context7
+    ;;
+  keenable)
+    check_secret_file keenable
     ;;
 esac
 

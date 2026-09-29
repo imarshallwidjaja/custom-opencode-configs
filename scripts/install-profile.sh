@@ -123,8 +123,9 @@ profile_needs_context_improved() {
 preflight_context_improved() {
   check_command jq
   check_command uvx
-  if [[ -z "${CONTEXT7_API_KEY:-}" ]]; then
-    printf 'CONTEXT7_API_KEY is not set. It is required for %s.\n' "${AGENTS_PROFILE}" >&2
+  local secret_path="${TARGET_DIR}/secrets/context7"
+  if [[ ! -f "${secret_path}" || ! -r "${secret_path}" ]] || ! LC_ALL=C grep -q '[^[:space:]]' "${secret_path}"; then
+    printf 'Context7 secret file is missing, unreadable, or empty: %s. It is required for %s.\n' "${secret_path}" "${AGENTS_PROFILE}" >&2
     exit 1
   fi
 }

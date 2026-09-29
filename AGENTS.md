@@ -12,7 +12,7 @@ Use this repository as the source of truth for the portable Opencode profile.
 ## Configuration Rules
 
 - Prefer remote plugin references such as `oc-arkive` over local build paths.
-- Prefer environment variables for API keys and other machine-specific values.
+- Read API keys through `{file:secrets/<name>}` references, which Opencode resolves relative to the installed config directory, and keep secret-file references out of `profiles/base/` because Opencode refuses to start when a referenced file is missing. Use environment variables for other machine-specific values.
 - Keep the default profile limited to documented provider access; do not add local provider shims without documenting their prerequisites.
 - Add optional providers and MCPs only when their prerequisites are documented in `README.md`.
 

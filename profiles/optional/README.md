@@ -27,23 +27,23 @@ Purpose: Enables the portable context-improved overlay in one merge.
 It adds:
 
 - a local `ast_grep` MCP launched through `uvx`
-- the bundled remote `context7` MCP entry already present in the base profile
+- the bundled remote `context7` MCP entry already present in the base profile, enabled with a `CONTEXT7_API_KEY` header read from `{file:secrets/context7}`
 - the matching `agent_hive.context-improved.json` overlay, which writes `disableMcps` to `context7` and `ast_grep` on the target Hive config. The base Hive config sets no `disableMcps`, so an `oc-arkive` release that bundles research MCPs would register its own `context7` and `ast_grep` and replace this bundle's entries; the overlay stops that. It replaces any previous `disableMcps` list on the target. Scout skill loading comes from the base Hive config.
 
 Prerequisites:
 
 - `uvx` available on `PATH`
 - network access to `https://mcp.context7.com/mcp`
-- `CONTEXT7_API_KEY` set in the environment
+- a non-empty `secrets/context7` file in the target Opencode config directory
 
 Verification:
 
 - `uvx --help`
-- `printenv CONTEXT7_API_KEY`
+- `test -s "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/context7" && echo present`
 
 Some notes:
 
-- this bundle normalizes the live local setup into portable `PATH`-based commands and environment variables
+- this bundle normalizes the live local setup into portable `PATH`-based commands and config-relative secret files
 - this bundle updates both `opencode.json` and `agent_hive.json`; Hive Scout skills stay on the base config. The Hive overlay writes `disableMcps` to `context7` and `ast_grep`, replacing any previous list on the target, so Hive's same-named built-ins cannot replace the MCP entries this bundle enables
 - the installer auto-applies this bundle for the `shared-context-improved` and `personal-context-improved` AGENTS profiles after preflighting the same prerequisites
 - install `cymbal` with `brew install 1broseidon/tap/cymbal` when the machine uses Homebrew and you want the full local navigation workflow
@@ -59,16 +59,16 @@ Portability:
 
 ### `opencode.mcp-context7-enabled.json`
 
-Purpose: Enables the remote `context7` MCP entry already defined in the base profile.
+Purpose: Enables the remote `context7` MCP entry already defined in the base profile and adds its `CONTEXT7_API_KEY` header from `{file:secrets/context7}`.
 
 Prerequisites:
 
 - network access to `https://mcp.context7.com/mcp`
-- `CONTEXT7_API_KEY` set in the environment
+- a non-empty `secrets/context7` file in the target Opencode config directory
 
 Verification:
 
-- `printenv CONTEXT7_API_KEY`
+- `test -s "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/context7" && echo present`
 
 Portability:
 
@@ -83,6 +83,8 @@ It adds:
 
 - a local `chrome-devtools` MCP launched through `npx` with a non-absolute command
 - `chrome-devtools-mcp@latest` resolved at runtime
+- `--isolated=true`, which gives each run a temporary browser profile that is deleted when the browser closes
+- `--category-extensions=true`, which exposes the browser-extension tools; upstream supports them only when the MCP launches Chrome itself
 
 Prerequisites:
 
@@ -93,17 +95,42 @@ Prerequisites:
 Verification:
 
 - `npx --version`
-- after enable, confirm `mcp.chrome-devtools.command` is `["npx", "-y", "chrome-devtools-mcp@latest"]`
+- after enable, confirm `mcp.chrome-devtools.command` is `["npx", "-y", "chrome-devtools-mcp@latest", "--isolated=true", "--category-extensions=true"]`
 
 Some notes:
 
 - AGENTS profiles route interactive browser work to `chrome-devtools`
 - keep the command PATH-based; do not embed absolute Node or home-directory paths
+- the bundle does not pass `--headless`, so Chrome opens a visible window; isolated runs do not keep logins or cookies between sessions
 
 Portability:
 
 - medium
 - suitable when Node.js is installed and the operator wants interactive browser automation
+
+### `opencode.keenable.json`
+
+Purpose: Enables the remote Keenable web search and page-fetch MCP.
+
+It adds:
+
+- a remote `keenable` MCP at `https://api.keenable.ai/mcp`, enabled on merge
+- an `X-API-Key` header read from `{file:secrets/keenable}`
+
+Prerequisites:
+
+- network access to `https://api.keenable.ai/mcp`
+- a Keenable API key in a non-empty `secrets/keenable` file in the target Opencode config directory
+
+Verification:
+
+- `test -s "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/keenable" && echo present`
+- after enable, confirm `mcp.keenable.headers["X-API-Key"]` is `{file:secrets/keenable}`
+
+Portability:
+
+- high
+- no local binary required
 
 ## Merge workflow
 
@@ -128,13 +155,15 @@ Other examples:
 
 ```bash
 ./scripts/enable-optional.sh chrome-devtools
+./scripts/enable-optional.sh keenable
 ```
 
 Some notes:
 
 - the script requires `jq`
 - it creates a timestamped backup of the current `opencode.json`, and `agent_hive.json` when the bundle includes an Agent Hive overlay, before replacing them
-- it refuses to apply a snippet if the listed binaries or environment variables are missing
+- it refuses to apply a snippet if a listed binary is missing, or if a secret file the snippet references is missing, unreadable, or blank; it checks secret files under the selected `OPENCODE_CONFIG_DIR`
+- it never creates, copies, or backs up `secrets/`
 
 ## Recommended policy
 
@@ -143,4 +172,5 @@ For a shareable profile:
 - keep remote MCPs preferred over local MCPs
 - avoid absolute paths
 - prefer command names resolved through `PATH`
-- record environment variables near the bundle that uses them
+- read API keys through `{file:secrets/<name>}` relative to the config directory, never inline and never from a tracked file, and record the secret file next to the bundle that uses it
+- keep secret-file references out of `profiles/base/`; Opencode refuses to start when a referenced file is missing

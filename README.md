@@ -45,7 +45,7 @@ See the upstream project: [Dicklesworthstone/destructive_command_guard](https://
 Optional features require their own tools:
 
 - `jq` for `scripts/enable-optional.sh`
-- `CONTEXT7_API_KEY` for the optional `context7` MCP entry
+- a Context7 API key in `secrets/context7` under the Opencode config directory for the optional `context7` MCP entry, and a Keenable API key in `secrets/keenable` for the optional `keenable` MCP (see [MCP API keys](#mcp-api-keys))
 - `uvx` and optionally the `cymbal` CLI for the context-improved workflow
 - `npx` (Node.js) for the optional `chrome-devtools` browser MCP
 - VS Code if you want the companion extension
@@ -90,7 +90,8 @@ brew install 1broseidon/tap/cymbal
 git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
 cd custom-opencode-configs
 opencode auth login -p openai
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --apply
+(umask 077 && mkdir -p "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets" && read -rs -p 'Context7 API key: ' key && printf '%s\n' "$key" > "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/context7")
+OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --apply
 opencode
 ```
 
@@ -168,14 +169,14 @@ OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh --apply
 ```
 
 ```bash
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --apply
+OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --apply
 ```
 
 ```bash
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh --apply
+OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh --apply
 ```
 
-The two `*-context-improved` profiles require `jq`, `uvx`, and `CONTEXT7_API_KEY`. The installer preflights those dependencies and applies the matching `context-improved` overlay automatically.
+The two `*-context-improved` profiles require `jq`, `uvx`, and a non-empty `secrets/context7` file in the target Opencode config directory (see [MCP API keys](#mcp-api-keys)). The installer preflights those dependencies before changing anything and applies the matching `context-improved` overlay automatically.
 
 ### Agent Hive config
 
@@ -271,14 +272,14 @@ The context-improved workflow adds the local context and structural-search toolc
 It enables:
 
 - a local `ast_grep` MCP launched through `uvx`
-- the bundled remote `context7` MCP entry
+- the bundled remote `context7` MCP entry, with its API key read from `secrets/context7`
 - Scout navigation rules for `cymbal` and `ast-grep`
 
 Prerequisites:
 
 - `jq`
 - `uvx` available on `PATH`
-- `CONTEXT7_API_KEY` set in the environment
+- a non-empty `secrets/context7` file in the Opencode config directory
 - `cymbal` on `PATH` if you want that navigation tool available to agents
 
 Install `cymbal` with Homebrew when you want that tool:
@@ -304,6 +305,7 @@ Optional merge snippets live under `profiles/optional/`:
 - `opencode.context-improved.json`
 - `opencode.mcp-context7-enabled.json`
 - `opencode.chrome-devtools.json`
+- `opencode.keenable.json`
 
 Apply a snippet with:
 
@@ -313,13 +315,36 @@ Apply a snippet with:
 
 The script validates prerequisites, backs up the current config file, and merges the chosen snippet into the active config.
 
-`chrome-devtools` is the canonical interactive browser solution. It requires `npx` on `PATH` and launches `chrome-devtools-mcp@latest` with a non-absolute command.
+`chrome-devtools` is the canonical interactive browser solution. It requires `npx` on `PATH` and launches `chrome-devtools-mcp@latest` with a non-absolute command, `--isolated=true` (a temporary browser profile that is deleted when the browser closes), and `--category-extensions=true` (browser-extension tools). It does not pass `--headless`, so Chrome opens a visible window.
+
+`keenable` adds the remote Keenable web search and page-fetch MCP at `https://api.keenable.ai/mcp`. It sends the key from `secrets/keenable` as the `X-API-Key` header.
 
 Useful checks:
 
 ```bash
 npx --version
 jq '.mcp["chrome-devtools"]' "$OPENCODE_CONFIG_DIR/opencode.json"
+```
+
+### MCP API keys
+
+Optional MCP bundles read API keys from files under `secrets/` in the Opencode config directory. Their snippets use `{file:secrets/<name>}`, which Opencode resolves relative to the directory that holds `opencode.json`, so a custom `OPENCODE_CONFIG_DIR` keeps its own keys. Opencode refuses to start when a referenced file is missing. For that reason the base `opencode.json` references no secret file, and `scripts/enable-optional.sh` and the context-improved install stop before changing any config unless the file exists, is readable, and is not blank. The installers never create, copy, or back up `secrets/`, and this repository ignores `secrets/` so a key cannot be committed by accident.
+
+| Bundle | Secret file | Sent as |
+| --- | --- | --- |
+| `context-improved`, `mcp-context7-enabled` | `secrets/context7` | `CONTEXT7_API_KEY` header |
+| `keenable` | `secrets/keenable` | `X-API-Key` header |
+
+Create a key file without echoing the key or leaving it in shell history (swap `context7` for `keenable` as needed):
+
+```bash
+(umask 077 && mkdir -p "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets" && read -rs -p 'Context7 API key: ' key && printf '%s\n' "$key" > "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/context7")
+```
+
+Check it without printing the key:
+
+```bash
+test -s "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/secrets/context7" && echo present
 ```
 
 ## Base plugins

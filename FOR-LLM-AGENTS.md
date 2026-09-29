@@ -40,8 +40,11 @@ Do not invent extra setup questions. This repository exposes the following real 
 5. Whether to enable the optional `chrome-devtools` browser MCP:
    - none
    - `chrome-devtools`
-6. Whether to install the optional Agent Hive / `oc-arkive` VS Code companion from the latest release `.vsix`.
-7. Whether to install the separate Cursor prompt-level assets:
+6. Whether to enable the optional Keenable web search MCP:
+   - none
+   - `keenable`
+7. Whether to install the optional Agent Hive / `oc-arkive` VS Code companion from the latest release `.vsix`.
+8. Whether to install the separate Cursor prompt-level assets:
    - skip Cursor setup
    - validate and inspect the Cursor assets only
    - install the Cursor assets into `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` or semicolon-separated `CURSOR_CONFIG_DIRS` targets and paste Rules manually
@@ -58,7 +61,7 @@ Some setup facts are not user choices:
 - The published `oc-arkive@latest` plugin is installed by Opencode on first run.
 - Updating this repository's profile files does not prove Opencode is using the latest cached `oc-arkive@latest` plugin. After a profile update, restart Opencode. If the Agent Hive commands or plugin manifest still match an older release, remove or refresh the cached `oc-arkive` plugin entry according to the local Opencode cache layout before starting Opencode again.
 - The optional context-improved bundle enables local `ast_grep`, enabled `context7`, and a matching `agent_hive.json` overlay. The base Agent Hive config sets no `disableMcps`, so an `oc-arkive` release that bundles research MCPs can register them and replace same-named `opencode.json` entries; the context-improved overlay disables the `context7` and `ast_grep` built-ins so the bundle's own definitions stay.
-- `context7` is present in the base config but disabled by default.
+- `context7` is present in the base config but disabled by default and has no API-key header. The `context-improved` and `mcp-context7-enabled` snippets enable it and add a `{file:secrets/context7}` header; the `keenable` snippet uses `{file:secrets/keenable}`. Opencode resolves those paths relative to the config directory and refuses to start when a referenced file is missing, so `scripts/enable-optional.sh` and the context-improved install check the file first. The installers never create or back up `secrets/`.
 - `cymbal` is a separate optional CLI tool. When it is available on `PATH`, both the base installer and the context-improved bundle attempt to install its supported OpenCode hook into the selected `OPENCODE_CONFIG_DIR` with `cymbal hook install opencode --scope user`; a hook failure warns without failing the install. Do not copy `cymbal-opencode.js` by hand unless the CLI is unavailable.
 - The Railway CLI, with auth, installs and maintains its own `use-railway` agent skill via `railway setup agent` / `railway skills`; this repository does not package or install it.
 - The packaged `drawio-skill` needs `uv` and the draw.io desktop CLI; Graphviz (`dot`) is optional for auto-layout. Without those tools it is unused.
@@ -269,7 +272,7 @@ Recommendation:
 
 `profiles/base/agent_hive.json` is the sole Hive config source. It uses `openai/gpt-6-luna-fast`, `openai/gpt-6-sol`, `openai/gpt-6-astra`, and, for the three primary orchestration seats only, `openai/gpt-5.6-sol`. Confirm OpenAI ChatGPT OAuth is available before install.
 
-Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, and `AGENTS.md` with this repo's versions. In `skills/`, it replaces the OpenCode-local skill (`writing-skills`); removes leftover copies of the shared canonical skills, leftover Hive-owned skill names, and leftover retired OpenCode-local skills (`using-git-worktrees`, `finishing-a-development-branch`, `consolidate-test-suites`, `root-cause-finder`, `context-mode`) so they cannot shadow `${AGENTS_SKILLS_DIR}` or Hive materialization; and leaves other existing skill directories in place, including unmanaged installs such as `impeccable` from the official CLI. Shared-profile installs leave an unowned `skills/ivan-writing` in place; personal profiles copy `ivan-writing` into the agents dir and remove a leftover OpenCode `skills/ivan-writing`. It installs optional standalone `agents/` or prompt-backed `commands/` only when this repo packages them; removes the old managed Hive command prompt files from `commands/`; and writes timestamped backups under `<target>/.backup/` first when those paths already exist, including a whole-`skills/` backup before that directory is mutated. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `uvx`, and `CONTEXT7_API_KEY`, then auto-applies the matching `context-improved` overlays. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
+Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, and `AGENTS.md` with this repo's versions. In `skills/`, it replaces the OpenCode-local skill (`writing-skills`); removes leftover copies of the shared canonical skills, leftover Hive-owned skill names, and leftover retired OpenCode-local skills (`using-git-worktrees`, `finishing-a-development-branch`, `consolidate-test-suites`, `root-cause-finder`, `context-mode`) so they cannot shadow `${AGENTS_SKILLS_DIR}` or Hive materialization; and leaves other existing skill directories in place, including unmanaged installs such as `impeccable` from the official CLI. Shared-profile installs leave an unowned `skills/ivan-writing` in place; personal profiles copy `ivan-writing` into the agents dir and remove a leftover OpenCode `skills/ivan-writing`. It installs optional standalone `agents/` or prompt-backed `commands/` only when this repo packages them; removes the old managed Hive command prompt files from `commands/`; and writes timestamped backups under `<target>/.backup/` first when those paths already exist, including a whole-`skills/` backup before that directory is mutated. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `uvx`, and a non-empty `secrets/context7` file in the target config directory, then auto-applies the matching `context-improved` overlays. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
 
 Run one of these:
 
@@ -282,14 +285,14 @@ OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh --apply
 ```
 
 ```bash
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --apply
+OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --apply
 ```
 
 ```bash
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh --apply
+OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh --apply
 ```
 
-If a custom config directory was chosen, include `OPENCODE_CONFIG_DIR=/path/to/dir` as well.
+Before either context-improved command, have the operator write the Context7 key to `secrets/context7` in the target config directory with the no-echo command in [README.md](README.md#mcp-api-keys). Never ask them to paste the key into chat, and never print it. If a custom config directory was chosen, include `OPENCODE_CONFIG_DIR=/path/to/dir` as well.
 
 Do not use the APM-only install path for first-time setup unless the operator explicitly asks for it.
 
@@ -318,7 +321,7 @@ Only enable it if:
 - the operator wants it
 - `jq` is installed
 - `uvx` is on `PATH`
-- `CONTEXT7_API_KEY` is set
+- `secrets/context7` exists and is not blank in the target config directory
 - the machine can reach `https://mcp.context7.com/mcp`
 
 Optional but recommended for the full navigation workflow:
@@ -350,7 +353,7 @@ If all conditions are met and the selected AGENTS profile is not one of the cont
 Ask:
 
 ```text
-Do you want me to enable the optional context7 documentation MCP? It needs a CONTEXT7_API_KEY environment variable.
+Do you want me to enable the optional context7 documentation MCP? It needs a Context7 API key saved in secrets/context7 in your Opencode config directory.
 ```
 
 Only enable it if:
@@ -358,7 +361,7 @@ Only enable it if:
 - the operator wants it
 - the context-improved bundle was not already enabled
 - `jq` is installed
-- `CONTEXT7_API_KEY` is set
+- `secrets/context7` exists and is not blank in the target config directory
 - the machine can reach `https://mcp.context7.com/mcp`
 
 If all conditions are met, run:
@@ -373,7 +376,7 @@ Some notes:
 - the base `agent_hive.json` sets no `disableMcps`. The `context-improved` bundle also updates `agent_hive.json` to disable the Hive `context7` and `ast_grep` built-ins so its own definitions are not replaced.
 - when `shared-context-improved` or `personal-context-improved` is selected, `scripts/install-profile.sh` applies that bundle automatically instead of requiring this separate step.
 
-### 8. Offer the optional chrome-devtools browser MCP
+### 8. Offer the optional chrome-devtools and Keenable MCPs
 
 Ask this first:
 
@@ -385,12 +388,24 @@ Before applying the bundle:
 
 - check that `jq` is installed
 - check that `npx` is on `PATH`
-- explain that this is the canonical browser solution
+- explain that this is the canonical browser solution, that it opens a visible Chrome window with a temporary profile (`--isolated=true`), and that it exposes extension tools (`--category-extensions=true`)
 
 Apply with:
 
 ```bash
 ./scripts/enable-optional.sh chrome-devtools
+```
+
+Then offer the optional Keenable web search MCP:
+
+```text
+Do you want the Keenable web search MCP? It needs a Keenable API key saved in secrets/keenable in your Opencode config directory.
+```
+
+Only enable it if the operator wants it, `jq` is installed, `secrets/keenable` exists and is not blank in the target config directory, and the machine can reach `https://api.keenable.ai/mcp`. Apply with:
+
+```bash
+./scripts/enable-optional.sh keenable
 ```
 
 Do not apply the snippet before the base profile exists in the target directory.
@@ -500,7 +515,9 @@ Concrete checks:
 
 - if `context-improved` was enabled, verify `mcp.ast_grep` and `mcp.context7.enabled` exist in `opencode.json`
 - if `context7` was enabled, verify `mcp.context7.enabled` is `true`
-- if `chrome-devtools` was enabled, verify `mcp.chrome-devtools.command` is `["npx", "-y", "chrome-devtools-mcp@latest"]`
+- if `chrome-devtools` was enabled, verify `mcp.chrome-devtools.command` is `["npx", "-y", "chrome-devtools-mcp@latest", "--isolated=true", "--category-extensions=true"]`
+- if `keenable` was enabled, verify `mcp.keenable.enabled` is `true` and its `X-API-Key` header is `{file:secrets/keenable}`
+- if any secret-file MCP was enabled, verify the referenced file under `secrets/` exists without printing it
 - verify `plugin` includes `opencode-gpt-imagegen`
 - verify `plugins/dcg-guard.js` exists in the target config directory
 - verify every Hive model is exactly `openai/gpt-6-luna-fast`, `openai/gpt-6-sol`, or `openai/gpt-6-astra`, except `hive-master`, `swarm-orchestrator`, and `hive-builder` on `openai/gpt-5.6-sol`, with no other provider; the base `opencode.json` `compaction` agent uses `openai/gpt-6-luna-fast` and `explore` is disabled. Confirm model IDs and configured variants with `opencode models openai --verbose`, then separately verify inference access; listing alone is insufficient
@@ -530,6 +547,7 @@ Then report back with:
 - whether the context-improved bundle was enabled
 - whether `context7` was enabled
 - whether `chrome-devtools` was enabled
+- whether `keenable` was enabled
 - whether `cymbal` is installed as a CLI on this machine
 - whether `dcg` is installed as a CLI on this machine
 - whether the VS Code extension was installed
@@ -545,9 +563,10 @@ Use this as the source of truth for the interview.
 | AGENTS merge strategy | preserve the user's `AGENTS.md` as the base, or replace it only with explicit approval | preserve the user's file | explicit approval required before full replacement or conflict consolidation |
 | AGENTS profile | `shared`, `personal-default`, `shared-context-improved`, `personal-context-improved` | `shared` | none |
 | Config directory | `~/.config/opencode` or custom path | `~/.config/opencode` | none |
-| Context-improved bundle | enable or skip | skip | `jq`, `uvx`, `CONTEXT7_API_KEY`, network access; `cymbal` optional CLI |
-| `context7` MCP only | enable or skip | skip | `jq`, `CONTEXT7_API_KEY`, network access |
+| Context-improved bundle | enable or skip | skip | `jq`, `uvx`, `secrets/context7`, network access; `cymbal` optional CLI |
+| `context7` MCP only | enable or skip | skip | `jq`, `secrets/context7`, network access |
 | chrome-devtools MCP | enable or skip | skip | `jq`, `npx`, network for first `npx` download |
+| Keenable MCP | enable or skip | skip | `jq`, `secrets/keenable`, network access |
 | Destructive Command Guard CLI | install `dcg` or skip | recommend install; not required for profile copy | network for the upstream installer; plugin is inactive without `dcg` on `PATH` |
 | VS Code companion extension | install or skip | skip unless operator uses VS Code | VS Code and usually `code` CLI; latest Agent Hive fork release `.vsix` |
 | Cursor prompt-level assets | skip, inspect only, or install into the selected Cursor config target | skip unless operator asks for Cursor | `python3`; manual paste into Cursor Customize -> Rules -> User Rules |
@@ -566,16 +585,16 @@ Base install with the personal profile:
 OPENCODE_AGENTS_PROFILE=personal-default ./scripts/install-profile.sh --apply
 ```
 
-Base install with the shared context-improved profile:
+Base install with the shared context-improved profile, after `secrets/context7` exists:
 
 ```bash
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --apply
+OPENCODE_AGENTS_PROFILE=shared-context-improved ./scripts/install-profile.sh --apply
 ```
 
-Base install with the personal context-improved profile:
+Base install with the personal context-improved profile, after `secrets/context7` exists:
 
 ```bash
-CONTEXT7_API_KEY=... OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh --apply
+OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh --apply
 ```
 
 Base install into a custom config directory:
@@ -602,6 +621,12 @@ Enable chrome-devtools browser MCP:
 
 ```bash
 ./scripts/enable-optional.sh chrome-devtools
+```
+
+Enable the Keenable web search MCP, after `secrets/keenable` exists:
+
+```bash
+./scripts/enable-optional.sh keenable
 ```
 
 Install the VS Code companion extension:
@@ -647,6 +672,7 @@ CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor" ./scripts/
 - Do not silently overwrite the user's existing `AGENTS.md` during merge.
 - Do not silently clean up conflicts by deleting or rewriting instructions.
 - Do not enable optional snippets without first checking their prerequisites.
+- Do not ask for, echo, log, or commit MCP API keys; the operator writes them to `secrets/<name>` in the config directory.
 - Do not enable the context-improved bundle without also checking whether the chosen `AGENTS.md` profile matches that capability set.
 - Do not assume `personal-default` is appropriate for every operator.
 - Do not describe `cymbal` as a bundled MCP or JSON config entry. It is a separate CLI dependency.

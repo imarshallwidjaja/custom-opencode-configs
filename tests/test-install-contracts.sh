@@ -735,6 +735,9 @@ optional_bin="${TMPDIR}/optional-bin"
 optional_target="${TMPDIR}/optional-target"
 optional_target_failing_cymbal="${TMPDIR}/optional-target-failing-cymbal"
 mkdir -p "${optional_bin}" "${optional_target}" "${optional_target_failing_cymbal}"
+write_secret() { mkdir -p "$1/secrets"; printf 'test-key\n' > "$1/secrets/$2"; }
+write_secret "${optional_target}" context7
+write_secret "${optional_target_failing_cymbal}" context7
 ln -s "$(command -v jq)" "${optional_bin}/jq"
 printf '#!/bin/sh\nexit 0\n' > "${optional_bin}/uvx"
 cat > "${optional_bin}/cymbal" <<'SH'
@@ -754,7 +757,7 @@ cat > "${optional_target}/opencode.json" <<'JSON'
 }
 JSON
 printf '{}\n' > "${optional_target}/agent_hive.json"
-if PATH="${optional_bin}:/usr/bin:/bin" CYMBAL_HOOK_LOG="${TMPDIR}/cymbal-hook.log" CONTEXT7_API_KEY=test OPENCODE_CONFIG_DIR="${optional_target}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null; then
+if PATH="${optional_bin}:/usr/bin:/bin" CYMBAL_HOOK_LOG="${TMPDIR}/cymbal-hook.log" OPENCODE_CONFIG_DIR="${optional_target}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null; then
   if [[ "$(sed -n '1p' "${TMPDIR}/cymbal-hook.log" 2>/dev/null)" == "${optional_target}" && "$(sed -n '2p' "${TMPDIR}/cymbal-hook.log" 2>/dev/null)" == "hook install opencode --scope user" ]]; then
     pass "0a: context-improved installs Cymbal hook for selected config dir"
   else
@@ -763,7 +766,7 @@ if PATH="${optional_bin}:/usr/bin:/bin" CYMBAL_HOOK_LOG="${TMPDIR}/cymbal-hook.l
 else
   fail "0a: context-improved install with Cymbal should succeed"
 fi
-if jq -e '(.mcp.unrelated.command == ["unrelated-server"]) and (.mcp.ast_grep.command == ["uvx", "--from", "git+https://github.com/ast-grep/ast-grep-mcp", "--with", "fastmcp", "ast-grep-server"]) and (.mcp.context7.enabled == true)' "${optional_target}/opencode.json" >/dev/null; then
+if jq -e '(.mcp.unrelated.command == ["unrelated-server"]) and (.mcp.ast_grep.command == ["uvx", "--from", "git+https://github.com/ast-grep/ast-grep-mcp", "--with", "fastmcp", "ast-grep-server"]) and (.mcp.context7.enabled == true) and (.mcp.context7.headers.CONTEXT7_API_KEY == "{file:secrets/context7}")' "${optional_target}/opencode.json" >/dev/null; then
   pass "0b: context-improved preserves unrelated MCPs and adds context tools"
 else
   fail "0b: context-improved preserves unrelated MCPs and adds context tools"
@@ -774,7 +777,7 @@ exit 23
 SH
 printf '{}\n' > "${optional_target_failing_cymbal}/opencode.json"
 printf '{}\n' > "${optional_target_failing_cymbal}/agent_hive.json"
-if PATH="${optional_bin}:/usr/bin:/bin" CONTEXT7_API_KEY=test OPENCODE_CONFIG_DIR="${optional_target_failing_cymbal}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null 2>"${TMPDIR}/optional-failing-cymbal.err" && grep -q 'Warning: failed to install optional Cymbal OpenCode hook.' "${TMPDIR}/optional-failing-cymbal.err" && jq -e '(.mcp.ast_grep.command == ["uvx", "--from", "git+https://github.com/ast-grep/ast-grep-mcp", "--with", "fastmcp", "ast-grep-server"]) and (.mcp.context7.enabled == true)' "${optional_target_failing_cymbal}/opencode.json" >/dev/null; then
+if PATH="${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${optional_target_failing_cymbal}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null 2>"${TMPDIR}/optional-failing-cymbal.err" && grep -q 'Warning: failed to install optional Cymbal OpenCode hook.' "${TMPDIR}/optional-failing-cymbal.err" && jq -e '(.mcp.ast_grep.command == ["uvx", "--from", "git+https://github.com/ast-grep/ast-grep-mcp", "--with", "fastmcp", "ast-grep-server"]) and (.mcp.context7.enabled == true)' "${optional_target_failing_cymbal}/opencode.json" >/dev/null; then
   pass "0c: failed Cymbal hook warns without failing or rolling back bundle"
 else
   fail "0c: failed Cymbal hook should warn without failing or rolling back bundle"
@@ -785,9 +788,10 @@ fi
 # ---------------------------------------------------------------------------
 printf '\n=== 0d. Missing agent_hive target no-mutation ===\n'
 td_missing_ah="${TMPDIR}/test-missing-ah"; mkdir -p "${td_missing_ah}"
+write_secret "${td_missing_ah}" context7
 printf '{"mcp":{}}\n' > "${td_missing_ah}/opencode.json"
 cp "${td_missing_ah}/opencode.json" "${td_missing_ah}/opencode.json.before"
-if ! PATH="${optional_bin}:/usr/bin:/bin" CONTEXT7_API_KEY=test OPENCODE_CONFIG_DIR="${td_missing_ah}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null 2>&1; then
+if ! PATH="${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_missing_ah}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null 2>&1; then
   if cmp -s "${td_missing_ah}/opencode.json" "${td_missing_ah}/opencode.json.before"; then
     pass "0d: missing agent_hive target exits non-zero, opencode.json unchanged"
   else
@@ -802,10 +806,11 @@ fi
 # ---------------------------------------------------------------------------
 printf '\n=== 0e. Malformed agent_hive target no-mutation ===\n'
 td_malformed_ah="${TMPDIR}/test-malformed-ah"; mkdir -p "${td_malformed_ah}"
+write_secret "${td_malformed_ah}" context7
 printf '{"mcp":{}}\n' > "${td_malformed_ah}/opencode.json"
 cp "${td_malformed_ah}/opencode.json" "${td_malformed_ah}/opencode.json.before"
 printf 'not json\n' > "${td_malformed_ah}/agent_hive.json"
-if ! PATH="${optional_bin}:/usr/bin:/bin" CONTEXT7_API_KEY=test OPENCODE_CONFIG_DIR="${td_malformed_ah}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null 2>&1; then
+if ! PATH="${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_malformed_ah}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null 2>&1; then
   if cmp -s "${td_malformed_ah}/opencode.json" "${td_malformed_ah}/opencode.json.before"; then
     pass "0e: malformed agent_hive target exits non-zero, opencode.json unchanged"
   else
@@ -813,6 +818,103 @@ if ! PATH="${optional_bin}:/usr/bin:/bin" CONTEXT7_API_KEY=test OPENCODE_CONFIG_
   fi
 else
   fail "0e: malformed agent_hive target should have exited non-zero"
+fi
+
+# ---------------------------------------------------------------------------
+# 0f. MCP API keys come from config-relative secret files
+# ---------------------------------------------------------------------------
+printf '\n=== 0f. MCP secret-file preflights ===\n'
+secret_cases=(
+  "context-improved:context7"
+  "mcp-context7-enabled:context7"
+  "keenable:keenable"
+)
+for secret_case in "${secret_cases[@]}"; do
+  snippet="${secret_case%%:*}"
+  secret="${secret_case##*:}"
+  for state in missing blank; do
+    td_secret="${TMPDIR}/test-secret-${snippet}-${state}"; mkdir -p "${td_secret}"
+    printf '{"mcp":{}}\n' > "${td_secret}/opencode.json"
+    printf '{}\n' > "${td_secret}/agent_hive.json"
+    cp "${td_secret}/opencode.json" "${td_secret}/opencode.json.before"
+    if [[ "${state}" == "blank" ]]; then
+      mkdir -p "${td_secret}/secrets"
+      printf ' \n\t\n' > "${td_secret}/secrets/${secret}"
+    fi
+    if ! PATH="${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_secret}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" "${snippet}" >/dev/null 2>"${td_secret}/err" \
+      && grep -q "${td_secret}/secrets/${secret}" "${td_secret}/err" \
+      && cmp -s "${td_secret}/opencode.json" "${td_secret}/opencode.json.before"; then
+      pass "0f: ${snippet} rejects ${state} secrets/${secret} without mutation"
+    else
+      fail "0f: ${snippet} must reject ${state} secrets/${secret} without mutation"
+    fi
+  done
+done
+
+td_keenable="${TMPDIR}/test-keenable"; mkdir -p "${td_keenable}"
+write_secret "${td_keenable}" keenable
+printf '{"mcp":{"unrelated":{"type":"local","command":["unrelated-server"]}}}\n' > "${td_keenable}/opencode.json"
+if PATH="${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_keenable}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" keenable >/dev/null \
+  && jq -e '(.mcp.unrelated.command == ["unrelated-server"]) and (.mcp.keenable == {"type": "remote", "url": "https://api.keenable.ai/mcp", "headers": {"X-API-Key": "{file:secrets/keenable}"}, "enabled": true})' "${td_keenable}/opencode.json" >/dev/null; then
+  pass "0f: keenable enables the remote MCP with a relative secret-file header"
+else
+  fail "0f: keenable enables the remote MCP with a relative secret-file header"
+fi
+
+td_ci_install="${TMPDIR}/test-context-improved-install"
+if ! PATH="${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_ci_install}" OPENCODE_AGENTS_PROFILE=shared-context-improved bash "${INSTALL_HELPER}" --apply >/dev/null 2>"${TMPDIR}/ci-install.err" \
+  && grep -q "${td_ci_install}/secrets/context7" "${TMPDIR}/ci-install.err" \
+  && opencode_target_unmodified "${td_ci_install}"; then
+  pass "0f: context-improved install preflights secrets/context7 under OPENCODE_CONFIG_DIR before mutation"
+else
+  fail "0f: context-improved install must preflight secrets/context7 under OPENCODE_CONFIG_DIR before mutation"
+fi
+write_secret "${td_ci_install}" context7
+if PATH="${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_ci_install}" OPENCODE_AGENTS_PROFILE=shared-context-improved bash "${INSTALL_HELPER}" --apply >/dev/null 2>"${TMPDIR}/ci-install.err" \
+  && [[ -f "${td_ci_install}/opencode.json" && "$(cat "${td_ci_install}/secrets/context7")" == "test-key" ]]; then
+  pass "0f: context-improved install proceeds and preserves an existing secret file"
+else
+  fail "0f: context-improved install should proceed with a secret file: $(cat "${TMPDIR}/ci-install.err")"
+fi
+
+if python3 - "${BASELINE_PWD}" <<'PY'
+import json
+import re
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+errors = []
+payloads = sorted([root / "profiles/base/opencode.json", *(root / "profiles/optional").glob("opencode.*.json")])
+for path in payloads:
+    text = path.read_text(encoding="utf-8")
+    if "{env:" in text:
+        errors.append(f"{path.name} still reads an MCP credential from the environment")
+    for ref in re.findall(r"\{file:([^}]+)\}", text):
+        if not re.fullmatch(r"secrets/[a-z0-9-]+", ref):
+            errors.append(f"{path.name} file reference must be secrets/<name> relative to the config dir: {ref}")
+base = json.loads((root / "profiles/base/opencode.json").read_text(encoding="utf-8"))
+if "{file:" in json.dumps(base):
+    errors.append("base opencode.json must not reference secret files; Opencode fails startup when one is missing")
+chrome = json.loads((root / "profiles/optional/opencode.chrome-devtools.json").read_text(encoding="utf-8"))
+command = chrome["mcp"]["chrome-devtools"]["command"]
+if command != ["npx", "-y", "chrome-devtools-mcp@latest", "--isolated=true", "--category-extensions=true"]:
+    errors.append(f"chrome-devtools command={command!r}")
+optional = {path.name for path in (root / "profiles/optional").glob("opencode.*.json")}
+for blocked in ("railway", "atlassian"):
+    if any(blocked in name for name in optional):
+        errors.append(f"optional bundles must not include {blocked}")
+gitignore = (root / ".gitignore").read_text(encoding="utf-8").splitlines()
+if "secrets/" not in gitignore:
+    errors.append(".gitignore must ignore secrets/")
+if errors:
+    print("\n".join(errors))
+    raise SystemExit(1)
+PY
+then
+  pass "0f: MCP payloads use relative secret files, Chrome DevTools isolation flags, and no bundled secrets"
+else
+  fail "0f: MCP payloads use relative secret files, Chrome DevTools isolation flags, and no bundled secrets"
 fi
 
 # ---------------------------------------------------------------------------

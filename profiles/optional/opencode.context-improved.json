@@ -12,7 +12,10 @@
       ]
     },
     "context7": {
-      "enabled": true
+      "enabled": true,
+      "headers": {
+        "CONTEXT7_API_KEY": "{file:secrets/context7}"
+      }
     }
   }
 }
