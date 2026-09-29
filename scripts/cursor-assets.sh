@@ -58,6 +58,11 @@ CANONICAL_SKILLS=(
   writing-policy
   writing-work-items
 )
+SHARED_RETIRED_SKILLS=(
+  working-with-atlassian
+  managing-work-in-jira
+  connecting-atlassian-tools
+)
 
 usage() {
   printf 'Usage:\n' >&2
@@ -1054,6 +1059,11 @@ print_copy_plan() {
       printf 'Would back up and remove stale %s/skills/%s\n' "${target_dir}" "${name}"
     fi
   done
+  for name in "${SHARED_RETIRED_SKILLS[@]}"; do
+    if [[ -e "${AGENTS_SKILLS_DIR}/${name}" || -L "${AGENTS_SKILLS_DIR}/${name}" ]]; then
+      printf 'Would back up and remove formerly managed %s/%s\n' "${AGENTS_SKILLS_DIR}" "${name}"
+    fi
+  done
   case "${CURSOR_INSTALL_IVAN_WRITING:-}" in
     1)
       printf 'Would copy personal profiles/personal/skills/ivan-writing -> %s/ivan-writing (CURSOR_INSTALL_IVAN_WRITING=1)\n' "${AGENTS_SKILLS_DIR}"
@@ -1099,7 +1109,7 @@ backup_agents_skill() {
   local target_dir="$1"
   local skill_name="$2"
   local path="${AGENTS_SKILLS_DIR}/${skill_name}"
-  if [[ -e "${path}" ]]; then
+  if [[ -e "${path}" || -L "${path}" ]]; then
     if [[ -z "${BACKUP_DIR}" ]]; then
       BACKUP_DIR="${target_dir}/.backup/${BACKUP_BASENAME}"
       mkdir -p "${BACKUP_DIR}"
@@ -1184,6 +1194,13 @@ install_assets_into() {
   done
   for name in "${CANONICAL_SKILLS[@]}"; do
     install_canonical_skill "${name}" "${target_dir}"
+  done
+  for name in "${SHARED_RETIRED_SKILLS[@]}"; do
+    if [[ -e "${AGENTS_SKILLS_DIR}/${name}" || -L "${AGENTS_SKILLS_DIR}/${name}" ]]; then
+      backup_agents_skill "${target_dir}" "${name}"
+      rm -rf "${AGENTS_SKILLS_DIR:?}/${name}"
+      printf 'Backed up and removed formerly managed %s\n' "${AGENTS_SKILLS_DIR}/${name}"
+    fi
   done
 
   local marker="${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed"
@@ -1290,7 +1307,7 @@ check_target_readability() {
   fi
 
   if [[ -d "${AGENTS_SKILLS_DIR}" ]]; then
-    for name in "${CANONICAL_SKILLS[@]}" ivan-writing; do
+    for name in "${CANONICAL_SKILLS[@]}" "${SHARED_RETIRED_SKILLS[@]}" ivan-writing; do
       if [[ -e "${AGENTS_SKILLS_DIR}/${name}" || -L "${AGENTS_SKILLS_DIR}/${name}" ]]; then
         check_recursive_readable "${AGENTS_SKILLS_DIR}/${name}" "agents-skills/${name}" || return 1
       fi
@@ -1405,10 +1422,39 @@ preflight_agents_skills_dir() {
   fi
 }
 
+# Portable stand-in for GNU `realpath -m`: resolve the longest existing
+# directory prefix physically, then apply the missing components lexically.
+resolve_path() {
+  local path="$1" head tail="" part resolved
+  [[ "${path}" == /* ]] || path="${PWD}/${path}"
+  head="${path}"
+  while [[ ! -d "${head}" ]]; do
+    tail="${head##*/}/${tail}"
+    head="${head%/*}"
+    [[ -n "${head}" ]] || head="/"
+  done
+  resolved="$(cd -P -- "${head}" && pwd -P)" || return 1
+  while [[ -n "${tail}" ]]; do
+    part="${tail%%/*}"
+    tail="${tail#*/}"
+    case "${part}" in
+      ''|.) ;;
+      ..) resolved="${resolved%/*}"; [[ -n "${resolved}" ]] || resolved="/" ;;
+      *)
+        resolved="${resolved%/}/${part}"
+        if [[ -d "${resolved}" ]]; then
+          resolved="$(cd -P -- "${resolved}" && pwd -P)" || return 1
+        fi
+        ;;
+    esac
+  done
+  printf '%s\n' "${resolved}"
+}
+
 same_resolved_path() {
   local left right
-  left="$(realpath -m -- "$1")"
-  right="$(realpath -m -- "$2")"
+  left="$(resolve_path "$1")" || return 1
+  right="$(resolve_path "$2")" || return 1
   [[ "${left}" == "${right}" ]]
 }
 

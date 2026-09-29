@@ -469,7 +469,7 @@ backup_path() {
 backup_agents_skill() {
   local skill_name="$1"
   local path="${AGENTS_SKILLS_DIR}/${skill_name}"
-  if [[ -e "${path}" ]]; then
+  if [[ -e "${path}" || -L "${path}" ]]; then
     if [[ -z "${BACKUP_DIR}" ]]; then
       BACKUP_DIR="${TARGET_DIR}/.backup/$(date +%Y%m%d-%H%M%S)"
       mkdir -p "${BACKUP_DIR}"
@@ -479,10 +479,39 @@ backup_agents_skill() {
   fi
 }
 
+# Portable stand-in for GNU `realpath -m`: resolve the longest existing
+# directory prefix physically, then apply the missing components lexically.
+resolve_path() {
+  local path="$1" head tail="" part resolved
+  [[ "${path}" == /* ]] || path="${PWD}/${path}"
+  head="${path}"
+  while [[ ! -d "${head}" ]]; do
+    tail="${head##*/}/${tail}"
+    head="${head%/*}"
+    [[ -n "${head}" ]] || head="/"
+  done
+  resolved="$(cd -P -- "${head}" && pwd -P)" || return 1
+  while [[ -n "${tail}" ]]; do
+    part="${tail%%/*}"
+    tail="${tail#*/}"
+    case "${part}" in
+      ''|.) ;;
+      ..) resolved="${resolved%/*}"; [[ -n "${resolved}" ]] || resolved="/" ;;
+      *)
+        resolved="${resolved%/}/${part}"
+        if [[ -d "${resolved}" ]]; then
+          resolved="$(cd -P -- "${resolved}" && pwd -P)" || return 1
+        fi
+        ;;
+    esac
+  done
+  printf '%s\n' "${resolved}"
+}
+
 same_resolved_path() {
   local left right
-  left="$(realpath -m -- "$1")"
-  right="$(realpath -m -- "$2")"
+  left="$(resolve_path "$1")" || return 1
+  right="$(resolve_path "$2")" || return 1
   [[ "${left}" == "${right}" ]]
 }
 
@@ -571,7 +600,7 @@ for skill_name in "${SHARED_SKILLS[@]}"; do
   rm -rf -- "${TARGET_DIR}/skills/${skill_name}"
 done
 for skill_name in "${SHARED_RETIRED_SKILLS[@]}"; do
-  if [[ -e "${AGENTS_SKILLS_DIR}/${skill_name}" ]]; then
+  if [[ -e "${AGENTS_SKILLS_DIR}/${skill_name}" || -L "${AGENTS_SKILLS_DIR}/${skill_name}" ]]; then
     backup_agents_skill "${skill_name}"
     rm -rf -- "${AGENTS_SKILLS_DIR}/${skill_name}"
   fi

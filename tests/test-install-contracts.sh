@@ -1315,6 +1315,44 @@ fi
 sandbox_agents_skills
 
 # ---------------------------------------------------------------------------
+# 17e. Alias detection resolves symlinks and missing components without GNU realpath
+# ---------------------------------------------------------------------------
+printf '\n=== 17e. Portable alias detection without realpath ===\n'
+if grep -nE '^[^#]*realpath' "${BASELINE_PWD}/scripts/install-profile.sh" "${BASELINE_PWD}/scripts/cursor-assets.sh" >"${TMPDIR}/test17e-matches"; then
+  fail "17e-a: installers still call realpath: $(tr '\n' ' ' < "${TMPDIR}/test17e-matches")"
+else
+  pass "17e-a: installers do not depend on realpath"
+fi
+td17e="${TMPDIR}/test17e"
+no_realpath_bin="${td17e}/bin"
+mkdir -p "${td17e}/real" "${no_realpath_bin}"
+ln -s "${td17e}/real" "${td17e}/link"
+printf '#!/bin/sh\nexit 97\n' > "${no_realpath_bin}/realpath"
+chmod +x "${no_realpath_bin}/realpath"
+build_fixture
+for alias17e in "${td17e}/link/skills" "${td17e}/missing/../real/skills"; do
+  if ! PATH="${no_realpath_bin}:${PATH}" AGENTS_SKILLS_DIR="${alias17e}" OPENCODE_CONFIG_DIR="${td17e}/real" bash "${INSTALL_HELPER}" --apply >/dev/null 2>"${td17e}/err" \
+    && grep -q 'AGENTS_SKILLS_DIR resolves to the same directory' "${td17e}/err" && opencode_target_unmodified "${td17e}/real"; then
+    pass "17e-b: OpenCode aborts aliased AGENTS_SKILLS_DIR ${alias17e#"${td17e}/"}"
+  else
+    fail "17e-b: OpenCode did not abort aliased AGENTS_SKILLS_DIR ${alias17e#"${td17e}/"}: $(cat "${td17e}/err")"
+  fi
+  if ! PATH="${no_realpath_bin}:${PATH}" AGENTS_SKILLS_DIR="${alias17e}" env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td17e}/real" bash "${CURSOR_HELPER}" install --dry-run >/dev/null 2>"${td17e}/err" \
+    && grep -q 'AGENTS_SKILLS_DIR resolves to the same directory' "${td17e}/err"; then
+    pass "17e-c: Cursor aborts aliased AGENTS_SKILLS_DIR ${alias17e#"${td17e}/"}"
+  else
+    fail "17e-c: Cursor did not abort aliased AGENTS_SKILLS_DIR ${alias17e#"${td17e}/"}: $(cat "${td17e}/err")"
+  fi
+done
+sandbox_agents_skills
+if PATH="${no_realpath_bin}:${PATH}" OPENCODE_CONFIG_DIR="${td17e}/link/opencode" bash "${INSTALL_HELPER}" --apply >/dev/null 2>"${td17e}/err" \
+  && [[ -f "${td17e}/real/opencode/opencode.json" ]]; then
+  pass "17e-d: non-aliased install succeeds without realpath"
+else
+  fail "17e-d: non-aliased install failed without realpath: $(cat "${td17e}/err")"
+fi
+
+# ---------------------------------------------------------------------------
 # 22. Unsupported extra file in canonical skill directory
 # ---------------------------------------------------------------------------
 printf '\n=== 22. Unsupported extra file in canonical skill directory ===\n'
@@ -3312,6 +3350,63 @@ OPENCODE_CONFIG_DIR="${td69b}" OPENCODE_AGENTS_PROFILE=personal-default bash "${
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "69b-e: ivan-writing installed to agents dir" || fail "69b-f: ivan-writing missing from agents dir"
 grep -Fqx 'keep-me-sentinel' "${td69b}/skills/keep-me/file.txt" && pass "69b-g: unmanaged skill preserved on personal install" || fail "69b-h: unmanaged skill removed on personal install"
 
+printf '\n=== 69c. Installers retire formerly managed Atlassian skills, including dangling symlinks ===\n'
+# working-with-atlassian and managing-work-in-jira are directories;
+# connecting-atlassian-tools is a dangling symlink that -e alone would miss.
+seed_retired_atlassian() {
+  local dir="$1" retired
+  for retired in working-with-atlassian managing-work-in-jira; do
+    mkdir -p "${dir}/${retired}"
+    printf 'old managed skill: %s\n' "${retired}" > "${dir}/${retired}/SKILL.md"
+  done
+  ln -s "${dir}/missing-target" "${dir}/connecting-atlassian-tools"
+  mkdir -p "${dir}/user-managed"
+  printf 'user-managed-sentinel\n' > "${dir}/user-managed/SKILL.md"
+}
+check_retired_atlassian() {
+  local label="$1" backup_root="$2" retired
+  for retired in working-with-atlassian managing-work-in-jira connecting-atlassian-tools; do
+    [[ ! -e "${AGENTS_SKILLS_DIR}/${retired}" && ! -L "${AGENTS_SKILLS_DIR}/${retired}" ]] \
+      && pass "${label}: ${retired} removed" || fail "${label}: ${retired} remains"
+  done
+  grep -Fqx 'old managed skill: working-with-atlassian' "${backup_root}/agents-skills/working-with-atlassian/SKILL.md" \
+    && pass "${label}: directory backed up before removal" || fail "${label}: directory backup missing"
+  [[ -L "${backup_root}/agents-skills/connecting-atlassian-tools" ]] \
+    && pass "${label}: dangling symlink backed up as a symlink" || fail "${label}: dangling symlink backup missing"
+  grep -Fqx 'user-managed-sentinel' "${AGENTS_SKILLS_DIR}/user-managed/SKILL.md" \
+    && pass "${label}: unrelated shared skill preserved" || fail "${label}: unrelated shared skill changed"
+}
+
+build_fixture
+sandbox_agents_skills
+td69c="${TMPDIR}/test69c-opencode"
+seed_retired_atlassian "${AGENTS_SKILLS_DIR}"
+if OPENCODE_CONFIG_DIR="${td69c}" bash "${INSTALL_HELPER}" --apply >/dev/null 2>"${TMPDIR}/test69c.err"; then
+  check_retired_atlassian "69c-opencode" "$(ls -d "${td69c}/.backup/"* | head -n 1)"
+else
+  fail "69c-opencode: install failed: $(cat "${TMPDIR}/test69c.err")"
+fi
+
+sandbox_agents_skills
+td69c_cursor="${TMPDIR}/test69c-cursor"
+seed_retired_atlassian "${AGENTS_SKILLS_DIR}"
+if env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td69c_cursor}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install --dry-run >"${TMPDIR}/dry69c.out" 2>"${TMPDIR}/dry69c.err"; then
+  missing69c=""
+  for retired in working-with-atlassian managing-work-in-jira connecting-atlassian-tools; do
+    grep -Fqx "Would back up and remove formerly managed ${AGENTS_SKILLS_DIR}/${retired}" "${TMPDIR}/dry69c.out" || missing69c="${missing69c} ${retired}"
+  done
+  [[ -z "${missing69c}" ]] && pass "69c-cursor: dry-run describes each retirement" || fail "69c-cursor: dry-run omitted:${missing69c}"
+  [[ -d "${AGENTS_SKILLS_DIR}/working-with-atlassian" && -L "${AGENTS_SKILLS_DIR}/connecting-atlassian-tools" ]] \
+    && pass "69c-cursor: dry-run leaves retired skills in place" || fail "69c-cursor: dry-run mutated retired skills"
+else
+  fail "69c-cursor: dry-run failed: $(cat "${TMPDIR}/dry69c.err")"
+fi
+if env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td69c_cursor}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install >/dev/null 2>"${TMPDIR}/install69c.err"; then
+  check_retired_atlassian "69c-cursor" "$(ls -d "${td69c_cursor}/.backup/"* | head -n 1)"
+else
+  fail "69c-cursor: install failed: $(cat "${TMPDIR}/install69c.err")"
+fi
+
 # ---------------------------------------------------------------------------
 # Frontend slides standalone packager
 # ---------------------------------------------------------------------------
@@ -3512,9 +3607,6 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Summary
-# ---------------------------------------------------------------------------
-# ---------------------------------------------------------------------------
 # 70. Shared skill manifests match the packaged shared skills
 # ---------------------------------------------------------------------------
 printf '\n=== 70. Shared skill manifests ===\n'
@@ -3547,8 +3639,9 @@ if "aero-design" not in packaged:
 for retired in ("working-with-atlassian", "managing-work-in-jira", "connecting-atlassian-tools"):
     if retired in packaged:
         errors.append(f"{retired} is still packaged")
-    if retired not in bash_array("scripts/install-profile.sh", "SHARED_RETIRED_SKILLS"):
-        errors.append(f"{retired} is missing from shared skill upgrade cleanup")
+    for script in ("scripts/install-profile.sh", "scripts/cursor-assets.sh"):
+        if retired not in bash_array(script, "SHARED_RETIRED_SKILLS"):
+            errors.append(f"{retired} is missing from {script} shared skill upgrade cleanup")
 for skill in sorted(packaged):
     for path in (root / ".apm/skills" / skill).rglob("*.md"):
         text = path.read_text(encoding="utf-8", errors="ignore")
@@ -3568,6 +3661,9 @@ else
   fail "70a: installer manifests, packaged skills, and Related Skills references agree"
 fi
 
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
 printf '\n=== Summary ===\n'
 printf '  Passed: %d\n' "${PASS}"
 printf '  Failed: %d\n' "${FAIL}"

@@ -22,7 +22,7 @@ The Railway CLI, with auth, installs and maintains its own `use-railway` agent s
 | `.apm/cursor/commands/*.md` | `<cursor-config>/commands/*.md` | Seven genuinely Cursor-specific user-global commands |
 | `.apm/prompts/reflect.prompt.md` | `<cursor-config>/commands/reflect.md` | Shared `/reflect` policy, installed byte-for-byte by the helper |
 | `skills/<name>/` | `<cursor-config>/skills/<name>/` | Cursor-only and Hive-overlay skills; require `SKILL.md` and may include `references/` and `scripts/` |
-| `.apm/skills/<name>/` | `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}/<name>/` | Shared canonical skills used by Cursor and OpenCode. The installer also backs up and removes stale copies of those names from each Cursor target `skills/` directory |
+| `.apm/skills/<name>/` | `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}/<name>/` | Shared canonical skills used by Cursor and OpenCode. The installer also backs up and removes stale copies of those names from each Cursor target `skills/` directory, and backs up and removes the formerly packaged `working-with-atlassian`, `managing-work-in-jira`, and `connecting-atlassian-tools` from the agents dir, including dangling symlinks |
 | `rules/default-agent.md` | Cursor Customize -> Rules -> User Rules (manual paste) | Cursor exposes user rules via the Customize UI, not a deployable file path |
 | `vendor/oc-arkive/engineering-judgment/engineering-judgment.md` | Cursor Customize -> Rules -> User Rules (composed by `print-rules`) | Provenance-pinned generated snapshot; it is validated but not copied by `install` |
 
@@ -84,6 +84,6 @@ When opt-in installs `ivan-writing`, the helper writes a marker file `ivan-writi
 
 ## Opencode install isolation
 
-`scripts/install-profile.sh` copies the OpenCode-local skill (`writing-skills`) from `.apm/skills/` into the Opencode config `skills/` directory, upserts the sixteen shared canonical skills into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`, removes leftover retired OpenCode-local skill names, and copies `.apm/agents/` and `.apm/prompts/*.prompt.md` into the Opencode config directory. It does not copy `.apm/cursor/**`, including the Cursor-specific `agents-md-mastery` adaptation. Opencode prompt-backed commands come only from `.apm/prompts/`, currently `interview-drill-down`, `planning-prompt`, and `reflect`.
+`scripts/install-profile.sh` copies the OpenCode-local skill (`writing-skills`) from `.apm/skills/` into the Opencode config `skills/` directory, upserts the sixteen shared canonical skills into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`, backs up and removes the three formerly packaged Atlassian skills from that directory the same way the Cursor helper does, removes leftover retired OpenCode-local skill names, and copies `.apm/agents/` and `.apm/prompts/*.prompt.md` into the Opencode config directory. It does not copy `.apm/cursor/**`, including the Cursor-specific `agents-md-mastery` adaptation. Opencode prompt-backed commands come only from `.apm/prompts/`, currently `interview-drill-down`, `planning-prompt`, and `reflect`.
 
 For personal profiles (`personal-default`, `personal-context-improved`), `scripts/install-profile.sh` copies from `profiles/personal/skills/` into the agents dir, not into the OpenCode `skills/` directory.
