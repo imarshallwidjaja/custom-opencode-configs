@@ -10,7 +10,7 @@ Running `./scripts/install-profile.sh` with no arguments previews the install wi
 
 `./scripts/install-profile.sh --apply` installs these files into your Opencode config directory:
 
-- `profiles/base/opencode.json` -> `opencode.json`: base Opencode config with `oc-arkive@latest`
+- `profiles/base/opencode.json` -> `opencode.json`: base Opencode config with `oc-arkive@latest`. It turns off Opencode's internal file-change snapshots (`snapshot: false`), so agent edits cannot be rolled back through the Opencode UI, and startup self-updates (`autoupdate: false`), so update Opencode yourself. It also disables the built-in `explore` agent so read-only research goes to Hive's `scout-researcher`
 - `profiles/base/agent_hive.json` -> `agent_hive.json`: Agent Hive role and model configuration
 - `profiles/base/plugins/dcg-guard.js` -> `plugins/dcg-guard.js`: Destructive Command Guard adapter, auto-loaded from the Opencode plugins directory
 - `AGENTS.md`: the selected operating profile for Opencode agents
@@ -28,7 +28,7 @@ Base setup requires:
 - `git`
 - `curl`
 - `opencode`
-- OpenAI access for the non-fast `openai/gpt-5.6-luna`, `openai/gpt-5.6-sol`, and `openai/gpt-6-astra` models used by the default `agent_hive.json`; the base `opencode.json` `explore` / `compaction` overrides use Luna
+- OpenAI access for the non-fast `openai/gpt-5.6-luna`, `openai/gpt-5.6-sol`, and `openai/gpt-6-astra` models used by the default `agent_hive.json`; the base `opencode.json` runs the `compaction` agent on `openai/gpt-6-luna-fast`
 - OpenAI auth also covers the base `opencode-gpt-imagegen` plugin when you want image generation tools
 - Railway CLI with auth installs and maintains its own `use-railway` agent skill via `railway setup agent` / `railway skills`; this repository does not package or install it
 - `uv` plus the draw.io desktop CLI when you want the packaged `drawio-skill` to generate or export diagrams; Graphviz (`dot`) is optional for auto-layout

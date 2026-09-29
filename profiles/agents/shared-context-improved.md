@@ -2,7 +2,7 @@ CRITICAL: ALWAYS FOLLOW THESE INSTRUCTIONS UNLESS THEY ARE OVERWRITTEN BY AN INS
 
 # Agent Instructions
 
-Prefer retrieval-led reasoning over pre-training-led reasoning.
+Prefer retrieved evidence over model memory. Use configured search and fetch tools for externally verifiable facts you would otherwise infer or recall, especially releases, prices, current documentation, and company identity; assess source authority, recency, and conflicts.
 
 AGENTS.md is behavioral memory, not documentation. Every rule should change agent behavior by preventing a likely mistake, selecting the correct workflow, or pointing to a focused reference.
 
@@ -66,7 +66,7 @@ Load `agents-md-mastery` for any AGENTS.md edit, including additions.
 
 - Delegate multi-step code search and context retrieval to subagents when the task is well scoped.
 - Use scouts/foragers for retrieval and evidence; the orchestrator owns decisions.
-- Prefer `scout-researcher` for read-only codebase/context retrieval. Use `explore` only when `scout-researcher` is unavailable or explicitly called for.
+- Prefer `scout-researcher` for read-only codebase/context retrieval.
 - Use `forager-worker` for complex read-only exploration across many files or uncertain codebase areas. Explicitly instruct it not to modify files.
 - Break broad research into narrow independent subtopics and dispatch in parallel when useful.
 - Always ask subagents for a final summary with completed work, key findings, blockers, and relevant errors.

@@ -1777,14 +1777,12 @@ except json.JSONDecodeError as exc:
     print(f"invalid JSON: {exc}")
     raise SystemExit(1)
 
-allowed_models = {"openai/gpt-5.6-luna", "openai/gpt-5.6-sol", "openai/gpt-6-astra"}
+allowed_models = {"openai/gpt-5.6-luna", "openai/gpt-5.6-sol", "openai/gpt-6-astra", "openai/gpt-6-luna-fast"}
 blocked_substrings = ("opencode-go/", "magic-compact", "opencode-go-multi-auth")
 for path, value in walk(hive):
     if not isinstance(value, str):
         continue
-    if path.endswith(".model") and (
-        value not in allowed_models or "-fast" in value or value.startswith("xai/") or "opencode-go/" in value
-    ):
+    if path.endswith(".model") and value not in allowed_models:
         errors.append(f"{hive_path.name} {path}={value}")
 
 for path, value in walk(opencode):
@@ -1792,7 +1790,7 @@ for path, value in walk(opencode):
         continue
     if any(part in value for part in blocked_substrings):
         errors.append(f"{open_path.name} {path}={value}")
-    if path.endswith(".model") and (value not in allowed_models or "-fast" in value):
+    if path.endswith(".model") and value not in allowed_models:
         errors.append(f"{open_path.name} {path}={value}")
 
 plugin = opencode.get("plugin") or []
@@ -1800,6 +1798,21 @@ if "oc-arkive@latest" not in plugin:
     errors.append("opencode.json missing oc-arkive@latest")
 if "opencode-gpt-imagegen" not in plugin:
     errors.append("opencode.json missing opencode-gpt-imagegen")
+for entry in plugin:
+    if not isinstance(entry, str) or entry.startswith(("file:", "/", "./", "../", "~")):
+        errors.append(f"opencode.json plugin must be a package reference, got {entry!r}")
+if opencode.get("snapshot") is not False or opencode.get("autoupdate") is not False:
+    errors.append("opencode.json must set snapshot and autoupdate to false")
+open_agents = opencode.get("agent") or {}
+if open_agents.get("explore") != {"disable": True}:
+    errors.append(f"built-in explore must be disabled without a model override: {open_agents.get('explore')!r}")
+if open_agents.get("compaction") != {"model": "openai/gpt-6-luna-fast", "variant": "medium"}:
+    errors.append(f"compaction agent={open_agents.get('compaction')!r}")
+for key in ("small_model", "permission", "disabled_providers"):
+    if key in opencode:
+        errors.append(f"opencode.json must not set {key}")
+if set(opencode.get("provider") or {}) != {"openai"}:
+    errors.append(f"opencode.json providers={sorted(opencode.get('provider') or {})}, expected only openai")
 
 required_custom = {
     "documentation-reviewer",
@@ -2052,6 +2065,11 @@ if ((overlay.get("agents") or {}).get("scout-researcher") or {}).get("autoLoadSk
 if overlay.get("disableMcps") != ["context7", "ast_grep"]:
     errors.append(f"context-improved overlay disableMcps={overlay.get('disableMcps')!r}")
 
+retrieval_rule = (
+    "Prefer retrieved evidence over model memory. Use configured search and fetch tools for externally "
+    "verifiable facts you would otherwise infer or recall, especially releases, prices, current documentation, "
+    "and company identity; assess source authority, recency, and conflicts."
+)
 for profile_path in sorted((root / "profiles/agents").glob("*.md")):
     text = profile_path.read_text(encoding="utf-8")
     if "verification-before-completion" in text:
@@ -2059,6 +2077,10 @@ for profile_path in sorted((root / "profiles/agents").glob("*.md")):
     rel = str(profile_path.relative_to(root))
     if profile_path.name == "README.md":
         continue
+    if retrieval_rule not in text:
+        errors.append(f"{rel} must carry the retrieved-evidence rule")
+    if "`explore`" in text:
+        errors.append(f"{rel} must not route to the disabled built-in explore agent")
     if "`writing-policy`" not in text:
         errors.append(f"{rel} must reference writing-policy")
     if "Draft with `writing-for-humans`" in text:
@@ -2076,6 +2098,8 @@ for profile_path in sorted((root / "profiles/agents").glob("*.md")):
         errors.append(f"{rel} must not reference ivan-writing")
 
 cursor_rules = (root / ".apm/cursor/rules/default-agent.md").read_text(encoding="utf-8")
+if retrieval_rule not in cursor_rules:
+    errors.append("default-agent.md must carry the retrieved-evidence rule")
 if "ivan-writing" not in cursor_rules:
     errors.append("default-agent.md must mention ivan-writing")
 elif "installed or configured" not in cursor_rules:

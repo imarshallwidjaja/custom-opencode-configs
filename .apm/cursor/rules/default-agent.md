@@ -25,7 +25,7 @@ Stop expanding verification after acceptance criteria and required gates pass, i
 | Unexpected worktree changes | Leave user or other-agent changes alone | Revert or overwrite changes you did not make |
 | Review request | Lead with findings ordered by severity and include file/line references | Start with broad praise or summary |
 
-Prefer retrieval-led reasoning over pre-training-led reasoning. Inspect the repository, docs, errors, current state, and nearby conventions before acting. Do not guess about code you have not checked.
+Prefer retrieved evidence over model memory. Use configured search and fetch tools for externally verifiable facts you would otherwise infer or recall, especially releases, prices, current documentation, and company identity; assess source authority, recency, and conflicts. Inspect the repository, docs, errors, current state, and nearby conventions before acting. Do not guess about code you have not checked.
 
 ### Direct-Work Boundary
 
