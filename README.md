@@ -155,20 +155,28 @@ OPENCODE_CONFIG_DIR=/path/to/opencode-config AGENTS_SKILLS_DIR=/path/to/agents-s
 
 Shared canonical skills default to `$HOME/.agents/skills`. Set `AGENTS_SKILLS_DIR` when the installer must not write that live directory.
 
-Agent Hive reads its config only from `$HOME/.config/opencode/agent_hive.json`, whatever `OPENCODE_CONFIG_DIR` says, and writes a default file there when none exists. A custom-directory install copies `agent_hive.json` into the custom directory and warns that Hive will not read it. Every Opencode config on the machine shares the default-location Hive file. Before replacing it, inspect it and preserve any routing you need; back up the actual destination if it exists:
+Agent Hive reads its config only from `$HOME/.config/opencode/agent_hive.json`, whatever `OPENCODE_CONFIG_DIR` says, and writes a default file there when none exists. A custom-directory install copies `agent_hive.json` into the custom directory and warns that Hive will not read it. Every Opencode config on the machine shares the default-location Hive file. Before replacing it, review and back up an existing regular file. Resolve a symlink or other non-regular destination manually:
 
 ```bash
-hive_config="$HOME/.config/opencode/agent_hive.json"
-ls -ld "$hive_config"  # inspect the existing file; a missing file is expected on a fresh install
-if [[ -f "$hive_config" ]]; then less "$hive_config"; fi  # review existing routing
-if [[ -e "$hive_config" || -L "$hive_config" ]]; then
-  backup_dir="$(mktemp -d "$HOME/.config/opencode/.hive-backup.XXXXXX")"
-  cp -a "$hive_config" "$backup_dir/agent_hive.json"
-fi
-cp -a "${OPENCODE_CONFIG_DIR:?set OPENCODE_CONFIG_DIR}/agent_hive.json" "$hive_config"
+(
+  set -e
+  hive_dir="$HOME/.config/opencode"
+  hive_config="$hive_dir/agent_hive.json"
+  mkdir -p "$hive_dir"
+  if [[ -L "$hive_config" || ( -e "$hive_config" && ! -f "$hive_config" ) ]]; then
+    printf 'Refusing to replace %s: resolve the symlink or non-regular target manually.\n' "$hive_config" >&2
+    exit 1
+  fi
+  if [[ -f "$hive_config" ]]; then
+    less "$hive_config"  # review existing routing
+    backup_dir="$(mktemp -d "$hive_dir/.hive-backup.XXXXXX")"
+    cp "$hive_config" "$backup_dir/agent_hive.json"
+  fi
+  cp "${OPENCODE_CONFIG_DIR:?set OPENCODE_CONFIG_DIR}/agent_hive.json" "$hive_config"
+)
 ```
 
-Use this workflow only after deciding that the installed Hive routing should replace the shared destination. If the destination is a directory, resolve that first; do not copy into it.
+Use this workflow only after deciding that the installed Hive routing should replace the shared destination.
 
 ### AGENTS profiles
 
@@ -210,7 +218,7 @@ Routing uses cost-conscious effort defaults:
 
 `forager-worker` is the default for features, fixes, refactors, and integrations that follow established patterns. Choose `forager-capable` up front for coupled invariants, subtle state or concurrency behavior, and difficult cross-component diagnosis, and prefer it when genuinely unsure between the two. `forager-smart` is the rescue worker after a prior attempt hits a substantive technical dead end. Research is consolidated into `scout-researcher`; plan and code review each have one first-pass role. Adversarial passes supplement that first pass when the risk calls for them: `adversarial-code-reviewer` when a change touches public contracts, persistence, authorization, concurrency, state transitions, destructive behavior, or other failure-sensitive logic, or when the first review leaves correctness risk unresolved; `adversarial-simplicity-reviewer` when a change introduces or expands abstractions, configuration, flags, adapters, validation layers, fallback paths, or branching, or is materially larger than the request needs. Routine, localized changes with focused verification skip the adversarial code pass. The `minimal-change` council group pairs `simplicity-reviewer` with `adversarial-simplicity-reviewer`. The planner, swarm, and builder load `background-delegation` alongside their orchestration skills; only the ordinary worker's configured `autoLoadSkills` in this profile include `verification`. Agent Hive may prepend built-in defaults before these configured additions. Only the document-focused roles (`forager-documents`, `documentation-reviewer`, and `adversarial-documentation-reviewer`) auto-load `writing-policy`, together with `writing-for-humans`, `humanizer`, and `stop-slop`. Other seats load `writing-policy` on demand from its skill description and the AGENTS profile references. `hive-helper` is hardcoded to no auto-loaded skills. Personal `ivan-writing` stays out of this portable config.
 
-An aligned `oc-arkive` release newer than 2.5.0 must publish before this repository is pushed; its version number is not known yet. It no longer bundles research MCPs, so `opencode.json` and the optional bundles supply those entries. The new Hive loader rejects the entire `agent_hive.json` when it contains the removed `disableMcps` or `sandbox` fields, then falls back to defaults; agents, customAgents, council, and model routing from that file are lost. Replace or update `agent_hive.json` to remove those fields before restarting Opencode. The base Hive config already omits them. Published 2.5.0 still registers its own research MCPs.
+This profile requires an `oc-arkive` release after 2.5.0 that removes bundled research MCPs and rejects `agent_hive.json` files containing the removed `disableMcps` or `sandbox` fields. `opencode.json` and the optional bundles supply the research MCP entries. A rejected Hive file falls back to defaults; agents, customAgents, council, and model routing from that file are lost. Replace or update `agent_hive.json` to remove those fields before restarting Opencode. The base Hive config already omits them. Published 2.5.0 still registers its own research MCPs.
 
 These defaults are a heuristic, not an experimentally optimal routing policy. The September 3, 2026 [DeepSWE](https://deepswe.datacurve.ai/) results supplied for this choice report Astra `xhigh` at 74 +/- 3% and $6.52, Sol `max` at 73 +/- 3% and $6.46, and Luna `max` at 67 +/- 4% and $0.61. Their confidence intervals overlap, and those runs do not establish performance at the lower efforts used here. Output tokens and steps are not wall-clock latency. Validate changes against representative repository tasks and mergeability criteria such as correctness, tests, scope, and style, as used by [FrontierCode](https://cognition.com/frontiercode), before promoting a default.
 
