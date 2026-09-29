@@ -88,7 +88,10 @@ AGENTS_MODE="${OPENCODE_AGENTS_MODE:-install}"
 BASE_PAYLOAD_DIR="${REPO_ROOT}/profiles/base"
 OPENCODE_SOURCE="${BASE_PAYLOAD_DIR}/opencode.json"
 AGENT_HIVE_SOURCE="${BASE_PAYLOAD_DIR}/agent_hive.json"
-PLUGIN_SOURCE="${BASE_PAYLOAD_DIR}/plugins/dcg-guard.js"
+BASE_PLUGINS=(
+  dcg-guard.js
+  shell-agents.js
+)
 ENABLE_OPTIONAL_SCRIPT="${SCRIPT_DIR}/enable-optional.sh"
 LEGACY_PROMPT_COMMANDS=(
   approve-sync-plan
@@ -429,8 +432,12 @@ esac
 
 # Pre-mutation source readability check
 preflight_source_readable() {
-  local file
-  for file in "${OPENCODE_SOURCE}" "${AGENT_HIVE_SOURCE}" "${PLUGIN_SOURCE}"; do
+  local file plugin_name
+  local files=("${OPENCODE_SOURCE}" "${AGENT_HIVE_SOURCE}")
+  for plugin_name in "${BASE_PLUGINS[@]}"; do
+    files+=("${BASE_PAYLOAD_DIR}/plugins/${plugin_name}")
+  done
+  for file in "${files[@]}"; do
     if [[ ! -r "${file}" ]]; then
       printf 'ERROR: %s is not readable\n' "${file}" >&2
       exit 1
@@ -517,7 +524,9 @@ mkdir -p "${TARGET_DIR}"
 
 backup_path "${TARGET_DIR}/opencode.json"
 backup_path "${TARGET_DIR}/agent_hive.json"
-backup_path "${TARGET_DIR}/plugins/dcg-guard.js"
+for plugin_name in "${BASE_PLUGINS[@]}"; do
+  backup_path "${TARGET_DIR}/plugins/${plugin_name}"
+done
 if [[ "${AGENTS_MODE}" == "install" ]]; then
   backup_path "${TARGET_DIR}/AGENTS.md"
 fi
@@ -530,7 +539,9 @@ mkdir -p "${TARGET_DIR}/skills" "${TARGET_DIR}/agents" "${AGENTS_SKILLS_DIR}"
 install -m 0644 "${OPENCODE_SOURCE}" "${TARGET_DIR}/opencode.json"
 install -m 0644 "${AGENT_HIVE_SOURCE}" "${TARGET_DIR}/agent_hive.json"
 mkdir -p "${TARGET_DIR}/plugins"
-install -m 0644 "${PLUGIN_SOURCE}" "${TARGET_DIR}/plugins/dcg-guard.js"
+for plugin_name in "${BASE_PLUGINS[@]}"; do
+  install -m 0644 "${BASE_PAYLOAD_DIR}/plugins/${plugin_name}" "${TARGET_DIR}/plugins/${plugin_name}"
+done
 if [[ "${AGENTS_MODE}" == "install" ]]; then
   install -m 0644 "${AGENTS_SOURCE}" "${TARGET_DIR}/AGENTS.md"
 fi
@@ -616,7 +627,7 @@ else
   printf 'Skipped AGENTS.md replacement; selected profile for manual merge: %s\n' "${AGENTS_PROFILE}"
 fi
 printf 'Installed canonical Agent Hive config\n'
-printf 'Installed dcg-guard plugin\n'
+printf 'Installed dcg-guard and shell-agents plugins\n'
 if profile_needs_context_improved; then
   printf 'Auto-applied optional bundle: context-improved\n'
 fi

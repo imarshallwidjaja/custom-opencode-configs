@@ -13,6 +13,7 @@ Running `./scripts/install-profile.sh` with no arguments previews the install wi
 - `profiles/base/opencode.json` -> `opencode.json`: base Opencode config with `oc-arkive@latest`. It turns off Opencode's internal file-change snapshots (`snapshot: false`), so agent edits cannot be rolled back through the Opencode UI, and startup self-updates (`autoupdate: false`), so update Opencode yourself. It also disables the built-in `explore` agent so read-only research goes to Hive's `scout-researcher`
 - `profiles/base/agent_hive.json` -> `agent_hive.json`: Agent Hive role and model configuration
 - `profiles/base/plugins/dcg-guard.js` -> `plugins/dcg-guard.js`: Destructive Command Guard adapter, auto-loaded from the Opencode plugins directory
+- `profiles/base/plugins/shell-agents.js` -> `plugins/shell-agents.js`: nested `AGENTS.md` discovery for Bash tool calls, auto-loaded from the same directory (see [Base plugins](#base-plugins))
 - `AGENTS.md`: the selected operating profile for Opencode agents
 - `skills/`: OpenCode-local skill (`writing-skills`). The installer replaces that name in place from `.apm/skills/`, removes leftover copies of the shared canonical skills, leftover Hive-owned skill names, and leftover retired OpenCode-local skills (`using-git-worktrees`, `finishing-a-development-branch`, `consolidate-test-suites`, `root-cause-finder`, `context-mode`), and leaves other existing skill directories in place (for example `impeccable` from `npx impeccable install`).
 - `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: shared canonical skills used by both OpenCode and Cursor, plus personal skills from `profiles/personal/skills/` when the selected AGENTS profile is `personal-default` or `personal-context-improved`. Override the destination with `AGENTS_SKILLS_DIR`. Tests and other installer runs that keep the real `$HOME` must set this to a temp directory so they do not mutate `~/.agents/skills`.
@@ -355,6 +356,10 @@ The base `opencode.json` installs:
 - `opencode-gpt-imagegen` for OpenAI image generation tools
 
 The installer also copies `plugins/dcg-guard.js`, which Opencode auto-loads from the config plugins directory. It intercepts `bash` tool calls when `dcg` is on `PATH`, and is a no-op when `dcg` is missing.
+
+It also copies `plugins/shell-agents.js`. Opencode already attaches a nested `AGENTS.md` when the `read` tool opens a file below it. This plugin does the same for `bash`: when a command's working directory is a subdirectory of the project, it appends every non-empty `AGENTS.md` between that directory and the project root (the root file is excluded because Opencode loads it natively) as a system reminder on the command output. It skips any file already visible in the system prompt or in earlier tool output that compaction has not removed, and it applies the same deduplication to `read` reminders. Symlinks that resolve outside the project are ignored. If loading fails, the command output gets a short diagnostic reminder instead of failing the tool call. It uses Opencode's `experimental.chat.messages.transform` and `experimental.chat.system.transform` hooks, so an Opencode upgrade that changes those hooks can break it.
+
+Opencode loads plugins only at startup. After installing or updating either plugin, restart every running Opencode process that uses this config directory, including a long-lived `opencode serve`. To check the plugin from this repository, run `bun test tests/shell-agents.test.js`; it needs Bun on `PATH` but no packages.
 
 `opencode-gpt-imagegen` currently uses ChatGPT Plus or Pro OAuth from Opencode. It does not provide an API-key image path. No credentials are embedded in this repository.
 

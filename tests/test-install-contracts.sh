@@ -206,6 +206,7 @@ SKILL
   echo '{"source":"profiles/base/agent_hive.json"}' > "${REPO_FIXTURE}/profiles/base/agent_hive.json"
   mkdir -p "${REPO_FIXTURE}/profiles/base/plugins"
   printf '%s\n' '// fixture dcg-guard' > "${REPO_FIXTURE}/profiles/base/plugins/dcg-guard.js"
+  printf '%s\n' '// fixture shell-agents' > "${REPO_FIXTURE}/profiles/base/plugins/shell-agents.js"
   echo '{"source":"obsolete-root/opencode.json"}' > "${REPO_FIXTURE}/opencode.json"
   echo '{"source":"obsolete-root/agent_hive.json"}' > "${REPO_FIXTURE}/agent_hive.json"
   echo '{}' > "${REPO_FIXTURE}/apm.yml"
@@ -1758,37 +1759,44 @@ run_td_frontmatter_test "59" "OpenCode one-space-indented description" opencode 
 build_fixture
 
 # ---------------------------------------------------------------------------
-# 62. Shared install copies dcg-guard plugin without wiping other plugins
+# 62. Shared install copies base plugins without wiping other plugins
 # ---------------------------------------------------------------------------
-printf '\n=== 62. Shared install copies dcg-guard plugin ===\n'
+printf '\n=== 62. Shared install copies base plugins ===\n'
 td62="${TMPDIR}/test62"; mkdir -p "${td62}/plugins"
 printf '%s\n' '// keep me' > "${td62}/plugins/unrelated.js"
+printf '%s\n' '// previous shell-agents' > "${td62}/plugins/shell-agents.js"
 OPENCODE_CONFIG_DIR="${td62}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td62}/err" && pass "62a: shared install succeeded" || fail "62b: shared install failed: $(cat "${td62}/err")"
-cmp -s "${REPO_FIXTURE}/profiles/base/plugins/dcg-guard.js" "${td62}/plugins/dcg-guard.js" && pass "62c: dcg-guard plugin installed" || fail "62d: dcg-guard plugin not copied from profiles/base/plugins"
+for plugin_name in dcg-guard.js shell-agents.js; do
+  cmp -s "${REPO_FIXTURE}/profiles/base/plugins/${plugin_name}" "${td62}/plugins/${plugin_name}" && pass "62c: ${plugin_name} installed" || fail "62d: ${plugin_name} not copied from profiles/base/plugins"
+done
+backup62="$(find "${td62}/.backup" -name shell-agents.js -type f 2>/dev/null | head -n 1)"
+[[ -n "${backup62}" && "$(cat "${backup62}")" == "// previous shell-agents" ]] && pass "62g: replaced shell-agents plugin backed up" || fail "62h: replaced shell-agents plugin not backed up"
 [[ -f "${td62}/plugins/unrelated.js" ]] && pass "62e: existing unrelated plugin preserved" || fail "62f: existing plugins directory was wiped"
 build_fixture
 
 # ---------------------------------------------------------------------------
-# 63. Missing dcg-guard plugin source fails before mutation
+# 63. Missing base plugin source fails before mutation
 # ---------------------------------------------------------------------------
-printf '\n=== 63. Missing dcg-guard plugin source fails before mutation ===\n'
-td63="${TMPDIR}/test63"; mkdir -p "${td63}"
-printf '{"existing":"opencode"}\n' > "${td63}/opencode.json"
-printf '{"existing":"agent_hive"}\n' > "${td63}/agent_hive.json"
-cp "${td63}/opencode.json" "${td63}/opencode.json.before"
-cp "${td63}/agent_hive.json" "${td63}/agent_hive.json.before"
-rm -f "${REPO_FIXTURE}/profiles/base/plugins/dcg-guard.js"
-if ! OPENCODE_CONFIG_DIR="${td63}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td63}/err"; then
-  grep -q 'ERROR' "${td63}/err" && pass "63a: missing dcg-guard plugin exits non-zero" || fail "63b: wrong error: $(cat "${td63}/err")"
-  if cmp -s "${td63}/opencode.json" "${td63}/opencode.json.before" && cmp -s "${td63}/agent_hive.json" "${td63}/agent_hive.json.before"; then
-    pass "63c: existing target config unmodified"
+printf '\n=== 63. Missing base plugin source fails before mutation ===\n'
+for plugin_name in dcg-guard.js shell-agents.js; do
+  td63="${TMPDIR}/test63-${plugin_name}"; mkdir -p "${td63}"
+  printf '{"existing":"opencode"}\n' > "${td63}/opencode.json"
+  printf '{"existing":"agent_hive"}\n' > "${td63}/agent_hive.json"
+  cp "${td63}/opencode.json" "${td63}/opencode.json.before"
+  cp "${td63}/agent_hive.json" "${td63}/agent_hive.json.before"
+  rm -f "${REPO_FIXTURE}/profiles/base/plugins/${plugin_name}"
+  if ! OPENCODE_CONFIG_DIR="${td63}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td63}/err"; then
+    grep -q "ERROR.*${plugin_name}" "${td63}/err" && pass "63a: missing ${plugin_name} exits non-zero" || fail "63b: wrong error: $(cat "${td63}/err")"
+    if cmp -s "${td63}/opencode.json" "${td63}/opencode.json.before" && cmp -s "${td63}/agent_hive.json" "${td63}/agent_hive.json.before" && [[ ! -e "${td63}/plugins" ]]; then
+      pass "63c: existing target config unmodified without ${plugin_name}"
+    else
+      fail "63d: existing target config mutated without ${plugin_name}"
+    fi
   else
-    fail "63d: existing target config mutated"
+    fail "63e: install should have failed when profiles/base/plugins/${plugin_name} is absent"
   fi
-else
-  fail "63e: install should have failed when profiles/base/plugins/dcg-guard.js is absent"
-fi
-build_fixture
+  build_fixture
+done
 
 # ---------------------------------------------------------------------------
 # 63f. Malformed writing-policy source fails before OpenCode target mutation
@@ -2221,6 +2229,16 @@ else:
     text = plugin_path.read_text(encoding="utf-8")
     if "Bun.which(\"dcg\")" not in text or "tool.execute.before" not in text:
         errors.append("dcg-guard.js is not the Destructive Command Guard adapter")
+shell_agents = root / "profiles/base/plugins/shell-agents.js"
+if not shell_agents.is_file():
+    errors.append("profiles/base/plugins/shell-agents.js missing")
+else:
+    text = shell_agents.read_text(encoding="utf-8")
+    if "export default async function ShellAgentsPlugin" not in text or "tool.execute.after" not in text:
+        errors.append("shell-agents.js is not the Bash AGENTS.md discovery plugin")
+shell_tests = root / "tests/shell-agents.test.js"
+if not shell_tests.is_file() or 'from "../profiles/base/plugins/shell-agents.js"' not in shell_tests.read_text(encoding="utf-8"):
+    errors.append("tests/shell-agents.test.js must exercise profiles/base/plugins/shell-agents.js")
 
 if errors:
     print("\n".join(errors))

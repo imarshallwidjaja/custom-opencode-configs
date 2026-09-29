@@ -53,6 +53,7 @@ Some setup facts are not user choices:
 
 - Running `./scripts/install-profile.sh` with no arguments previews without changes or hooks. Use `--apply` for the full install, or `--help` for usage.
 - The default repo profile uses `openai/gpt-6-luna-fast`, `openai/gpt-6-sol`, and `openai/gpt-6-astra` in `agent_hive.json`, plus `openai/gpt-5.6-sol` for the primary-only `hive-master`, `swarm-orchestrator`, and `hive-builder` seats because `gpt-6-sol` is unsuitable for orchestration. The base Opencode config disables the built-in `explore` agent, runs `agent.compaction` on `openai/gpt-6-luna-fast` with `variant: medium`, and sets `snapshot: false` (no UI rollback of agent edits) and `autoupdate: false` (Opencode updates are manual). Top-level compaction `auto` and `prune` stay disabled.
+- The installer copies `plugins/shell-agents.js`, which extends Opencode's nested `AGENTS.md` discovery from the `read` tool to `bash` commands and deduplicates reminders still visible in active history. It has no prerequisites. It relies on experimental Opencode hooks; `bun test tests/shell-agents.test.js` from the repository root checks it. Opencode loads plugins only at startup, so restart every Opencode process that uses the config directory, including a long-lived `opencode serve`, after install or update.
 - The installer copies `plugins/dcg-guard.js`. Opencode auto-loads it. The plugin is a no-op until the `dcg` CLI is on `PATH`; install it from [destructive_command_guard](https://github.com/dicklesworthstone/destructive_command_guard) with `curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh?$(date +%s)" | bash -s -- --easy-mode`.
 - Hive routing follows the cost-conscious role/effort policy in [README.md](README.md#agent-hive-config): Luna (`gpt-6-luna-fast`) for research, documents, and helper/summarizer seats; Sol (`gpt-6-sol`) for ordinary and hard implementation, plan review, UI work, and most adversarial passes; `gpt-5.6-sol` for the three primary orchestration seats; Astra for rescue work, architecture planning, code/security review, and low-effort specialist first passes. No Hive seat uses `max`; only the difficult approach advisor uses `xhigh`. Do not mechanically preserve another provider's maximum effort when remapping roles. The cited benchmark results do not establish optimal lower-effort defaults or wall-clock latency.
 - `scout-researcher` is the sole research role. `plan-reviewer` and `code-reviewer` own their full first-pass scope. `forager-worker` handles features, fixes, refactors, and integrations on established patterns; choose `forager-capable` up front for coupled invariants, subtle state or concurrency behavior, and difficult cross-component diagnosis; `forager-smart` rescues work after a substantive technical dead end. Adversarial passes supplement ordinary review on risk: public contracts, persistence, authorization, concurrency, state transitions, destructive behavior, or other failure-sensitive logic for code, and added abstractions, configuration, flags, adapters, validation layers, fallback paths, or branching for simplicity. The `minimal-change` council group uses `adversarial-simplicity-reviewer`. Portable profiles exclude personal `ivan-writing` and `impeccable` auto-loads and all non-OpenAI providers.
@@ -505,6 +506,7 @@ Verify that the target config directory now contains:
 - `agent_hive.json`
 - `AGENTS.md`
 - `plugins/dcg-guard.js`
+- `plugins/shell-agents.js`
 - `skills/`
 - `agents/`
 - `commands/` when present, especially legacy managed Hive prompt commands that the installer now removes
@@ -519,7 +521,7 @@ Concrete checks:
 - if `keenable` was enabled, verify `mcp.keenable.enabled` is `true` and its `X-API-Key` header is `{file:secrets/keenable}`
 - if any secret-file MCP was enabled, verify the referenced file under `secrets/` exists without printing it
 - verify `plugin` includes `opencode-gpt-imagegen`
-- verify `plugins/dcg-guard.js` exists in the target config directory
+- verify `plugins/dcg-guard.js` and `plugins/shell-agents.js` exist in the target config directory
 - verify every Hive model is exactly `openai/gpt-6-luna-fast`, `openai/gpt-6-sol`, or `openai/gpt-6-astra`, except `hive-master`, `swarm-orchestrator`, and `hive-builder` on `openai/gpt-5.6-sol`, with no other provider; the base `opencode.json` `compaction` agent uses `openai/gpt-6-luna-fast` and `explore` is disabled. Confirm model IDs and configured variants with `opencode models openai --verbose`, then separately verify inference access; listing alone is insufficient
 
 If the operator wanted `cymbal`, verify that `cymbal` is available on `PATH` with a simple command such as:
