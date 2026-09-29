@@ -45,7 +45,7 @@ Purpose: The shared profile plus strong routing rules for the optional context-i
 Use this when:
 
 - you have enabled `profiles/optional/opencode.context-improved.json`
-- you have also applied the matching `agent_hive.context-improved.json` overlay, either through `./scripts/enable-optional.sh context-improved` or automatically through `./scripts/install-profile.sh --apply`
+- you have applied `./scripts/enable-optional.sh context-improved` or installed this AGENTS profile with `./scripts/install-profile.sh --apply`
 - local `ast_grep` and enabled `context7` are actually available in the running environment
 - `cymbal` is available on `PATH` when you want agents to start unfamiliar-code navigation there; the context-improved install attempts to wire its OpenCode hook when present, without making hook success a bundle requirement
 - you want agents to prefer the richer context and navigation workflow explicitly
@@ -58,7 +58,7 @@ Use this when:
 
 - you want the same Ivan-voice selection as personal-default: published, submitted, or sent as Ivan, with internal reports remaining neutral unless requested
 - you have enabled `profiles/optional/opencode.context-improved.json`
-- you have also applied the matching `agent_hive.context-improved.json` overlay, either through `./scripts/enable-optional.sh context-improved` or automatically through `./scripts/install-profile.sh --apply`
+- you have applied `./scripts/enable-optional.sh context-improved` or installed this AGENTS profile with `./scripts/install-profile.sh --apply`
 - you want the AGENTS policy to assume the context-improved tool bundle is present
 - `cymbal` is available on `PATH` when you want agents to start unfamiliar-code navigation there; the context-improved install attempts to wire its OpenCode hook when present, without making hook success a bundle requirement
 

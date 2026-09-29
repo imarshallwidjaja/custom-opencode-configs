@@ -62,6 +62,11 @@ SHARED_SKILLS=(
   writing-policy
   writing-work-items
 )
+SHARED_RETIRED_SKILLS=(
+  working-with-atlassian
+  managing-work-in-jira
+  connecting-atlassian-tools
+)
 HIVE_OWNED_SKILLS=(
   adversarial-review
   agents-md-mastery
@@ -564,6 +569,12 @@ for skill_name in "${SHARED_SKILLS[@]}"; do
   rm -rf -- "${AGENTS_SKILLS_DIR}/${skill_name}"
   cp -a "${skill_source}" "${AGENTS_SKILLS_DIR}/${skill_name}"
   rm -rf -- "${TARGET_DIR}/skills/${skill_name}"
+done
+for skill_name in "${SHARED_RETIRED_SKILLS[@]}"; do
+  if [[ -e "${AGENTS_SKILLS_DIR}/${skill_name}" ]]; then
+    backup_agents_skill "${skill_name}"
+    rm -rf -- "${AGENTS_SKILLS_DIR}/${skill_name}"
+  fi
 done
 for skill_name in "${HIVE_OWNED_SKILLS[@]}" "${OPENCODE_RETIRED_SKILLS[@]}"; do
   rm -rf -- "${TARGET_DIR}/skills/${skill_name}"

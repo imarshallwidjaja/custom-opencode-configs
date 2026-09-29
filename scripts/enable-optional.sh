@@ -6,7 +6,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TARGET_DIR="${OPENCODE_CONFIG_DIR:-${HOME}/.config/opencode}"
 TARGET_JSON="${TARGET_DIR}/opencode.json"
-TARGET_AGENT_HIVE_JSON="${TARGET_DIR}/agent_hive.json"
 SNIPPET_NAME="${1:-}"
 SKIP_BACKUP="${OPENCODE_OPTIONAL_SKIP_BACKUP:-0}"
 
@@ -113,29 +112,13 @@ case "${SNIPPET_NAME}" in
     ;;
 esac
 
-AGENT_HIVE_SNIPPET_FILE="${REPO_ROOT}/profiles/optional/agent_hive.${SNIPPET_NAME}.json"
 if ! jq '.' "${TARGET_JSON}" >/dev/null 2>&1; then
   printf 'Target config is not valid JSON: %s\n' "${TARGET_JSON}" >&2
   exit 1
 fi
-if [[ -f "${AGENT_HIVE_SNIPPET_FILE}" ]]; then
-  if [[ ! -f "${TARGET_AGENT_HIVE_JSON}" ]]; then
-    printf 'Agent Hive target not found: %s\n' "${TARGET_AGENT_HIVE_JSON}" >&2
-    exit 1
-  fi
-  if ! jq '.' "${TARGET_AGENT_HIVE_JSON}" >/dev/null 2>&1; then
-    printf 'Agent Hive target is not valid JSON: %s\n' "${TARGET_AGENT_HIVE_JSON}" >&2
-    exit 1
-  fi
-fi
 
 backup_json "${TARGET_JSON}" "opencode.json"
 merge_json "${TARGET_JSON}" "${SNIPPET_FILE}"
-
-if [[ -f "${AGENT_HIVE_SNIPPET_FILE}" ]]; then
-  backup_json "${TARGET_AGENT_HIVE_JSON}" "agent_hive.json"
-  merge_json "${TARGET_AGENT_HIVE_JSON}" "${AGENT_HIVE_SNIPPET_FILE}"
-fi
 
 if [[ "${SNIPPET_NAME}" == "context-improved" ]]; then
   if command -v cymbal >/dev/null 2>&1; then
@@ -146,9 +129,6 @@ if [[ "${SNIPPET_NAME}" == "context-improved" ]]; then
 fi
 
 printf 'Applied %s to %s\n' "${SNIPPET_NAME}" "${TARGET_JSON}"
-if [[ -f "${AGENT_HIVE_SNIPPET_FILE}" ]]; then
-  printf 'Applied %s to %s\n' "${SNIPPET_NAME}" "${TARGET_AGENT_HIVE_JSON}"
-fi
 if [[ -n "${BACKUP_DIR}" ]]; then
   printf 'Backed up the previous config to %s\n' "${BACKUP_DIR}"
 fi

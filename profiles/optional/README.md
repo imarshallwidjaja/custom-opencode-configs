@@ -6,7 +6,7 @@ These optional bundles are Opencode-only. Cursor v1 has no optional MCP bundle i
 
 ## Operating model
 
-Each bundle is led by a partial `opencode.json` fragment and may also include a matching `agent_hive.json` overlay when Hive-specific behavior must change.
+Each bundle is a partial `opencode.json` fragment. Optional bundles leave `agent_hive.json` unchanged.
 
 Purpose:
 
@@ -28,7 +28,6 @@ It adds:
 
 - a local `ast_grep` MCP launched through `uvx`
 - the bundled remote `context7` MCP entry already present in the base profile, enabled with a `CONTEXT7_API_KEY` header read from `{file:secrets/context7}`
-- the matching `agent_hive.context-improved.json` overlay, which writes `disableMcps` to `context7` and `ast_grep` on the target Hive config. The base Hive config sets no `disableMcps`, so an `oc-arkive` release that bundles research MCPs would register its own `context7` and `ast_grep` and replace this bundle's entries; the overlay stops that. It replaces any previous `disableMcps` list on the target. Scout skill loading comes from the base Hive config.
 
 Prerequisites:
 
@@ -44,7 +43,8 @@ Verification:
 Some notes:
 
 - this bundle normalizes the live local setup into portable `PATH`-based commands and config-relative secret files
-- this bundle updates both `opencode.json` and `agent_hive.json`; Hive Scout skills stay on the base config. The Hive overlay writes `disableMcps` to `context7` and `ast_grep`, replacing any previous list on the target, so Hive's same-named built-ins cannot replace the MCP entries this bundle enables
+- this bundle updates `opencode.json`; Hive Scout skill loading comes from the base Hive config. Hive's optional research MCPs are allowed, and any same-named Hive MCP may take precedence over the OpenCode MCP entry at runtime
+- if an earlier install set `disableMcps` in `agent_hive.json`, rerun `./scripts/install-profile.sh --apply` to replace that config with the current base profile; applying this bundle alone leaves an existing Hive config untouched
 - the installer auto-applies this bundle for the `shared-context-improved` and `personal-context-improved` AGENTS profiles after preflighting the same prerequisites
 - install `cymbal` with `brew install 1broseidon/tap/cymbal` when the machine uses Homebrew and you want the full local navigation workflow
 - `cymbal` is a separate optional CLI tool for local code navigation; when it is on `PATH`, both `scripts/install-profile.sh` and this bundle attempt to install its supported OpenCode hook into the selected `OPENCODE_CONFIG_DIR`, and a hook failure warns without failing the install
@@ -138,7 +138,7 @@ The merge workflow involves the following:
 
 1. Pick a snippet from this directory.
 2. Verify the listed dependencies on the target machine.
-3. Merge the relevant JSON object into `opencode.json`, plus the matching `agent_hive.json` overlay when the bundle includes one.
+3. Merge the relevant JSON object into `opencode.json`.
 4. Start Opencode and confirm the integration loads without command-not-found errors.
 
 For `AGENTS.md`, keep the existing file and fold in the new routing rules structurally instead of replacing it.
@@ -161,7 +161,7 @@ Other examples:
 Some notes:
 
 - the script requires `jq`
-- it creates a timestamped backup of the current `opencode.json`, and `agent_hive.json` when the bundle includes an Agent Hive overlay, before replacing them
+- it creates a timestamped backup of the current `opencode.json` before replacing it
 - it refuses to apply a snippet if a listed binary is missing, or if a secret file the snippet references is missing, unreadable, or blank; it checks secret files under the selected `OPENCODE_CONFIG_DIR`
 - it never creates, copies, or backs up `secrets/`
 

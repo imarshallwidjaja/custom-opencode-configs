@@ -755,7 +755,7 @@ cat > "${optional_target}/opencode.json" <<'JSON'
   }
 }
 JSON
-printf '{}\n' > "${optional_target}/agent_hive.json"
+printf '{"custom":"keep"}\n' > "${optional_target}/agent_hive.json"
 if PATH="${optional_bin}:/usr/bin:/bin" CYMBAL_HOOK_LOG="${TMPDIR}/cymbal-hook.log" OPENCODE_CONFIG_DIR="${optional_target}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null; then
   if [[ "$(sed -n '1p' "${TMPDIR}/cymbal-hook.log" 2>/dev/null)" == "${optional_target}" && "$(sed -n '2p' "${TMPDIR}/cymbal-hook.log" 2>/dev/null)" == "hook install opencode --scope user" ]]; then
     pass "0a: context-improved installs Cymbal hook for selected config dir"
@@ -770,6 +770,11 @@ if jq -e '(.mcp.unrelated.command == ["unrelated-server"]) and (.mcp.ast_grep.co
 else
   fail "0b: context-improved preserves unrelated MCPs and adds context tools"
 fi
+if jq -e '. == {"custom":"keep"}' "${optional_target}/agent_hive.json" >/dev/null; then
+  pass "0b: context-improved leaves Agent Hive config untouched"
+else
+  fail "0b: context-improved modified Agent Hive config"
+fi
 cat > "${optional_bin}/cymbal" <<'SH'
 #!/bin/sh
 exit 23
@@ -783,40 +788,34 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 0d. Missing agent_hive target exits non-zero without mutating opencode.json
+# 0d. Context-improved does not require an Agent Hive config
 # ---------------------------------------------------------------------------
-printf '\n=== 0d. Missing agent_hive target no-mutation ===\n'
+printf '\n=== 0d. Context-improved without Agent Hive ===\n'
 td_missing_ah="${TMPDIR}/test-missing-ah"; mkdir -p "${td_missing_ah}"
 write_secret "${td_missing_ah}" context7
 printf '{"mcp":{}}\n' > "${td_missing_ah}/opencode.json"
-cp "${td_missing_ah}/opencode.json" "${td_missing_ah}/opencode.json.before"
-if ! PATH="${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_missing_ah}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null 2>&1; then
-  if cmp -s "${td_missing_ah}/opencode.json" "${td_missing_ah}/opencode.json.before"; then
-    pass "0d: missing agent_hive target exits non-zero, opencode.json unchanged"
-  else
-    fail "0d: missing agent_hive target mutated opencode.json"
-  fi
+if PATH="${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_missing_ah}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null 2>&1 \
+  && jq -e '(.mcp.ast_grep.command[0] == "uvx") and (.mcp.context7.enabled == true)' "${td_missing_ah}/opencode.json" >/dev/null \
+  && [[ ! -e "${td_missing_ah}/agent_hive.json" ]]; then
+  pass "0d: context-improved merges OpenCode MCPs without Agent Hive"
 else
-  fail "0d: missing agent_hive target should have exited non-zero"
+  fail "0d: context-improved should not require Agent Hive"
 fi
 
 # ---------------------------------------------------------------------------
-# 0e. Malformed agent_hive target exits non-zero without mutating opencode.json
+# 0e. Context-improved preserves an existing malformed Agent Hive file
 # ---------------------------------------------------------------------------
-printf '\n=== 0e. Malformed agent_hive target no-mutation ===\n'
+printf '\n=== 0e. Context-improved leaves Agent Hive file untouched ===\n'
 td_malformed_ah="${TMPDIR}/test-malformed-ah"; mkdir -p "${td_malformed_ah}"
 write_secret "${td_malformed_ah}" context7
 printf '{"mcp":{}}\n' > "${td_malformed_ah}/opencode.json"
-cp "${td_malformed_ah}/opencode.json" "${td_malformed_ah}/opencode.json.before"
 printf 'not json\n' > "${td_malformed_ah}/agent_hive.json"
-if ! PATH="${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_malformed_ah}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null 2>&1; then
-  if cmp -s "${td_malformed_ah}/opencode.json" "${td_malformed_ah}/opencode.json.before"; then
-    pass "0e: malformed agent_hive target exits non-zero, opencode.json unchanged"
-  else
-    fail "0e: malformed agent_hive target mutated opencode.json"
-  fi
+if PATH="${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_malformed_ah}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" context-improved >/dev/null 2>&1 \
+  && jq -e '(.mcp.ast_grep.command[0] == "uvx") and (.mcp.context7.enabled == true)' "${td_malformed_ah}/opencode.json" >/dev/null \
+  && grep -Fqx 'not json' "${td_malformed_ah}/agent_hive.json"; then
+  pass "0e: context-improved does not read or alter Agent Hive"
 else
-  fail "0e: malformed agent_hive target should have exited non-zero"
+  fail "0e: context-improved changed or required Agent Hive"
 fi
 
 # ---------------------------------------------------------------------------
@@ -2028,8 +2027,8 @@ if "adversarial-simplicity-reviewer" not in minimal_members or "adversarial-code
     errors.append(f"council.groups.minimal-change must use adversarial-simplicity-reviewer: {minimal_members!r}")
 if "disableMcps" in hive:
     errors.append("base agent_hive.json must not disable Hive research MCPs")
-if hive.get("sandbox") != "none":
-    errors.append(f"base agent_hive.json sandbox={hive.get('sandbox')!r}, expected 'none'")
+if "sandbox" in hive:
+    errors.append("base agent_hive.json must omit sandbox")
 
 orchestration_skills = {
     "hive-master": ["parallel-exploration"],
@@ -2173,11 +2172,8 @@ else:
                 if not re.search(r"do not activate.{0,80}(?:discoverable|installed)", voice):
                     errors.append("writing-policy must not activate personal voice merely because it is discoverable or installed")
 
-overlay = json.loads((root / "profiles/optional/agent_hive.context-improved.json").read_text(encoding="utf-8"))
-if ((overlay.get("agents") or {}).get("scout-researcher") or {}).get("autoLoadSkills"):
-    errors.append("context-improved overlay must not restate scout autoLoadSkills")
-if overlay.get("disableMcps") != ["context7", "ast_grep"]:
-    errors.append(f"context-improved overlay disableMcps={overlay.get('disableMcps')!r}")
+if list((root / "profiles/optional").glob("agent_hive.*.json")):
+    errors.append("optional bundles must not overlay Agent Hive config")
 
 retrieval_rule = (
     "Prefer retrieved evidence over model memory. Use configured search and fetch tools for externally "
@@ -3243,12 +3239,18 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 69. OpenCode installer preserves unmanaged skills
+# 69. OpenCode installer retires shared Atlassian skills and preserves unmanaged skills
 # ---------------------------------------------------------------------------
-printf '\n=== 69. OpenCode installer preserves unmanaged skills ===\n'
+printf '\n=== 69. OpenCode installer retires shared Atlassian skills and preserves unmanaged skills ===\n'
 build_fixture
 sandbox_agents_skills
 td69="${TMPDIR}/test69"
+for retired69 in working-with-atlassian managing-work-in-jira connecting-atlassian-tools; do
+  mkdir -p "${AGENTS_SKILLS_DIR}/${retired69}"
+  printf 'old managed skill: %s\n' "${retired69}" > "${AGENTS_SKILLS_DIR}/${retired69}/SKILL.md"
+done
+mkdir -p "${AGENTS_SKILLS_DIR}/user-managed"
+printf 'user-managed-sentinel\n' > "${AGENTS_SKILLS_DIR}/user-managed/SKILL.md"
 mkdir -p "${td69}/skills/impeccable" "${td69}/skills/context-mode" "${td69}/skills/cymbal" "${td69}/skills/brainstorming" "${td69}/skills/ivan-writing" \
   "${td69}/skills/using-git-worktrees" "${td69}/skills/finishing-a-development-branch" "${td69}/skills/consolidate-test-suites" "${td69}/skills/root-cause-finder"
 printf '%s\n' 'impeccable-sentinel-keep' > "${td69}/skills/impeccable/SENTINEL"
@@ -3262,6 +3264,15 @@ printf '%s\n' 'stale leftover consolidate-test-suites' > "${td69}/skills/consoli
 printf '%s\n' 'stale leftover root-cause-finder' > "${td69}/skills/root-cause-finder/SKILL.md"
 printf '%s\n' 'keep-file' > "${td69}/skills/keep.txt"
 OPENCODE_CONFIG_DIR="${td69}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td69}/err" && pass "69a: shared install succeeded" || fail "69b: shared install failed: $(cat "${td69}/err")"
+for retired69 in working-with-atlassian managing-work-in-jira connecting-atlassian-tools; do
+  if [[ ! -e "${AGENTS_SKILLS_DIR}/${retired69}" ]] \
+    && grep -Fqx "old managed skill: ${retired69}" "${td69}/.backup/"*/"agents-skills/${retired69}/SKILL.md"; then
+    pass "69a: retired ${retired69} removed from shared destination and backed up"
+  else
+    fail "69b: retired ${retired69} remains or lacks shared-destination backup"
+  fi
+done
+grep -Fqx 'user-managed-sentinel' "${AGENTS_SKILLS_DIR}/user-managed/SKILL.md" && pass "69a: unrelated shared skill preserved" || fail "69b: unrelated shared skill changed"
 if grep -Fqx 'impeccable-sentinel-keep' "${td69}/skills/impeccable/SENTINEL"; then
   pass "69c: unmanaged impeccable survived"
 else
@@ -3536,6 +3547,8 @@ if "aero-design" not in packaged:
 for retired in ("working-with-atlassian", "managing-work-in-jira", "connecting-atlassian-tools"):
     if retired in packaged:
         errors.append(f"{retired} is still packaged")
+    if retired not in bash_array("scripts/install-profile.sh", "SHARED_RETIRED_SKILLS"):
+        errors.append(f"{retired} is missing from shared skill upgrade cleanup")
 for skill in sorted(packaged):
     for path in (root / ".apm/skills" / skill).rglob("*.md"):
         text = path.read_text(encoding="utf-8", errors="ignore")

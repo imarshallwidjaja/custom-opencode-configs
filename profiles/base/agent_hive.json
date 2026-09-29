@@ -3,7 +3,6 @@
   "enableToolsFor": [],
   "disableSkills": [],
   "agentMode": "dedicated",
-  "sandbox": "none",
   "council": {
     "defaultGroup": "decision",
     "maxMembers": 4,
