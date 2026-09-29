@@ -28,7 +28,7 @@ It adds:
 
 - a local `ast_grep` MCP launched through `uvx`
 - the bundled remote `context7` MCP entry already present in the base profile
-- the matching `agent_hive.context-improved.json` overlay, which writes `disableMcps` to `context7` and `ast_grep` on the target Hive config. That replaces any previous `disableMcps` list, so Hive workers stay off those MCPs even when this overlay is merged into an existing target. Scout skill loading comes from the base Hive config.
+- the matching `agent_hive.context-improved.json` overlay, which writes `disableMcps` to `context7` and `ast_grep` on the target Hive config. The base Hive config sets no `disableMcps`, so an `oc-arkive` release that bundles research MCPs would register its own `context7` and `ast_grep` and replace this bundle's entries; the overlay stops that. It replaces any previous `disableMcps` list on the target. Scout skill loading comes from the base Hive config.
 
 Prerequisites:
 
@@ -44,7 +44,7 @@ Verification:
 Some notes:
 
 - this bundle normalizes the live local setup into portable `PATH`-based commands and environment variables
-- this bundle updates both `opencode.json` and `agent_hive.json`; Hive Scout skills stay on the base config. The Hive overlay writes `disableMcps` to `context7` and `ast_grep`, replacing any previous list on the target so Hive workers stay off those MCPs after the OpenCode overlay enables them
+- this bundle updates both `opencode.json` and `agent_hive.json`; Hive Scout skills stay on the base config. The Hive overlay writes `disableMcps` to `context7` and `ast_grep`, replacing any previous list on the target, so Hive's same-named built-ins cannot replace the MCP entries this bundle enables
 - the installer auto-applies this bundle for the `shared-context-improved` and `personal-context-improved` AGENTS profiles after preflighting the same prerequisites
 - install `cymbal` with `brew install 1broseidon/tap/cymbal` when the machine uses Homebrew and you want the full local navigation workflow
 - `cymbal` is a separate optional CLI tool for local code navigation; when it is on `PATH`, both `scripts/install-profile.sh` and this bundle attempt to install its supported OpenCode hook into the selected `OPENCODE_CONFIG_DIR`, and a hook failure warns without failing the install

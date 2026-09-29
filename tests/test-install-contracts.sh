@@ -1777,7 +1777,7 @@ except json.JSONDecodeError as exc:
     print(f"invalid JSON: {exc}")
     raise SystemExit(1)
 
-allowed_models = {"openai/gpt-5.6-luna", "openai/gpt-5.6-sol", "openai/gpt-6-astra", "openai/gpt-6-luna-fast"}
+allowed_models = {"openai/gpt-6-luna-fast", "openai/gpt-6-sol", "openai/gpt-6-astra", "openai/gpt-5.6-sol"}
 blocked_substrings = ("opencode-go/", "magic-compact", "opencode-go-multi-auth")
 for path, value in walk(hive):
     if not isinstance(value, str):
@@ -1871,34 +1871,34 @@ for group_name in ("design", "ui"):
     if "code-reviewer-ui" in members:
         errors.append(f"council.groups.{group_name} still references code-reviewer-ui")
 
+# gpt-5.6-sol is reserved for the primary-only orchestration seats.
 exact_seats = {
     "forager-smart": ("openai/gpt-6-astra", "medium"),
-    "forager-capable": ("openai/gpt-5.6-sol", "high"),
-    "forager-documents": ("openai/gpt-5.6-luna", "high"),
-    "forager-fast": ("openai/gpt-5.6-luna", "high"),
-    "forager-ui": ("openai/gpt-5.6-sol", "high"),
-    "adversarial-plan-reviewer": ("openai/gpt-5.6-sol", "high"),
-    "adversarial-documentation-reviewer": ("openai/gpt-5.6-luna", "high"),
-    "adversarial-code-reviewer": ("openai/gpt-5.6-sol", "high"),
-    "adversarial-simplicity-reviewer": ("openai/gpt-5.6-sol", "high"),
-    "adversarial-approach-advisor": ("openai/gpt-5.6-sol", "high"),
-    "ui-design-advisor": ("openai/gpt-5.6-sol", "high"),
+    "forager-capable": ("openai/gpt-6-sol", "high"),
+    "forager-documents": ("openai/gpt-6-luna-fast", "high"),
+    "forager-ui": ("openai/gpt-6-sol", "high"),
+    "adversarial-plan-reviewer": ("openai/gpt-6-sol", "high"),
+    "adversarial-documentation-reviewer": ("openai/gpt-6-luna-fast", "high"),
+    "adversarial-code-reviewer": ("openai/gpt-6-sol", "high"),
+    "adversarial-simplicity-reviewer": ("openai/gpt-6-sol", "high"),
+    "adversarial-approach-advisor": ("openai/gpt-6-sol", "high"),
+    "ui-design-advisor": ("openai/gpt-6-sol", "high"),
     "approach-advisor-xhigh-reasoning": ("openai/gpt-6-astra", "xhigh"),
     "ui-reviewer": ("openai/gpt-6-astra", "low"),
     "documentation-reviewer": ("openai/gpt-6-astra", "low"),
     "hive-master": ("openai/gpt-5.6-sol", "high"),
     "architect-planner": ("openai/gpt-6-astra", "high"),
-    "swarm-orchestrator": ("openai/gpt-6-astra", "medium"),
-    "scout-researcher": ("openai/gpt-5.6-luna", "high"),
-    "forager-worker": ("openai/gpt-5.6-sol", "medium"),
-    "hive-helper": ("openai/gpt-5.6-luna", "medium"),
-    "plan-reviewer": ("openai/gpt-5.6-sol", "medium"),
+    "swarm-orchestrator": ("openai/gpt-5.6-sol", "medium"),
+    "scout-researcher": ("openai/gpt-6-luna-fast", "high"),
+    "forager-worker": ("openai/gpt-6-sol", "medium"),
+    "hive-helper": ("openai/gpt-6-luna-fast", "medium"),
+    "plan-reviewer": ("openai/gpt-6-sol", "medium"),
     "code-reviewer": ("openai/gpt-6-astra", "medium"),
     "simplicity-reviewer": ("openai/gpt-6-astra", "low"),
-    "approach-advisor": ("openai/gpt-5.6-sol", "high"),
+    "approach-advisor": ("openai/gpt-6-sol", "high"),
     "vulnerability-reviewer": ("openai/gpt-6-astra", "high"),
-    "hive-builder": ("openai/gpt-6-astra", "medium"),
-    "taskTraceSummarizer": ("openai/gpt-5.6-luna", "medium"),
+    "hive-builder": ("openai/gpt-5.6-sol", "medium"),
+    "taskTraceSummarizer": ("openai/gpt-6-luna-fast", "medium"),
 }
 seats = {**agents, **custom, "taskTraceSummarizer": hive.get("taskTraceSummarizer") or {}}
 if set(seats) != set(exact_seats):
@@ -1915,14 +1915,21 @@ for name, group in groups.items():
     unknown = set(group.get("members") or []) - (set(agents) | set(custom))
     if unknown:
         errors.append(f"council.groups.{name} references unknown roles: {sorted(unknown)}")
+minimal_members = (groups.get("minimal-change") or {}).get("members") or []
+if "adversarial-simplicity-reviewer" not in minimal_members or "adversarial-code-reviewer" in minimal_members:
+    errors.append(f"council.groups.minimal-change must use adversarial-simplicity-reviewer: {minimal_members!r}")
+if "disableMcps" in hive:
+    errors.append("base agent_hive.json must not disable Hive research MCPs")
+if hive.get("sandbox") != "none":
+    errors.append(f"base agent_hive.json sandbox={hive.get('sandbox')!r}, expected 'none'")
 
 orchestration_skills = {
-    "hive-master": ["parallel-exploration", "writing-policy"],
-    "architect-planner": ["brainstorming", "writing-plans", "parallel-exploration", "dispatching-parallel-agents", "background-delegation", "writing-policy"],
-    "swarm-orchestrator": ["dispatching-parallel-agents", "parallel-exploration", "background-delegation", "executing-plans", "writing-policy"],
-    "hive-builder": ["parallel-exploration", "dispatching-parallel-agents", "background-delegation", "writing-policy"],
-    "scout-researcher": ["cymbal", "ast-grep", "writing-policy"],
-    "forager-worker": ["verification", "writing-policy"],
+    "hive-master": ["parallel-exploration"],
+    "architect-planner": ["brainstorming", "writing-plans", "parallel-exploration", "dispatching-parallel-agents", "background-delegation"],
+    "swarm-orchestrator": ["dispatching-parallel-agents", "parallel-exploration", "background-delegation", "executing-plans"],
+    "hive-builder": ["parallel-exploration", "dispatching-parallel-agents", "background-delegation"],
+    "scout-researcher": ["cymbal", "ast-grep"],
+    "forager-worker": ["verification"],
 }
 for name, expected in orchestration_skills.items():
     if (agents.get(name) or {}).get("autoLoadSkills") != expected:
@@ -1933,11 +1940,12 @@ for name, entry in custom.items():
             errors.append(f"{name} must autoload adversarial-review")
         if "in addition to" not in entry.get("description", "") or "do not replace" not in entry.get("description", ""):
             errors.append(f"{name} must supplement the first review pass")
-if "after every behavior-changing implementation" not in (custom.get("adversarial-code-reviewer") or {}).get("description", ""):
-    errors.append("adversarial code review must cover every behavior-changing implementation")
 for name, phrases in {
-    "forager-smart": ("Escalation-only", "failed, stalled", "Hard but already-defined work goes to forager-capable"),
-    "forager-capable": ("Pick this up front", "not a retry after failure"),
+    "adversarial-code-reviewer": ("failure-sensitive logic", "unresolved correctness risk", "Skip routine, localized behavior changes"),
+    "code-reviewer": ("failure-sensitive logic", "Skip the adversarial pass for routine, localized behavior changes"),
+    "adversarial-simplicity-reviewer": ("introduces or expands abstractions", "materially larger"),
+    "forager-smart": ("Rescue worker", "dead end", "belongs to forager-capable"),
+    "forager-capable": ("Use up front", "prefer forager-capable"),
     "scout-researcher": ("Sole research agent", "multi-hop", "parallel dispatches"),
 }.items():
     if any(phrase not in (seats.get(name) or {}).get("description", "") for phrase in phrases):
@@ -1959,7 +1967,7 @@ for name, expected in docs_specialists.items():
         errors.append(f"{name} configured inherited skills missing {missing_docs}")
     depth_indexes = [skills.index(skill) for skill in depth if skill in skills]
     if router not in skills or (depth_indexes and skills.index(router) > min(depth_indexes)):
-        errors.append(f"{name} must keep inherited {router} ahead of prose depth skills")
+        errors.append(f"{name} must keep {router} ahead of prose depth skills")
 for name in ("forager-ui", "ui-reviewer", "ui-design-advisor"):
     skills = configured_inherited_skills(name)
     if "web-design-guidelines" not in skills or "stop-design-slop" not in skills:
@@ -1971,14 +1979,12 @@ for name in list(agents) + list(custom):
         if skills:
             errors.append(f"{name} must have no configured auto-loaded skills")
         continue
-    if router not in skills:
-        errors.append(f"{name} configured inherited skills must include {router}")
+    if name not in docs_specialists and router in skills:
+        errors.append(f"{name} must not auto-load {router}; only document-focused roles do")
+    if name in docs_specialists and router not in declared:
+        errors.append(f"{name} must declare {router} itself")
     if name not in docs_specialists and depth.intersection(skills):
         errors.append(f"{name} must not auto-load prose depth skills {sorted(depth.intersection(skills))}")
-    if name in custom and router in declared:
-        errors.append(f"{name} restates {router} instead of inheriting it")
-if declared_skills(agents.get("forager-worker"))[:2] != ["verification", router]:
-    errors.append("forager-worker autoLoadSkills must start with verification then writing-policy")
 if configured_inherited_skills("forager-documents")[:2] != ["verification", router]:
     errors.append("forager-documents configured inherited skills must start with verification then writing-policy")
 

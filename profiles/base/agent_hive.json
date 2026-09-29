@@ -2,10 +2,6 @@
   "$schema": "https://raw.githubusercontent.com/imarshallwidjaja/agent-hive/main/packages/opencode-hive/schema/agent_hive.schema.json",
   "enableToolsFor": [],
   "disableSkills": [],
-  "disableMcps": [
-    "context7",
-    "ast_grep"
-  ],
   "agentMode": "dedicated",
   "sandbox": "none",
   "council": {
@@ -45,7 +41,7 @@
           "scout-researcher",
           "simplicity-reviewer",
           "code-reviewer",
-          "adversarial-code-reviewer"
+          "adversarial-simplicity-reviewer"
         ]
       },
       "documents": {
@@ -79,37 +75,32 @@
   "customAgents": {
     "forager-smart": {
       "baseAgent": "forager-worker",
-      "description": "Escalation-only implementation worker. Use after forager-worker or forager-capable failed, stalled, or returned an incomplete change, or when no closer forager specialist fits and the worker must discover and solve substantial problems the task does not already define, especially with few or no leads. Hard but already-defined work goes to forager-capable, not here. forager-worker still owns ordinary defined implementation, including work that crosses files, packages, or subsystem boundaries. Do not dispatch for review, research, UI, docs, mechanical edits, or as a default upgrade for important or cross-cutting work.",
+      "description": "Rescue worker for when a prior attempt hits a substantive technical dead end and progress needs a different approach. Initial hard or uncertain work belongs to forager-capable.",
       "model": "openai/gpt-6-astra",
       "variant": "medium"
     },
     "forager-capable": {
       "baseAgent": "forager-worker",
-      "description": "Use when the orchestrator judges defined implementation is hard enough that forager-worker is likely to under-think it: interacting constraints already named in the task, correctness that is easy to get wrong, or acceptance that depends on generated artifacts, live probes, or a reproduce-diagnose-verify loop. Also use for standalone live verification. Pick this up front; it is not a retry after failure. forager-worker still owns ordinary defined work. Failed, stalled, or unspecified work with few leads goes to forager-smart. Do not dispatch for strategy, review, research, UI-primary, docs-primary, or mechanical edits.",
-      "model": "openai/gpt-5.6-sol",
+      "description": "Use up front for coupled invariants, subtle state or concurrency behavior, and difficult cross-component diagnosis. Scope and routine verification alone do not qualify. When genuinely uncertain between forager-worker and forager-capable, prefer forager-capable.",
+      "model": "openai/gpt-6-sol",
       "variant": "high"
     },
     "forager-documents": {
       "baseAgent": "forager-worker",
-      "description": "Use when the main deliverable is documentation, operator guidance, specs, reports, or other substantial human-facing text. forager-worker still owns code changes where documentation is incidental. Do not dispatch for code review.",
-      "model": "openai/gpt-5.6-luna",
+      "description": "Use when the main deliverable is documentation, operator guidance, specs, reports, or other substantial prose. forager-worker still owns code changes where documentation is incidental.",
+      "model": "openai/gpt-6-luna-fast",
       "variant": "high",
       "autoLoadSkills": [
+        "writing-policy",
         "writing-for-humans",
         "humanizer",
         "stop-slop"
       ]
     },
-    "forager-fast": {
-      "baseAgent": "forager-worker",
-      "description": "Use only for mechanical, behavior-preserving edits such as formatting, renames, import cleanup, or generated snapshots. Do not dispatch for behavior changes, review, research, or UI-primary work.",
-      "model": "openai/gpt-5.6-luna",
-      "variant": "high"
-    },
     "forager-ui": {
       "baseAgent": "forager-worker",
       "description": "Use when the main change is user-visible interface behavior, layout, styling, accessibility, React or component state, or UX polish. forager-worker still owns backend work and incidental UI text. Do not dispatch for review-only tasks.",
-      "model": "openai/gpt-5.6-sol",
+      "model": "openai/gpt-6-sol",
       "variant": "high",
       "autoLoadSkills": [
         "web-design-guidelines",
@@ -118,8 +109,8 @@
     },
     "adversarial-plan-reviewer": {
       "baseAgent": "plan-reviewer",
-      "description": "Dispatch in addition to plan-reviewer when the plan has irreversible steps, conflicting requirements, dependency races, or a worker is likely to execute the wrong thing; do not replace that pass. Tell it this is an adversarial pass. Look for evidence the handoff cannot be executed as written. Return OKAY or REJECT; reject only for real worker blockers.",
-      "model": "openai/gpt-5.6-sol",
+      "description": "Dispatch in addition to plan-reviewer when the plan has irreversible steps, conflicting requirements, dependency races, or a worker is likely to execute the wrong thing; do not replace that pass. Tell it this is an adversarial pass. Look for evidence the handoff cannot be executed as written.",
+      "model": "openai/gpt-6-sol",
       "variant": "high",
       "autoLoadSkills": [
         "adversarial-review"
@@ -127,7 +118,7 @@
     },
     "ui-reviewer": {
       "baseAgent": "code-reviewer",
-      "description": "Use when the primary review risk is user-visible behavior, accessibility, responsive layout, frontend state, visual regression, or design-system fit. code-reviewer still owns general correctness and backend review, including diffs where UI is incidental. After a behavior-changing UI diff, also dispatch adversarial-code-reviewer; do not replace this pass.",
+      "description": "Use when the primary review risk is user-visible behavior, accessibility, responsive layout, frontend state, visual regression, or design-system fit. code-reviewer still owns general correctness and backend review. When a UI diff changes failure-sensitive behavior, also dispatch adversarial-code-reviewer; do not replace this pass.",
       "model": "openai/gpt-6-astra",
       "variant": "low",
       "autoLoadSkills": [
@@ -141,6 +132,7 @@
       "model": "openai/gpt-6-astra",
       "variant": "low",
       "autoLoadSkills": [
+        "writing-policy",
         "writing-for-humans",
         "humanizer",
         "stop-slop"
@@ -148,11 +140,12 @@
     },
     "adversarial-documentation-reviewer": {
       "baseAgent": "code-reviewer",
-      "description": "Dispatch in addition to documentation-reviewer when operators will treat the docs as the install, deploy, or recovery contract; do not replace that pass. Tell it this is an adversarial pass. Check guidance against evidence: missing prerequisites, unrun commands, false claims, and misleading workflow.",
-      "model": "openai/gpt-5.6-luna",
+      "description": "Dispatch in addition to documentation-reviewer when operators will treat the docs as the install, deploy, or recovery contract; do not replace that pass. Tell it this is an adversarial pass. Check guidance against evidence.",
+      "model": "openai/gpt-6-luna-fast",
       "variant": "high",
       "autoLoadSkills": [
         "adversarial-review",
+        "writing-policy",
         "writing-for-humans",
         "humanizer",
         "stop-slop"
@@ -160,8 +153,8 @@
     },
     "adversarial-code-reviewer": {
       "baseAgent": "code-reviewer",
-      "description": "Dispatch in addition to code-reviewer or ui-reviewer after every behavior-changing implementation; do not replace that pass. Skip only for mechanical edits or diffs with no behavior change. Tell it this is an adversarial second pass. Probe false assumptions, missing edge cases, invalid state, and contract breaks.",
-      "model": "openai/gpt-5.6-sol",
+      "description": "Dispatch in addition to code-reviewer or ui-reviewer when an implementation changes public contracts, persistence, authorization, concurrency, state transitions, destructive behavior, or other failure-sensitive logic, or when the first review reports unresolved correctness risk; do not replace that pass. Skip routine, localized behavior changes that have focused verification. Tell it this is an adversarial second pass. Probe false assumptions, missing edge cases, invalid state, and contract breaks.",
+      "model": "openai/gpt-6-sol",
       "variant": "high",
       "autoLoadSkills": [
         "adversarial-review"
@@ -169,8 +162,8 @@
     },
     "adversarial-simplicity-reviewer": {
       "baseAgent": "simplicity-reviewer",
-      "description": "Dispatch in addition to simplicity-reviewer when the change added layers, flags, adapters, or defensive branches beyond the accepted task; do not replace that pass. Tell it this is an adversarial pass. Recommend deletions that preserve behavior. Do not redesign the approach.",
-      "model": "openai/gpt-5.6-sol",
+      "description": "Dispatch in addition to simplicity-reviewer when an implementation introduces or expands abstractions, helpers, configuration, flags, adapters, validation layers, fallback paths, or branching, or when the diff is materially larger than the requested behavior appears to require; do not replace that pass. Tell it this is an adversarial pass. Look for deletions and consolidation that preserve behavior.",
+      "model": "openai/gpt-6-sol",
       "variant": "high",
       "autoLoadSkills": [
         "adversarial-review"
@@ -178,14 +171,14 @@
     },
     "approach-advisor-xhigh-reasoning": {
       "baseAgent": "approach-advisor",
-      "description": "Use when a concrete decision would change architecture, persistence, deployment, or integration boundaries. Advises only; does not approve plans, review diffs, or implement. approach-advisor still owns local tradeoffs. If no boundary-changing decision is on the table, stay with approach-advisor. When the route is costly to reverse or competing routes remain, also dispatch adversarial-approach-advisor.",
+      "description": "Use when a concrete decision would change architecture, persistence, deployment, or integration boundaries. approach-advisor still owns local tradeoffs. If no boundary-changing decision is on the table, stay with approach-advisor. When the route is costly to reverse or competing routes remain, also dispatch adversarial-approach-advisor.",
       "model": "openai/gpt-6-astra",
       "variant": "xhigh"
     },
     "adversarial-approach-advisor": {
       "baseAgent": "approach-advisor",
-      "description": "Dispatch in addition to approach-advisor when the chosen route is costly to reverse, or competing routes remain plausible; do not replace that pass. Tell it this is an adversarial pass. Challenge the architecture, migration, persistence, deployment, or integration route. Do not approve plans or review diffs.",
-      "model": "openai/gpt-5.6-sol",
+      "description": "Dispatch in addition to approach-advisor when the chosen route is costly to reverse, or competing routes remain plausible; do not replace that pass. Tell it this is an adversarial pass. Challenge the architecture, migration, persistence, deployment, or integration route.",
+      "model": "openai/gpt-6-sol",
       "variant": "high",
       "autoLoadSkills": [
         "adversarial-review"
@@ -193,8 +186,8 @@
     },
     "ui-design-advisor": {
       "baseAgent": "approach-advisor",
-      "description": "Use before planning when audience, information hierarchy, surface structure, interaction model, what the screen should emphasize, or design-system direction is still unresolved. It produces a design brief. It does not implement or review code. approach-advisor still owns questions that are not UI or UX direction.",
-      "model": "openai/gpt-5.6-sol",
+      "description": "Use before planning when audience, information hierarchy, surface structure, interaction model, what the screen should emphasize, or design-system direction is still unresolved.",
+      "model": "openai/gpt-6-sol",
       "variant": "high",
       "autoLoadSkills": [
         "stop-design-slop",
@@ -203,15 +196,14 @@
     }
   },
   "taskTraceSummarizer": {
-    "model": "openai/gpt-5.6-luna",
+    "model": "openai/gpt-6-luna-fast",
     "variant": "medium"
   },
   "agents": {
     "hive-master": {
       "model": "openai/gpt-5.6-sol",
       "autoLoadSkills": [
-        "parallel-exploration",
-        "writing-policy"
+        "parallel-exploration"
       ],
       "variant": "high"
     },
@@ -222,93 +214,78 @@
         "writing-plans",
         "parallel-exploration",
         "dispatching-parallel-agents",
-        "background-delegation",
-        "writing-policy"
+        "background-delegation"
       ],
       "variant": "high"
     },
     "swarm-orchestrator": {
-      "model": "openai/gpt-6-astra",
+      "model": "openai/gpt-5.6-sol",
       "autoLoadSkills": [
         "dispatching-parallel-agents",
         "parallel-exploration",
         "background-delegation",
-        "executing-plans",
-        "writing-policy"
+        "executing-plans"
       ],
       "variant": "medium"
     },
     "scout-researcher": {
-      "model": "openai/gpt-5.6-luna",
+      "model": "openai/gpt-6-luna-fast",
       "description": "Sole research agent for local code lookup, codebase exploration, multi-hop symbol or call tracing, architecture mapping, and external docs or data retrieval. Independent questions should be fanned out across parallel dispatches rather than folded into one call.",
       "autoLoadSkills": [
         "cymbal",
-        "ast-grep",
-        "writing-policy"
+        "ast-grep"
       ],
       "variant": "high"
     },
     "forager-worker": {
-      "model": "openai/gpt-5.6-sol",
-      "description": "Default for ordinary implementation, bug fixes, and refactoring in an isolated worktree, including work that crosses files, packages, or subsystem boundaries when the task already defines the change. Pick forager-capable up front when that defined work is hard enough that this worker is likely to under-think it. Escalate to forager-smart only after failure or when the path is unspecified.",
+      "model": "openai/gpt-6-sol",
+      "description": "Default for features, fixes, refactors, and integrations using established patterns. Owns investigation, multi-file implementation, and verification. Choose forager-capable when the remaining problem needs deeper reasoning.",
       "autoLoadSkills": [
-        "verification",
-        "writing-policy"
+        "verification"
       ],
       "variant": "medium"
     },
     "hive-helper": {
-      "model": "openai/gpt-5.6-luna",
+      "model": "openai/gpt-6-luna-fast",
       "autoLoadSkills": [],
       "variant": "medium"
     },
     "plan-reviewer": {
-      "model": "openai/gpt-5.6-sol",
-      "description": "Sole first-pass plan review covering worker readiness, references, dependencies, executable verification, cross-system sequencing, and irreversible migration risk. Returns plan blockers; does not give architecture advice or review code. When the plan has irreversible steps, conflicting requirements, or a likely worker misdirect, also dispatch adversarial-plan-reviewer; do not replace this pass.",
-      "autoLoadSkills": [
-        "writing-policy"
-      ],
+      "model": "openai/gpt-6-sol",
+      "description": "Plan reviewer. When the plan has irreversible steps, conflicting requirements, or a likely worker misdirect, also dispatch adversarial-plan-reviewer; do not replace this pass.",
+      "autoLoadSkills": [],
       "variant": "medium"
     },
     "code-reviewer": {
       "model": "openai/gpt-6-astra",
-      "description": "Sole first-pass implementation review covering correctness, tests, risk, scope creep, YAGNI, dead code, and high-risk concerns such as security boundaries, data loss, concurrency races, migration correctness, and public API breakage. Reviews against the task; does not redesign the approach. After a behavior-changing diff, also dispatch adversarial-code-reviewer; do not replace this pass. Skip the second pass only for mechanical edits or diffs with no behavior change.",
-      "autoLoadSkills": [
-        "writing-policy"
-      ],
+      "description": "Code reviewer. Also dispatch adversarial-code-reviewer when an implementation changes public contracts, persistence, authorization, concurrency, state transitions, destructive behavior, or other failure-sensitive logic, or when this review reports unresolved correctness risk. Skip the adversarial pass for routine, localized behavior changes that have focused verification.",
+      "autoLoadSkills": [],
       "variant": "medium"
     },
     "simplicity-reviewer": {
       "model": "openai/gpt-6-astra",
-      "description": "Default first-pass post-implementation simplicity review covering unnecessary abstractions, duplication, dead code, and safe deletion. When the change added layers, flags, adapters, or extra defensive branches, also dispatch adversarial-simplicity-reviewer; do not replace this pass.",
-      "autoLoadSkills": [
-        "writing-policy"
-      ],
+      "description": "Simplicity reviewer. Also dispatch adversarial-simplicity-reviewer when an implementation introduces or expands abstractions, helpers, configuration, flags, adapters, validation layers, fallback paths, or branching, or when the diff is materially larger than the requested behavior appears to require.",
+      "autoLoadSkills": [],
       "variant": "low"
     },
     "approach-advisor": {
-      "model": "openai/gpt-5.6-sol",
-      "description": "Default first-pass read-only approach advice on technical direction, architecture, debugging, and tradeoffs. When the route is costly to reverse or competing routes remain, also dispatch adversarial-approach-advisor; do not replace this pass.",
-      "autoLoadSkills": [
-        "writing-policy"
-      ],
+      "model": "openai/gpt-6-sol",
+      "description": "Approach advisor. When the route is costly to reverse or competing routes remain, also dispatch adversarial-approach-advisor; do not replace this pass.",
+      "autoLoadSkills": [],
       "variant": "high"
     },
     "vulnerability-reviewer": {
       "model": "openai/gpt-6-astra",
-      "description": "Default for application-security review focused on evidenced attacker-to-impact paths and root-cause triage.",
-      "autoLoadSkills": [
-        "writing-policy"
-      ],
+      "description": "Vulnerability reviewer. Default for application-security review focused on evidenced attacker-to-impact paths and root-cause triage.",
+      "autoLoadSkills": [],
       "variant": "high"
     },
     "hive-builder": {
-      "model": "openai/gpt-6-astra",
+      "model": "openai/gpt-5.6-sol",
       "autoLoadSkills": [
         "parallel-exploration",
         "dispatching-parallel-agents",
-        "background-delegation",
-        "writing-policy"
+        "background-delegation"
       ],
       "variant": "medium"
     }
