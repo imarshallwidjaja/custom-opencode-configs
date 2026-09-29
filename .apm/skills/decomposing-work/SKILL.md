@@ -98,4 +98,4 @@ Load companions only when their task is in scope:
 
 - `writing-work-items`: authoring or reviewing the product backlog items this decomposition produces.
 - `running-agile-delivery`: explaining or assessing its method, or executing its cadence after explicit user or project adoption.
-- `working-with-atlassian`: required foundation only when using Atlassian tools. Add `managing-work-in-jira` for Jira operations or `connecting-atlassian-tools` for cross-product, JPD, or Teamwork Graph work. A backlog draft needs none of these vendor skills.
+- Tracker skills: load one only when publishing to that tracker and it is installed. A backlog draft needs none.

@@ -99,4 +99,4 @@ Load companions only when their task is in scope:
 
 - `decomposing-work`: producing or revising the product backlog dependency graph, waves, and ownership boundaries.
 - `writing-work-items`: authoring or reviewing the backlog specs that gates verify against and retrospectives audit.
-- `working-with-atlassian`: required foundation only when using Atlassian tools. Add `managing-work-in-jira` for Jira operations or `connecting-atlassian-tools` for cross-product, JPD, or Teamwork Graph work. This cadence does not require an Atlassian tracker.
+- Tracker skills: load one only when publishing to that tracker and it is installed. This cadence does not require a specific tracker.

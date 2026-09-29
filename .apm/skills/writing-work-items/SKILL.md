@@ -127,4 +127,4 @@ Load companions only when their task is in scope:
 
 - `decomposing-work`: deciding which product backlog items to create and how they depend on one another; unnecessary for an already bounded item.
 - `running-agile-delivery`: explaining or assessing its method, or applying its governance after explicit user or project adoption. Authoring an item does not adopt that governance.
-- `working-with-atlassian`: required foundation only when using Atlassian tools. Add `managing-work-in-jira` for Jira operations or `connecting-atlassian-tools` for cross-product, JPD, or Teamwork Graph work. Drafting an item does not require a tracker.
+- Tracker skills: load one only when publishing to that tracker and it is installed. Drafting an item does not require a tracker.

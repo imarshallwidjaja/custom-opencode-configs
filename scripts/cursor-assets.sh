@@ -41,21 +41,19 @@ RETIRED_SKILLS=(
 )
 
 CANONICAL_SKILLS=(
-  connecting-atlassian-tools
+  aero-design
   cymbal
   decomposing-work
   drawio-skill
   frontend-slides
   hard-cut
   humanizer
-  managing-work-in-jira
   react-best-practices
   resume-tailoring
   running-agile-delivery
   stop-design-slop
   stop-slop
   web-design-guidelines
-  working-with-atlassian
   writing-for-humans
   writing-policy
   writing-work-items
@@ -653,10 +651,21 @@ source_manifests = (
         False,
     ),
     (
-        repo_root / '.apm' / 'skills' / 'connecting-atlassian-tools',
-        'connecting-atlassian-tools',
-        ('SKILL.md',),
-        WRITING_ALLOWED_KEYS,
+        repo_root / '.apm' / 'skills' / 'aero-design',
+        'aero-design',
+        (
+            'README.md',
+            'SKILL.md',
+            'assets',
+            'assets/AERO-DESIGN.template.md',
+            'references',
+            'references/data-presentation.md',
+            'references/review.md',
+            'references/sources.md',
+            'references/tuning.md',
+            'references/visual-language.md',
+        ),
+        None,
         False,
     ),
     (
@@ -671,29 +680,11 @@ source_manifests = (
         True,
     ),
     (
-        repo_root / '.apm' / 'skills' / 'managing-work-in-jira',
-        'managing-work-in-jira',
-        ('SKILL.md',),
-        WRITING_ALLOWED_KEYS,
-        False,
-    ),
-    (
         repo_root / '.apm' / 'skills' / 'running-agile-delivery',
         'running-agile-delivery',
         ('SKILL.md',),
         WRITING_ALLOWED_KEYS,
         True,
-    ),
-    (
-        repo_root / '.apm' / 'skills' / 'working-with-atlassian',
-        'working-with-atlassian',
-        (
-            'SKILL.md',
-            'references',
-            'references/jql-essentials.md',
-        ),
-        WRITING_ALLOWED_KEYS,
-        False,
     ),
     (
         repo_root / '.apm' / 'skills' / 'writing-work-items',

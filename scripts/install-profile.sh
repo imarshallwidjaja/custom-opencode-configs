@@ -45,21 +45,19 @@ OPENCODE_RETIRED_SKILLS=(
   context-mode
 )
 SHARED_SKILLS=(
-  connecting-atlassian-tools
+  aero-design
   cymbal
   decomposing-work
   drawio-skill
   frontend-slides
   hard-cut
   humanizer
-  managing-work-in-jira
   react-best-practices
   resume-tailoring
   running-agile-delivery
   stop-design-slop
   stop-slop
   web-design-guidelines
-  working-with-atlassian
   writing-for-humans
   writing-policy
   writing-work-items

@@ -96,11 +96,9 @@ SKILL
   stub_canonical_skill_tree stop-design-slop
   stub_canonical_skill_tree react-best-practices
   stub_canonical_skill_tree resume-tailoring
-  stub_canonical_skill_tree connecting-atlassian-tools
+  stub_canonical_skill_tree aero-design
   stub_canonical_skill_tree decomposing-work
-  stub_canonical_skill_tree managing-work-in-jira
   stub_canonical_skill_tree running-agile-delivery
-  stub_canonical_skill_tree working-with-atlassian
   stub_canonical_skill_tree writing-work-items
 
   # Cursor asset root (.apm/cursor/)
@@ -3505,6 +3503,58 @@ fi
 # ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# 70. Shared skill manifests match the packaged shared skills
+# ---------------------------------------------------------------------------
+printf '\n=== 70. Shared skill manifests ===\n'
+if python3 - "${BASELINE_PWD}" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+errors = []
+
+def bash_array(path, name):
+    text = (root / path).read_text(encoding="utf-8")
+    match = re.search(rf"^{name}=\(\n(.*?)^\)", text, re.MULTILINE | re.DOTALL)
+    if not match:
+        errors.append(f"{path} is missing {name}")
+        return set()
+    return set(match.group(1).split())
+
+opencode_shared = bash_array("scripts/install-profile.sh", "SHARED_SKILLS")
+opencode_local = bash_array("scripts/install-profile.sh", "OPENCODE_LOCAL_SKILLS")
+cursor_shared = bash_array("scripts/cursor-assets.sh", "CANONICAL_SKILLS")
+packaged = {path.name for path in (root / ".apm/skills").iterdir() if path.is_dir()}
+if opencode_shared != cursor_shared:
+    errors.append(f"OpenCode and Cursor shared skills differ: {sorted(opencode_shared ^ cursor_shared)}")
+if opencode_shared | opencode_local != packaged:
+    errors.append(f"installer manifests and .apm/skills differ: {sorted((opencode_shared | opencode_local) ^ packaged)}")
+if "aero-design" not in packaged:
+    errors.append("aero-design is not packaged")
+for retired in ("working-with-atlassian", "managing-work-in-jira", "connecting-atlassian-tools"):
+    if retired in packaged:
+        errors.append(f"{retired} is still packaged")
+for skill in sorted(packaged):
+    for path in (root / ".apm/skills" / skill).rglob("*.md"):
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        related = re.search(r"^## Related Skills\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
+        if not related:
+            continue
+        for name in re.findall(r"^- `([a-z0-9-]+)`", related.group(1), re.MULTILINE):
+            if name not in packaged:
+                errors.append(f"{path.relative_to(root)} points to unpackaged skill {name}")
+if errors:
+    print("\n".join(errors))
+    raise SystemExit(1)
+PY
+then
+  pass "70a: installer manifests, packaged skills, and Related Skills references agree"
+else
+  fail "70a: installer manifests, packaged skills, and Related Skills references agree"
+fi
+
 printf '\n=== Summary ===\n'
 printf '  Passed: %d\n' "${PASS}"
 printf '  Failed: %d\n' "${FAIL}"
