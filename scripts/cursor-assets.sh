@@ -1427,6 +1427,7 @@ preflight_agents_skills_dir() {
 resolve_path() {
   local path="$1" head tail="" part resolved
   [[ "${path}" == /* ]] || path="${PWD}/${path}"
+  while [[ "${path}" == //* ]]; do path="${path#/}"; done
   head="${path}"
   while [[ ! -d "${head}" ]]; do
     tail="${head##*/}/${tail}"

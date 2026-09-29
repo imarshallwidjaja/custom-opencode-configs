@@ -484,6 +484,7 @@ backup_agents_skill() {
 resolve_path() {
   local path="$1" head tail="" part resolved
   [[ "${path}" == /* ]] || path="${PWD}/${path}"
+  while [[ "${path}" == //* ]]; do path="${path#/}"; done
   head="${path}"
   while [[ ! -d "${head}" ]]; do
     tail="${head##*/}/${tail}"
@@ -592,7 +593,7 @@ for skill_name in "${SHARED_SKILLS[@]}"; do
     printf 'ERROR: missing shared skill source: %s\n' "${skill_source}" >&2
     exit 1
   fi
-  if [[ -e "${AGENTS_SKILLS_DIR}/${skill_name}" ]]; then
+  if [[ -e "${AGENTS_SKILLS_DIR}/${skill_name}" || -L "${AGENTS_SKILLS_DIR}/${skill_name}" ]]; then
     backup_agents_skill "${skill_name}"
   fi
   rm -rf -- "${AGENTS_SKILLS_DIR}/${skill_name}"
@@ -618,7 +619,7 @@ case "${AGENTS_PROFILE}" in
       for personal_entry in "${personal_skills}"/*; do
         [[ -e "${personal_entry}" ]] || continue
         personal_name="$(basename "${personal_entry}")"
-        if [[ -e "${AGENTS_SKILLS_DIR}/${personal_name}" ]]; then
+        if [[ -e "${AGENTS_SKILLS_DIR}/${personal_name}" || -L "${AGENTS_SKILLS_DIR}/${personal_name}" ]]; then
           backup_agents_skill "${personal_name}"
         fi
         rm -rf -- "${AGENTS_SKILLS_DIR}/${personal_name}"

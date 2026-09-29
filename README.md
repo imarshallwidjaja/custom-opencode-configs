@@ -87,7 +87,6 @@ Fresh machine with the context-improved AGENTS profile and overlay:
 
 ```bash
 curl -fsSL https://opencode.ai/install | bash
-brew install 1broseidon/tap/cymbal
 git clone git@github.com:imarshallwidjaja/custom-opencode-configs.git
 cd custom-opencode-configs
 opencode auth login -p openai
@@ -100,7 +99,7 @@ Where:
 
 - the repository clone requires GitHub access to this repo
 - `opencode auth login -p openai` opens the ChatGPT OAuth flow; `opencode-gpt-imagegen` currently requires a ChatGPT Plus or Pro subscription through that OAuth path
-- `brew install 1broseidon/tap/cymbal` is only needed when you want the full context-improved local navigation workflow
+- if Homebrew is available and you want the optional `cymbal` navigation CLI, run `brew install 1broseidon/tap/cymbal` separately
 - the first `opencode` run should resolve `oc-arkive@latest` automatically from `opencode.json`
 
 ## Updating an existing install
@@ -129,7 +128,7 @@ OPENCODE_AGENTS_MODE=skip ./scripts/install-profile.sh --apply
 Some notes:
 
 - the installer replaces `opencode.json` with the base profile, which drops any optional bundle you enabled earlier. Reapply each one with `./scripts/enable-optional.sh <name>`; the `*-context-improved` profiles reapply `context-improved` themselves
-- this profile no longer reads the Context7 key from the `CONTEXT7_API_KEY` environment variable. If you set it that way, move the value into `secrets/context7` before reinstalling or reapplying a Context7 bundle: `printf '%s\n' "$CONTEXT7_API_KEY" | ./scripts/write-secret.sh context7`, then remove the variable from your shell profile
+- this profile no longer reads the Context7 key from `CONTEXT7_API_KEY`. Before reinstalling or reapplying a Context7 bundle, move it into the target config directory: `printf '%s\n' "$CONTEXT7_API_KEY" | OPENCODE_CONFIG_DIR="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}" ./scripts/write-secret.sh context7`. Remove the export from shell startup files, then `unset CONTEXT7_API_KEY` in the current shell
 - restart every Opencode process that uses this config directory, including a long-lived `opencode serve`; Opencode reads config and plugins only at startup
 - with a custom `OPENCODE_CONFIG_DIR`, Agent Hive still reads `$HOME/.config/opencode/agent_hive.json` (see [Target config directory](#target-config-directory))
 - `curl -fsSL https://opencode.ai/install | bash` updates or installs the Opencode binary; it does not update this profile
@@ -156,7 +155,20 @@ OPENCODE_CONFIG_DIR=/path/to/opencode-config AGENTS_SKILLS_DIR=/path/to/agents-s
 
 Shared canonical skills default to `$HOME/.agents/skills`. Set `AGENTS_SKILLS_DIR` when the installer must not write that live directory.
 
-Agent Hive reads its config only from `$HOME/.config/opencode/agent_hive.json`, whatever `OPENCODE_CONFIG_DIR` says, and writes a default file there when none exists. A custom-directory install still copies `agent_hive.json` into that directory, but Hive does not read that copy, and the installer prints a warning saying so. To use this profile's Hive models with a custom config directory, copy the installed `agent_hive.json` to `$HOME/.config/opencode/` yourself, keeping in mind that every Opencode config on the machine shares that file.
+Agent Hive reads its config only from `$HOME/.config/opencode/agent_hive.json`, whatever `OPENCODE_CONFIG_DIR` says, and writes a default file there when none exists. A custom-directory install copies `agent_hive.json` into the custom directory and warns that Hive will not read it. Every Opencode config on the machine shares the default-location Hive file. Before replacing it, inspect it and preserve any routing you need; back up the actual destination if it exists:
+
+```bash
+hive_config="$HOME/.config/opencode/agent_hive.json"
+ls -ld "$hive_config"  # inspect the existing file; a missing file is expected on a fresh install
+if [[ -f "$hive_config" ]]; then less "$hive_config"; fi  # review existing routing
+if [[ -e "$hive_config" || -L "$hive_config" ]]; then
+  backup_dir="$(mktemp -d "$HOME/.config/opencode/.hive-backup.XXXXXX")"
+  cp -a "$hive_config" "$backup_dir/agent_hive.json"
+fi
+cp -a "${OPENCODE_CONFIG_DIR:?set OPENCODE_CONFIG_DIR}/agent_hive.json" "$hive_config"
+```
+
+Use this workflow only after deciding that the installed Hive routing should replace the shared destination. If the destination is a directory, resolve that first; do not copy into it.
 
 ### AGENTS profiles
 
@@ -198,7 +210,7 @@ Routing uses cost-conscious effort defaults:
 
 `forager-worker` is the default for features, fixes, refactors, and integrations that follow established patterns. Choose `forager-capable` up front for coupled invariants, subtle state or concurrency behavior, and difficult cross-component diagnosis, and prefer it when genuinely unsure between the two. `forager-smart` is the rescue worker after a prior attempt hits a substantive technical dead end. Research is consolidated into `scout-researcher`; plan and code review each have one first-pass role. Adversarial passes supplement that first pass when the risk calls for them: `adversarial-code-reviewer` when a change touches public contracts, persistence, authorization, concurrency, state transitions, destructive behavior, or other failure-sensitive logic, or when the first review leaves correctness risk unresolved; `adversarial-simplicity-reviewer` when a change introduces or expands abstractions, configuration, flags, adapters, validation layers, fallback paths, or branching, or is materially larger than the request needs. Routine, localized changes with focused verification skip the adversarial code pass. The `minimal-change` council group pairs `simplicity-reviewer` with `adversarial-simplicity-reviewer`. The planner, swarm, and builder load `background-delegation` alongside their orchestration skills; only the ordinary worker's configured `autoLoadSkills` in this profile include `verification`. Agent Hive may prepend built-in defaults before these configured additions. Only the document-focused roles (`forager-documents`, `documentation-reviewer`, and `adversarial-documentation-reviewer`) auto-load `writing-policy`, together with `writing-for-humans`, `humanizer`, and `stop-slop`. Other seats load `writing-policy` on demand from its skill description and the AGENTS profile references. `hive-helper` is hardcoded to no auto-loaded skills. Personal `ivan-writing` stays out of this portable config.
 
-This profile needs an `oc-arkive` release newer than 2.5.0. Those releases no longer bundle research MCPs, so the MCP entries in `opencode.json` and the optional bundles are the only ones loaded. They also ignore an `agent_hive.json` that still contains the removed `disableMcps` or `sandbox` keys; the base Hive config omits both. With 2.5.0 or older, Hive registers its own research MCPs as well.
+An aligned `oc-arkive` release newer than 2.5.0 must publish before this repository is pushed; its version number is not known yet. It no longer bundles research MCPs, so `opencode.json` and the optional bundles supply those entries. The new Hive loader rejects the entire `agent_hive.json` when it contains the removed `disableMcps` or `sandbox` fields, then falls back to defaults; agents, customAgents, council, and model routing from that file are lost. Replace or update `agent_hive.json` to remove those fields before restarting Opencode. The base Hive config already omits them. Published 2.5.0 still registers its own research MCPs.
 
 These defaults are a heuristic, not an experimentally optimal routing policy. The September 3, 2026 [DeepSWE](https://deepswe.datacurve.ai/) results supplied for this choice report Astra `xhigh` at 74 +/- 3% and $6.52, Sol `max` at 73 +/- 3% and $6.46, and Luna `max` at 67 +/- 4% and $0.61. Their confidence intervals overlap, and those runs do not establish performance at the lower efforts used here. Output tokens and steps are not wall-clock latency. Validate changes against representative repository tasks and mergeability criteria such as correctness, tests, scope, and style, as used by [FrontierCode](https://cognition.com/frontiercode), before promoting a default.
 
@@ -330,7 +342,7 @@ Useful checks:
 
 ```bash
 npx --version
-jq '.mcp["chrome-devtools"]' "$OPENCODE_CONFIG_DIR/opencode.json"
+jq '.mcp["chrome-devtools"]' "${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}/opencode.json"
 ```
 
 ### MCP API keys

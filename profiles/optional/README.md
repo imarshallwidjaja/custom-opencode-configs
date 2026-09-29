@@ -44,7 +44,7 @@ Some notes:
 
 - this bundle normalizes the live local setup into portable `PATH`-based commands and config-relative secret files
 - this bundle updates `opencode.json`; Hive Scout skill loading comes from the base Hive config. `oc-arkive` releases newer than 2.5.0 bundle no research MCPs, so these entries are the only `ast_grep` and `context7` servers loaded
-- if an earlier install set `disableMcps` in `agent_hive.json`, rerun `./scripts/install-profile.sh --apply` to replace that config with the current base profile. Newer `oc-arkive` releases ignore an `agent_hive.json` that still has `disableMcps`, and applying this bundle alone leaves an existing Hive config untouched
+- before restarting with the forthcoming aligned `oc-arkive` release, replace or update `agent_hive.json` to remove old `disableMcps` or `sandbox` fields (rerun `./scripts/install-profile.sh --apply` for the base config). The new loader rejects the whole file and falls back to defaults, losing agents, customAgents, council, and model routing. Applying this bundle alone leaves Hive config untouched; the aligned release newer than 2.5.0 must publish before this repo is pushed
 - the installer auto-applies this bundle for the `shared-context-improved` and `personal-context-improved` AGENTS profiles after preflighting the same prerequisites
 - install `cymbal` with `brew install 1broseidon/tap/cymbal` when the machine uses Homebrew and you want the full local navigation workflow
 - `cymbal` is a separate optional CLI tool for local code navigation; when it is on `PATH`, both `scripts/install-profile.sh` and this bundle attempt to install its supported OpenCode hook into the selected `OPENCODE_CONFIG_DIR`, and a hook failure warns without failing the install

@@ -36,6 +36,10 @@ fi
 umask 077
 mkdir -p "${SECRETS_DIR}"
 chmod 700 "${SECRETS_DIR}"
+if [[ -d "${SECRET_PATH}" || ( -e "${SECRET_PATH}" && ! -f "${SECRET_PATH}" && ! -L "${SECRET_PATH}" ) ]]; then
+  printf 'Secret target is not a file: %s\n' "${SECRET_PATH}" >&2
+  exit 1
+fi
 # Write a fresh 0600 file and rename it over the old one, so rotating a key
 # never puts the new value into an existing inode with looser permissions.
 tmp="$(mktemp "${SECRETS_DIR}/.${NAME}.XXXXXX")"

@@ -883,6 +883,16 @@ if ! printf ' \t\n' | OPENCODE_CONFIG_DIR="${td_write_secret}" "${BASELINE_PWD}/
 else
   fail "0f: write-secret must reject blank keys and path-like names without changing the key"
 fi
+mkdir -p "${td_write_secret}/secrets/context7"
+printf 'sentinel\n' > "${td_write_secret}/secrets/context7/keep"
+if ! printf 'new-key\n' | OPENCODE_CONFIG_DIR="${td_write_secret}" "${BASELINE_PWD}/scripts/write-secret.sh" context7 >"${td_write_secret}/out" 2>"${td_write_secret}/err" \
+  && grep -q 'Secret target is not a file' "${td_write_secret}/err" \
+  && [[ ! -s "${td_write_secret}/out" && "$(ls -A "${td_write_secret}/secrets/context7")" == "keep" ]] \
+  && [[ "$(ls -A "${td_write_secret}/secrets")" == $'context7\nkeenable' ]]; then
+  pass "0f: write-secret rejects directory targets without false success or stray key files"
+else
+  fail "0f: write-secret must reject directory targets"
+fi
 
 if python3 - "${BASELINE_PWD}" <<'PY'
 import re
@@ -1337,6 +1347,24 @@ OPENCODE_CONFIG_DIR="${td17c}" OPENCODE_AGENTS_PROFILE=personal-default bash "${
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "17c-c: ivan-writing in agents dir" || fail "17c-d: ivan-writing missing from agents dir"
 [[ ! -e "${td17c}/skills/ivan-writing" ]] && pass "17c-e: ivan-writing absent from OpenCode skills" || fail "17c-f: ivan-writing leaked into OpenCode skills"
 
+printf '\n=== 17c. OpenCode backs up dangling canonical and personal skills ===\n'
+for profile17c in shared personal-default; do
+  td17c_link="${TMPDIR}/test17c-${profile17c}"
+  mkdir -p "${td17c_link}"
+  sandbox_agents_skills
+  if [[ "${profile17c}" == shared ]]; then skill17c=stop-slop; else skill17c=ivan-writing; fi
+  ln -s "${td17c_link}/missing-skill" "${AGENTS_SKILLS_DIR}/${skill17c}"
+  if OPENCODE_CONFIG_DIR="${td17c_link}" OPENCODE_AGENTS_PROFILE="${profile17c}" bash "${INSTALL_HELPER}" --apply >/dev/null 2>"${td17c_link}/err"; then
+    backups17c=("${td17c_link}"/.backup/*/agents-skills/"${skill17c}")
+    [[ -L "${backups17c[0]}" && "$(readlink "${backups17c[0]}")" == "${td17c_link}/missing-skill" ]] \
+      && pass "17c: ${profile17c} backs up dangling ${skill17c}" || fail "17c: ${profile17c} lost dangling ${skill17c} backup"
+    [[ -f "${AGENTS_SKILLS_DIR}/${skill17c}/SKILL.md" ]] \
+      && pass "17c: ${profile17c} replaces dangling ${skill17c}" || fail "17c: ${profile17c} did not replace dangling ${skill17c}"
+  else
+    fail "17c: ${profile17c} install failed: $(cat "${td17c_link}/err")"
+  fi
+done
+
 # ---------------------------------------------------------------------------
 # 17d. Installer aborts when AGENTS_SKILLS_DIR equals the harness skills dir
 # ---------------------------------------------------------------------------
@@ -1383,7 +1411,7 @@ ln -s "${td17e}/real" "${td17e}/link"
 printf '#!/bin/sh\nexit 97\n' > "${no_realpath_bin}/realpath"
 chmod +x "${no_realpath_bin}/realpath"
 build_fixture
-for alias17e in "${td17e}/link/skills" "${td17e}/missing/../real/skills"; do
+for alias17e in "${td17e}/link/skills" "${td17e}/missing/../real/skills" "/${td17e}/real/skills"; do
   if ! PATH="${no_realpath_bin}:${PATH}" AGENTS_SKILLS_DIR="${alias17e}" OPENCODE_CONFIG_DIR="${td17e}/real" bash "${INSTALL_HELPER}" --apply >/dev/null 2>"${td17e}/err" \
     && grep -q 'AGENTS_SKILLS_DIR resolves to the same directory' "${td17e}/err" && opencode_target_unmodified "${td17e}/real"; then
     pass "17e-b: OpenCode aborts aliased AGENTS_SKILLS_DIR ${alias17e#"${td17e}/"}"
@@ -1413,6 +1441,12 @@ if HOME="${td17e}/home" OPENCODE_CONFIG_DIR="${td17e}/home/.config/../.config/op
   pass "17e-f: default config root does not warn about Agent Hive config location"
 else
   fail "17e-f: default config root warned or failed: $(cat "${td17e}/err")"
+fi
+if HOME="${td17e}/home" OPENCODE_CONFIG_DIR="/${td17e}/home/.config/opencode" bash "${INSTALL_HELPER}" --apply >/dev/null 2>"${td17e}/err" \
+  && ! grep -q 'Agent Hive reads' "${td17e}/err"; then
+  pass "17e-g: double-leading-slash default config root does not warn"
+else
+  fail "17e-g: double-leading-slash default config root warned or failed: $(cat "${td17e}/err")"
 fi
 
 # ---------------------------------------------------------------------------
