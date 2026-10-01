@@ -2,6 +2,8 @@
 
 This directory contains installable `AGENTS.md` profiles for Opencode.
 
+The accompanying config targets `oc-arkive` v3.0.0 and requires OpenCode >= 1.18.30. Check `opencode --version` and upgrade an older host before updating the plugin or profile. Research MCPs are operator-configured and work independently of skill availability; Hive v3 does not bundle an `ast-grep` skill, and these profiles route directly to the MCP tools.
+
 All four profiles share the same baseline quality, delegation, verification, search, browser, handoff, worktree, and document-conversion rules. Interactive browser work routes to `chrome-devtools`. Their `## Prose policy` section references `writing-policy` for prose routing and delegated propagation, including each child's own skill loads and the task's required output format. `writing-for-humans` owns drafting, the finish pass, and durable naming. `stop-slop` and `humanizer` load conditionally for matching rewrite problems. The three document-focused Hive roles auto-load `writing-policy` and `writing-for-humans`; `adversarial-documentation-reviewer` also retains `adversarial-review`.
 
 The `personal-*` profiles install Ivan's voice skill and load `ivan-writing` only for prose published, submitted, or sent as Ivan; internal worker reports stay neutral unless requested. PR and review drafts require explicit operator selection of personal voice under `pr-writing`. The `shared*` profiles omit that voice layer. The `*-context-improved` profiles add strong explicit routing rules for the optional context-improved toolchain; the plain profiles use the baseline routing without those explicit assumptions.

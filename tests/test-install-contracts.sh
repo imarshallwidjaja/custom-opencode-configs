@@ -2170,7 +2170,7 @@ orchestration_skills = {
     "architect-planner": ["brainstorming", "writing-plans", "parallel-exploration", "dispatching-parallel-agents", "background-delegation"],
     "swarm-orchestrator": ["dispatching-parallel-agents", "parallel-exploration", "background-delegation", "executing-plans"],
     "hive-builder": ["parallel-exploration", "dispatching-parallel-agents", "background-delegation"],
-    "scout-researcher": ["cymbal", "ast-grep"],
+    "scout-researcher": ["cymbal"],
     "forager-worker": ["verification"],
 }
 for name, expected in orchestration_skills.items():
@@ -2325,6 +2325,10 @@ for profile_path in sorted((root / "profiles/agents").glob("*.md")):
     rel = str(profile_path.relative_to(root))
     if profile_path.name == "README.md":
         continue
+    if re.search(r"\b[Ll]oad `ast-grep`", text):
+        errors.append(f"{rel} must not require the retired ast-grep skill")
+    if "| Syntax-aware structural search | `ast-grep` MCP tools |" not in text:
+        errors.append(f"{rel} must retain ast-grep MCP routing")
     if retrieval_rule not in text:
         errors.append(f"{rel} must carry the retrieved-evidence rule")
     if "`explore`" in text:

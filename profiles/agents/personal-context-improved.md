@@ -86,7 +86,7 @@ Load `agents-md-mastery` for any AGENTS.md edit, including additions.
 | Exact local file text for editing | `read` | Use after narrowing the target enough that exact text matters. |
 | Local filename search | `glob` | Prefer over shell `find`. |
 | Local text search | `grep` | Prefer over shell `grep` or `rg` unless direct counting/processing is needed. |
-| Syntax-aware structural search | `ast-grep` MCP tools | Load `ast-grep` first. Use for code shape, structural invariants, and pattern verification. |
+| Syntax-aware structural search | `ast-grep` MCP tools | Use for code shape, structural invariants, and pattern verification. |
 | Large output, logs, tests, diffs, API responses, non-edit file analysis | Bounded execution or context tools | Think in code and print bounded findings, not raw dumps. |
 | Official current library/framework docs | `context7` | Resolve the library ID first unless the user provides `/org/project`. |
 | Public GitHub implementation examples | `grep_app` | Search literal code patterns, APIs, identifiers, or syntax fragments. |
@@ -95,7 +95,6 @@ Load `agents-md-mastery` for any AGENTS.md edit, including additions.
 
 ## ast-grep Rules
 
-- Load `ast-grep` before using ast-grep MCP tools.
 - Assume this machine exposes only `ast_grep_dump_syntax_tree`, `ast_grep_test_match_code_rule`, `ast_grep_find_code`, and `ast_grep_find_code_by_rule` unless the live tool list shows more.
 - Do not instruct or expect `ast_grep_scan-code`, `ast_grep_analyze-imports`, or `ast_grep_rewrite_code` in this environment.
 - Do not use ast-grep as default repo navigation when `cymbal` can answer more directly.

@@ -62,7 +62,7 @@ Some setup facts are not user choices:
 - All four Opencode AGENTS profiles reference `writing-policy` for human-facing prose and prose handoffs, conditional depth-skill routing, and the task's required output format. Permitted prose handoffs require each child to load the named skills itself. `writing-for-humans` owns drafting, the finish pass, and durable naming. Profile references alone do not prove the loaded skill source: the installers still supply shared writing skills, and resolving overrides or retiring those sources requires separate work.
 - The published `oc-arkive@latest` plugin is installed by Opencode on first run.
 - Updating this repository's profile files does not prove Opencode is using the latest cached `oc-arkive@latest` plugin. After a profile update, restart Opencode. If the Agent Hive commands or plugin manifest still match an older release, remove or refresh the cached `oc-arkive` plugin entry according to the local Opencode cache layout before starting Opencode again.
-- This profile requires an `oc-arkive` release after 2.5.0 that removes bundled research MCPs and rejects `agent_hive.json` files containing the removed `disableMcps` or `sandbox` fields. A rejected file falls back to defaults, losing agents, customAgents, council, and model routing. Replace or update that file before restarting. The base config omits both fields; the optional context-improved bundle adds local `ast_grep` and enabled `context7` to `opencode.json` only.
+- This profile targets `oc-arkive` v3.0.0 and requires OpenCode >= 1.18.30. Check `opencode --version` and upgrade an older host before updating the plugin or profile. Hive no longer configures research MCPs or bundles an `ast-grep` skill; operator-configured research MCPs work independently of skill availability. Hive rejects `agent_hive.json` files containing `disableMcps`, `sandbox`, `dockerImage`, or `persistentContainers`. A rejected file falls back to defaults, losing agents, customAgents, council, and model routing; repository and worktree tools can also fail with an invalid-config error. Replace or update that file before restarting. The base config omits all four fields; the optional context-improved bundle adds local `ast_grep` and enabled `context7` to `opencode.json` only.
 - Agent Hive reads `$HOME/.config/opencode/agent_hive.json` whatever `OPENCODE_CONFIG_DIR` says, and writes a default there when it is missing. With a custom config directory, the installed Hive copy is not read and the installer warns. Obtain approval to replace the shared default-location file, review and back up an existing regular file, and resolve any symlink or non-regular destination manually before copying from the installed custom directory as shown in [README.md](README.md#target-config-directory).
 - `context7` is present in the base config but disabled by default and has no API-key header. The `context-improved` and `mcp-context7-enabled` snippets enable it and add a `{file:secrets/context7}` header; the `keenable` snippet uses `{file:secrets/keenable}`. Opencode resolves those paths relative to the config directory and refuses to start when a referenced file is missing, so `scripts/enable-optional.sh` and the context-improved install check that the file exists and contains a non-whitespace character. The installers never create or back up `secrets/`; the operator writes keys with `./scripts/write-secret.sh <name>`. Older installs could pass the Context7 key through `CONTEXT7_API_KEY`; this profile no longer reads that variable.
 - Keenable also answers without a key on a shared public tier limited per IP address. This profile requires a Keenable key on purpose so agent traffic runs on the operator's own account limits; do not remove the header to skip the key.
@@ -99,7 +99,7 @@ Follow this safe order:
 I recommend updating the normal Opencode config at ~/.config/opencode. Is this the config you want updated, or do you use a custom OPENCODE_CONFIG_DIR?
 ```
 
-2. Inspect the existing target before writing. Check whether `opencode.json`, `agent_hive.json`, `AGENTS.md`, `skills/`, `agents/`, or `commands/` exist. Read the existing `AGENTS.md` when present and note any local operator-specific instructions. If `commands/` contains the old Hive prompt command files, explain that this repo now removes those managed files because `oc-arkive` owns the command surface.
+2. Inspect the existing target before writing. Check whether `opencode.json`, `agent_hive.json`, `AGENTS.md`, `skills/`, `agents/`, or `commands/` exist. Read the existing `AGENTS.md` when present and note any local operator-specific instructions. If `commands/` contains the old Hive prompt command files, explain that this repo now removes those managed files because `oc-arkive` owns the command surface. Run `opencode --version`; if older than 1.18.30, upgrade with `curl -fsSL https://opencode.ai/install | bash` and rerun the version check before any plugin or profile update or host restart.
 3. Update the repository clone with `git pull`. If the repository is not cloned, clone it first. If there are local changes in the repository clone, stop and ask before pulling or changing branches.
 4. Choose the AGENTS profile. Recommend preserving the currently intended profile when it is evident from prior install notes or operator preference; otherwise recommend `shared` as the safest portable default. If uncertain, ask one question and include the recommendation.
 5. Decide how to handle the existing `AGENTS.md`:
@@ -210,11 +210,11 @@ Verify or install the local tools:
 
 - `git`
 - `curl`
-- `opencode`
+- OpenCode >= 1.18.30 for the `oc-arkive` v3.0.0 baseline (keep `oc-arkive@latest` in the profile)
 
 Also verify that the operator has OpenAI access available before running `opencode auth login -p openai`.
 
-If `opencode` is missing, the standard install command is:
+Run `opencode --version`. If Opencode is missing or older than 1.18.30, use the standard install/upgrade command, then rerun the version check before installing the plugin or profile:
 
 ```bash
 curl -fsSL https://opencode.ai/install | bash
@@ -377,7 +377,7 @@ If all conditions are met, run:
 Some notes:
 
 - `scripts/enable-optional.sh` requires `jq`.
-- the `context-improved` bundle updates `opencode.json` only. Hive's optional research MCPs remain allowed; if Hive registers one with the same name, it may take precedence.
+- the `context-improved` bundle updates `opencode.json` only. Hive v3.0.0 does not register research MCPs; the operator-configured servers work independently of skill availability.
 - when `shared-context-improved` or `personal-context-improved` is selected, `scripts/install-profile.sh` applies that bundle automatically instead of requiring this separate step.
 
 ### 8. Offer the optional chrome-devtools and Keenable MCPs

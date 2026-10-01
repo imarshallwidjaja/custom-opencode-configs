@@ -38,6 +38,7 @@ OPENCODE_LOCAL_SKILLS=(
   writing-skills
 )
 OPENCODE_RETIRED_SKILLS=(
+  ast-grep
   using-git-worktrees
   finishing-a-development-branch
   consolidate-test-suites
@@ -70,7 +71,6 @@ SHARED_RETIRED_SKILLS=(
 HIVE_OWNED_SKILLS=(
   adversarial-review
   agents-md-mastery
-  ast-grep
   background-delegation
   brainstorming
   code-reviewer

@@ -8,6 +8,8 @@ These optional bundles are Opencode-only. Cursor v1 has no optional MCP bundle i
 
 Each bundle is a partial `opencode.json` fragment. Optional bundles leave `agent_hive.json` unchanged.
 
+The accompanying profile targets `oc-arkive` v3.0.0 and requires OpenCode >= 1.18.30. Check `opencode --version` and upgrade an older host before updating the plugin or profile and restarting its host process.
+
 Purpose:
 
 - keep the base profile safe on a fresh machine
@@ -43,8 +45,8 @@ Verification:
 Some notes:
 
 - this bundle normalizes the live local setup into portable `PATH`-based commands and config-relative secret files
-- this bundle updates `opencode.json`; Hive Scout skill loading comes from the base Hive config. This profile requires an `oc-arkive` release after 2.5.0 that removes bundled research MCPs, so these entries supply the `ast_grep` and `context7` servers
-- the required `oc-arkive` release also rejects `agent_hive.json` files containing the removed `disableMcps` or `sandbox` fields. Before restarting, replace or update that file to remove those fields (rerun `./scripts/install-profile.sh --apply` for the base config). A rejected file falls back to defaults, losing agents, customAgents, council, and model routing. Applying this bundle alone leaves Hive config untouched
+- this bundle updates `opencode.json`; `oc-arkive` v3.0.0 no longer configures research MCPs or bundles an `ast-grep` skill. These operator-configured `ast_grep` and `context7` servers work independently of skill availability
+- `oc-arkive` v3.0.0 rejects `agent_hive.json` files containing the removed `disableMcps`, `sandbox`, `dockerImage`, or `persistentContainers` fields. Before restarting, replace or update that file to remove those fields (rerun `./scripts/install-profile.sh --apply` for the base config). A rejected file falls back to defaults, losing agents, customAgents, council, and model routing; repository and worktree tools can also fail with an invalid-config error. Applying this bundle alone leaves Hive config untouched
 - the installer auto-applies this bundle for the `shared-context-improved` and `personal-context-improved` AGENTS profiles after preflighting the same prerequisites
 - install `cymbal` with `brew install 1broseidon/tap/cymbal` when the machine uses Homebrew and you want the full local navigation workflow
 - `cymbal` is a separate optional CLI tool for local code navigation; when it is on `PATH`, both `scripts/install-profile.sh` and this bundle attempt to install its supported OpenCode hook into the selected `OPENCODE_CONFIG_DIR`, and a hook failure warns without failing the install

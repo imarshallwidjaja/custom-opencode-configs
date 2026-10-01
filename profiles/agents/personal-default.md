@@ -86,7 +86,7 @@ Load `agents-md-mastery` for any AGENTS.md edit, including additions.
 | Exact local file text for editing | `read` | Use after narrowing the target enough that exact text matters. |
 | Local filename search | `glob` | Prefer over shell `find`. |
 | Local text search | `grep` | Prefer over shell `grep` or `rg` unless direct counting/processing is needed. |
-| Syntax-aware structural search | `ast-grep` MCP tools | Load `ast-grep` first if available. Use for code shape, structural invariants, and pattern verification. |
+| Syntax-aware structural search | `ast-grep` MCP tools | Use for code shape, structural invariants, and pattern verification. |
 | Large output, logs, tests, diffs, API responses, non-edit file analysis | Bounded execution or context tools | Think in code and print bounded findings, not raw dumps. |
 | Official current library/framework docs | `context7` | Resolve the library ID first unless the user provides `/org/project`; use only when available. |
 | Public GitHub implementation examples | `grep_app` | Search literal code patterns, APIs, identifiers, or syntax fragments; use only when available. |
