@@ -2089,7 +2089,7 @@ def configured_inherited_skills(name):
         out.append(skill)
     return out
 
-docs_depth = ("writing-for-humans", "humanizer", "stop-slop")
+docs_depth = ("writing-for-humans",)
 docs_specialists = {
     "forager-documents": docs_depth,
     "documentation-reviewer": docs_depth,
@@ -2207,6 +2207,9 @@ for name, expected in docs_specialists.items():
     missing_docs = [skill for skill in expected if skill not in skills]
     if missing_docs:
         errors.append(f"{name} configured inherited skills missing {missing_docs}")
+    rewrite_overlays = {"humanizer", "stop-slop"}.intersection(skills)
+    if rewrite_overlays:
+        errors.append(f"{name} must load rewrite overlays conditionally, not auto-load {sorted(rewrite_overlays)}")
     depth_indexes = [skills.index(skill) for skill in depth if skill in skills]
     if router not in skills or (depth_indexes and skills.index(router) > min(depth_indexes)):
         errors.append(f"{name} must keep {router} ahead of prose depth skills")
@@ -2326,12 +2329,23 @@ for profile_path in sorted((root / "profiles/agents").glob("*.md")):
         errors.append(f"{rel} must carry the retrieved-evidence rule")
     if "`explore`" in text:
         errors.append(f"{rel} must not route to the disabled built-in explore agent")
-    if "`writing-policy`" not in text:
-        errors.append(f"{rel} must reference writing-policy")
+    prose_sections = re.findall(r"^## Prose policy\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
+    if len(prose_sections) != 1:
+        errors.append(f"{rel} must have one short Prose policy section")
+    else:
+        prose = prose_sections[0]
+        if "Use `writing-policy` for human-facing prose and prose handoffs." not in prose:
+            errors.append(f"{rel} must reference writing-policy in its Prose policy section")
+        if "conditional depth-skill routing" not in prose or "required output format" not in prose:
+            errors.append(f"{rel} must retain conditional prose routing and required output format")
+        if len(prose.split()) > 100:
+            errors.append(f"{rel} Prose policy must stay a short pointer, not copy the finish gate")
+    if "## Prose Finish Gate" in text:
+        errors.append(f"{rel} must not copy the Prose Finish Gate")
     if "Draft with `writing-for-humans`" in text:
         errors.append(f"{rel} still drafts with writing-for-humans")
-    if "Parent-loaded skills do not imply child loading" not in text:
-        errors.append(f"{rel} must state parent-loaded skills do not imply child loading")
+    if "Require each child to load those skills itself" not in text:
+        errors.append(f"{rel} must require each child to load the named skills itself")
     if "Write in Ivan's voice by default" in text:
         errors.append(f"{rel} still defaults to Ivan voice")
     if rel.startswith("profiles/agents/personal-"):
@@ -2339,6 +2353,8 @@ for profile_path in sorted((root / "profiles/agents").glob("*.md")):
             errors.append(f"{rel} must load ivan-writing for published/submitted/sent prose")
         if "Internal worker reports stay neutral" not in text:
             errors.append(f"{rel} must keep internal worker reports neutral unless requested")
+        if "PR and review drafts require explicit operator selection of personal voice under `pr-writing`." not in text:
+            errors.append(f"{rel} must require explicit personal-voice selection for PR and review drafts")
     elif "ivan-writing" in text:
         errors.append(f"{rel} must not reference ivan-writing")
 

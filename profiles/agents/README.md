@@ -2,7 +2,11 @@
 
 This directory contains installable `AGENTS.md` profiles for Opencode.
 
-All four profiles share the same baseline quality, delegation, verification, search, browser, handoff, worktree, and document-conversion rules. Interactive browser work routes to `chrome-devtools`. `writing-policy` owns prose routing and delegated propagation. All four profiles keep the same `## Prose Finish Gate` section: an always-on draft, audit, fix loop for human-facing prose. `writing-for-humans`, `stop-slop`, and `humanizer` remain conditional depth skills. The `personal-*` profiles install Ivan's voice skill and load `ivan-writing` only for prose published, submitted, or sent as Ivan; internal worker reports stay neutral unless requested. The `shared*` profiles omit that voice layer. The `*-context-improved` profiles add strong explicit routing rules for the optional context-improved toolchain; the plain profiles use the baseline routing without those explicit assumptions.
+All four profiles share the same baseline quality, delegation, verification, search, browser, handoff, worktree, and document-conversion rules. Interactive browser work routes to `chrome-devtools`. Their `## Prose policy` section references `writing-policy` for prose routing and delegated propagation, including each child's own skill loads and the task's required output format. `writing-for-humans` owns drafting, the finish pass, and durable naming. `stop-slop` and `humanizer` load conditionally for matching rewrite problems. The three document-focused Hive roles auto-load `writing-policy` and `writing-for-humans`; `adversarial-documentation-reviewer` also retains `adversarial-review`.
+
+The `personal-*` profiles install Ivan's voice skill and load `ivan-writing` only for prose published, submitted, or sent as Ivan; internal worker reports stay neutral unless requested. PR and review drafts require explicit operator selection of personal voice under `pr-writing`. The `shared*` profiles omit that voice layer. The `*-context-improved` profiles add strong explicit routing rules for the optional context-improved toolchain; the plain profiles use the baseline routing without those explicit assumptions.
+
+These profile references do not establish which skill copy a running Opencode session loads. The installer still supplies shared writing skills under `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}` as described in the root README; retiring those sources or resolving local overrides requires separate work.
 
 All four profiles also share `Request And Skill Precedence`: explicit user intent overrides skill defaults within higher-priority instructions, tool permissions, and project requirements. Clear implementation requests proceed, advice-only scope stays read-only, skill-driven pauses cite the instruction, and verification stops after acceptance and required gates absent new changes, failures, or concrete unresolved risk. Preserve this section when merging a profile into an existing `AGENTS.md`.
 
@@ -28,7 +32,7 @@ Use this when:
 
 ### `personal-default.md`
 
-Purpose: The shared profile plus Ivan's voice skill. That voice is selected only for prose published, submitted, or sent as Ivan; internal worker reports stay neutral unless requested.
+Purpose: The shared profile plus Ivan's voice skill. That voice is selected only for prose published, submitted, or sent as Ivan; internal worker reports stay neutral unless requested. PR and review drafts require explicit operator selection of personal voice under `pr-writing`.
 
 Use this when:
 

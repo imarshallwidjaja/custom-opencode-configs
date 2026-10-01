@@ -91,9 +91,7 @@
       "variant": "high",
       "autoLoadSkills": [
         "writing-policy",
-        "writing-for-humans",
-        "humanizer",
-        "stop-slop"
+        "writing-for-humans"
       ]
     },
     "forager-ui": {
@@ -132,9 +130,7 @@
       "variant": "low",
       "autoLoadSkills": [
         "writing-policy",
-        "writing-for-humans",
-        "humanizer",
-        "stop-slop"
+        "writing-for-humans"
       ]
     },
     "adversarial-documentation-reviewer": {
@@ -145,9 +141,7 @@
       "autoLoadSkills": [
         "adversarial-review",
         "writing-policy",
-        "writing-for-humans",
-        "humanizer",
-        "stop-slop"
+        "writing-for-humans"
       ]
     },
     "adversarial-code-reviewer": {

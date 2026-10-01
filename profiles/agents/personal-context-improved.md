@@ -49,7 +49,7 @@ Load `agents-md-mastery` for any AGENTS.md edit, including additions.
 - Before claiming completion, load `verification` and verify with command output or explicit evidence.
 - When discussing parity or readiness, separate expected parity from validated parity.
 - When changes affect install flow, setup choices, profile selection, optional components, or dependency expectations, update the operator-facing docs and agent instructions for that workflow in the same change.
-- Name durable artifacts by purpose or domain meaning, not by Phase 1, Option B, workstream, ticket, or other planning context. A name should still make sense in isolation. See `writing-policy`.
+- Name durable artifacts by purpose or domain meaning, not by Phase 1, Option B, workstream, ticket, or other planning context. A name should still make sense in isolation. See `writing-for-humans`.
 - Place each test invariant in the same change: name it, choose one owning layer (unit, integration, or end-to-end), reuse that layer's existing canonical suite, prefer editing an existing test, and fold weaker duplicates before finishing. Do not leave a later test-cleanup pass.
 
 ## Editing Rules
@@ -75,7 +75,7 @@ Load `agents-md-mastery` for any AGENTS.md edit, including additions.
 - If you are a delegated subagent, always return the requested final summary before finishing, including blockers and errors.
 - If a subagent fails, start a fresh subagent with concise failure context instead of resuming the failed session.
 - If a task provides `worker_prompt.md`, pass it verbatim and instruct the worker to follow it exactly.
-- Parent-loaded skills do not imply child loading. Permitted delegated or fresh-retry prose handoffs must state artifact, audience, voice, and required writing skills; descendants preserve that contract where nested delegation is permitted. See `writing-policy`.
+- For permitted prose delegation and fresh follow-ups, state the artifact, audience, voice when specified, and required writing skills per `writing-policy`. Require each child to load those skills itself.
 - When `todowrite` is available, keep it current at each task transition.
 
 ## Search And Context Routing
@@ -112,29 +112,11 @@ Load `agents-md-mastery` for any AGENTS.md edit, including additions.
 | When finishing a Hive worktree, squash-merge, rebase, or cherry-pick via Hive merge tools, then remove the worktree and task branch | Load `finishing-a-development-branch` to pick a generic merge/PR/discard menu, use a plain merge commit from a temporary worktree branch, or leave generated artifacts/duplicate churn behind |
 | Explicitly remove or revert unwanted artifacts before merge | Assume aborting a worktree removed artifacts already committed on a task branch |
 
-## Prose Finish Gate
+## Prose policy
 
-Run this gate on any human-facing prose before delivering it: documentation, PR and commit text, review write-ups, plans, summaries, and chat replies longer than a short paragraph. Do not announce the gate.
+Use `writing-policy` for human-facing prose and prose handoffs. Follow its conditional depth-skill routing and preserve the task's required output format.
 
-1. Draft for the reader. Keep names stable. Leave out decoration. Name discarded options only when the reader would otherwise reopen them.
-2. Audit the draft with two questions. What makes this read as machine-written? Does it state any fact, name, number, date, quote, or citation that is not in the source or the conversation? A rewrite never adds one.
-3. Fix the hits, then check again.
-
-Tells to look for (clusters matter more than a single hit):
-
-- antithesis and stacked negation ("It's not X, it's Y", "not only X but also Y")
-- runs of short dramatic fragments, one-line paragraphs, Stop/Start couplets
-- throat-clearing and signposting openers ("Here's the thing", "Let's dive in", "It's worth noting")
-- AI vocabulary clusters (delve, robust, seamless, leverage, landscape, testament, elevate, unlock, crucial, showcase)
-- chatbot closers and generic upbeat endings ("I hope this helps", "Exciting times ahead", "In summary")
-- inline-header bullet lists, bold on every key term, emoji in headings, title-cased headings
-- actorless passive or an abstraction given a human verb when the real actor is known
-- forced rule-of-three, false ranges ("from X to Y and everything in between"), aphorism formulas
-- em dashes used as the default connector
-
-Preserve specific detail, mixed feelings, varied sentence length, and the author's own voice. A user-supplied writing sample outranks these defaults. Load depth skills only through `writing-policy`.
-
-Load `ivan-writing` for prose intended to be published, submitted, or sent as Ivan, whether or not first-person. Internal worker reports stay neutral unless requested. Neutral, team, or third-party voice still overrides when explicit. Casual remains opt-in.
+Load `ivan-writing` for prose intended to be published, submitted, or sent as Ivan, whether or not first-person. Internal worker reports stay neutral unless requested. Neutral, team, or third-party voice still overrides when explicit. Casual remains opt-in. PR and review drafts require explicit operator selection of personal voice under `pr-writing`.
 
 ## Browser Usage
 
