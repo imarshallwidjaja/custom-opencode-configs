@@ -1987,7 +1987,7 @@ fi
 build_fixture
 
 # ---------------------------------------------------------------------------
-# 65. Repository payloads use the portable Luna/Sol/Astra Hive policy
+# 65. Repository payloads use the portable Luna/Sol Hive policy
 # ---------------------------------------------------------------------------
 printf '\n=== 65. Repository OpenAI-only payload contracts ===\n'
 if python3 - "${BASELINE_PWD}" <<'PY'
@@ -2019,7 +2019,7 @@ except json.JSONDecodeError as exc:
     print(f"invalid JSON: {exc}")
     raise SystemExit(1)
 
-allowed_models = {"openai/gpt-6-luna-fast", "openai/gpt-6-sol", "openai/gpt-6-astra", "openai/gpt-5.6-sol"}
+allowed_models = {"openai/gpt-6-luna", "openai/gpt-6.1-sol"}
 blocked_substrings = ("opencode-go/", "magic-compact", "opencode-go-multi-auth")
 for path, value in walk(hive):
     if not isinstance(value, str):
@@ -2048,7 +2048,7 @@ if opencode.get("snapshot") is not False or opencode.get("autoupdate") is not Fa
 open_agents = opencode.get("agent") or {}
 if open_agents.get("explore") != {"disable": True}:
     errors.append(f"built-in explore must be disabled without a model override: {open_agents.get('explore')!r}")
-if open_agents.get("compaction") != {"model": "openai/gpt-6-luna-fast", "variant": "medium"}:
+if open_agents.get("compaction") != {"model": "openai/gpt-6-luna", "variant": "medium"}:
     errors.append(f"compaction agent={open_agents.get('compaction')!r}")
 for key in ("small_model", "permission", "disabled_providers"):
     if key in opencode:
@@ -2113,34 +2113,33 @@ for group_name in ("design", "ui"):
     if "code-reviewer-ui" in members:
         errors.append(f"council.groups.{group_name} still references code-reviewer-ui")
 
-# gpt-5.6-sol is reserved for the primary-only orchestration seats.
 exact_seats = {
-    "forager-smart": ("openai/gpt-6-astra", "medium"),
-    "forager-capable": ("openai/gpt-6-sol", "high"),
-    "forager-documents": ("openai/gpt-6-luna-fast", "high"),
-    "forager-ui": ("openai/gpt-6-sol", "high"),
-    "adversarial-plan-reviewer": ("openai/gpt-6-sol", "high"),
-    "adversarial-documentation-reviewer": ("openai/gpt-6-luna-fast", "high"),
-    "adversarial-code-reviewer": ("openai/gpt-6-sol", "high"),
-    "adversarial-simplicity-reviewer": ("openai/gpt-6-sol", "high"),
-    "adversarial-approach-advisor": ("openai/gpt-6-sol", "high"),
-    "ui-design-advisor": ("openai/gpt-6-sol", "high"),
-    "approach-advisor-xhigh-reasoning": ("openai/gpt-6-astra", "xhigh"),
-    "ui-reviewer": ("openai/gpt-6-astra", "low"),
-    "documentation-reviewer": ("openai/gpt-6-astra", "low"),
-    "hive-master": ("openai/gpt-5.6-sol", "high"),
-    "architect-planner": ("openai/gpt-6-astra", "high"),
-    "swarm-orchestrator": ("openai/gpt-5.6-sol", "medium"),
-    "scout-researcher": ("openai/gpt-6-luna-fast", "high"),
-    "forager-worker": ("openai/gpt-6-sol", "medium"),
-    "hive-helper": ("openai/gpt-6-luna-fast", "medium"),
-    "plan-reviewer": ("openai/gpt-6-sol", "medium"),
-    "code-reviewer": ("openai/gpt-6-astra", "medium"),
-    "simplicity-reviewer": ("openai/gpt-6-astra", "low"),
-    "approach-advisor": ("openai/gpt-6-sol", "high"),
-    "vulnerability-reviewer": ("openai/gpt-6-astra", "high"),
-    "hive-builder": ("openai/gpt-5.6-sol", "medium"),
-    "taskTraceSummarizer": ("openai/gpt-6-luna-fast", "medium"),
+    "forager-smart": ("openai/gpt-6.1-sol", "xhigh"),
+    "forager-capable": ("openai/gpt-6.1-sol", "xhigh"),
+    "forager-documents": ("openai/gpt-6-luna", "high"),
+    "forager-ui": ("openai/gpt-6.1-sol", "medium"),
+    "adversarial-plan-reviewer": ("openai/gpt-6.1-sol", "xhigh"),
+    "adversarial-documentation-reviewer": ("openai/gpt-6.1-sol", "medium"),
+    "adversarial-code-reviewer": ("openai/gpt-6.1-sol", "xhigh"),
+    "adversarial-simplicity-reviewer": ("openai/gpt-6.1-sol", "xhigh"),
+    "adversarial-approach-advisor": ("openai/gpt-6.1-sol", "xhigh"),
+    "ui-design-advisor": ("openai/gpt-6.1-sol", "medium"),
+    "approach-advisor-xhigh-reasoning": ("openai/gpt-6.1-sol", "max"),
+    "ui-reviewer": ("openai/gpt-6.1-sol", "medium"),
+    "documentation-reviewer": ("openai/gpt-6-luna", "high"),
+    "hive-master": ("openai/gpt-6.1-sol", "medium"),
+    "architect-planner": ("openai/gpt-6.1-sol", "xhigh"),
+    "swarm-orchestrator": ("openai/gpt-6.1-sol", "medium"),
+    "scout-researcher": ("openai/gpt-6-luna", "high"),
+    "forager-worker": ("openai/gpt-6.1-sol", "medium"),
+    "hive-helper": ("openai/gpt-6-luna", "medium"),
+    "plan-reviewer": ("openai/gpt-6.1-sol", "medium"),
+    "code-reviewer": ("openai/gpt-6.1-sol", "medium"),
+    "simplicity-reviewer": ("openai/gpt-6.1-sol", "medium"),
+    "approach-advisor": ("openai/gpt-6.1-sol", "xhigh"),
+    "vulnerability-reviewer": ("openai/gpt-6.1-sol", "max"),
+    "hive-builder": ("openai/gpt-6.1-sol", "medium"),
+    "taskTraceSummarizer": ("openai/gpt-6-luna", "medium"),
 }
 seats = {**agents, **custom, "taskTraceSummarizer": hive.get("taskTraceSummarizer") or {}}
 if set(seats) != set(exact_seats):
@@ -2180,15 +2179,22 @@ for name, entry in custom.items():
     if name.startswith("adversarial-"):
         if "adversarial-review" not in (entry.get("autoLoadSkills") or []):
             errors.append(f"{name} must autoload adversarial-review")
-        if "in addition to" not in entry.get("description", "") or "do not replace" not in entry.get("description", ""):
+        description = entry.get("description", "")
+        if "in addition to" not in description:
             errors.append(f"{name} must supplement the first review pass")
+        if name in {
+            "adversarial-plan-reviewer",
+            "adversarial-documentation-reviewer",
+            "adversarial-approach-advisor",
+        } and "do not replace" not in description:
+            errors.append(f"{name} must keep the do-not-replace clause")
 for name, phrases in {
     "adversarial-code-reviewer": ("failure-sensitive logic", "unresolved correctness risk", "Skip routine, localized behavior changes"),
     "code-reviewer": ("failure-sensitive logic", "Skip the adversarial pass for routine, localized behavior changes"),
     "adversarial-simplicity-reviewer": ("introduces or expands abstractions", "materially larger"),
-    "forager-smart": ("Rescue worker", "dead end", "belongs to forager-capable"),
-    "forager-capable": ("Use up front", "prefer forager-capable"),
-    "scout-researcher": ("Sole research agent", "multi-hop", "parallel dispatches"),
+    "forager-smart": ("mechanism is unsettled", "substantive dead end", "Named changes stay with forager-worker or forager-capable"),
+    "forager-capable": ("Use up front only when", "use forager-worker", "goes to forager-smart"),
+    "scout-researcher": ("Search agent", "decomposed and fanned out", "parallel dispatches"),
 }.items():
     if any(phrase not in (seats.get(name) or {}).get("description", "") for phrase in phrases):
         errors.append(f"{name} is missing its dispatch boundary")
@@ -2395,9 +2401,9 @@ if errors:
 print("ok")
 PY
 then
-  pass "65a: base payloads enforce portable Luna/Sol/Astra Hive roles and efforts"
+  pass "65a: base payloads enforce portable Luna/Sol Hive roles and efforts"
 else
-  fail "65b: base payloads enforce portable Luna/Sol/Astra Hive roles and efforts"
+  fail "65b: base payloads enforce portable Luna/Sol Hive roles and efforts"
 fi
 
 # ---------------------------------------------------------------------------

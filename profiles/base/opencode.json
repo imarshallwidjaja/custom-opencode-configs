@@ -7,7 +7,7 @@
       "disable": true
     },
     "compaction": {
-      "model": "openai/gpt-6-luna-fast",
+      "model": "openai/gpt-6-luna",
       "variant": "medium"
     }
   },
