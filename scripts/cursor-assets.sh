@@ -29,11 +29,15 @@ SKILLS=(
   agents-md-mastery
   brainstorming
   finishing-a-development-branch
+  humanizer
+  stop-slop
   subagent-delegation
   systematic-debugging
   test-driven-development
   using-git-worktrees
   verification
+  writing-for-humans
+  writing-policy
 )
 RETIRED_SKILLS=(
   consolidate-test-suites
@@ -47,21 +51,23 @@ CANONICAL_SKILLS=(
   drawio-skill
   frontend-slides
   hard-cut
-  humanizer
   react-best-practices
   resume-tailoring
   running-agile-delivery
   stop-design-slop
-  stop-slop
   web-design-guidelines
-  writing-for-humans
-  writing-policy
   writing-work-items
 )
 SHARED_RETIRED_SKILLS=(
   working-with-atlassian
   managing-work-in-jira
   connecting-atlassian-tools
+)
+HIVE_WRITING_SKILLS=(
+  humanizer
+  stop-slop
+  writing-for-humans
+  writing-policy
 )
 
 usage() {
@@ -507,7 +513,7 @@ source_manifests = (
         WRITING_ALLOWED_KEYS,
     ),
     (
-        repo_root / '.apm' / 'skills' / 'humanizer',
+        repo_root / '.apm' / 'cursor' / 'skills' / 'humanizer',
         'humanizer',
         ('SKILL.md', 'references', 'references/patterns.md'),
         WRITING_ALLOWED_KEYS,
@@ -542,12 +548,10 @@ source_manifests = (
         None,
     ),
     (
-        repo_root / '.apm' / 'skills' / 'stop-slop',
+        repo_root / '.apm' / 'cursor' / 'skills' / 'stop-slop',
         'stop-slop',
         (
             'SKILL.md',
-            'README.md',
-            'LICENSE',
             'references',
             'references/examples.md',
             'references/phrases.md',
@@ -556,7 +560,7 @@ source_manifests = (
         WRITING_ALLOWED_KEYS,
     ),
     (
-        repo_root / '.apm' / 'skills' / 'writing-for-humans',
+        repo_root / '.apm' / 'cursor' / 'skills' / 'writing-for-humans',
         'writing-for-humans',
         (
             'SKILL.md',
@@ -568,7 +572,7 @@ source_manifests = (
         True,
     ),
     (
-        repo_root / '.apm' / 'skills' / 'writing-policy',
+        repo_root / '.apm' / 'cursor' / 'skills' / 'writing-policy',
         'writing-policy',
         ('SKILL.md',),
         WRITING_ALLOWED_KEYS,
@@ -1064,6 +1068,11 @@ print_copy_plan() {
       printf 'Would back up and remove formerly managed %s/%s\n' "${AGENTS_SKILLS_DIR}" "${name}"
     fi
   done
+  for name in "${HIVE_WRITING_SKILLS[@]}"; do
+    if [[ -e "${AGENTS_SKILLS_DIR}/${name}" || -L "${AGENTS_SKILLS_DIR}/${name}" ]]; then
+      printf 'Would back up and remove Hive writing skill %s/%s\n' "${AGENTS_SKILLS_DIR}" "${name}"
+    fi
+  done
   case "${CURSOR_INSTALL_IVAN_WRITING:-}" in
     1)
       printf 'Would copy personal profiles/personal/skills/ivan-writing -> %s/ivan-writing (CURSOR_INSTALL_IVAN_WRITING=1)\n' "${AGENTS_SKILLS_DIR}"
@@ -1202,6 +1211,13 @@ install_assets_into() {
       printf 'Backed up and removed formerly managed %s\n' "${AGENTS_SKILLS_DIR}/${name}"
     fi
   done
+  for name in "${HIVE_WRITING_SKILLS[@]}"; do
+    if [[ -e "${AGENTS_SKILLS_DIR}/${name}" || -L "${AGENTS_SKILLS_DIR}/${name}" ]]; then
+      backup_agents_skill "${target_dir}" "${name}"
+      rm -rf "${AGENTS_SKILLS_DIR:?}/${name}"
+      printf 'Backed up and removed Hive writing skill %s\n' "${AGENTS_SKILLS_DIR}/${name}"
+    fi
+  done
 
   local marker="${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed"
   local cursor_ivan="${target_dir}/skills/ivan-writing"
@@ -1307,7 +1323,7 @@ check_target_readability() {
   fi
 
   if [[ -d "${AGENTS_SKILLS_DIR}" ]]; then
-    for name in "${CANONICAL_SKILLS[@]}" "${SHARED_RETIRED_SKILLS[@]}" ivan-writing; do
+    for name in "${CANONICAL_SKILLS[@]}" "${SHARED_RETIRED_SKILLS[@]}" "${HIVE_WRITING_SKILLS[@]}" ivan-writing; do
       if [[ -e "${AGENTS_SKILLS_DIR}/${name}" || -L "${AGENTS_SKILLS_DIR}/${name}" ]]; then
         check_recursive_readable "${AGENTS_SKILLS_DIR}/${name}" "agents-skills/${name}" || return 1
       fi

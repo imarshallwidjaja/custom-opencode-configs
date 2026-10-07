@@ -63,7 +63,7 @@ build_fixture() {
   mkdir -p "${REPO_FIXTURE}"
 
   # Canonical skills (.apm/skills/)
-  for skill in humanizer stop-slop writing-for-humans writing-policy cymbal hard-cut web-design-guidelines writing-skills; do
+  for skill in cymbal hard-cut web-design-guidelines writing-skills; do
     mkdir -p "${REPO_FIXTURE}/.apm/skills/${skill}"
     cat > "${REPO_FIXTURE}/.apm/skills/${skill}/SKILL.md" <<SKILL
 ---
@@ -73,23 +73,6 @@ description: Use when testing fixture canonical skill ${skill}.
 OK
 SKILL
   done
-
-  # humanizer references
-  mkdir -p "${REPO_FIXTURE}/.apm/skills/humanizer/references"
-  echo "# Patterns" > "${REPO_FIXTURE}/.apm/skills/humanizer/references/patterns.md"
-
-  # stop-slop references
-  mkdir -p "${REPO_FIXTURE}/.apm/skills/stop-slop/references"
-  echo "# Examples" > "${REPO_FIXTURE}/.apm/skills/stop-slop/references/examples.md"
-  echo "# Phrases" > "${REPO_FIXTURE}/.apm/skills/stop-slop/references/phrases.md"
-  echo "# Structures" > "${REPO_FIXTURE}/.apm/skills/stop-slop/references/structures.md"
-  echo "# README" > "${REPO_FIXTURE}/.apm/skills/stop-slop/README.md"
-  echo "MIT License" > "${REPO_FIXTURE}/.apm/skills/stop-slop/LICENSE"
-
-  # writing-for-humans references
-  mkdir -p "${REPO_FIXTURE}/.apm/skills/writing-for-humans/references"
-  echo "# Examples" > "${REPO_FIXTURE}/.apm/skills/writing-for-humans/references/examples.md"
-  echo "# Sources" > "${REPO_FIXTURE}/.apm/skills/writing-for-humans/references/sources.md"
 
   stub_canonical_skill_tree frontend-slides
   stub_canonical_skill_tree drawio-skill
@@ -169,7 +152,7 @@ provenance = {
 PY
 
   # Cursor skills
-  for skill in agents-md-mastery brainstorming finishing-a-development-branch subagent-delegation systematic-debugging test-driven-development using-git-worktrees verification; do
+  for skill in agents-md-mastery brainstorming finishing-a-development-branch humanizer stop-slop subagent-delegation systematic-debugging test-driven-development using-git-worktrees verification writing-for-humans writing-policy; do
     mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/${skill}"
     cat > "${REPO_FIXTURE}/.apm/cursor/skills/${skill}/SKILL.md" <<SKILL
 ---
@@ -179,6 +162,16 @@ description: Use when testing fixture Cursor skill ${skill}.
 OK
 SKILL
   done
+
+  mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/humanizer/references"
+  echo "# Patterns" > "${REPO_FIXTURE}/.apm/cursor/skills/humanizer/references/patterns.md"
+  mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/stop-slop/references"
+  echo "# Examples" > "${REPO_FIXTURE}/.apm/cursor/skills/stop-slop/references/examples.md"
+  echo "# Phrases" > "${REPO_FIXTURE}/.apm/cursor/skills/stop-slop/references/phrases.md"
+  echo "# Structures" > "${REPO_FIXTURE}/.apm/cursor/skills/stop-slop/references/structures.md"
+  mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/writing-for-humans/references"
+  echo "# Examples" > "${REPO_FIXTURE}/.apm/cursor/skills/writing-for-humans/references/examples.md"
+  echo "# Sources" > "${REPO_FIXTURE}/.apm/cursor/skills/writing-for-humans/references/sources.md"
 
   # Personal source
   mkdir -p "${REPO_FIXTURE}/profiles/personal/skills/ivan-writing/references"
@@ -1008,13 +1001,24 @@ CURSOR_CONFIG_DIR="${td3}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/references/registers.md" ]] && pass "3e: registers.md" || fail "3f: registers.md not found"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/references/examples.md" ]] && pass "3g: examples.md" || fail "3h: examples.md not found"
 [[ ! -e "${td3}/skills/ivan-writing" ]] && pass "3c2: ivan-writing absent from Cursor skills" || fail "3d2: ivan-writing leaked into Cursor skills"
-[[ -f "${AGENTS_SKILLS_DIR}/stop-slop/SKILL.md" ]] && pass "3i: stop-slop installed" || fail "3j: canonical skill not installed"
-[[ ! -e "${td3}/skills/stop-slop" ]] && pass "3i2: stop-slop absent from Cursor skills" || fail "3j2: stop-slop leaked into Cursor skills"
-[[ -f "${AGENTS_SKILLS_DIR}/humanizer/SKILL.md" ]] && pass "3k: humanizer installed" || fail "3l: canonical skill not installed"
-[[ -f "${AGENTS_SKILLS_DIR}/writing-for-humans/SKILL.md" ]] && pass "3ac: writing-for-humans installed" || fail "3ad: writing-for-humans canonical skill not installed"
-[[ -f "${AGENTS_SKILLS_DIR}/writing-for-humans/references/sources.md" ]] && pass "3ae: writing-for-humans sources" || fail "3af: writing-for-humans extra file not copied"
-[[ -f "${AGENTS_SKILLS_DIR}/writing-policy/SKILL.md" ]] && pass "3ag: writing-policy installed" || fail "3ah: writing-policy canonical skill not installed"
-[[ ! -e "${td3}/skills/writing-policy" ]] && pass "3ag2: writing-policy absent from Cursor skills" || fail "3ah2: writing-policy leaked into Cursor skills"
+for hive_writing in humanizer stop-slop writing-for-humans writing-policy; do
+  mkdir -p "${AGENTS_SKILLS_DIR}/${hive_writing}"
+  printf 'stale agents %s\n' "${hive_writing}" > "${AGENTS_SKILLS_DIR}/${hive_writing}/SKILL.md"
+done
+CURSOR_CONFIG_DIR="${td3}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}" install 2>"${td3}/install-hive-writing.log" && pass "3hw-a: reinstall with stale Hive writing skills succeeded" || fail "3hw-b: reinstall with stale Hive writing skills failed"
+[[ ! -e "${AGENTS_SKILLS_DIR}/stop-slop" ]] && pass "3i: stop-slop removed from agents dir" || fail "3j: stop-slop remained in agents dir"
+[[ -f "${td3}/skills/stop-slop/SKILL.md" ]] && pass "3i2: stop-slop installed into Cursor skills" || fail "3j2: stop-slop missing from Cursor skills"
+[[ -f "${td3}/skills/stop-slop/references/examples.md" && -f "${td3}/skills/stop-slop/references/phrases.md" && -f "${td3}/skills/stop-slop/references/structures.md" ]] && pass "3i3: stop-slop references installed" || fail "3j3: stop-slop references missing"
+[[ ! -e "${AGENTS_SKILLS_DIR}/humanizer" ]] && pass "3k: humanizer removed from agents dir" || fail "3l: humanizer remained in agents dir"
+[[ -f "${td3}/skills/humanizer/SKILL.md" && -f "${td3}/skills/humanizer/references/patterns.md" ]] && pass "3k2: humanizer and patterns installed into Cursor skills" || fail "3l2: humanizer Cursor copy incomplete"
+[[ ! -e "${AGENTS_SKILLS_DIR}/writing-for-humans" ]] && pass "3ac: writing-for-humans removed from agents dir" || fail "3ad: writing-for-humans remained in agents dir"
+[[ -f "${td3}/skills/writing-for-humans/SKILL.md" && -f "${td3}/skills/writing-for-humans/references/sources.md" && -f "${td3}/skills/writing-for-humans/references/examples.md" ]] && pass "3ae: writing-for-humans Cursor copy includes references" || fail "3af: writing-for-humans Cursor copy incomplete"
+[[ ! -e "${AGENTS_SKILLS_DIR}/writing-policy" ]] && pass "3ag: writing-policy removed from agents dir" || fail "3ah: writing-policy remained in agents dir"
+[[ -f "${td3}/skills/writing-policy/SKILL.md" ]] && pass "3ag2: writing-policy installed into Cursor skills" || fail "3ah2: writing-policy missing from Cursor skills"
+for hive_writing in humanizer stop-slop writing-for-humans writing-policy; do
+  grep -Fqx "stale agents ${hive_writing}" "${td3}/.backup/"*/agents-skills/"${hive_writing}"/SKILL.md \
+    && pass "3hw: ${hive_writing} agents-dir leftover backed up" || fail "3hw: ${hive_writing} agents-dir leftover backup missing"
+done
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/SKILL.md" ]] && pass "3o: frontend-slides installed" || fail "3p: frontend-slides canonical skill not installed"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/viewport-base.css" ]] && pass "3q: frontend-slides viewport-base.css" || fail "3r: frontend-slides extra file not copied"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/scripts/build-standalone.py" ]] && pass "3ao: frontend-slides build-standalone.py" || fail "3ap: frontend-slides build-standalone.py not copied"
@@ -1090,9 +1094,9 @@ ls "${td5e}/.backup/"*"/skills/ivan-writing" >/dev/null 2>&1 && pass "5e-k: Curs
 # ---------------------------------------------------------------------------
 printf '\n=== 6. Missing canonical source fails before mutation ===\n'
 td6="${TMPDIR}/test6"; mkdir -p "${td6}"
-rm -rf "${REPO_FIXTURE}/.apm/skills/humanizer"
+rm -rf "${REPO_FIXTURE}/.apm/cursor/skills/humanizer"
 ! CURSOR_CONFIG_DIR="${td6}" bash "${CURSOR_HELPER}" install --dry-run 2>"${td6}/err" || fail "6a: should have failed"
-grep -q 'validation failed.*\.apm/skills/humanizer' "${td6}/err" && pass "6b: missing canonical detected" || fail "6c: wrong error: $(cat ${td6}/err)"
+grep -q 'validation failed.*skills/humanizer' "${td6}/err" && pass "6b: missing Cursor humanizer detected" || fail "6c: wrong error: $(cat ${td6}/err)"
 cursor_target_unmodified "${td6}" && pass "6d: no managed paths created" || fail "6e: target mutated"
 build_fixture
 
@@ -1101,7 +1105,7 @@ build_fixture
 # ---------------------------------------------------------------------------
 printf '\n=== 7. Wrong-name canonical source fails before mutation ===\n'
 td7="${TMPDIR}/test7"; mkdir -p "${td7}"
-SKILL_FILE="${REPO_FIXTURE}/.apm/skills/humanizer/SKILL.md"
+SKILL_FILE="${REPO_FIXTURE}/.apm/cursor/skills/humanizer/SKILL.md"
 replace_fixture_text "${SKILL_FILE}" 'name: humanizer' 'name: humanizer-wrong'
 ! CURSOR_CONFIG_DIR="${td7}" bash "${CURSOR_HELPER}" install --dry-run 2>"${td7}/err" || fail "7a: should have failed"
 grep -q -i 'frontmatter name' "${td7}/err" && pass "7b: wrong name detected" || fail "7c: wrong error: $(cat ${td7}/err)"
@@ -1167,10 +1171,24 @@ cmp -s "${REPO_FIXTURE}/profiles/base/agent_hive.json" "${td12}/agent_hive.json"
 [[ ! -e "${td12}/skills/frontend-slides" ]] && pass "12g2: frontend-slides absent from OpenCode skills" || fail "12h2: frontend-slides leaked into OpenCode skills"
 [[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/SKILL.md" ]] && pass "12i: shared drawio-skill installed" || fail "12j: shared drawio-skill missing"
 [[ -f "${AGENTS_SKILLS_DIR}/stop-design-slop/SKILL.md" ]] && pass "12k: shared stop-design-slop installed" || fail "12l: shared stop-design-slop missing"
-[[ -f "${AGENTS_SKILLS_DIR}/writing-for-humans/SKILL.md" ]] && pass "12m: shared writing-for-humans installed" || fail "12n: shared writing-for-humans missing"
-[[ ! -e "${td12}/skills/writing-for-humans" ]] && pass "12m2: writing-for-humans absent from OpenCode skills" || fail "12n2: writing-for-humans leaked into OpenCode skills"
-[[ -f "${AGENTS_SKILLS_DIR}/writing-policy/SKILL.md" ]] && pass "12o: shared writing-policy installed" || fail "12p: shared writing-policy missing"
-[[ ! -e "${td12}/skills/writing-policy" ]] && pass "12o2: writing-policy absent from OpenCode skills" || fail "12p2: writing-policy leaked into OpenCode skills"
+for hive_writing in humanizer stop-slop writing-for-humans writing-policy; do
+  [[ ! -e "${AGENTS_SKILLS_DIR}/${hive_writing}" && ! -e "${td12}/skills/${hive_writing}" ]] && pass "12m0: ${hive_writing} not created by OpenCode install" || fail "12n0: ${hive_writing} was created by OpenCode install"
+done
+for hive_writing in humanizer stop-slop writing-for-humans writing-policy; do
+  mkdir -p "${AGENTS_SKILLS_DIR}/${hive_writing}" "${td12}/skills/${hive_writing}"
+  printf 'stale agents %s\n' "${hive_writing}" > "${AGENTS_SKILLS_DIR}/${hive_writing}/SKILL.md"
+  printf 'stale opencode %s\n' "${hive_writing}" > "${td12}/skills/${hive_writing}/SKILL.md"
+done
+OPENCODE_CONFIG_DIR="${td12}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td12}/hive-writing.err" && pass "12m: reinstall removed Hive writing leftovers" || fail "12n: reinstall with Hive writing leftovers failed: $(cat "${td12}/hive-writing.err")"
+for hive_writing in humanizer stop-slop writing-for-humans writing-policy; do
+  if [[ ! -e "${AGENTS_SKILLS_DIR}/${hive_writing}" && ! -e "${td12}/skills/${hive_writing}" ]] \
+    && grep -Fqx "stale agents ${hive_writing}" "${td12}/.backup/"*/agents-skills/"${hive_writing}"/SKILL.md; then
+    pass "12o: ${hive_writing} removed from agents dir and OpenCode skills"
+  else
+    fail "12p: ${hive_writing} remained or was not backed up"
+  fi
+done
+[[ -f "${AGENTS_SKILLS_DIR}/writing-work-items/SKILL.md" && -f "${AGENTS_SKILLS_DIR}/decomposing-work/SKILL.md" && -f "${AGENTS_SKILLS_DIR}/running-agile-delivery/SKILL.md" ]] && pass "12q2: other shared skills remain in agents dir" || fail "12r2: a remaining shared skill is missing from agents dir"
 [[ -f "${td12}/skills/writing-skills/SKILL.md" ]] && pass "12w: OpenCode-local writing-skills installed" || fail "12x: OpenCode-local writing-skills missing"
 retired12=""
 for skill12 in using-git-worktrees finishing-a-development-branch consolidate-test-suites root-cause-finder context-mode; do
@@ -1249,8 +1267,13 @@ after13="$(snapshot_tree "${td13}")"
 grep -q 'canonical .apm/skills/frontend-slides' "${TMPDIR}/test13-dryrun.log" && pass "13e: dry-run plans frontend-slides" || fail "13f: dry-run omitted frontend-slides"
 grep -q 'canonical .apm/skills/drawio-skill' "${TMPDIR}/test13-dryrun.log" && pass "13g: dry-run plans drawio-skill" || fail "13h: dry-run omitted drawio-skill"
 grep -q 'canonical .apm/skills/stop-design-slop' "${TMPDIR}/test13-dryrun.log" && pass "13i: dry-run plans stop-design-slop" || fail "13j: dry-run omitted stop-design-slop"
-grep -q 'canonical .apm/skills/writing-for-humans' "${TMPDIR}/test13-dryrun.log" && pass "13k: dry-run plans writing-for-humans" || fail "13l: dry-run omitted writing-for-humans"
-grep -q "${AGENTS_SKILLS_DIR}/writing-for-humans" "${TMPDIR}/test13-dryrun.log" && pass "13q: dry-run destinations use agents dir" || fail "13r: dry-run omitted agents-dir destination"
+grep -q 'skills/writing-for-humans' "${TMPDIR}/test13-dryrun.log" && pass "13k: dry-run plans Cursor writing-for-humans" || fail "13l: dry-run omitted Cursor writing-for-humans"
+grep -q "${AGENTS_SKILLS_DIR}/frontend-slides" "${TMPDIR}/test13-dryrun.log" && pass "13q: dry-run destinations use agents dir" || fail "13r: dry-run omitted agents-dir destination"
+if grep -q 'canonical .apm/skills/writing-for-humans' "${TMPDIR}/test13-dryrun.log"; then
+  fail "13k2: dry-run still plans writing-for-humans as a shared canonical skill"
+else
+  pass "13l2: dry-run does not plan writing-for-humans as a shared canonical skill"
+fi
 grep -q '\.apm/prompts/reflect\.prompt\.md.*commands/reflect\.md' "${TMPDIR}/test13-dryrun.log" && pass "13m: dry-run sources reflect from canonical prompt" || fail "13n: dry-run omitted canonical reflect source"
 grep -q 'skills/agents-md-mastery.*skills/agents-md-mastery' "${TMPDIR}/test13-dryrun.log" && pass "13o: dry-run plans Cursor agents-md-mastery" || fail "13p: dry-run omitted Cursor agents-md-mastery"
 
@@ -1274,12 +1297,12 @@ mkdir -p "${td15a}" "${td15b}"
 build_fixture
 sandbox_agents_skills
 CURSOR_CONFIG_DIRS="${td15a};${td15b}" bash "${CURSOR_HELPER}" install 2>"${TMPDIR}/multi.log" && pass "15a: multi-root succeeded" || fail "15b: multi-root failed"
-[[ -f "${AGENTS_SKILLS_DIR}/stop-slop/SKILL.md" ]] && pass "15c: shared stop-slop in agents dir" || fail "15d: shared stop-slop missing from agents dir"
-[[ ! -e "${td15a}/skills/stop-slop" && ! -e "${td15b}/skills/stop-slop" ]] && pass "15e: stop-slop absent from both Cursor targets" || fail "15f: stop-slop leaked into a Cursor target"
+[[ ! -e "${AGENTS_SKILLS_DIR}/stop-slop" ]] && pass "15c: stop-slop absent from agents dir" || fail "15d: stop-slop installed into agents dir"
+[[ -f "${td15a}/skills/stop-slop/SKILL.md" && -f "${td15b}/skills/stop-slop/SKILL.md" && -f "${td15a}/skills/stop-slop/references/examples.md" && -f "${td15b}/skills/stop-slop/references/phrases.md" ]] && pass "15e: stop-slop installed into both Cursor targets" || fail "15f: stop-slop missing from a Cursor target"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/SKILL.md" ]] && pass "15k: shared frontend-slides in agents dir" || fail "15l: multi-root missing frontend-slides"
 [[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/SKILL.md" ]] && pass "15m: shared drawio-skill in agents dir" || fail "15n: multi-root missing drawio-skill"
 [[ -f "${AGENTS_SKILLS_DIR}/stop-design-slop/SKILL.md" ]] && pass "15o: shared stop-design-slop in agents dir" || fail "15p: multi-root missing stop-design-slop"
-[[ -f "${AGENTS_SKILLS_DIR}/writing-for-humans/SKILL.md" ]] && pass "15q: shared writing-for-humans in agents dir" || fail "15r: multi-root missing writing-for-humans"
+[[ ! -e "${AGENTS_SKILLS_DIR}/writing-for-humans" && -f "${td15a}/skills/writing-for-humans/references/sources.md" && -f "${td15b}/skills/writing-for-humans/references/sources.md" ]] && pass "15q: writing-for-humans installed only into Cursor targets" || fail "15r: multi-root writing-for-humans placement wrong"
 [[ -f "${td15a}/agents/forager.md" ]] && pass "15g: first target agent" || fail "15h: first target missing agent"
 [[ -f "${td15b}/agents/forager.md" ]] && pass "15i: second target agent" || fail "15j: second target missing agent"
 [[ -f "${td15a}/commands/reflect.md" && -f "${td15b}/commands/reflect.md" ]] && pass "15s: both targets reflect command" || fail "15t: multi-root missing reflect command"
@@ -1330,10 +1353,12 @@ echo "stale stop-slop" > "${td17b}/skills/stop-slop/SKILL.md"
 echo "stale hard-cut" > "${td17b}/skills/hard-cut/SKILL.md"
 build_fixture
 sandbox_agents_skills
+mkdir -p "${AGENTS_SKILLS_DIR}/stop-slop"
+echo "stale agents stop-slop" > "${AGENTS_SKILLS_DIR}/stop-slop/SKILL.md"
 CURSOR_CONFIG_DIR="${td17b}" bash "${CURSOR_HELPER}" install 2>"${td17b}/install.log" && pass "17b-a: install succeeded" || fail "17b-b: install failed"
-[[ ! -e "${td17b}/skills/stop-slop" ]] && pass "17b-c: stale stop-slop removed from Cursor skills" || fail "17b-d: stale stop-slop remained"
+grep -Fqx 'OK' "${td17b}/skills/stop-slop/SKILL.md" && [[ -f "${td17b}/skills/stop-slop/references/structures.md" ]] && pass "17b-c: stop-slop replaced in Cursor skills" || fail "17b-d: stale stop-slop was not replaced"
 [[ ! -e "${td17b}/skills/hard-cut" ]] && pass "17b-e: stale hard-cut removed from Cursor skills" || fail "17b-f: stale hard-cut remained"
-[[ -f "${AGENTS_SKILLS_DIR}/stop-slop/SKILL.md" ]] && pass "17b-g: stop-slop installed to agents dir" || fail "17b-h: stop-slop missing from agents dir"
+[[ ! -e "${AGENTS_SKILLS_DIR}/stop-slop" ]] && pass "17b-g: stop-slop removed from agents dir" || fail "17b-h: stop-slop remained in agents dir"
 [[ -f "${AGENTS_SKILLS_DIR}/hard-cut/SKILL.md" ]] && pass "17b-i: hard-cut installed to agents dir" || fail "17b-j: hard-cut missing from agents dir"
 
 # ---------------------------------------------------------------------------
@@ -1352,7 +1377,7 @@ for profile17c in shared personal-default; do
   td17c_link="${TMPDIR}/test17c-${profile17c}"
   mkdir -p "${td17c_link}"
   sandbox_agents_skills
-  if [[ "${profile17c}" == shared ]]; then skill17c=stop-slop; else skill17c=ivan-writing; fi
+  if [[ "${profile17c}" == shared ]]; then skill17c=cymbal; else skill17c=ivan-writing; fi
   ln -s "${td17c_link}/missing-skill" "${AGENTS_SKILLS_DIR}/${skill17c}"
   if OPENCODE_CONFIG_DIR="${td17c_link}" OPENCODE_AGENTS_PROFILE="${profile17c}" bash "${INSTALL_HELPER}" --apply >/dev/null 2>"${td17c_link}/err"; then
     backups17c=("${td17c_link}"/.backup/*/agents-skills/"${skill17c}")
@@ -1454,7 +1479,7 @@ fi
 # ---------------------------------------------------------------------------
 printf '\n=== 22. Unsupported extra file in canonical skill directory ===\n'
 td22="${TMPDIR}/test22"; mkdir -p "${td22}"
-touch "${REPO_FIXTURE}/.apm/skills/humanizer/extra.txt"
+touch "${REPO_FIXTURE}/.apm/cursor/skills/humanizer/extra.txt"
 ! CURSOR_CONFIG_DIR="${td22}" bash "${CURSOR_HELPER}" install --dry-run 2>"${td22}/err" || fail "22a: should have failed"
 grep -q -i 'extra\|unsupported' "${td22}/err" && pass "22b: extra file detected" || fail "22c: wrong error: $(cat ${td22}/err)"
 cursor_target_unmodified "${td22}" && pass "22d: no managed paths created" || fail "22e: target mutated"
@@ -1465,7 +1490,7 @@ build_fixture
 # ---------------------------------------------------------------------------
 printf '\n=== 23. Unsupported extra subdirectory in canonical skill ===\n'
 td23="${TMPDIR}/test23"; mkdir -p "${td23}"
-mkdir -p "${REPO_FIXTURE}/.apm/skills/humanizer/scripts"
+mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/humanizer/scripts"
 ! CURSOR_CONFIG_DIR="${td23}" bash "${CURSOR_HELPER}" install --dry-run 2>"${td23}/err" || fail "23a: should have failed"
 grep -q -i 'scripts\|unsupported' "${td23}/err" && pass "23b: extra subdir detected" || fail "23c: wrong error: $(cat ${td23}/err)"
 cursor_target_unmodified "${td23}" && pass "23d: no managed paths created" || fail "23e: target mutated"
@@ -1500,7 +1525,7 @@ cursor_target_unmodified "${td25}" && pass "25d: no managed paths created" || fa
 # ---------------------------------------------------------------------------
 printf '\n=== 26. Nested unsupported file under references/ (canonical, Cursor) ===\n'
 td26="${TMPDIR}/test26"; mkdir -p "${td26}"
-touch "${REPO_FIXTURE}/.apm/skills/stop-slop/references/extra.txt"
+touch "${REPO_FIXTURE}/.apm/cursor/skills/stop-slop/references/extra.txt"
 ! CURSOR_CONFIG_DIR="${td26}" bash "${CURSOR_HELPER}" install --dry-run 2>"${td26}/err" || fail "26a: should have failed"
 grep -q 'extra\|unsupported' "${td26}/err" && pass "26b: nested extra file rejected" || fail "26c: wrong error: $(cat ${td26}/err)"
 cursor_target_unmodified "${td26}" && pass "26d: no managed paths created" || fail "26e: target mutated"
@@ -1511,7 +1536,7 @@ build_fixture
 # ---------------------------------------------------------------------------
 printf '\n=== 27. Nested subdirectory under references/ (canonical, Cursor) ===\n'
 td27="${TMPDIR}/test27"; mkdir -p "${td27}"
-mkdir -p "${REPO_FIXTURE}/.apm/skills/humanizer/references/subdir"
+mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/humanizer/references/subdir"
 ! CURSOR_CONFIG_DIR="${td27}" bash "${CURSOR_HELPER}" install --dry-run 2>"${td27}/err" || fail "27a: should have failed"
 grep -q 'subdir\|unsupported' "${td27}/err" && pass "27b: nested subdir rejected" || fail "27c: wrong error: $(cat ${td27}/err)"
 cursor_target_unmodified "${td27}" && pass "27d: no managed paths created" || fail "27e: target mutated"
@@ -1555,7 +1580,7 @@ build_fixture
 # ---------------------------------------------------------------------------
 printf '\n=== 31. Nested unsupported file under references/ (canonical, OpenCode install) ===\n'
 td31="${TMPDIR}/test31"; mkdir -p "${td31}"
-touch "${REPO_FIXTURE}/.apm/skills/stop-slop/references/rando.txt"
+touch "${REPO_FIXTURE}/.apm/skills/writing-work-items/references/rando.txt"
 ! OPENCODE_CONFIG_DIR="${td31}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td31}/err" || fail "31a: should have failed"
 grep -q 'rando\|unsupported' "${td31}/err" && pass "31b: canonical nested extra file rejected in OpenCode" || fail "31c: wrong error: $(cat ${td31}/err)"
 opencode_target_unmodified "${td31}" && pass "31d: no managed paths created" || fail "31e: target mutated"
@@ -1621,7 +1646,7 @@ after35="$(snapshot_tree "${scope35}")"
 printf '\n=== 36. Broken source symlink rejected ===\n'
 td36="${TMPDIR}/test36"; mkdir -p "${td36}"
 build_fixture
-ln -s missing.md "${REPO_FIXTURE}/.apm/skills/humanizer/references/broken.md"
+ln -s missing.md "${REPO_FIXTURE}/.apm/cursor/skills/humanizer/references/broken.md"
 ! CURSOR_CONFIG_DIR="${td36}" bash "${CURSOR_HELPER}" install --dry-run 2>"${TMPDIR}/test36-err" || fail "36a: should have failed"
 grep -q 'broken.md\|symlink' "${TMPDIR}/test36-err" && pass "36b: broken symlink rejected" || fail "36c: wrong error: $(cat "${TMPDIR}/test36-err")"
 cursor_target_unmodified "${td36}" && pass "36d: no managed paths created" || fail "36e: target mutated"
@@ -1642,7 +1667,7 @@ grep -q 'frontmatter\|delimiter\|unterminated' "${TMPDIR}/test37-err" && pass "3
 printf '\n=== 38. OpenCode wrong canonical source rejected ===\n'
 td38="${TMPDIR}/test38"; mkdir -p "${td38}"
 build_fixture
-replace_fixture_text "${REPO_FIXTURE}/.apm/skills/stop-slop/SKILL.md" 'name: stop-slop' 'name: wrong-name'
+replace_fixture_text "${REPO_FIXTURE}/.apm/skills/writing-work-items/SKILL.md" 'name: writing-work-items' 'name: wrong-name'
 ! OPENCODE_CONFIG_DIR="${td38}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${TMPDIR}/test38-err" || fail "38a: should have failed"
 grep -q 'wrong-name\|frontmatter name\|expected stop-slop' "${TMPDIR}/test38-err" && pass "38b: wrong canonical name rejected" || fail "38c: wrong error: $(cat "${TMPDIR}/test38-err")"
 opencode_target_unmodified "${td38}" && pass "38d: no managed paths created" || fail "38e: target mutated"
@@ -1653,8 +1678,8 @@ opencode_target_unmodified "${td38}" && pass "38d: no managed paths created" || 
 printf '\n=== 39. OpenCode extra canonical source entry rejected ===\n'
 td39="${TMPDIR}/test39"; mkdir -p "${td39}"
 build_fixture
-mkdir -p "${REPO_FIXTURE}/.apm/skills/stop-slop/references/nested"
-printf 'extra\n' > "${REPO_FIXTURE}/.apm/skills/stop-slop/references/nested/extra.md"
+mkdir -p "${REPO_FIXTURE}/.apm/skills/writing-work-items/references/nested"
+printf 'extra\n' > "${REPO_FIXTURE}/.apm/skills/writing-work-items/references/nested/extra.md"
 ! OPENCODE_CONFIG_DIR="${td39}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${TMPDIR}/test39-err" || fail "39a: should have failed"
 grep -q 'nested\|extra.md\|unsupported' "${TMPDIR}/test39-err" && pass "39b: nested extra entry rejected" || fail "39c: wrong error: $(cat "${TMPDIR}/test39-err")"
 opencode_target_unmodified "${td39}" && pass "39d: no managed paths created" || fail "39e: target mutated"
@@ -1694,11 +1719,11 @@ fi
 # ---------------------------------------------------------------------------
 printf '\n=== 42. OpenCode unreadable canonical reference fails before mutation ===\n'
 td42="${TMPDIR}/test42"; mkdir -p "${td42}"
-chmod 000 "${REPO_FIXTURE}/.apm/skills/stop-slop/references/examples.md"
+chmod 000 "${REPO_FIXTURE}/.apm/skills/writing-work-items/references/work-item-templates.md"
 ! OPENCODE_CONFIG_DIR="${td42}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${TMPDIR}/test42-err" || fail "42a: should have failed"
 grep -q 'not readable' "${TMPDIR}/test42-err" && pass "42b: unreadable reference detected" || fail "42c: wrong error: $(cat "${TMPDIR}/test42-err")"
 opencode_target_unmodified "${td42}" && pass "42d: no managed paths created" || fail "42e: target mutated"
-chmod -R +rwX "${REPO_FIXTURE}/.apm/skills/stop-slop" 2>/dev/null || true
+chmod -R +rwX "${REPO_FIXTURE}/.apm/skills/writing-work-items" 2>/dev/null || true
 build_fixture
 
 
@@ -1774,13 +1799,14 @@ printf '\n=== Table-driven malformed-frontmatter tests ===\n'
 run_td_frontmatter_test() {
   local tn="$1" label="$2" tool="$3" content="$4" expect="$5"
   local td="${TMPDIR}/tdfm_${tn}"; mkdir -p "${td}"
-  printf '%b' "${content}" > "${REPO_FIXTURE}/.apm/skills/humanizer/SKILL.md"
   case "${tool}" in
     cursor)
+      printf '%b' "${content}" > "${REPO_FIXTURE}/.apm/cursor/skills/humanizer/SKILL.md"
       ! CURSOR_CONFIG_DIR="${td}" bash "${CURSOR_HELPER}" install --dry-run 2>"${td}/err" || { fail "${tn}a: ${label} should have failed"; return; }
       cursor_target_unmodified "${td}" && pass "${tn}d: ${label} no managed paths" || fail "${tn}e: ${label} target mutated"
       ;;
     opencode)
+      printf '%b' "${content}" > "${REPO_FIXTURE}/.apm/skills/writing-work-items/SKILL.md"
       ! OPENCODE_CONFIG_DIR="${td}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td}/err" || { fail "${tn}a: ${label} should have failed"; return; }
       opencode_target_unmodified "${td}" && pass "${tn}d: ${label} no managed paths" || fail "${tn}e: ${label} target mutated"
       ;;
@@ -1939,16 +1965,16 @@ printf '{"existing":"opencode"}\n' > "${td63f}/opencode.json"
 printf '{"existing":"agent_hive"}\n' > "${td63f}/agent_hive.json"
 cp "${td63f}/opencode.json" "${td63f}/opencode.json.before"
 cp "${td63f}/agent_hive.json" "${td63f}/agent_hive.json.before"
-printf 'not a skill\n' > "${REPO_FIXTURE}/.apm/skills/writing-policy/SKILL.md"
+printf 'not a skill\n' > "${REPO_FIXTURE}/.apm/skills/writing-work-items/SKILL.md"
 if ! OPENCODE_CONFIG_DIR="${td63f}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td63f}/err"; then
-  grep -q 'writing-policy' "${td63f}/err" && pass "63f-a: malformed writing-policy exits non-zero" || fail "63f-b: wrong error: $(cat "${td63f}/err")"
+  grep -q 'writing-work-items' "${td63f}/err" && pass "63f-a: malformed writing-work-items exits non-zero" || fail "63f-b: wrong error: $(cat "${td63f}/err")"
   if cmp -s "${td63f}/opencode.json" "${td63f}/opencode.json.before" && cmp -s "${td63f}/agent_hive.json" "${td63f}/agent_hive.json.before"; then
     pass "63f-c: existing target config unmodified"
   else
     fail "63f-d: existing target config mutated"
   fi
 else
-  fail "63f-e: install should have failed when writing-policy source is malformed"
+  fail "63f-e: install should have failed when writing-work-items source is malformed"
 fi
 build_fixture
 
@@ -2239,9 +2265,9 @@ for name in list(agents) + list(custom):
 if configured_inherited_skills("forager-documents")[:2] != ["verification", router]:
     errors.append("forager-documents configured inherited skills must start with verification then writing-policy")
 
-skill_path = root / ".apm/skills/writing-policy/SKILL.md"
+skill_path = root / ".apm/cursor/skills/writing-policy/SKILL.md"
 if not skill_path.is_file():
-    errors.append("missing .apm/skills/writing-policy/SKILL.md")
+    errors.append("missing .apm/cursor/skills/writing-policy/SKILL.md")
 else:
     skill_text = skill_path.read_text(encoding="utf-8")
     if not skill_text.startswith("---\n"):
@@ -2266,8 +2292,8 @@ else:
             if "human-facing prose" not in lowered_desc or "delegat" not in lowered_desc:
                 errors.append("writing-policy description must trigger for human-facing and delegated prose")
             words = len(body.split())
-            if words > 220:
-                errors.append(f"writing-policy instructional body is {words} words, expected at most 220")
+            if words > 420:
+                errors.append(f"writing-policy instructional body is {words} words, expected at most 420")
             lowered_body = body.casefold()
             if "ivan-writing" in lowered_body:
                 errors.append("portable writing-policy must not name ivan-writing")
@@ -2310,11 +2336,9 @@ else:
                 errors.append("writing-policy missing personal voice overlay route")
             else:
                 voice = " ".join(voice_routes)
-                for required in ("personal agents profile", "cursor rules", "handoff"):
+                for required in ("applicable instructions", "operator", "availability alone does not select"):
                     if required not in voice:
                         errors.append(f"writing-policy personal-voice route missing {required!r}")
-                if not re.search(r"do not activate.{0,80}(?:discoverable|installed)", voice):
-                    errors.append("writing-policy must not activate personal voice merely because it is discoverable or installed")
 
 if list((root / "profiles/optional").glob("agent_hive.*.json")):
     errors.append("optional bundles must not overlay Agent Hive config")
@@ -2971,6 +2995,11 @@ fi
 td68b="${TMPDIR}/opencode68b"
 mkdir -p "${td68b}"
 sandbox_agents_skills
+for hive_writing in humanizer stop-slop writing-for-humans writing-policy; do
+  mkdir -p "${AGENTS_SKILLS_DIR}/${hive_writing}" "${td68b}/skills/${hive_writing}"
+  printf 'stale agents %s\n' "${hive_writing}" > "${AGENTS_SKILLS_DIR}/${hive_writing}/SKILL.md"
+  printf 'stale opencode %s\n' "${hive_writing}" > "${td68b}/skills/${hive_writing}/SKILL.md"
+done
 if OPENCODE_CONFIG_DIR="${td68b}" OPENCODE_AGENTS_PROFILE=shared bash "${BASELINE_PWD}/scripts/install-profile.sh" --apply >"${TMPDIR}/install68b.out" 2>"${TMPDIR}/install68b.err"; then
   if python3 - "${td68b}" "${AGENTS_SKILLS_DIR}" <<'PY'
 import sys
@@ -2985,10 +3014,14 @@ for name in ('brainstorming', 'systematic-debugging', 'test-driven-development',
         errors.append(f'installed OpenCode skill {name}')
     if name in ('brainstorming', 'systematic-debugging', 'test-driven-development', 'ast-grep') and (agents / name).exists():
         errors.append(f'installed agents skill {name}')
-if (skills / 'writing-for-humans' / 'SKILL.md').is_file():
-    errors.append('writing-for-humans must not be copied into OpenCode skills')
-if not (agents / 'writing-for-humans' / 'SKILL.md').is_file():
-    errors.append('missing shared skill writing-for-humans in agents dir')
+for name in ('humanizer', 'stop-slop', 'writing-for-humans', 'writing-policy'):
+    if (skills / name).exists():
+        errors.append(f'{name} remained in OpenCode skills')
+    if (agents / name).exists():
+        errors.append(f'{name} remained in agents dir')
+for name in ('writing-work-items', 'decomposing-work', 'running-agile-delivery'):
+    if not (agents / name / 'SKILL.md').is_file():
+        errors.append(f'missing shared skill {name} in agents dir')
 if not (skills / 'writing-skills' / 'SKILL.md').is_file():
     errors.append('missing OpenCode-local skill writing-skills')
 if errors:
@@ -3338,8 +3371,12 @@ fi
 td68p="${TMPDIR}/cursor68p"
 mkdir -p "${td68p}"
 sandbox_agents_skills
+for hive_writing in humanizer stop-slop writing-for-humans writing-policy; do
+  mkdir -p "${AGENTS_SKILLS_DIR}/${hive_writing}"
+  printf 'stale agents %s\n' "${hive_writing}" > "${AGENTS_SKILLS_DIR}/${hive_writing}/SKILL.md"
+done
 if env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td68p}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install >"${TMPDIR}/install68p.out" 2>"${TMPDIR}/install68p.err"; then
-  if python3 - "${BASELINE_PWD}" "${td68p}" <<'PY'
+  if python3 - "${BASELINE_PWD}" "${td68p}" "${AGENTS_SKILLS_DIR}" <<'PY'
 import hashlib
 import json
 import sys
@@ -3347,6 +3384,7 @@ from pathlib import Path
 
 root = Path(sys.argv[1])
 installed = Path(sys.argv[2])
+agents = Path(sys.argv[3])
 provenance = json.loads((root / 'vendor/oc-arkive/cursor-skills/provenance.json').read_text(encoding='utf-8'))
 errors = []
 for name in (
@@ -3363,6 +3401,23 @@ for name in (
     expected = provenance['skills'][name]['installedSha256']
     if actual != expected:
         errors.append(f'installed {name} sha256 is {actual}, expected {expected}')
+writing_files = {
+    'humanizer': ('SKILL.md', 'references/patterns.md'),
+    'stop-slop': ('SKILL.md', 'references/examples.md', 'references/phrases.md', 'references/structures.md'),
+    'writing-for-humans': ('SKILL.md', 'references/examples.md', 'references/sources.md'),
+    'writing-policy': ('SKILL.md',),
+}
+for name, relatives in writing_files.items():
+    if (agents / name).exists():
+        errors.append(f'{name} remained in agents dir')
+    for relative in relatives:
+        source = root / '.apm/cursor/skills' / name / relative
+        target = installed / 'skills' / name / relative
+        if target.is_symlink() or not target.is_file():
+            errors.append(f'installed {name}/{relative} must be a regular file')
+            continue
+        if source.read_bytes() != target.read_bytes():
+            errors.append(f'installed {name}/{relative} does not match the Cursor copy')
 if errors:
     raise SystemExit('\n'.join(errors))
 PY

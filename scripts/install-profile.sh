@@ -52,21 +52,23 @@ SHARED_SKILLS=(
   drawio-skill
   frontend-slides
   hard-cut
-  humanizer
   react-best-practices
   resume-tailoring
   running-agile-delivery
   stop-design-slop
-  stop-slop
   web-design-guidelines
-  writing-for-humans
-  writing-policy
   writing-work-items
 )
 SHARED_RETIRED_SKILLS=(
   working-with-atlassian
   managing-work-in-jira
   connecting-atlassian-tools
+)
+HIVE_WRITING_SKILLS=(
+  humanizer
+  stop-slop
+  writing-for-humans
+  writing-policy
 )
 HIVE_OWNED_SKILLS=(
   adversarial-review
@@ -422,10 +424,6 @@ validate_skill_source() {
 }
 
 validate_skill_source "${REPO_ROOT}/.apm/skills/decomposing-work" decomposing-work ".apm/skills/decomposing-work" "SKILL.md" "decomposition-example.md" || exit 1
-validate_skill_source "${REPO_ROOT}/.apm/skills/humanizer" humanizer ".apm/skills/humanizer" "SKILL.md" "patterns.md" || exit 1
-validate_skill_source "${REPO_ROOT}/.apm/skills/stop-slop" stop-slop ".apm/skills/stop-slop" "SKILL.md README.md LICENSE" "examples.md phrases.md structures.md" || exit 1
-validate_skill_source "${REPO_ROOT}/.apm/skills/writing-for-humans" writing-for-humans ".apm/skills/writing-for-humans" "SKILL.md" "examples.md sources.md" || exit 1
-validate_skill_source "${REPO_ROOT}/.apm/skills/writing-policy" writing-policy ".apm/skills/writing-policy" "SKILL.md" "" || exit 1
 validate_skill_source "${REPO_ROOT}/.apm/skills/writing-work-items" writing-work-items ".apm/skills/writing-work-items" "SKILL.md" "work-item-templates.md" || exit 1
 case "${AGENTS_PROFILE}" in
   personal-default|personal-context-improved)
@@ -605,6 +603,13 @@ for skill_name in "${SHARED_RETIRED_SKILLS[@]}"; do
     backup_agents_skill "${skill_name}"
     rm -rf -- "${AGENTS_SKILLS_DIR}/${skill_name}"
   fi
+done
+for skill_name in "${HIVE_WRITING_SKILLS[@]}"; do
+  if [[ -e "${AGENTS_SKILLS_DIR}/${skill_name}" || -L "${AGENTS_SKILLS_DIR}/${skill_name}" ]]; then
+    backup_agents_skill "${skill_name}"
+    rm -rf -- "${AGENTS_SKILLS_DIR}/${skill_name}"
+  fi
+  rm -rf -- "${TARGET_DIR}/skills/${skill_name}"
 done
 for skill_name in "${HIVE_OWNED_SKILLS[@]}" "${OPENCODE_RETIRED_SKILLS[@]}"; do
   rm -rf -- "${TARGET_DIR}/skills/${skill_name}"

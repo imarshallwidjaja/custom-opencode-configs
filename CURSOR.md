@@ -12,8 +12,8 @@ The selected Cursor asset root contains:
 
 - six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, and `simplicity-reviewer`
 - eight installed commands: seven Cursor-specific commands (`compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`) plus the shared canonical `reflect`
-- eight managed Cursor skills installed into Cursor `skills/`: `agents-md-mastery`, `brainstorming`, `finishing-a-development-branch`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, and `verification`
-- sixteen shared canonical skills consumed from `.apm/skills/` and installed into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: `aero-design`, `cymbal`, `decomposing-work`, `drawio-skill`, `frontend-slides`, `hard-cut`, `humanizer`, `react-best-practices`, `resume-tailoring`, `running-agile-delivery`, `stop-design-slop`, `stop-slop`, `web-design-guidelines`, `writing-for-humans`, `writing-policy`, and `writing-work-items`
+- twelve managed Cursor skills installed into Cursor `skills/`: `agents-md-mastery`, `brainstorming`, `finishing-a-development-branch`, `humanizer`, `stop-slop`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, `verification`, `writing-for-humans`, and `writing-policy`
+- twelve shared canonical skills consumed from `.apm/skills/` and installed into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: `aero-design`, `cymbal`, `decomposing-work`, `drawio-skill`, `frontend-slides`, `hard-cut`, `react-best-practices`, `resume-tailoring`, `running-agile-delivery`, `stop-design-slop`, `web-design-guidelines`, and `writing-work-items`
 - optional personal skill `ivan-writing` installed into the agents dir when `CURSOR_INSTALL_IVAN_WRITING=1` is set
 - one composed default-Agent Rules payload: `rules/default-agent.md`, one separator, and the provenance-pinned Engineering Judgment snapshot under `vendor/oc-arkive/engineering-judgment/`
 
@@ -46,7 +46,7 @@ The target defaults to `~/.cursor`. For inspection, set `CURSOR_CONFIG_DIR` to a
 - Accepted values: unset/empty (opt-out, no personal skill) and exact `1` (opt-in). Any other value (0, false, 2, etc.) fails before install or dry-run starts.
 - When opt-in installs `ivan-writing`, the helper writes a hidden marker file `ivan-writing/.cursor-managed` inside the agents-dir skill directory and backs up and removes a leftover Cursor `skills/ivan-writing` the same way it strips stale canonical copies.
 - On later opt-out (CURSOR_INSTALL_IVAN_WRITING unset), the helper backs up and removes the agents-dir `ivan-writing` only when that `.cursor-managed` marker exists, and also backs up and removes a Cursor `skills/ivan-writing` that still has `.cursor-managed`. If no marker exists, an existing `ivan-writing` directory is left untouched. A deleted-then-recreated user-owned directory is preserved.
-- Cursor and OpenCode also scan `~/.claude/skills`, so shared skills must not be left there either.
+- Cursor and OpenCode also scan `~/.claude/skills`, so shared skills must not be left there either. A leftover `humanizer`, `stop-slop`, `writing-for-humans`, or `writing-policy` in `~/.claude/skills` still shadows Hive's bundle and is not removed by either installer.
 - Dry-run describes those Cursor-dir backup and remove or preserve actions when they apply, and the expected agents-dir managed removal when the in-directory marker exists.
 
 ## Windows Cursor With WSL Projects
@@ -118,6 +118,8 @@ Engineering Judgment:
 ```
 
 Shared Cursor copies of `brainstorming`, `systematic-debugging`, `test-driven-development`, and `verification` record their Agent Hive source pin and installed hashes. The installed copies include Cursor-runtime adaptations; `brainstorming`, `systematic-debugging`, and `verification` also carry local request-scope and verification repairs. A sync regenerates these files, so review and preserve those local repairs before accepting its diff. `agents-md-mastery` remains the Cursor-specific adaptation and is not overwritten from Hive.
+
+`humanizer`, `stop-slop`, `writing-for-humans`, and `writing-policy` are Cursor copies of the Hive writing skills. The source for each is `packages/opencode-hive/skills/<name>/` at commit `1326cfa9711b9cd266d58239e6ddd014cc0efe2a` (package version 4.0.0 in that checkout). The tracked copy is `SKILL.md` plus `references/` when that directory exists. `HIVE_WRITING_SKILLS` in `scripts/install-profile.sh` and `scripts/cursor-assets.sh` names these four. They stay outside `vendor/oc-arkive/cursor-skills/provenance.json` and outside `VENDORED_SKILLS` in `scripts/sync-cursor-hive-skills.py`, which regenerates only `brainstorming`, `systematic-debugging`, `test-driven-development`, and `verification`. OpenCode loads Hive's copies. A same-name skill in `~/.agents/skills`, `~/.config/opencode/skills`, or `~/.claude/skills` makes OpenCode skip the Hive bundle. The OpenCode installer backs these four up and removes them from the agents skills directory, and deletes them from the OpenCode config `skills/` directory. The Cursor installer installs them only into the Cursor config `skills/` directory and backs up and removes leftover agents-dir copies. A leftover in `~/.claude/skills` still shadows Hive and is not removed.
 
 ```bash
 ./scripts/sync-cursor-hive-skills.py \
