@@ -33,6 +33,8 @@ Before releasing draft text, compare it to the source material for:
 - **Metrics, dates, and ordering:** If the source says "after A, we did B", do not reorder into "we did B, and then A". If the source gives no numbers, do not invent them.
 - **Required detail:** If the source names a specific technology ("Postgres"), keep it. If the source only says "database", do not upgrade to a named product.
 
+The comparison is between claims. A scope limit is preserved when the draft states what the thing covers or where an excluded capability lives; the Boundaries and alternatives section of `writing-for-humans` decides which exclusions stay and in what form.
+
 Fix every mismatch before output. If a claim cannot be sourced to the input, remove or flag it rather than leaving an unsupported statement.
 
 ## Anti-Patterns
