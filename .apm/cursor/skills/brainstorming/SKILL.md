@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "Use before creative work such as creating features, building components, adding functionality, or modifying behavior."
+description: Use when starting creative work such as creating features, building components, adding functionality, or modifying behavior.
 ---
 
 # Brainstorming Ideas Into Designs
@@ -11,9 +11,20 @@ Understand the project context, desired behavior, constraints, and observable ac
 
 ## Choose The Path
 
-For a clear, authorized feature request or concrete corrective feedback, proceed with the smallest coherent implementation through the applicable execution workflow. Do not add a readiness prompt, design approval, or planning handoff by default.
+For a clear, authorized feature request, proceed with the smallest coherent implementation through the applicable execution workflow. Do not add a readiness prompt, design approval, or planning handoff by default.
 
-Ask one targeted question when a material ambiguity affects correctness, safety, data scope, persistence, UX, or a public contract. Pause the affected decision until it is resolved; do not guess. Continue independent authorized preparation when safe.
+Skip brainstorming dialogue only when corrective feedback names all four of these:
+
+- the wrong behavior
+- the desired behavior
+- the affected artifact
+- the correction direction
+
+Bare bug reports and vague feature requests do not qualify. If the operator asks to explore alternatives, discuss the change, or design it, keep the work exploratory even when the feedback names all four.
+
+When the feedback qualifies, skip ordinary refinement questions, competing approaches, and section-by-section design checks. Keep applicable project-context review, isolation, testing, and verification. Handoff prompts still follow After The Design.
+
+Ask one targeted question when a material ambiguity affects correctness, safety, data scope, persistence, UX, or a public contract. Pause the affected decision until it is resolved. Do not guess. If qualifying feedback still has that ambiguity and the question is unanswered, stop rather than entering ordinary brainstorming. Continue independent authorized preparation when safe.
 
 When the user asks to explore, discuss, or design, keep the work exploratory. Reading this skill does not authorize implementation of an advice-only request.
 
