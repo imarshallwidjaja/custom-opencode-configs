@@ -17,10 +17,10 @@ Interview rules:
 - Focus on the highest-ambiguity, highest-risk, and highest-value questions first.
 - Prefer 2-4 concise options with useful descriptions when offering choices. Put your recommended option first when there is a sensible default, and leave room for custom input when the options are incomplete.
 - Base each next question on what you just learned. Skip questions whose answers are already obvious.
-- Keep the interview tight and decision-oriented. Usually 4-7 questions is enough. Do not ask more than 8 questions unless the operator explicitly wants a deeper interview.
+- Keep the interview decision-oriented. No fixed question cap applies.
 - After each answer, reply with a short running summary covering what is now decided, what constraints are clear, and what still needs clarification.
+- Stop when no unresolved item could materially change the implementation handoff.
 - If the operator supplied goals or requirements in runtime arguments, treat them as steering context for the interview rather than repeating them mechanically.
-- If there are no more useful high-value questions, conclude the interview immediately.
 
 Prioritize collecting:
 
@@ -36,7 +36,7 @@ Prioritize collecting:
 
 Use the current session as source of truth for any already-established technical context. If the session already contains relevant repo findings, capture them accurately. If it does not, clearly mark codebase details as "needs validation" rather than guessing.
 
-Stop the interview when you have enough information to produce a useful clarified brief and a sensible next step.
+When implementation planning is the next step, end with brief-ready context for a separate `/implementation-brief`. Do not write that brief.
 
 At the end, output all of the following:
 

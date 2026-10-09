@@ -47,6 +47,8 @@ Ask each councillor to return:
 - assumptions and unknowns
 - recommended next step
 
+Scout-derived seats return evidence, unknowns, and contradictions; a missing Scout verdict is not agreement.
+
 If `include` names too many councillors, trim to the smallest useful set for synthesis, usually 3-4 seats, without violating the operator's requested member list.
 
 After all councillors respond, synthesize the result yourself.

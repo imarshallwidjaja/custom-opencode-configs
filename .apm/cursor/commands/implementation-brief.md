@@ -1,5 +1,7 @@
 Turn the current exploration in this session into a generic implementation-planning brief that the operator can pass to a planning agent or use in a follow-up planning session.
 
+When this session already contains interview output, consume that handoff and do not restart the interview.
+
 Use the live codebase as source of truth, not just prior notes. Revalidate the current code paths, references, and assumptions first.
 
 This command is read-only. Do not write code, mutate files, change settings, create or switch branches, update planning state, or modify any other durable project state.
