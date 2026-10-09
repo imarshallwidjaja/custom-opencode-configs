@@ -14,9 +14,12 @@ Read the target until you can say what is under review and which behavior, contr
 
 Launch terminal reviewers in a fresh Cursor subagent session. You launch every session. A reviewer returns its result to you and does not launch further subagents.
 
-- When the target is an implementation candidate, launch `code-reviewer` and `simplicity-reviewer`.
-- When the question is which approach to take, launch `approach-advisor`.
-- When the question is whether a plan is ready, launch `plan-reviewer`.
+A vulnerability-only request still belongs to `/vuln-review`. For every other request, choose the smallest useful reviewer set. Do not skip a reviewer the operator named, including `vulnerability-reviewer`.
+
+- When the operator names the reviewers, launch each named reviewer.
+- When the operator names no reviewer and the target is an implementation candidate, launch `code-reviewer` and `simplicity-reviewer`.
+- When the operator names no reviewer and the question is which approach to take, launch `approach-advisor`.
+- When the operator names no reviewer and the question is whether a plan is ready, launch `plan-reviewer`.
 
 Give each reviewer the resolved target, the question it owns, known constraints, and this contract:
 

@@ -558,6 +558,7 @@ def validate(rule, skill, agents, docs):
         "plan-reviewer": (("read-only",), ("plan",), ("readiness", "ready"), ("requested", "artifact")),
         "code-reviewer": (("read-only",), ("completed",), ("correctness",), ("risk", "regression")),
         "simplicity-reviewer": (("read-only",), ("final", "completed"), ("yagni", "unnecessary complexity"), ("dead code",), ("proportional",)),
+        "vulnerability-reviewer": (("read-only",), ("vulnerability",), ("operator-requested", "operator requested"), ("scope",)),
     }
     for name, groups in route_contracts.items():
         require_terms(errors, f"{name} route", route(routing, name), groups)
@@ -569,8 +570,23 @@ def validate(rule, skill, agents, docs):
         "true write isolation", "worktree", ("isolated project copy", "separate project copy"),
         ("cloud environment", "separate working directory"),
     ))
-    if not re.search(r"shared checkout.{0,160}(?:disjoint|non-overlapping).{0,100}(?:serial|one writing lane)", isolation_text, re.DOTALL):
-        errors.append("shared-checkout writers are not constrained to disjoint ownership or serial execution")
+    if not re.search(
+        r"parallel (?:writing )?(?:lanes?|writers?).{0,200}(?:separate )?(?:git )?worktree(?: or |, or |/)isolated (?:project )?copy",
+        isolation_text,
+        re.DOTALL,
+    ):
+        errors.append("parallel writers are not required to use a separate worktree or isolated copy")
+    if re.search(
+        r"(?:"
+        r"shared checkout.{0,180}(?:disjoint|non-overlapping).{0,120}(?:serial|one writing lane|together|may share|may use)"
+        r"|(?:disjoint|non-overlapping) (?:paths?|ownership|writing lanes?).{0,140}(?:one writing lane|run serially|shared checkout|together)"
+        r"|two writers?.{0,60}(?:may|can).{0,80}(?:share|use).{0,80}(?:one |the )?(?:shared )?checkout.{0,80}disjoint"
+        r"|one writing lane per owned path"
+        r")",
+        isolation_text,
+        re.DOTALL,
+    ):
+        errors.append("two writers may share one checkout on disjoint paths")
     if re.search(r"(?:git )?branch (?:isolates? files|provides? (?:file isolation|true write isolation))", isolation_text, re.DOTALL):
         errors.append("a Git branch is incorrectly described as file isolation")
 
@@ -655,6 +671,7 @@ rule = load(".apm/cursor/rules/default-agent.md")
 skill = load(".apm/cursor/skills/subagent-delegation/SKILL.md")
 agents = {name: load(f".apm/cursor/agents/{name}.md") for name in (
     "scout", "forager", "approach-advisor", "plan-reviewer", "code-reviewer", "simplicity-reviewer",
+    "vulnerability-reviewer",
 )}
 docs = {name: load(name) for name in ("README.md", "CURSOR.md", "FOR-LLM-AGENTS.md", ".apm/cursor/README.md")}
 

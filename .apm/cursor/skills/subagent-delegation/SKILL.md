@@ -21,10 +21,10 @@ Execute the default Agent Rules' delegation-first policy with named Cursor subag
 ## Scheduling Rules
 
 - Launch independent read-only seats in one message. A later seat waits only when it needs an earlier result. Blocking does not mean serial.
-- Run disjoint writing lanes together only when they do not share writable files, state, migrations, generated outputs, or a live runtime.
-- Separate context is not filesystem isolation. Cursor children share the checkout unless the parent gives them a separate working directory.
-- In a shared checkout, writers with disjoint paths use one writing lane per owned path.
-- Overlapping writers use a git worktree or isolated copy. If that copy cannot be created, report the blocker. Do not silently write a shared checkout another writer occupies.
+- Separate context is not filesystem isolation. A Git branch does not isolate files.
+- Parallel writing lanes each get their own git worktree or isolated copy. One writer may use the shared checkout when no other writer is active. If a separate placement cannot be created, report the blocker. Do not put two writers in one checkout, even on disjoint paths.
+- Direct shared-checkout edits remain valid for a single writer: an explicit request to continue existing uncommitted work, a small mechanical edit on a clean tree with no other writer, or work already inside the isolated directory.
+- Shared state, migrations, generated outputs, and a live runtime keep one owner or sequenced access. Separate worktrees do not isolate them.
 
 ## Lane Prompt Requirements
 
@@ -58,8 +58,8 @@ For writing Cursor subagents or lanes, assign ownership up front:
 
 - Give each named Cursor subagent a separate self-contained prompt and explicit file ownership.
 - True write isolation requires a separate worktree, isolated project copy, cloud environment, or other separate working directory. A Git branch or separate assistant session does not isolate files.
-- Overlapping writers use a git worktree or isolated copy. If that copy cannot be created, report the blocker. Do not silently write a shared checkout another writer occupies.
-- Direct shared-checkout edits remain valid for an explicit operator request to continue existing uncommitted work, a small mechanical edit on a clean tree with no overlapping writer, or work already inside the isolated directory.
+- Parallel writing lanes each get their own git worktree or isolated copy. One writer may use the shared checkout when no other writer is active. If a separate placement cannot be created, report the blocker. Do not put two writers in one checkout, even on disjoint paths.
+- Direct shared-checkout edits remain valid for a single writer: an explicit request to continue existing uncommitted work, a small mechanical edit on a clean tree with no other writer, or work already inside the isolated directory.
 - Keep the parent as integration owner, responsible for reading final summaries, inspecting diffs, resolving conflicts, and running combined verification.
 
 ## Failure Handling
