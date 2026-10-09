@@ -15,27 +15,41 @@ AGENTS=(
   plan-reviewer
   scout
   simplicity-reviewer
+  vulnerability-reviewer
 )
 COMMANDS=(
   compact-summary
   council-directive
   council
+  dash-review
+  grill
   implementation-brief
   interview
   interview-drill-down
   planning-prompt
+  vuln-review
 )
 SKILLS=(
+  adversarial-review
   agents-md-mastery
   brainstorming
+  code-design-principles
+  complexity-audit
+  complexity-review
   finishing-a-development-branch
+  grilling
+  how
   humanizer
+  orchestrating-ad-hoc-work
+  parallel-exploration
+  pr-writing
   stop-slop
   subagent-delegation
   systematic-debugging
   test-driven-development
   using-git-worktrees
   verification
+  why
   writing-for-humans
   writing-policy
 )

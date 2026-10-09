@@ -88,7 +88,7 @@ SKILL
   mkdir -p "${REPO_FIXTURE}/.apm/cursor/agents" "${REPO_FIXTURE}/.apm/cursor/commands" "${REPO_FIXTURE}/.apm/cursor/skills" "${REPO_FIXTURE}/.apm/cursor/rules"
 
   # Cursor agents
-  for agent in approach-advisor code-reviewer forager plan-reviewer scout simplicity-reviewer; do
+  for agent in approach-advisor code-reviewer forager plan-reviewer scout simplicity-reviewer vulnerability-reviewer; do
     cat > "${REPO_FIXTURE}/.apm/cursor/agents/${agent}.md" <<AGENT
 ---
 name: ${agent}
@@ -101,7 +101,7 @@ AGENT
   done
 
   # Cursor commands
-  for cmd in compact-summary council-directive council implementation-brief interview interview-drill-down planning-prompt; do
+  for cmd in compact-summary council-directive council dash-review grill implementation-brief interview interview-drill-down planning-prompt vuln-review; do
     echo "# ${cmd}" > "${REPO_FIXTURE}/.apm/cursor/commands/${cmd}.md"
   done
 
@@ -152,7 +152,7 @@ provenance = {
 PY
 
   # Cursor skills
-  for skill in agents-md-mastery brainstorming finishing-a-development-branch humanizer stop-slop subagent-delegation systematic-debugging test-driven-development using-git-worktrees verification writing-for-humans writing-policy; do
+  for skill in adversarial-review agents-md-mastery brainstorming code-design-principles complexity-audit complexity-review finishing-a-development-branch grilling how humanizer orchestrating-ad-hoc-work parallel-exploration pr-writing stop-slop subagent-delegation systematic-debugging test-driven-development using-git-worktrees verification why writing-for-humans writing-policy; do
     mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/${skill}"
     cat > "${REPO_FIXTURE}/.apm/cursor/skills/${skill}/SKILL.md" <<SKILL
 ---
@@ -539,23 +539,12 @@ def validate(rule, skill, agents, docs):
     integration = section(skill, "Integration")
 
     require_terms(errors, "direct-work boundary", direct, (
-        ("up to one bounded read", "at most one bounded read"),
-        ("one bounded write or patch", "one bounded write/patch"),
-        ("one cheap focused check", "one cheap, focused check"),
+        "no exact-one-read or exact-one-write quota",
+        "bounded direct reads stay allowed",
+        "non-trivial implementation, test, debug, refactor, integration, and review stay delegate-first",
         ("coordination", "setup"),
         ("trivial conversation", "trivial conversational"),
     ))
-    for pattern, label in (
-        (r"(?:two|2)(?:\s+or more|\+)\s+reads", "2+ reads"),
-        (r"(?:two|2)(?:\s+or more|\+)\s+(?:writes|patches)", "2+ patches"),
-        (r"tests?.{0,30}(?:debug|loop)|(?:debug|test).{0,30}loops?", "test or debug loops"),
-        (r"material uncertainty", "material uncertainty"),
-        (r"multi-file", "multi-file work"),
-        (r"behavio(?:u)?r.{0,20}public[- ]contract", "behavior or public-contract changes"),
-        (r"implementation-level.{0,30}non-trivial verification", "implementation-level non-trivial verification"),
-    ):
-        if not re.search(pattern, direct, re.DOTALL):
-            errors.append(f"direct-work boundary is missing {label}")
     if not re.search(r"classification thresholds?.{0,100}(?:do not|don't).{0,80}(?:prevent|stop).{0,80}parent", direct, re.DOTALL):
         errors.append("direct-work boundary does not separate classification from parent integration duties")
     require_terms(errors, "direct-work parent integration duty", direct, (
@@ -2650,11 +2639,59 @@ PY
   else
     fail "67f: sync accepted interpolation or returned the wrong error"
   fi
+
+  git -C "${upstream67}" checkout -q -- packages/opencode-hive/src/agents/engineering-judgment.ts
+  python3 - "${upstream67}/packages/opencode-hive/src/agents/engineering-judgment.ts" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+path.write_text(
+    'export const ENGINEERING_JUDGMENT_PROMPT = `## Engineering Judgment\n\nLoad \\`code-design-principles\\`.\n`;\n',
+    encoding='utf-8',
+)
+PY
+  git -C "${upstream67}" add .
+  git -C "${upstream67}" -c user.name=Fixture -c user.email=fixture@example.test commit -qm escaped-backtick
+  if "${REPO_FIXTURE}/${sync_rel}" --source-repo "${upstream67}" --ref HEAD >"${TMPDIR}/sync67-backtick.out" 2>"${TMPDIR}/sync67-backtick.err" &&
+    python3 - "${REPO_FIXTURE}/${vendor_rel}" <<'PY'
+import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text(encoding='utf-8')
+if 'Load `code-design-principles`.' not in text or '\\`' in text:
+    raise SystemExit('vendored markdown did not contain a real backtick')
+PY
+  then
+    pass "67f2: sync unescapes a template backtick into the vendored markdown"
+  else
+    fail "67f2: sync did not unescape a template backtick: $(cat "${TMPDIR}/sync67-backtick.err")"
+  fi
+
+  python3 - "${upstream67}/packages/opencode-hive/src/agents/engineering-judgment.ts" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+path.write_text(
+    'export const ENGINEERING_JUDGMENT_PROMPT = `## Engineering Judgment\n\nLine\\nbreak.\n`;\n',
+    encoding='utf-8',
+)
+PY
+  git -C "${upstream67}" add .
+  git -C "${upstream67}" -c user.name=Fixture -c user.email=fixture@example.test commit -qm other-escape
+  if ! "${REPO_FIXTURE}/${sync_rel}" --source-repo "${upstream67}" --ref HEAD >"${TMPDIR}/sync67-escape.out" 2>"${TMPDIR}/sync67-escape.err" && grep -qi 'escape\|unsupported' "${TMPDIR}/sync67-escape.err"; then
+    pass "67f3: sync rejects an unsupported escape in the upstream prompt"
+  else
+    fail "67f3: sync accepted an unsupported escape or returned the wrong error"
+  fi
 else
   fail "67c: sync behavior unavailable"
   fail "67d: repeated sync behavior unavailable"
   fail "67e: Git replacement behavior unavailable"
   fail "67f: interpolation rejection unavailable"
+  fail "67f2: escaped backtick sync unavailable"
+  fail "67f3: unsupported escape rejection unavailable"
 fi
 
 for target67 in "${vendor_rel}" "${provenance_rel}"; do
@@ -2825,8 +2862,8 @@ from pathlib import Path
 
 root = Path(sys.argv[1])
 anchor = sys.argv[2]
-selected = {'forager', 'plan-reviewer', 'code-reviewer', 'simplicity-reviewer'}
-excluded = {'scout', 'approach-advisor'}
+selected = {'forager', 'plan-reviewer', 'code-reviewer', 'simplicity-reviewer', 'approach-advisor', 'vulnerability-reviewer'}
+excluded = {'scout'}
 errors = []
 for name in selected:
     text = (root / f'.apm/cursor/agents/{name}.md').read_text(encoding='utf-8')
@@ -2919,14 +2956,14 @@ for relative in docs:
     text = (root / relative).read_text(encoding='utf-8')
     lowered = text.casefold()
     required = (
-        ('provenance-pinned to oc-arkive 2.3.5', 'Engineering Judgment provenance pin'),
+        ('provenance-pinned to oc-arkive 4.0.0', 'Engineering Judgment provenance pin'),
         ('opencode receives engineering judgment from the installed plugin', 'OpenCode delivery'),
         ('cursor cannot load the plugin prompt directly', 'Cursor plugin limitation'),
     )
     for phrase, label in required:
         if phrase.casefold() not in lowered:
             errors.append(f'{relative} is missing {label}: {phrase}')
-    if 'oc-arkive@latest` is 2.3.5' in lowered or 'oc-arkive@latest is 2.3.5' in lowered:
+    if 'oc-arkive@latest` is 4.0.0' in lowered or 'oc-arkive@latest is 4.0.0' in lowered or 'oc-arkive@latest` is 2.3.5' in lowered or 'oc-arkive@latest is 2.3.5' in lowered:
         errors.append(f'{relative} still claims oc-arkive@latest equals a fixed version')
     for obsolete in ('2.3.4', 'postdates tag', 'does not contain engineering judgment', 'does not contain it'):
         if obsolete in lowered:
@@ -2935,8 +2972,8 @@ for relative in docs:
 vendor = root / 'vendor/oc-arkive/engineering-judgment/engineering-judgment.md'
 provenance = json.loads((vendor.parent / 'provenance.json').read_text(encoding='utf-8'))
 expected_release = {
-    'commit': 'caf2c7ab6e269495f8e2bed9eac7e0da7bb25d35',
-    'packageVersion': '2.3.5',
+    'commit': 'aa999dd89b3ab1073a2cf9dd83a802051e923f1e',
+    'packageVersion': '4.0.0',
 }
 for field, expected in expected_release.items():
     if provenance.get(field) != expected:

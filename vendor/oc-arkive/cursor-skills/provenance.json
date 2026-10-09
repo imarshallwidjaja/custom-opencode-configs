@@ -7,7 +7,7 @@
     "brainstorming": {
       "sourcePath": "packages/opencode-hive/skills/brainstorming/SKILL.md",
       "sourceSha256": "de2afa2ae9a629923f31cae39bb67f31bf2e7ef4b3752bc524333c7da939d506",
-      "installedSha256": "d7be3fdd2a65c714e866a4646d1c712fdf1ef84bb5e85c76633af4feb9501f28"
+      "installedSha256": "9868057a5cd3963eba3e5cf26eddbab11c15bd4d8bc470fa0d9679f1da84e58e"
     },
     "systematic-debugging": {
       "sourcePath": "packages/opencode-hive/skills/systematic-debugging/SKILL.md",
@@ -22,7 +22,7 @@
     "verification": {
       "sourcePath": "packages/opencode-hive/skills/verification/SKILL.md",
       "sourceSha256": "4c0920e0ea4e9208714529b41b0a68ecefca8e7286dfe4ac3870dba9e5d2fe7e",
-      "installedSha256": "4ccecbd3f94ef81a99a37af9f1c2499d505b8ef16b9fc5787d3b936a1549a761"
+      "installedSha256": "ad4ef5d3cd133a557d1d7579ae9a61f3b33a95ba01a6f5f637564eaba298e7c4"
     }
   }
 }

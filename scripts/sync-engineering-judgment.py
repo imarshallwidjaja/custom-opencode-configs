@@ -14,7 +14,7 @@ SOURCE_PATH = 'packages/opencode-hive/src/agents/engineering-judgment.ts'
 PACKAGE_PATH = 'packages/opencode-hive/package.json'
 VENDOR_DIRECTORY = Path('vendor/oc-arkive/engineering-judgment')
 PROMPT_PATTERN = re.compile(
-    r'export const ENGINEERING_JUDGMENT_PROMPT = `([^`]*)`;\n?',
+    r'export const ENGINEERING_JUDGMENT_PROMPT = `((?:\\`|[^`])*)`;\n?',
     re.DOTALL,
 )
 
@@ -75,8 +75,9 @@ def extract_prompt(source: str) -> str:
     body = match.group(1)
     if '${' in body:
         raise ValueError('unsupported interpolation in ENGINEERING_JUDGMENT_PROMPT')
-    if '\\' in body:
+    if re.search(r'\\(?!`)', body):
         raise ValueError('unsupported escape sequence in ENGINEERING_JUDGMENT_PROMPT')
+    body = body.replace('\\`', '`')
     if not body.startswith('## Engineering Judgment\n'):
         raise ValueError('ENGINEERING_JUDGMENT_PROMPT is missing its expected heading')
     return body.rstrip('\n') + '\n'

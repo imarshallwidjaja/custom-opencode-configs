@@ -2,7 +2,7 @@
 
 This repository ships a Cursor asset bundle whose default parent Agent uses Hive-Builder-like ad-hoc orchestration through Cursor-native named subagents. Delegation is the baseline for non-trivial work; the parent classifies and coordinates lanes, inspects results and diffs, runs combined verification and review, and owns synthesis and integration.
 
-This is a strong prompt policy, but Cursor routing is heuristic and not runtime-guaranteed. The bounded direct-work exception covers coordination, setup, trivial conversation, and at most one bounded read, one bounded write or patch, and one cheap focused check. Separate context does not isolate files in a shared checkout. Overlapping writers require explicit worktrees or isolated project copies; otherwise children must own disjoint paths or run serially.
+This is a strong prompt policy, but Cursor routing is heuristic and not runtime-guaranteed. The bounded direct-work exception covers coordination, setup, and trivial conversation. Bounded direct reads and cheap parent checks stay with the parent. Non-trivial implementation, test, debug, refactor, integration, and review stay delegated. Separate context does not isolate files in a shared checkout. Overlapping writers require explicit worktrees or isolated project copies; otherwise children must own disjoint paths or run serially.
 
 This is prompt-level behavior, not Agent Hive runtime parity. It has no Hive tools, state, task DAG, board, or worktree lifecycle, and it does not install `oc-arkive`, OpenCode commands, `opencode.json`, `agent_hive.json`, or an OpenCode `AGENTS.md` profile. Execution stays inside Cursor's own subagent, editor, terminal, project-copy, and Rules features.
 
@@ -10,9 +10,9 @@ This is prompt-level behavior, not Agent Hive runtime parity. It has no Hive too
 
 The selected Cursor asset root contains:
 
-- six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, and `simplicity-reviewer`
-- eight installed commands: seven Cursor-specific commands (`compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`) plus the shared canonical `reflect`
-- twelve managed Cursor skills installed into Cursor `skills/`: `agents-md-mastery`, `brainstorming`, `finishing-a-development-branch`, `humanizer`, `stop-slop`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, `verification`, `writing-for-humans`, and `writing-policy`
+- seven subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, `simplicity-reviewer`, and `vulnerability-reviewer`
+- eleven installed commands: ten Cursor-specific commands (`compact-summary`, `council-directive`, `council`, `dash-review`, `grill`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`, `vuln-review`) plus the shared canonical `reflect`
+- twenty-two managed Cursor skills installed into Cursor `skills/`: `adversarial-review`, `agents-md-mastery`, `brainstorming`, `code-design-principles`, `complexity-audit`, `complexity-review`, `finishing-a-development-branch`, `grilling`, `how`, `humanizer`, `orchestrating-ad-hoc-work`, `parallel-exploration`, `pr-writing`, `stop-slop`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, `verification`, `why`, `writing-for-humans`, and `writing-policy`
 - twelve shared canonical skills consumed from `.apm/skills/` and installed into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: `aero-design`, `cymbal`, `decomposing-work`, `drawio-skill`, `frontend-slides`, `hard-cut`, `react-best-practices`, `resume-tailoring`, `running-agile-delivery`, `stop-design-slop`, `web-design-guidelines`, and `writing-work-items`
 - optional personal skill `ivan-writing` installed into the agents dir when `CURSOR_INSTALL_IVAN_WRITING=1` is set
 - one composed default-Agent Rules payload: `rules/default-agent.md`, one separator, and the provenance-pinned Engineering Judgment snapshot under `vendor/oc-arkive/engineering-judgment/`
@@ -98,9 +98,9 @@ Print the default-Agent Rules text:
 
 Paste that output into Cursor Customize -> Rules -> User Rules. The helper does not write undocumented Cursor settings files. If `vendor/oc-arkive/engineering-judgment/provenance.json` records a new `sha256`, rerun `print-rules` and replace the previously pasted Rules text.
 
-The vendored Engineering Judgment snapshot is provenance-pinned to oc-arkive 2.3.5. OpenCode receives Engineering Judgment from the installed plugin; this repository does not duplicate it in OpenCode AGENTS profiles, config, agents, commands, or skills. Cursor continues to use that vendored snapshot because Cursor cannot load the plugin prompt directly.
+The vendored Engineering Judgment snapshot is provenance-pinned to oc-arkive 4.0.0. OpenCode receives Engineering Judgment from the installed plugin; this repository does not duplicate it in OpenCode AGENTS profiles, config, agents, commands, or skills. Cursor continues to use that vendored snapshot because Cursor cannot load the plugin prompt directly.
 
-Cursor User Rules apply to the parent Agent Chat, not Inline Edit, and Cursor does not document guaranteed propagation into every child subagent. The installed agent definitions and parent handoff packets therefore carry critical child instructions. `writing-policy` owns prose routing. `rules/default-agent.md` still runs the Prose Finish Gate for the parent. Each of the six agent definitions requires the child to load and apply `writing-policy`. The `subagent-delegation` skill requires every handoff to state artifact, audience, voice, and any additional depth or domain writing skills because parent-loaded skills do not propagate. Project `.cursor/rules/*.mdc` files are a separate opt-in mechanism for workspace-specific propagation; this helper does not create or install project rules automatically.
+Cursor User Rules apply to the parent Agent Chat, not Inline Edit, and Cursor does not document guaranteed propagation into every child subagent. The installed agent definitions and parent handoff packets therefore carry critical child instructions. `writing-policy` owns prose routing. `rules/default-agent.md` still runs the Prose Finish Gate for the parent. Each of the seven agent definitions requires the child to load and apply `writing-policy`. The `subagent-delegation` skill requires every handoff to state artifact, audience, voice, and any additional depth or domain writing skills because parent-loaded skills do not propagate. Project `.cursor/rules/*.mdc` files are a separate opt-in mechanism for workspace-specific propagation; this helper does not create or install project rules automatically.
 
 The Rules' `Request And Skill Precedence` section makes explicit user intent override skill defaults within higher-priority instructions, tool permissions, and project requirements. Clear implementation requests proceed; advice-only requests remain read-only. Skill-driven pauses cite the source instruction, and verification stops after acceptance and required gates unless new evidence warrants more checks. Reprint and manually repaste Rules after updating this guidance, and reinstall the changed managed skills.
 
@@ -165,16 +165,40 @@ Expected high-level layout:
 ~/.cursor/agents/plan-reviewer.md
 ~/.cursor/agents/scout.md
 ~/.cursor/agents/simplicity-reviewer.md
+~/.cursor/agents/vulnerability-reviewer.md
 ~/.cursor/commands/compact-summary.md
 ~/.cursor/commands/council-directive.md
 ~/.cursor/commands/council.md
+~/.cursor/commands/dash-review.md
+~/.cursor/commands/grill.md
 ~/.cursor/commands/implementation-brief.md
 ~/.cursor/commands/interview.md
 ~/.cursor/commands/interview-drill-down.md
 ~/.cursor/commands/planning-prompt.md
 ~/.cursor/commands/reflect.md
+~/.cursor/commands/vuln-review.md
+~/.cursor/skills/adversarial-review/SKILL.md
 ~/.cursor/skills/agents-md-mastery/SKILL.md
-~/.cursor/skills/<skill-name>/SKILL.md
+~/.cursor/skills/brainstorming/SKILL.md
+~/.cursor/skills/code-design-principles/SKILL.md
+~/.cursor/skills/complexity-audit/SKILL.md
+~/.cursor/skills/complexity-review/SKILL.md
+~/.cursor/skills/finishing-a-development-branch/SKILL.md
+~/.cursor/skills/grilling/SKILL.md
+~/.cursor/skills/how/SKILL.md
+~/.cursor/skills/humanizer/SKILL.md
+~/.cursor/skills/orchestrating-ad-hoc-work/SKILL.md
+~/.cursor/skills/parallel-exploration/SKILL.md
+~/.cursor/skills/pr-writing/SKILL.md
+~/.cursor/skills/stop-slop/SKILL.md
+~/.cursor/skills/subagent-delegation/SKILL.md
+~/.cursor/skills/systematic-debugging/SKILL.md
+~/.cursor/skills/test-driven-development/SKILL.md
+~/.cursor/skills/using-git-worktrees/SKILL.md
+~/.cursor/skills/verification/SKILL.md
+~/.cursor/skills/why/SKILL.md
+~/.cursor/skills/writing-for-humans/SKILL.md
+~/.cursor/skills/writing-policy/SKILL.md
 ```
 
 For a non-destructive verification run, install into a temp directory and inspect that directory instead:

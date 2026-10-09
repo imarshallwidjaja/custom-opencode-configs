@@ -2,13 +2,13 @@
 
 Prompt-level Cursor assets sourced from this repository and installed globally under Cursor config directories by `scripts/cursor-assets.sh`. The default parent Agent uses Hive-Builder-like delegation-first orchestration with Cursor-native named subagents; it is not Agent Hive runtime parity and has no Hive tools, state, task DAG, board, or worktree lifecycle.
 
-Delegation is a strong prompt policy, but Cursor routing is heuristic and not runtime-guaranteed. The bounded direct-work exception covers coordination, setup, trivial conversation, and at most one bounded read, one bounded write or patch, and one cheap focused check. Separate context does not isolate files in a shared checkout. Overlapping writers require explicit worktrees or isolated project copies; otherwise children must own disjoint paths or run serially.
+Delegation is a strong prompt policy, but Cursor routing is heuristic and not runtime-guaranteed. The bounded direct-work exception covers coordination, setup, and trivial conversation. Bounded direct reads and cheap parent checks stay with the parent. Non-trivial implementation, test, debug, refactor, integration, and review stay delegated. Separate context does not isolate files in a shared checkout. Overlapping writers require explicit worktrees or isolated project copies; otherwise children must own disjoint paths or run serially.
 
 ## Inventory
 
-- six subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, `simplicity-reviewer`
-- eight installed commands: seven Cursor-specific commands (`compact-summary`, `council-directive`, `council`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`) plus the shared canonical `reflect`
-- twelve managed Cursor skills installed into Cursor `skills/`: `agents-md-mastery`, `brainstorming`, `finishing-a-development-branch`, `humanizer`, `stop-slop`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, `verification`, `writing-for-humans`, `writing-policy`
+- seven subagents: `approach-advisor`, `code-reviewer`, `forager`, `plan-reviewer`, `scout`, `simplicity-reviewer`, `vulnerability-reviewer`
+- eleven installed commands: ten Cursor-specific commands (`compact-summary`, `council-directive`, `council`, `dash-review`, `grill`, `implementation-brief`, `interview`, `interview-drill-down`, `planning-prompt`, `vuln-review`) plus the shared canonical `reflect`
+- twenty-two managed Cursor skills installed into Cursor `skills/`: `adversarial-review`, `agents-md-mastery`, `brainstorming`, `code-design-principles`, `complexity-audit`, `complexity-review`, `finishing-a-development-branch`, `grilling`, `how`, `humanizer`, `orchestrating-ad-hoc-work`, `parallel-exploration`, `pr-writing`, `stop-slop`, `subagent-delegation`, `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, `verification`, `why`, `writing-for-humans`, `writing-policy`
 - twelve shared canonical skills consumed from `.apm/skills/` and installed into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}`: `aero-design`, `cymbal`, `decomposing-work`, `drawio-skill`, `frontend-slides`, `hard-cut`, `react-best-practices`, `resume-tailoring`, `running-agile-delivery`, `stop-design-slop`, `web-design-guidelines`, `writing-work-items`
 - optional personal skill `ivan-writing` installed into the agents dir when `CURSOR_INSTALL_IVAN_WRITING=1` is set
 
@@ -19,7 +19,7 @@ The Railway CLI, with auth, installs and maintains its own `use-railway` agent s
 | Source | Target | Notes |
 |--------|--------|-------|
 | `agents/*.md` | `<cursor-config>/agents/*.md` | Cursor user-global subagents |
-| `.apm/cursor/commands/*.md` | `<cursor-config>/commands/*.md` | Seven genuinely Cursor-specific user-global commands |
+| `.apm/cursor/commands/*.md` | `<cursor-config>/commands/*.md` | Ten genuinely Cursor-specific user-global commands |
 | `.apm/prompts/reflect.prompt.md` | `<cursor-config>/commands/reflect.md` | Shared `/reflect` policy, installed byte-for-byte by the helper |
 | `skills/<name>/` | `<cursor-config>/skills/<name>/` | Cursor-only and Hive-overlay skills; require `SKILL.md` and may include `references/` and `scripts/` |
 | `.apm/skills/<name>/` | `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}/<name>/` | Twelve shared canonical skills used by Cursor and OpenCode. The installer also backs up and removes stale copies of those names from each Cursor target `skills/` directory, and backs up and removes the formerly packaged `working-with-atlassian`, `managing-work-in-jira`, and `connecting-atlassian-tools` from the agents dir, including dangling symlinks. `humanizer`, `stop-slop`, `writing-for-humans`, and `writing-policy` are installed from `.apm/cursor/skills/` into Cursor `skills/` only; both installers back up and remove leftover agents-dir copies of those four |
@@ -38,9 +38,9 @@ CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor" ./scripts/
 
 ## Subagent readonly choices
 
-The parent coordinates non-trivial work instead of acting as the default implementation worker. It routes ordinary bounded implementation, bug fixes, refactoring, tests, and documentation to `forager`, read-only discovery to `scout`, uncertain or costly-to-reverse direction to `approach-advisor`, plan readiness to `plan-reviewer` only when a plan is requested, completed-change correctness review to `code-reviewer`, and final proportional cleanup to `simplicity-reviewer`. Cursor children share the checkout unless an isolated project copy or worktree is explicitly used, so parent handoffs assign non-overlapping path ownership and carry critical instructions that User Rules may not propagate to children. Each agent definition requires the child to load and apply `writing-policy`; see `CURSOR.md`.
+The parent coordinates non-trivial work instead of acting as the default implementation worker. It routes ordinary bounded implementation, bug fixes, refactoring, tests, and documentation to `forager`, read-only discovery to `scout`, uncertain or costly-to-reverse direction to `approach-advisor`, plan readiness to `plan-reviewer` only when a plan is requested, completed-change correctness review to `code-reviewer`, final proportional cleanup to `simplicity-reviewer`, and an operator-requested security review to `vulnerability-reviewer`. Cursor children share the checkout unless an isolated project copy or worktree is explicitly used, so parent handoffs assign non-overlapping path ownership and carry critical instructions that User Rules may not propagate to children. Each agent definition requires the child to load and apply `writing-policy`; see `CURSOR.md`.
 
-The Cursor subagent files use `model: inherit` so they follow the caller's selected model. Read-only roles set `readonly: true`: `scout`, `plan-reviewer`, `code-reviewer`, `simplicity-reviewer`, and `approach-advisor`.
+The Cursor subagent files use `model: inherit` so they follow the caller's selected model. Read-only roles set `readonly: true`: `scout`, `plan-reviewer`, `code-reviewer`, `simplicity-reviewer`, `approach-advisor`, and `vulnerability-reviewer`.
 
 `forager` sets `readonly: false` explicitly because it is the write-capable implementation role. Keeping the field explicit is safer than relying on a default when these assets are copied between machines or Cursor versions.
 
@@ -50,7 +50,7 @@ APM (Microsoft Agent Package Manager) deploys primitives to **project-local** ha
 
 The thin helper `scripts/cursor-assets.sh` handles validation, temp/global copy, and manual Rules printing because no reliable pure-APM path exists for user-global Cursor assets. The printed Rules append the vendored Engineering Judgment snapshot; when its provenance hash changes, regenerate and repaste the complete Rules output. User Rules apply to Agent Chat, not Inline Edit, and project `.cursor/rules/*.mdc` remains a separate opt-in mechanism rather than an automatic install target.
 
-The vendored Engineering Judgment snapshot is provenance-pinned to oc-arkive 2.3.5. OpenCode receives Engineering Judgment from the installed plugin. Cursor continues to use that vendored snapshot because Cursor cannot load the plugin prompt directly. Provenance `packageVersion` is metadata from the selected source checkout, not evidence of npm publication. Maintainer sync requires Git, Python 3, and a local Agent Hive checkout containing the selected ref.
+The vendored Engineering Judgment snapshot is provenance-pinned to oc-arkive 4.0.0. OpenCode receives Engineering Judgment from the installed plugin. Cursor continues to use that vendored snapshot because Cursor cannot load the plugin prompt directly. Provenance `packageVersion` is metadata from the selected source checkout, not evidence of npm publication. Maintainer sync requires Git, Python 3, and a local Agent Hive checkout containing the selected ref.
 
 Hive-overlapping skill packaging is in README.md. Maintainer sync for the four Hive-pinned Cursor skills is in CURSOR.md. OpenCode does not package Hive-overlapping skills and does not package `using-git-worktrees`, `finishing-a-development-branch`, `consolidate-test-suites`, or `root-cause-finder`. Hive/`oc-arkive` owns worktrees and merge. Cursor keeps the worktree and finish skills because it has no Hive runtime. Test placement is default Engineering Judgment / Quality Gates, not a separate skill.
 
