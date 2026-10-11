@@ -12,6 +12,7 @@ if (( $# > 1 )); then
   usage >&2
   exit 2
 fi
+MODE=apply
 case "${1:-}" in
   --apply) ;;
   --help) usage; exit 0 ;;
@@ -21,11 +22,7 @@ case "${1:-}" in
       usage >&2
       exit 2
     fi
-    printf 'Would install Opencode profile into %s\n' "${OPENCODE_CONFIG_DIR:-${HOME}/.config/opencode}"
-    printf 'Would install shared skills into %s\n' "${AGENTS_SKILLS_DIR:-${HOME}/.agents/skills}"
-    printf 'AGENTS profile: %s; mode: %s\n' "${OPENCODE_AGENTS_PROFILE:-shared}" "${OPENCODE_AGENTS_MODE:-install}"
-    printf 'Run with --apply to install.\n'
-    exit 0
+    MODE=preview
     ;;
 esac
 
@@ -142,6 +139,82 @@ list_agents_profiles() {
     basename "${profile_file}" ".md"
   done | sort
 }
+
+DECISION_COUNT=0
+
+note_conflict() {
+  printf 'decision needed: conflict: %s is outside the managed install path %s; left in place\n' "$1" "$2" >&2
+  DECISION_COUNT=$((DECISION_COUNT + 1))
+}
+
+note_unversioned() {
+  printf 'decision needed: unversioned: %s is not packaged by this install; left in place\n' "$1" >&2
+  DECISION_COUNT=$((DECISION_COUNT + 1))
+}
+
+exit_if_skill_decisions() {
+  if [[ "${DECISION_COUNT}" -gt 0 ]]; then
+    exit 1
+  fi
+}
+
+report_opencode_skill_decisions() {
+  local skill_name path personal_skills personal_entry personal_name
+
+  for skill_name in "${SHARED_SKILLS[@]}"; do
+    path="${TARGET_DIR}/skills/${skill_name}"
+    if [[ -e "${path}" || -L "${path}" ]]; then
+      note_conflict "${path}" "${AGENTS_SKILLS_DIR}/${skill_name}"
+    fi
+  done
+  for skill_name in "${HIVE_WRITING_SKILLS[@]}"; do
+    path="${AGENTS_SKILLS_DIR}/${skill_name}"
+    if [[ -e "${path}" || -L "${path}" ]]; then
+      note_conflict "${path}" "Hive materialization"
+    fi
+    path="${TARGET_DIR}/skills/${skill_name}"
+    if [[ -e "${path}" || -L "${path}" ]]; then
+      note_conflict "${path}" "Hive materialization"
+    fi
+  done
+  for skill_name in "${HIVE_OWNED_SKILLS[@]}"; do
+    path="${TARGET_DIR}/skills/${skill_name}"
+    if [[ -e "${path}" || -L "${path}" ]]; then
+      note_conflict "${path}" "Hive materialization"
+    fi
+  done
+  for skill_name in "${OPENCODE_RETIRED_SKILLS[@]}"; do
+    path="${TARGET_DIR}/skills/${skill_name}"
+    if [[ -e "${path}" || -L "${path}" ]]; then
+      note_unversioned "${path}"
+    fi
+  done
+  case "${AGENTS_PROFILE}" in
+    personal-default|personal-context-improved)
+      personal_skills="${REPO_ROOT}/profiles/personal/skills"
+      if [[ -d "${personal_skills}" ]]; then
+        for personal_entry in "${personal_skills}"/*; do
+          [[ -e "${personal_entry}" ]] || continue
+          personal_name="$(basename "${personal_entry}")"
+          path="${TARGET_DIR}/skills/${personal_name}"
+          if [[ -e "${path}" || -L "${path}" ]]; then
+            note_conflict "${path}" "${AGENTS_SKILLS_DIR}/${personal_name}"
+          fi
+        done
+      fi
+      ;;
+  esac
+}
+
+if [[ "${MODE}" == preview ]]; then
+  printf 'Would install Opencode profile into %s\n' "${TARGET_DIR}"
+  printf 'Would install shared skills into %s\n' "${AGENTS_SKILLS_DIR}"
+  printf 'AGENTS profile: %s; mode: %s\n' "${AGENTS_PROFILE}" "${AGENTS_MODE}"
+  printf 'Run with --apply to install.\n'
+  report_opencode_skill_decisions
+  exit_if_skill_decisions
+  exit 0
+fi
 
 if [[ ! -f "${AGENTS_SOURCE}" ]]; then
   printf 'Unknown AGENTS profile: %s\n' "${AGENTS_PROFILE}" >&2
@@ -594,17 +667,6 @@ for skill_name in "${SHARED_SKILLS[@]}"; do
   fi
   rm -rf -- "${AGENTS_SKILLS_DIR}/${skill_name}"
   cp -a "${skill_source}" "${AGENTS_SKILLS_DIR}/${skill_name}"
-  rm -rf -- "${TARGET_DIR}/skills/${skill_name}"
-done
-for skill_name in "${HIVE_WRITING_SKILLS[@]}"; do
-  if [[ -e "${AGENTS_SKILLS_DIR}/${skill_name}" || -L "${AGENTS_SKILLS_DIR}/${skill_name}" ]]; then
-    backup_agents_skill "${skill_name}"
-    rm -rf -- "${AGENTS_SKILLS_DIR}/${skill_name}"
-  fi
-  rm -rf -- "${TARGET_DIR}/skills/${skill_name}"
-done
-for skill_name in "${HIVE_OWNED_SKILLS[@]}" "${OPENCODE_RETIRED_SKILLS[@]}"; do
-  rm -rf -- "${TARGET_DIR}/skills/${skill_name}"
 done
 if [[ -d "${REPO_ROOT}/.apm/agents" ]]; then
   cp -a "${REPO_ROOT}/.apm/agents/." "${TARGET_DIR}/agents/"
@@ -621,11 +683,11 @@ case "${AGENTS_PROFILE}" in
         fi
         rm -rf -- "${AGENTS_SKILLS_DIR}/${personal_name}"
         cp -a "${personal_entry}" "${AGENTS_SKILLS_DIR}/${personal_name}"
-        rm -rf -- "${TARGET_DIR}/skills/${personal_name}"
       done
     fi
     ;;
 esac
+report_opencode_skill_decisions
 
 shopt -s nullglob
 if (( ${#LEGACY_PROMPT_COMMANDS[@]} > 0 )); then
@@ -674,3 +736,4 @@ fi
 if [[ -n "${BACKUP_DIR}" ]]; then
   printf 'Backed up replaced config into %s\n' "${BACKUP_DIR}"
 fi
+exit_if_skill_decisions

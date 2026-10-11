@@ -81,6 +81,66 @@ HIVE_WRITING_SKILLS=(
   writing-for-humans
   writing-policy
 )
+DECISION_COUNT=0
+AGENTS_IVAN_OPT_OUT_NOTED=0
+
+note_conflict() {
+  printf 'decision needed: conflict: %s is outside the managed install path %s; left in place\n' "$1" "$2" >&2
+  DECISION_COUNT=$((DECISION_COUNT + 1))
+}
+
+note_unversioned() {
+  printf 'decision needed: unversioned: %s is not packaged by this install; left in place\n' "$1" >&2
+  DECISION_COUNT=$((DECISION_COUNT + 1))
+}
+
+exit_if_skill_decisions() {
+  if [[ "${DECISION_COUNT}" -gt 0 ]]; then
+    exit 1
+  fi
+}
+
+report_cursor_skill_decisions() {
+  local target_dir="$1"
+  local name path agents_ivan
+
+  for name in "${RETIRED_SKILLS[@]}"; do
+    path="${target_dir}/skills/${name}"
+    if [[ -e "${path}" || -L "${path}" ]]; then
+      note_unversioned "${path}"
+    fi
+  done
+  for name in "${CANONICAL_SKILLS[@]}"; do
+    path="${target_dir}/skills/${name}"
+    if [[ -e "${path}" || -L "${path}" ]]; then
+      note_conflict "${path}" "${AGENTS_SKILLS_DIR}/${name}"
+    fi
+  done
+  for name in "${HIVE_WRITING_SKILLS[@]}"; do
+    path="${AGENTS_SKILLS_DIR}/${name}"
+    if [[ -e "${path}" || -L "${path}" ]]; then
+      note_conflict "${path}" "${target_dir}/skills/${name}"
+    fi
+  done
+  path="${target_dir}/skills/ivan-writing"
+  case "${CURSOR_INSTALL_IVAN_WRITING:-}" in
+    1)
+      if [[ -e "${path}" || -L "${path}" ]]; then
+        note_conflict "${path}" "${AGENTS_SKILLS_DIR}/ivan-writing"
+      fi
+      ;;
+    '')
+      if [[ -f "${path}/.cursor-managed" ]]; then
+        note_unversioned "${path}"
+      fi
+      agents_ivan="${AGENTS_SKILLS_DIR}/ivan-writing"
+      if [[ "${AGENTS_IVAN_OPT_OUT_NOTED}" -eq 0 && -f "${agents_ivan}/.cursor-managed" ]]; then
+        AGENTS_IVAN_OPT_OUT_NOTED=1
+        note_unversioned "${agents_ivan}"
+      fi
+      ;;
+  esac
+}
 
 usage() {
   printf 'Usage:\n' >&2
@@ -1085,45 +1145,25 @@ print_copy_plan() {
     source="${root}/skills/${name}"
     printf 'Would copy %s -> %s\n' "${source#"${root}/"}" "${target_dir}/skills/${name}"
   done
-  for name in "${RETIRED_SKILLS[@]}"; do
-    if [[ -e "${target_dir}/skills/${name}" || -L "${target_dir}/skills/${name}" ]]; then
-      printf 'Would back up and remove leftover %s/skills/%s\n' "${target_dir}" "${name}"
-    fi
-  done
   for name in "${CANONICAL_SKILLS[@]}"; do
     printf 'Would copy canonical .apm/skills/%s -> %s/%s\n' "${name}" "${AGENTS_SKILLS_DIR}" "${name}"
-    if [[ -e "${target_dir}/skills/${name}" || -L "${target_dir}/skills/${name}" ]]; then
-      printf 'Would back up and remove stale %s/skills/%s\n' "${target_dir}" "${name}"
-    fi
-  done
-  for name in "${HIVE_WRITING_SKILLS[@]}"; do
-    if [[ -e "${AGENTS_SKILLS_DIR}/${name}" || -L "${AGENTS_SKILLS_DIR}/${name}" ]]; then
-      printf 'Would back up and remove Hive writing skill %s/%s\n' "${AGENTS_SKILLS_DIR}" "${name}"
-    fi
   done
   case "${CURSOR_INSTALL_IVAN_WRITING:-}" in
     1)
       printf 'Would copy personal profiles/personal/skills/ivan-writing -> %s/ivan-writing (CURSOR_INSTALL_IVAN_WRITING=1)\n' "${AGENTS_SKILLS_DIR}"
-      if [[ -e "${target_dir}/skills/ivan-writing" || -L "${target_dir}/skills/ivan-writing" ]]; then
-        printf 'Would back up and remove stale %s/skills/ivan-writing\n' "${target_dir}"
-      fi
       ;;
     '')
-      local marker="${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed"
-      if [[ -f "${marker}" ]]; then
-        printf 'Would back up and remove previously managed %s/ivan-writing (CURSOR_INSTALL_IVAN_WRITING unset, opt-out effective)\n' "${AGENTS_SKILLS_DIR}"
-      elif [[ -d "${AGENTS_SKILLS_DIR}/ivan-writing" ]]; then
+      if [[ -d "${AGENTS_SKILLS_DIR}/ivan-writing" && ! -f "${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed" ]]; then
         printf 'Would preserve existing %s/ivan-writing (not managed by this helper)\n' "${AGENTS_SKILLS_DIR}"
       fi
       if [[ -e "${target_dir}/skills/ivan-writing" || -L "${target_dir}/skills/ivan-writing" ]]; then
-        if [[ -f "${target_dir}/skills/ivan-writing/.cursor-managed" ]]; then
-          printf 'Would back up and remove previously managed %s/skills/ivan-writing (CURSOR_INSTALL_IVAN_WRITING unset, opt-out effective)\n' "${target_dir}"
-        else
+        if [[ ! -f "${target_dir}/skills/ivan-writing/.cursor-managed" ]]; then
           printf 'Would preserve existing %s/skills/ivan-writing (not managed by this helper)\n' "${target_dir}"
         fi
       fi
       ;;
   esac
+  report_cursor_skill_decisions "${target_dir}"
 }
 
 BACKUP_DIR=""
@@ -1166,10 +1206,6 @@ install_canonical_skill() {
   rm -rf "${AGENTS_SKILLS_DIR}/${skill_name}"
   mkdir -p "${AGENTS_SKILLS_DIR}/${skill_name}"
   cp -a "${source}/." "${AGENTS_SKILLS_DIR}/${skill_name}/"
-  if [[ -e "${target_dir}/skills/${skill_name}" || -L "${target_dir}/skills/${skill_name}" ]]; then
-    backup_path "${target_dir}" "${target_dir}/skills/${skill_name}"
-    rm -rf "${target_dir}/skills/${skill_name}"
-  fi
   printf 'Copied canonical skills/%s -> %s\n' "${skill_name}" "${AGENTS_SKILLS_DIR}/${skill_name}"
 }
 
@@ -1184,10 +1220,6 @@ install_personal_skill() {
   mkdir -p "${AGENTS_SKILLS_DIR}/${skill_name}"
   cp -a "${source}/." "${AGENTS_SKILLS_DIR}/${skill_name}/"
   touch "${AGENTS_SKILLS_DIR}/${skill_name}/.cursor-managed"
-  if [[ -e "${target_dir}/skills/${skill_name}" || -L "${target_dir}/skills/${skill_name}" ]]; then
-    backup_path "${target_dir}" "${target_dir}/skills/${skill_name}"
-    rm -rf "${target_dir}/skills/${skill_name}"
-  fi
   printf 'Copied personal skills/%s -> %s\n' "${skill_name}" "${AGENTS_SKILLS_DIR}/${skill_name}"
 }
 
@@ -1222,51 +1254,27 @@ install_assets_into() {
     cp -a "${root}/skills/${name}/." "${target_dir}/skills/${name}/"
     printf 'Copied skills/%s -> %s\n' "${name}" "${target_dir}/skills/${name}"
   done
-  for name in "${RETIRED_SKILLS[@]}"; do
-    if [[ -e "${target_dir}/skills/${name}" || -L "${target_dir}/skills/${name}" ]]; then
-      backup_path "${target_dir}" "${target_dir}/skills/${name}"
-      rm -rf "${target_dir}/skills/${name}"
-      printf 'Backed up and removed leftover skills/%s\n' "${name}"
-    fi
-  done
   for name in "${CANONICAL_SKILLS[@]}"; do
     install_canonical_skill "${name}" "${target_dir}"
   done
-  for name in "${HIVE_WRITING_SKILLS[@]}"; do
-    if [[ -e "${AGENTS_SKILLS_DIR}/${name}" || -L "${AGENTS_SKILLS_DIR}/${name}" ]]; then
-      backup_agents_skill "${target_dir}" "${name}"
-      rm -rf "${AGENTS_SKILLS_DIR:?}/${name}"
-      printf 'Backed up and removed Hive writing skill %s\n' "${AGENTS_SKILLS_DIR}/${name}"
-    fi
-  done
 
-  local marker="${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed"
   local cursor_ivan="${target_dir}/skills/ivan-writing"
   case "${CURSOR_INSTALL_IVAN_WRITING:-}" in
     1)
       install_personal_skill "ivan-writing" "${target_dir}"
       ;;
     '')
-      if [[ -d "${AGENTS_SKILLS_DIR}/ivan-writing" ]]; then
-        if [[ -f "${marker}" ]]; then
-          backup_agents_skill "${target_dir}" "ivan-writing"
-          rm -rf "${AGENTS_SKILLS_DIR}/ivan-writing"
-          printf 'Backed up and removed previously managed ivan-writing from agents dir (opt-out effective)\n'
-        else
-          printf 'Preserved existing agents-dir ivan-writing (not managed by this helper)\n'
-        fi
+      if [[ -d "${AGENTS_SKILLS_DIR}/ivan-writing" && ! -f "${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed" ]]; then
+        printf 'Preserved existing agents-dir ivan-writing (not managed by this helper)\n'
       fi
       if [[ -e "${cursor_ivan}" || -L "${cursor_ivan}" ]]; then
-        if [[ -f "${cursor_ivan}/.cursor-managed" ]]; then
-          backup_path "${target_dir}" "${cursor_ivan}"
-          rm -rf "${cursor_ivan}"
-          printf 'Backed up and removed previously managed skills/ivan-writing (opt-out effective)\n'
-        else
+        if [[ ! -f "${cursor_ivan}/.cursor-managed" ]]; then
           printf 'Preserved existing skills/ivan-writing (not managed by this helper)\n'
         fi
       fi
       ;;
   esac
+  report_cursor_skill_decisions "${target_dir}"
 
   printf 'Cursor markdown assets installed into %s\n' "${target_dir}"
   if [[ -n "${BACKUP_DIR}" ]]; then
@@ -1522,11 +1530,14 @@ install_assets() {
   preflight_agents_skills_dir || exit 1
   preflight_targets "${TARGETS[@]}" || exit 1
 
+  DECISION_COUNT=0
+  AGENTS_IVAN_OPT_OUT_NOTED=0
   for target_dir in "${TARGETS[@]}"; do
     install_assets_into "${root}" "${target_dir}"
   done
 
   printf 'Manual next step: paste the output of ./scripts/cursor-assets.sh print-rules into Cursor Customize -> Rules -> User Rules.\n'
+  exit_if_skill_decisions
 }
 
 print_all_copy_plans() {
@@ -1538,9 +1549,12 @@ print_all_copy_plans() {
   preflight_agents_skills_dir || exit 1
   preflight_targets "${TARGETS[@]}" || exit 1
 
+  DECISION_COUNT=0
+  AGENTS_IVAN_OPT_OUT_NOTED=0
   for target_dir in "${TARGETS[@]}"; do
     print_copy_plan "${root}" "${target_dir}"
   done
+  exit_if_skill_decisions
 }
 
 main() {

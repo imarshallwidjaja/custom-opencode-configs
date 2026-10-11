@@ -1012,19 +1012,22 @@ for hive_writing in humanizer stop-slop writing-for-humans writing-policy; do
   mkdir -p "${AGENTS_SKILLS_DIR}/${hive_writing}"
   printf 'stale agents %s\n' "${hive_writing}" > "${AGENTS_SKILLS_DIR}/${hive_writing}/SKILL.md"
 done
-CURSOR_CONFIG_DIR="${td3}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}" install 2>"${td3}/install-hive-writing.log" && pass "3hw-a: reinstall with stale Hive writing skills succeeded" || fail "3hw-b: reinstall with stale Hive writing skills failed"
-[[ ! -e "${AGENTS_SKILLS_DIR}/stop-slop" ]] && pass "3i: stop-slop removed from agents dir" || fail "3j: stop-slop remained in agents dir"
+hw3_status=0
+CURSOR_CONFIG_DIR="${td3}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}" install 2>"${td3}/install-hive-writing.log" || hw3_status=$?
+[[ "${hw3_status}" -eq 1 ]] && pass "3hw-a: reinstall with stale Hive writing skills exits 1 after install" || fail "3hw-b: reinstall with stale Hive writing skills exited ${hw3_status}: $(cat "${td3}/install-hive-writing.log")"
 [[ -f "${td3}/skills/stop-slop/SKILL.md" ]] && pass "3i2: stop-slop installed into Cursor skills" || fail "3j2: stop-slop missing from Cursor skills"
 [[ -f "${td3}/skills/stop-slop/references/examples.md" && -f "${td3}/skills/stop-slop/references/phrases.md" && -f "${td3}/skills/stop-slop/references/structures.md" ]] && pass "3i3: stop-slop references installed" || fail "3j3: stop-slop references missing"
-[[ ! -e "${AGENTS_SKILLS_DIR}/humanizer" ]] && pass "3k: humanizer removed from agents dir" || fail "3l: humanizer remained in agents dir"
 [[ -f "${td3}/skills/humanizer/SKILL.md" && -f "${td3}/skills/humanizer/references/patterns.md" ]] && pass "3k2: humanizer and patterns installed into Cursor skills" || fail "3l2: humanizer Cursor copy incomplete"
-[[ ! -e "${AGENTS_SKILLS_DIR}/writing-for-humans" ]] && pass "3ac: writing-for-humans removed from agents dir" || fail "3ad: writing-for-humans remained in agents dir"
 [[ -f "${td3}/skills/writing-for-humans/SKILL.md" && -f "${td3}/skills/writing-for-humans/references/sources.md" && -f "${td3}/skills/writing-for-humans/references/examples.md" ]] && pass "3ae: writing-for-humans Cursor copy includes references" || fail "3af: writing-for-humans Cursor copy incomplete"
-[[ ! -e "${AGENTS_SKILLS_DIR}/writing-policy" ]] && pass "3ag: writing-policy removed from agents dir" || fail "3ah: writing-policy remained in agents dir"
 [[ -f "${td3}/skills/writing-policy/SKILL.md" ]] && pass "3ag2: writing-policy installed into Cursor skills" || fail "3ah2: writing-policy missing from Cursor skills"
 for hive_writing in humanizer stop-slop writing-for-humans writing-policy; do
-  grep -Fqx "stale agents ${hive_writing}" "${td3}/.backup/"*/agents-skills/"${hive_writing}"/SKILL.md \
-    && pass "3hw: ${hive_writing} agents-dir leftover backed up" || fail "3hw: ${hive_writing} agents-dir leftover backup missing"
+  if grep -Fqx "stale agents ${hive_writing}" "${AGENTS_SKILLS_DIR}/${hive_writing}/SKILL.md" \
+    && grep -Fqx "decision needed: conflict: ${AGENTS_SKILLS_DIR}/${hive_writing} is outside the managed install path ${td3}/skills/${hive_writing}; left in place" "${td3}/install-hive-writing.log" \
+    && ! ls "${td3}/.backup/"*/agents-skills/"${hive_writing}" >/dev/null 2>&1; then
+    pass "3hw: ${hive_writing} agents-dir copy left in place for a decision"
+  else
+    fail "3hw: ${hive_writing} agents-dir copy was removed, backed up, or not reported"
+  fi
 done
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/SKILL.md" ]] && pass "3o: frontend-slides installed" || fail "3p: frontend-slides canonical skill not installed"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/viewport-base.css" ]] && pass "3q: frontend-slides viewport-base.css" || fail "3r: frontend-slides extra file not copied"
@@ -1043,16 +1046,23 @@ cmp -s "${REPO_FIXTURE}/.apm/cursor/skills/agents-md-mastery/SKILL.md" "${td3}/s
 # ---------------------------------------------------------------------------
 # 4. Opt-out removes only helper-managed ivan-writing (in-directory marker)
 # ---------------------------------------------------------------------------
-printf '\n=== 4. Opt-out removes managed ivan-writing (in-directory marker) ===\n'
+printf '\n=== 4. Opt-out leaves managed ivan-writing for a decision ===\n'
 td4="${TMPDIR}/test4"; mkdir -p "${td4}"
 build_fixture
 sandbox_agents_skills
 CURSOR_CONFIG_DIR="${td4}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}" install 2>"${td4}/install.log" || fail "4a: install failed"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] || fail "4b: pre-check failed"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed" ]] || fail "4c: installer did not create marker"
-CURSOR_CONFIG_DIR="${td4}" bash "${CURSOR_HELPER}" install 2>"${td4}/optout.log" || fail "4d: opt-out install failed"
-[[ ! -d "${AGENTS_SKILLS_DIR}/ivan-writing" ]] && pass "4e: opt-out removed ivan-writing" || fail "4f: opt-out did not remove ivan-writing"
-ls "${td4}/.backup/"*"/agents-skills/ivan-writing" >/dev/null 2>&1 && pass "4g: backup exists" || fail "4h: no backup"
+optout4_status=0
+CURSOR_CONFIG_DIR="${td4}" bash "${CURSOR_HELPER}" install 2>"${td4}/optout.log" || optout4_status=$?
+[[ "${optout4_status}" -eq 1 ]] && pass "4d: opt-out exits 1 after install" || fail "4d: opt-out exited ${optout4_status}: $(cat "${td4}/optout.log")"
+[[ -d "${AGENTS_SKILLS_DIR}/ivan-writing" && -f "${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed" ]] && pass "4e: opt-out left managed ivan-writing in place" || fail "4f: opt-out removed ivan-writing"
+grep -Fqx "decision needed: unversioned: ${AGENTS_SKILLS_DIR}/ivan-writing is not packaged by this install; left in place" "${td4}/optout.log" && pass "4g: opt-out reports unversioned ivan-writing" || fail "4h: opt-out decision line missing: $(cat "${td4}/optout.log")"
+if ls "${td4}/.backup/"*"/agents-skills/ivan-writing" >/dev/null 2>&1; then
+  fail "4i: opt-out backed up ivan-writing"
+else
+  pass "4j: opt-out did not back up ivan-writing"
+fi
 
 # ---------------------------------------------------------------------------
 # 5. Unowned existing ivan-writing preserved on opt-out (no marker)
@@ -1068,33 +1078,52 @@ CURSOR_CONFIG_DIR="${td5}" bash "${CURSOR_HELPER}" install 2>"${td5}/optout.log"
 # ---------------------------------------------------------------------------
 # 5d. Opt-in strips stale Cursor skills/ivan-writing
 # ---------------------------------------------------------------------------
-printf '\n=== 5d. Opt-in strips stale Cursor ivan-writing ===\n'
+printf '\n=== 5d. Opt-in leaves stale Cursor ivan-writing for a decision ===\n'
 td5d="${TMPDIR}/test5d"; mkdir -p "${td5d}/skills/ivan-writing"
 echo "stale ivan-writing" > "${td5d}/skills/ivan-writing/SKILL.md"
 build_fixture
 sandbox_agents_skills
-CURSOR_CONFIG_DIR="${td5d}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}" install --dry-run >"${td5d}/dry.log" 2>&1 && pass "5d-a: opt-in dry-run succeeded" || fail "5d-b: opt-in dry-run failed"
-grep -F "Would back up and remove stale ${td5d}/skills/ivan-writing" "${td5d}/dry.log" >/dev/null && pass "5d-c: dry-run describes Cursor ivan-writing strip" || fail "5d-d: dry-run omitted Cursor ivan-writing strip"
-CURSOR_CONFIG_DIR="${td5d}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}" install 2>"${td5d}/install.log" && pass "5d-e: opt-in install succeeded" || fail "5d-f: opt-in install failed"
-[[ ! -e "${td5d}/skills/ivan-writing" ]] && pass "5d-g: stale Cursor ivan-writing removed" || fail "5d-h: stale Cursor ivan-writing remained"
+dry5d_status=0
+CURSOR_CONFIG_DIR="${td5d}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}" install --dry-run >"${td5d}/dry.log" 2>&1 || dry5d_status=$?
+[[ "${dry5d_status}" -eq 1 ]] && pass "5d-a: opt-in dry-run exits 1" || fail "5d-b: opt-in dry-run exited ${dry5d_status}"
+grep -F "decision needed: conflict: ${td5d}/skills/ivan-writing is outside the managed install path ${AGENTS_SKILLS_DIR}/ivan-writing; left in place" "${td5d}/dry.log" >/dev/null && pass "5d-c: dry-run reports Cursor ivan-writing conflict" || fail "5d-d: dry-run omitted Cursor ivan-writing conflict: $(cat "${td5d}/dry.log")"
+[[ -f "${td5d}/skills/ivan-writing/SKILL.md" ]] && pass "5d-c2: dry-run left Cursor ivan-writing in place" || fail "5d-d2: dry-run changed Cursor ivan-writing"
+install5d_status=0
+CURSOR_CONFIG_DIR="${td5d}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}" install 2>"${td5d}/install.log" || install5d_status=$?
+[[ "${install5d_status}" -eq 1 ]] && pass "5d-e: opt-in install exits 1 after install" || fail "5d-f: opt-in install exited ${install5d_status}: $(cat "${td5d}/install.log")"
+grep -Fqx "stale ivan-writing" "${td5d}/skills/ivan-writing/SKILL.md" && pass "5d-g: stale Cursor ivan-writing left in place" || fail "5d-h: stale Cursor ivan-writing was removed"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "5d-i: ivan-writing installed to agents dir" || fail "5d-j: ivan-writing missing from agents dir"
-ls "${td5d}/.backup/"*"/skills/ivan-writing" >/dev/null 2>&1 && pass "5d-k: Cursor ivan-writing backup exists" || fail "5d-l: no Cursor ivan-writing backup"
+grep -F "decision needed: conflict: ${td5d}/skills/ivan-writing is outside the managed install path ${AGENTS_SKILLS_DIR}/ivan-writing; left in place" "${td5d}/install.log" >/dev/null && pass "5d-k: install reports Cursor ivan-writing conflict" || fail "5d-l: install omitted Cursor ivan-writing conflict"
+if ls "${td5d}/.backup/"*"/skills/ivan-writing" >/dev/null 2>&1; then
+  fail "5d-m: Cursor ivan-writing was backed up"
+else
+  pass "5d-n: Cursor ivan-writing was not backed up"
+fi
 
 # ---------------------------------------------------------------------------
 # 5e. Opt-out removes Cursor ivan-writing that still has .cursor-managed
 # ---------------------------------------------------------------------------
-printf '\n=== 5e. Opt-out removes Cursor ivan-writing with .cursor-managed ===\n'
+printf '\n=== 5e. Opt-out leaves Cursor ivan-writing with .cursor-managed for a decision ===\n'
 td5e="${TMPDIR}/test5e"; mkdir -p "${td5e}/skills/ivan-writing"
 echo "legacy cursor copy" > "${td5e}/skills/ivan-writing/SKILL.md"
 touch "${td5e}/skills/ivan-writing/.cursor-managed"
 build_fixture
 sandbox_agents_skills
-CURSOR_CONFIG_DIR="${td5e}" bash "${CURSOR_HELPER}" install --dry-run >"${td5e}/dry.log" 2>&1 && pass "5e-a: opt-out dry-run succeeded" || fail "5e-b: opt-out dry-run failed"
-grep -F "Would back up and remove previously managed ${td5e}/skills/ivan-writing" "${td5e}/dry.log" >/dev/null && pass "5e-c: dry-run describes Cursor marker removal" || fail "5e-d: dry-run omitted Cursor marker removal"
-CURSOR_CONFIG_DIR="${td5e}" bash "${CURSOR_HELPER}" install 2>"${td5e}/optout.log" && pass "5e-e: opt-out install succeeded" || fail "5e-f: opt-out install failed"
-[[ ! -e "${td5e}/skills/ivan-writing" ]] && pass "5e-g: managed Cursor ivan-writing removed" || fail "5e-h: managed Cursor ivan-writing remained"
+dry5e_status=0
+CURSOR_CONFIG_DIR="${td5e}" bash "${CURSOR_HELPER}" install --dry-run >"${td5e}/dry.log" 2>&1 || dry5e_status=$?
+[[ "${dry5e_status}" -eq 1 ]] && pass "5e-a: opt-out dry-run exits 1" || fail "5e-b: opt-out dry-run exited ${dry5e_status}"
+grep -F "decision needed: unversioned: ${td5e}/skills/ivan-writing is not packaged by this install; left in place" "${td5e}/dry.log" >/dev/null && pass "5e-c: dry-run reports unversioned Cursor ivan-writing" || fail "5e-d: dry-run omitted unversioned Cursor ivan-writing: $(cat "${td5e}/dry.log")"
+install5e_status=0
+CURSOR_CONFIG_DIR="${td5e}" bash "${CURSOR_HELPER}" install 2>"${td5e}/optout.log" || install5e_status=$?
+[[ "${install5e_status}" -eq 1 ]] && pass "5e-e: opt-out install exits 1 after install" || fail "5e-f: opt-out install exited ${install5e_status}: $(cat "${td5e}/optout.log")"
+grep -Fqx "legacy cursor copy" "${td5e}/skills/ivan-writing/SKILL.md" && [[ -f "${td5e}/skills/ivan-writing/.cursor-managed" ]] && pass "5e-g: managed Cursor ivan-writing left in place" || fail "5e-h: managed Cursor ivan-writing was removed"
 [[ ! -e "${AGENTS_SKILLS_DIR}/ivan-writing" ]] && pass "5e-i: agents-dir ivan-writing not created on opt-out" || fail "5e-j: agents-dir ivan-writing appeared on opt-out"
-ls "${td5e}/.backup/"*"/skills/ivan-writing" >/dev/null 2>&1 && pass "5e-k: Cursor ivan-writing backup exists" || fail "5e-l: no Cursor ivan-writing backup"
+grep -F "decision needed: unversioned: ${td5e}/skills/ivan-writing is not packaged by this install; left in place" "${td5e}/optout.log" >/dev/null && pass "5e-k: install reports unversioned Cursor ivan-writing" || fail "5e-l: install omitted unversioned Cursor ivan-writing"
+if ls "${td5e}/.backup/"*"/skills/ivan-writing" >/dev/null 2>&1; then
+  fail "5e-m: Cursor ivan-writing was backed up"
+else
+  pass "5e-n: Cursor ivan-writing was not backed up"
+fi
 
 # ---------------------------------------------------------------------------
 # 6. Missing canonical source fails before mutation
@@ -1186,13 +1215,18 @@ for hive_writing in humanizer stop-slop writing-for-humans writing-policy; do
   printf 'stale agents %s\n' "${hive_writing}" > "${AGENTS_SKILLS_DIR}/${hive_writing}/SKILL.md"
   printf 'stale opencode %s\n' "${hive_writing}" > "${td12}/skills/${hive_writing}/SKILL.md"
 done
-OPENCODE_CONFIG_DIR="${td12}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td12}/hive-writing.err" && pass "12m: reinstall removed Hive writing leftovers" || fail "12n: reinstall with Hive writing leftovers failed: $(cat "${td12}/hive-writing.err")"
+hive12_status=0
+OPENCODE_CONFIG_DIR="${td12}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td12}/hive-writing.err" || hive12_status=$?
+[[ "${hive12_status}" -eq 1 ]] && pass "12m: reinstall exits 1 after leaving Hive writing leftovers" || fail "12n: reinstall with Hive writing leftovers exited ${hive12_status}: $(cat "${td12}/hive-writing.err")"
 for hive_writing in humanizer stop-slop writing-for-humans writing-policy; do
-  if [[ ! -e "${AGENTS_SKILLS_DIR}/${hive_writing}" && ! -e "${td12}/skills/${hive_writing}" ]] \
-    && grep -Fqx "stale agents ${hive_writing}" "${td12}/.backup/"*/agents-skills/"${hive_writing}"/SKILL.md; then
-    pass "12o: ${hive_writing} removed from agents dir and OpenCode skills"
+  if grep -Fqx "stale agents ${hive_writing}" "${AGENTS_SKILLS_DIR}/${hive_writing}/SKILL.md" \
+    && grep -Fqx "stale opencode ${hive_writing}" "${td12}/skills/${hive_writing}/SKILL.md" \
+    && grep -Fqx "decision needed: conflict: ${AGENTS_SKILLS_DIR}/${hive_writing} is outside the managed install path Hive materialization; left in place" "${td12}/hive-writing.err" \
+    && grep -Fqx "decision needed: conflict: ${td12}/skills/${hive_writing} is outside the managed install path Hive materialization; left in place" "${td12}/hive-writing.err" \
+    && ! ls "${td12}/.backup/"*/agents-skills/"${hive_writing}" >/dev/null 2>&1; then
+    pass "12o: ${hive_writing} left in agents dir and OpenCode skills for a decision"
   else
-    fail "12p: ${hive_writing} remained or was not backed up"
+    fail "12p: ${hive_writing} was removed, backed up, or not reported"
   fi
 done
 [[ -f "${AGENTS_SKILLS_DIR}/writing-work-items/SKILL.md" && -f "${AGENTS_SKILLS_DIR}/decomposing-work/SKILL.md" && -f "${AGENTS_SKILLS_DIR}/running-agile-delivery/SKILL.md" ]] && pass "12q2: other shared skills remain in agents dir" || fail "12r2: a remaining shared skill is missing from agents dir"
@@ -1354,7 +1388,7 @@ CURSOR_CONFIG_DIR="${td17}" bash "${CURSOR_HELPER}" install 2>"${td17}/log2" || 
 # ---------------------------------------------------------------------------
 # 17b. Stale Cursor copy of a shared skill is removed on install
 # ---------------------------------------------------------------------------
-printf '\n=== 17b. Stale Cursor shared skill is removed ===\n'
+printf '\n=== 17b. Stale Cursor shared skill is left for a decision ===\n'
 td17b="${TMPDIR}/test17b"; mkdir -p "${td17b}/skills/stop-slop" "${td17b}/skills/hard-cut"
 echo "stale stop-slop" > "${td17b}/skills/stop-slop/SKILL.md"
 echo "stale hard-cut" > "${td17b}/skills/hard-cut/SKILL.md"
@@ -1362,11 +1396,15 @@ build_fixture
 sandbox_agents_skills
 mkdir -p "${AGENTS_SKILLS_DIR}/stop-slop"
 echo "stale agents stop-slop" > "${AGENTS_SKILLS_DIR}/stop-slop/SKILL.md"
-CURSOR_CONFIG_DIR="${td17b}" bash "${CURSOR_HELPER}" install 2>"${td17b}/install.log" && pass "17b-a: install succeeded" || fail "17b-b: install failed"
+install17b_status=0
+CURSOR_CONFIG_DIR="${td17b}" bash "${CURSOR_HELPER}" install 2>"${td17b}/install.log" || install17b_status=$?
+[[ "${install17b_status}" -eq 1 ]] && pass "17b-a: install exits 1 after reporting decisions" || fail "17b-b: install exited ${install17b_status}: $(cat "${td17b}/install.log")"
 grep -Fqx 'OK' "${td17b}/skills/stop-slop/SKILL.md" && [[ -f "${td17b}/skills/stop-slop/references/structures.md" ]] && pass "17b-c: stop-slop replaced in Cursor skills" || fail "17b-d: stale stop-slop was not replaced"
-[[ ! -e "${td17b}/skills/hard-cut" ]] && pass "17b-e: stale hard-cut removed from Cursor skills" || fail "17b-f: stale hard-cut remained"
-[[ ! -e "${AGENTS_SKILLS_DIR}/stop-slop" ]] && pass "17b-g: stop-slop removed from agents dir" || fail "17b-h: stop-slop remained in agents dir"
+grep -Fqx "stale hard-cut" "${td17b}/skills/hard-cut/SKILL.md" && pass "17b-e: stale hard-cut left in Cursor skills" || fail "17b-f: stale hard-cut was removed"
+grep -Fqx "stale agents stop-slop" "${AGENTS_SKILLS_DIR}/stop-slop/SKILL.md" && pass "17b-g: stop-slop left in agents dir" || fail "17b-h: stop-slop was removed from agents dir"
 [[ -f "${AGENTS_SKILLS_DIR}/hard-cut/SKILL.md" ]] && pass "17b-i: hard-cut installed to agents dir" || fail "17b-j: hard-cut missing from agents dir"
+grep -Fqx "decision needed: conflict: ${td17b}/skills/hard-cut is outside the managed install path ${AGENTS_SKILLS_DIR}/hard-cut; left in place" "${td17b}/install.log" && pass "17b-k: hard-cut conflict reported" || fail "17b-l: hard-cut conflict missing"
+grep -Fqx "decision needed: conflict: ${AGENTS_SKILLS_DIR}/stop-slop is outside the managed install path ${td17b}/skills/stop-slop; left in place" "${td17b}/install.log" && pass "17b-m: agents stop-slop conflict reported" || fail "17b-n: agents stop-slop conflict missing"
 
 # ---------------------------------------------------------------------------
 # 17c. Personal OpenCode profile installs ivan-writing into the agents dir
@@ -3055,13 +3093,16 @@ for hive_writing in humanizer stop-slop writing-for-humans writing-policy; do
   printf 'stale agents %s\n' "${hive_writing}" > "${AGENTS_SKILLS_DIR}/${hive_writing}/SKILL.md"
   printf 'stale opencode %s\n' "${hive_writing}" > "${td68b}/skills/${hive_writing}/SKILL.md"
 done
-if OPENCODE_CONFIG_DIR="${td68b}" OPENCODE_AGENTS_PROFILE=shared bash "${BASELINE_PWD}/scripts/install-profile.sh" --apply >"${TMPDIR}/install68b.out" 2>"${TMPDIR}/install68b.err"; then
-  if python3 - "${td68b}" "${AGENTS_SKILLS_DIR}" <<'PY'
+install68b_status=0
+OPENCODE_CONFIG_DIR="${td68b}" OPENCODE_AGENTS_PROFILE=shared bash "${BASELINE_PWD}/scripts/install-profile.sh" --apply >"${TMPDIR}/install68b.out" 2>"${TMPDIR}/install68b.err" || install68b_status=$?
+if [[ "${install68b_status}" -eq 1 ]]; then
+  if python3 - "${td68b}" "${AGENTS_SKILLS_DIR}" "${TMPDIR}/install68b.err" <<'PY'
 import sys
 from pathlib import Path
 
 target = Path(sys.argv[1])
 agents = Path(sys.argv[2])
+err = Path(sys.argv[3]).read_text(encoding='utf-8')
 skills = target / 'skills'
 errors = []
 for name in ('brainstorming', 'systematic-debugging', 'test-driven-development', 'ast-grep', 'using-git-worktrees', 'finishing-a-development-branch', 'consolidate-test-suites', 'root-cause-finder', 'context-mode'):
@@ -3070,10 +3111,17 @@ for name in ('brainstorming', 'systematic-debugging', 'test-driven-development',
     if name in ('brainstorming', 'systematic-debugging', 'test-driven-development', 'ast-grep') and (agents / name).exists():
         errors.append(f'installed agents skill {name}')
 for name in ('humanizer', 'stop-slop', 'writing-for-humans', 'writing-policy'):
-    if (skills / name).exists():
-        errors.append(f'{name} remained in OpenCode skills')
-    if (agents / name).exists():
-        errors.append(f'{name} remained in agents dir')
+    if (skills / name / 'SKILL.md').read_text(encoding='utf-8') != f'stale opencode {name}\n':
+        errors.append(f'{name} OpenCode copy was not left in place')
+    if (agents / name / 'SKILL.md').read_text(encoding='utf-8') != f'stale agents {name}\n':
+        errors.append(f'{name} agents copy was not left in place')
+    for existing, managed in (
+        (skills / name, 'Hive materialization'),
+        (agents / name, 'Hive materialization'),
+    ):
+        line = f'decision needed: conflict: {existing} is outside the managed install path {managed}; left in place'
+        if line not in err:
+            errors.append(f'missing decision line for {existing}')
 for name in ('writing-work-items', 'decomposing-work', 'running-agile-delivery'):
     if not (agents / name / 'SKILL.md').is_file():
         errors.append(f'missing shared skill {name} in agents dir')
@@ -3083,12 +3131,12 @@ if errors:
     raise SystemExit('\n'.join(errors))
 PY
   then
-    pass "68b: temp OpenCode install omits the three Hive-overlapping forks and keeps remaining skills"
+    pass "68b: temp OpenCode install omits Hive-overlapping forks, leaves Hive writing copies, and reports them"
   else
-    fail "68b: temp OpenCode install leaked Hive-overlapping forks or dropped remaining skills"
+    fail "68b: temp OpenCode install leaked forks, dropped managed skills, or missed a decision line"
   fi
 else
-  fail "68b: temp OpenCode install failed: $(cat "${TMPDIR}/install68b.err")"
+  fail "68b: temp OpenCode install exited ${install68b_status}: $(cat "${TMPDIR}/install68b.err")"
 fi
 
 if python3 - "${BASELINE_PWD}" <<'PY'
@@ -3430,8 +3478,10 @@ for hive_writing in humanizer stop-slop writing-for-humans writing-policy; do
   mkdir -p "${AGENTS_SKILLS_DIR}/${hive_writing}"
   printf 'stale agents %s\n' "${hive_writing}" > "${AGENTS_SKILLS_DIR}/${hive_writing}/SKILL.md"
 done
-if env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td68p}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install >"${TMPDIR}/install68p.out" 2>"${TMPDIR}/install68p.err"; then
-  if python3 - "${BASELINE_PWD}" "${td68p}" "${AGENTS_SKILLS_DIR}" <<'PY'
+install68p_status=0
+env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td68p}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install >"${TMPDIR}/install68p.out" 2>"${TMPDIR}/install68p.err" || install68p_status=$?
+if [[ "${install68p_status}" -eq 1 ]]; then
+  if python3 - "${BASELINE_PWD}" "${td68p}" "${AGENTS_SKILLS_DIR}" "${TMPDIR}/install68p.err" <<'PY'
 import hashlib
 import json
 import sys
@@ -3440,6 +3490,7 @@ from pathlib import Path
 root = Path(sys.argv[1])
 installed = Path(sys.argv[2])
 agents = Path(sys.argv[3])
+err = Path(sys.argv[4]).read_text(encoding='utf-8')
 provenance = json.loads((root / 'vendor/oc-arkive/cursor-skills/provenance.json').read_text(encoding='utf-8'))
 errors = []
 for name in (
@@ -3463,8 +3514,12 @@ writing_files = {
     'writing-policy': ('SKILL.md',),
 }
 for name, relatives in writing_files.items():
-    if (agents / name).exists():
-        errors.append(f'{name} remained in agents dir')
+    stale = agents / name / 'SKILL.md'
+    if not stale.is_file() or stale.read_text(encoding='utf-8') != f'stale agents {name}\n':
+        errors.append(f'{name} agents copy was not left in place')
+    line = f'decision needed: conflict: {agents / name} is outside the managed install path {installed / "skills" / name}; left in place'
+    if line not in err:
+        errors.append(f'missing decision line for {agents / name}')
     for relative in relatives:
         source = root / '.apm/cursor/skills' / name / relative
         target = installed / 'skills' / name / relative
@@ -3479,34 +3534,43 @@ PY
   then
     pass "68p: temp Cursor install of vendored Hive skills matches provenance installedSha256"
   else
-    fail "68p: temp Cursor install did not match provenance installedSha256"
+    fail "68p: temp Cursor install did not match provenance installedSha256 or missed a decision line"
   fi
 else
-  fail "68p: temp Cursor install from real worktree helper failed: $(cat "${TMPDIR}/install68p.err")"
+  fail "68p: temp Cursor install from real worktree helper exited ${install68p_status}: $(cat "${TMPDIR}/install68p.err")"
 fi
 
-printf '\n=== 68q. Cursor installer removes leftover retired skills ===\n'
+printf '\n=== 68q. Cursor installer leaves leftover retired skills for a decision ===\n'
 td68q="${TMPDIR}/cursor68q"
 mkdir -p "${td68q}/skills/consolidate-test-suites" "${td68q}/skills/root-cause-finder"
 printf '%s\n' 'stale leftover consolidate-test-suites' > "${td68q}/skills/consolidate-test-suites/SKILL.md"
 printf '%s\n' 'stale leftover root-cause-finder' > "${td68q}/skills/root-cause-finder/SKILL.md"
 sandbox_agents_skills
-if env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td68q}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install --dry-run >"${TMPDIR}/dry68q.out" 2>"${TMPDIR}/dry68q.err"; then
-  grep -F "Would back up and remove leftover ${td68q}/skills/consolidate-test-suites" "${TMPDIR}/dry68q.out" >/dev/null && pass "68q-a: dry-run describes leftover consolidate-test-suites removal" || fail "68q-b: dry-run omitted leftover consolidate-test-suites removal"
-  grep -F "Would back up and remove leftover ${td68q}/skills/root-cause-finder" "${TMPDIR}/dry68q.out" >/dev/null && pass "68q-c: dry-run describes leftover root-cause-finder removal" || fail "68q-d: dry-run omitted leftover root-cause-finder removal"
+dry68q_status=0
+env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td68q}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install --dry-run >"${TMPDIR}/dry68q.out" 2>"${TMPDIR}/dry68q.err" || dry68q_status=$?
+if [[ "${dry68q_status}" -eq 1 ]]; then
+  grep -Fqx "decision needed: unversioned: ${td68q}/skills/consolidate-test-suites is not packaged by this install; left in place" "${TMPDIR}/dry68q.err" && pass "68q-a: dry-run reports leftover consolidate-test-suites" || fail "68q-b: dry-run omitted leftover consolidate-test-suites: $(cat "${TMPDIR}/dry68q.err")"
+  grep -Fqx "decision needed: unversioned: ${td68q}/skills/root-cause-finder is not packaged by this install; left in place" "${TMPDIR}/dry68q.err" && pass "68q-c: dry-run reports leftover root-cause-finder" || fail "68q-d: dry-run omitted leftover root-cause-finder: $(cat "${TMPDIR}/dry68q.err")"
+  grep -Fqx 'stale leftover consolidate-test-suites' "${td68q}/skills/consolidate-test-suites/SKILL.md" && grep -Fqx 'stale leftover root-cause-finder' "${td68q}/skills/root-cause-finder/SKILL.md" && pass "68q-c2: dry-run left retired skills in place" || fail "68q-d2: dry-run changed retired skills"
 else
-  fail "68q-a: leftover Cursor retired-skill dry-run failed: $(cat "${TMPDIR}/dry68q.err")"
-  fail "68q-c: leftover Cursor retired-skill dry-run failed"
+  fail "68q-a: leftover Cursor retired-skill dry-run exited ${dry68q_status}: $(cat "${TMPDIR}/dry68q.err")"
 fi
-if env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td68q}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install >"${TMPDIR}/install68q.out" 2>"${TMPDIR}/install68q.err"; then
-  [[ ! -e "${td68q}/skills/consolidate-test-suites" ]] && pass "68q-e: leftover Cursor consolidate-test-suites removed" || fail "68q-f: leftover Cursor consolidate-test-suites remained"
-  [[ ! -e "${td68q}/skills/root-cause-finder" ]] && pass "68q-g: leftover Cursor root-cause-finder removed" || fail "68q-h: leftover Cursor root-cause-finder remained"
+install68q_status=0
+env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td68q}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install >"${TMPDIR}/install68q.out" 2>"${TMPDIR}/install68q.err" || install68q_status=$?
+if [[ "${install68q_status}" -eq 1 ]]; then
+  grep -Fqx 'stale leftover consolidate-test-suites' "${td68q}/skills/consolidate-test-suites/SKILL.md" && pass "68q-e: leftover Cursor consolidate-test-suites left in place" || fail "68q-f: leftover Cursor consolidate-test-suites was removed"
+  grep -Fqx 'stale leftover root-cause-finder' "${td68q}/skills/root-cause-finder/SKILL.md" && pass "68q-g: leftover Cursor root-cause-finder left in place" || fail "68q-h: leftover Cursor root-cause-finder was removed"
   [[ -f "${td68q}/skills/using-git-worktrees/SKILL.md" ]] && pass "68q-i: Cursor using-git-worktrees still installed" || fail "68q-j: Cursor using-git-worktrees missing"
   [[ -f "${td68q}/skills/finishing-a-development-branch/SKILL.md" ]] && pass "68q-k: Cursor finishing-a-development-branch still installed" || fail "68q-l: Cursor finishing-a-development-branch missing"
-  ls "${td68q}/.backup/"*"/skills/consolidate-test-suites" >/dev/null 2>&1 && pass "68q-m: leftover consolidate-test-suites backup exists" || fail "68q-n: no leftover consolidate-test-suites backup"
-  ls "${td68q}/.backup/"*"/skills/root-cause-finder" >/dev/null 2>&1 && pass "68q-o: leftover root-cause-finder backup exists" || fail "68q-p: no leftover root-cause-finder backup"
+  grep -Fqx "decision needed: unversioned: ${td68q}/skills/consolidate-test-suites is not packaged by this install; left in place" "${TMPDIR}/install68q.err" && pass "68q-m: install reports leftover consolidate-test-suites" || fail "68q-n: install omitted leftover consolidate-test-suites"
+  grep -Fqx "decision needed: unversioned: ${td68q}/skills/root-cause-finder is not packaged by this install; left in place" "${TMPDIR}/install68q.err" && pass "68q-o: install reports leftover root-cause-finder" || fail "68q-p: install omitted leftover root-cause-finder"
+  if ls "${td68q}/.backup/"*"/skills/consolidate-test-suites" >/dev/null 2>&1 || ls "${td68q}/.backup/"*"/skills/root-cause-finder" >/dev/null 2>&1; then
+    fail "68q-q: retired Cursor skills were backed up"
+  else
+    pass "68q-r: retired Cursor skills were not backed up"
+  fi
 else
-  fail "68q-e: leftover Cursor retired-skill install failed: $(cat "${TMPDIR}/install68q.err")"
+  fail "68q-e: leftover Cursor retired-skill install exited ${install68q_status}: $(cat "${TMPDIR}/install68q.err")"
 fi
 
 # ---------------------------------------------------------------------------
@@ -3534,7 +3598,9 @@ printf '%s\n' 'stale leftover finishing-a-development-branch' > "${td69}/skills/
 printf '%s\n' 'stale leftover consolidate-test-suites' > "${td69}/skills/consolidate-test-suites/SKILL.md"
 printf '%s\n' 'stale leftover root-cause-finder' > "${td69}/skills/root-cause-finder/SKILL.md"
 printf '%s\n' 'keep-file' > "${td69}/skills/keep.txt"
-OPENCODE_CONFIG_DIR="${td69}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td69}/err" && pass "69a: shared install succeeded" || fail "69b: shared install failed: $(cat "${td69}/err")"
+install69_status=0
+OPENCODE_CONFIG_DIR="${td69}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td69}/err" || install69_status=$?
+[[ "${install69_status}" -eq 1 ]] && pass "69a: shared install exits 1 after reporting decisions" || fail "69b: shared install exited ${install69_status}: $(cat "${td69}/err")"
 for shared69 in connecting-atlassian-tools managing-work-in-jira working-with-atlassian; do
   if cmp -s "${REPO_FIXTURE}/.apm/skills/${shared69}/SKILL.md" "${AGENTS_SKILLS_DIR}/${shared69}/SKILL.md" \
     && grep -Fqx "old managed skill: ${shared69}" "${td69}/.backup/"*/"agents-skills/${shared69}/SKILL.md" \
@@ -3555,17 +3621,27 @@ if grep -Fqx 'impeccable-sentinel-keep' "${td69}/skills/impeccable/SENTINEL"; th
 else
   fail "69d: unmanaged impeccable was deleted or changed"
 fi
-[[ ! -e "${td69}/skills/context-mode" ]] && pass "69e: stale context-mode removed as retired skill" || fail "69f: stale context-mode was not removed"
-[[ ! -e "${td69}/skills/cymbal" ]] && pass "69g: leftover shared cymbal removed from OpenCode skills" || fail "69h: leftover shared cymbal remained in OpenCode skills"
+grep -Fqx 'stale-opencode-local' "${td69}/skills/context-mode/SKILL.md" \
+  && grep -Fqx "decision needed: unversioned: ${td69}/skills/context-mode is not packaged by this install; left in place" "${td69}/err" \
+  && pass "69e: stale context-mode left in place as unversioned" || fail "69f: stale context-mode was removed or not reported"
+grep -Fqx 'stale leftover cymbal' "${td69}/skills/cymbal/SKILL.md" \
+  && grep -Fqx "decision needed: conflict: ${td69}/skills/cymbal is outside the managed install path ${AGENTS_SKILLS_DIR}/cymbal; left in place" "${td69}/err" \
+  && pass "69g: leftover shared cymbal left in OpenCode skills" || fail "69h: leftover shared cymbal was removed or not reported"
 cmp -s "${REPO_FIXTURE}/.apm/skills/cymbal/SKILL.md" "${AGENTS_SKILLS_DIR}/cymbal/SKILL.md" && pass "69i: shared cymbal installed into agents dir" || fail "69j: shared cymbal missing or wrong in agents dir"
-[[ ! -e "${td69}/skills/brainstorming" ]] && pass "69k: leftover Hive brainstorming removed" || fail "69l: leftover Hive brainstorming remained"
-retired69=""
+grep -Fqx 'stale leftover brainstorming' "${td69}/skills/brainstorming/SKILL.md" \
+  && grep -Fqx "decision needed: conflict: ${td69}/skills/brainstorming is outside the managed install path Hive materialization; left in place" "${td69}/err" \
+  && pass "69k: leftover Hive brainstorming left in place" || fail "69l: leftover Hive brainstorming was removed or not reported"
+retired69_missing=""
 for skill69r in using-git-worktrees finishing-a-development-branch consolidate-test-suites root-cause-finder context-mode; do
-  if [[ -e "${td69}/skills/${skill69r}" ]]; then
-    retired69="${retired69} ${skill69r}"
+  if ! grep -Fqx "stale leftover ${skill69r}" "${td69}/skills/${skill69r}/SKILL.md" \
+    && ! grep -Fqx 'stale-opencode-local' "${td69}/skills/${skill69r}/SKILL.md"; then
+    retired69_missing="${retired69_missing} ${skill69r}"
+  fi
+  if ! grep -Fqx "decision needed: unversioned: ${td69}/skills/${skill69r} is not packaged by this install; left in place" "${td69}/err"; then
+    retired69_missing="${retired69_missing} ${skill69r}-line"
   fi
 done
-[[ -z "${retired69}" ]] && pass "69k2: leftover retired OpenCode workflow skills removed" || fail "69l2: leftover retired OpenCode workflow skills remained:${retired69}"
+[[ -z "${retired69_missing}" ]] && pass "69k2: leftover retired OpenCode workflow skills left in place and reported" || fail "69l2: leftover retired OpenCode workflow skills missing or unreported:${retired69_missing}"
 grep -Fqx 'unowned-ivan-writing' "${td69}/skills/ivan-writing/SKILL.md" && pass "69m: unowned ivan-writing preserved on shared install" || fail "69n: unowned ivan-writing was stripped on shared install"
 grep -Fqx 'keep-file' "${td69}/skills/keep.txt" && pass "69o: unmanaged skills file survived" || fail "69p: unmanaged skills file was deleted"
 missing69=""
@@ -3577,17 +3653,26 @@ done
 [[ -z "${missing69}" ]] && pass "69q: OpenCode-local writing-skills present" || fail "69r: missing OpenCode-local skills:${missing69}"
 ls "${td69}/.backup/"*"/skills/impeccable/SENTINEL" >/dev/null 2>&1 && pass "69s: whole-skills backup includes unmanaged skill" || fail "69t: no whole-skills backup of unmanaged skill"
 
-printf '\n=== 69b. Personal OpenCode install strips leftover ivan-writing ===\n'
+printf '\n=== 69b. Personal OpenCode install leaves leftover ivan-writing for a decision ===\n'
 build_fixture
 sandbox_agents_skills
 td69b="${TMPDIR}/test69b"
 mkdir -p "${td69b}/skills/ivan-writing" "${td69b}/skills/keep-me"
 printf '%s\n' 'stale leftover ivan-writing' > "${td69b}/skills/ivan-writing/SKILL.md"
 printf '%s\n' 'keep-me-sentinel' > "${td69b}/skills/keep-me/file.txt"
-OPENCODE_CONFIG_DIR="${td69b}" OPENCODE_AGENTS_PROFILE=personal-default bash "${INSTALL_HELPER}" --apply 2>"${td69b}/err" && pass "69b-a: personal install succeeded" || fail "69b-b: personal install failed: $(cat "${td69b}/err")"
-[[ ! -e "${td69b}/skills/ivan-writing" ]] && pass "69b-c: leftover ivan-writing removed from OpenCode skills" || fail "69b-d: leftover ivan-writing remained"
+install69b_status=0
+OPENCODE_CONFIG_DIR="${td69b}" OPENCODE_AGENTS_PROFILE=personal-default bash "${INSTALL_HELPER}" --apply 2>"${td69b}/err" || install69b_status=$?
+[[ "${install69b_status}" -eq 1 ]] && pass "69b-a: personal install exits 1 after reporting the leftover" || fail "69b-b: personal install exited ${install69b_status}: $(cat "${td69b}/err")"
+grep -Fqx 'stale leftover ivan-writing' "${td69b}/skills/ivan-writing/SKILL.md" \
+  && grep -Fqx "decision needed: conflict: ${td69b}/skills/ivan-writing is outside the managed install path ${AGENTS_SKILLS_DIR}/ivan-writing; left in place" "${td69b}/err" \
+  && pass "69b-c: leftover ivan-writing left in OpenCode skills" || fail "69b-d: leftover ivan-writing was removed or not reported"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "69b-e: ivan-writing installed to agents dir" || fail "69b-f: ivan-writing missing from agents dir"
 grep -Fqx 'keep-me-sentinel' "${td69b}/skills/keep-me/file.txt" && pass "69b-g: unmanaged skill preserved on personal install" || fail "69b-h: unmanaged skill removed on personal install"
+if grep -F 'keep-me' "${td69b}/err" | grep -F 'decision needed:' >/dev/null; then
+  fail "69b-i: unmanaged skill was reported"
+else
+  pass "69b-j: unmanaged skill was not reported"
+fi
 
 printf '\n=== 69c. Installers upsert shared Atlassian skills, including a dangling symlink ===\n'
 # working-with-atlassian and managing-work-in-jira are directories;
