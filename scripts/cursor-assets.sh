@@ -83,6 +83,7 @@ HIVE_WRITING_SKILLS=(
 )
 DECISION_COUNT=0
 AGENTS_IVAN_OPT_OUT_NOTED=0
+AGENTS_HIVE_WRITING_NOTED=""
 
 note_conflict() {
   printf 'decision needed: conflict: %s is outside the managed install path %s; left in place\n' "$1" "$2" >&2
@@ -118,9 +119,15 @@ report_cursor_skill_decisions() {
   done
   for name in "${HIVE_WRITING_SKILLS[@]}"; do
     path="${AGENTS_SKILLS_DIR}/${name}"
-    if [[ -e "${path}" || -L "${path}" ]]; then
-      note_conflict "${path}" "${target_dir}/skills/${name}"
-    fi
+    case " ${AGENTS_HIVE_WRITING_NOTED} " in
+      *" ${name} "*) ;;
+      *)
+        if [[ -e "${path}" || -L "${path}" ]]; then
+          AGENTS_HIVE_WRITING_NOTED="${AGENTS_HIVE_WRITING_NOTED} ${name}"
+          note_conflict "${path}" "${target_dir}/skills/${name}"
+        fi
+        ;;
+    esac
   done
   path="${target_dir}/skills/ivan-writing"
   case "${CURSOR_INSTALL_IVAN_WRITING:-}" in
@@ -130,16 +137,30 @@ report_cursor_skill_decisions() {
       fi
       ;;
     '')
-      if [[ -f "${path}/.cursor-managed" ]]; then
+      if ivan_marker_unobservable "${path}"; then
+        note_unversioned "${path}"
+      elif [[ -f "${path}/.cursor-managed" ]]; then
         note_unversioned "${path}"
       fi
       agents_ivan="${AGENTS_SKILLS_DIR}/ivan-writing"
-      if [[ "${AGENTS_IVAN_OPT_OUT_NOTED}" -eq 0 && -f "${agents_ivan}/.cursor-managed" ]]; then
-        AGENTS_IVAN_OPT_OUT_NOTED=1
-        note_unversioned "${agents_ivan}"
+      if [[ "${AGENTS_IVAN_OPT_OUT_NOTED}" -eq 0 ]]; then
+        if ivan_marker_unobservable "${agents_ivan}"; then
+          AGENTS_IVAN_OPT_OUT_NOTED=1
+          note_unversioned "${agents_ivan}"
+        elif [[ -f "${agents_ivan}/.cursor-managed" ]]; then
+          AGENTS_IVAN_OPT_OUT_NOTED=1
+          note_unversioned "${agents_ivan}"
+        fi
       fi
       ;;
   esac
+}
+
+# Opt-out ivan-writing: a directory that is not both readable and traversable
+# hides whether .cursor-managed exists. Stat the directory only; do not read it.
+ivan_marker_unobservable() {
+  local path="$1"
+  [[ -d "${path}" && ( ! -r "${path}" || ! -x "${path}" ) ]]
 }
 
 usage() {
@@ -1153,11 +1174,11 @@ print_copy_plan() {
       printf 'Would copy personal profiles/personal/skills/ivan-writing -> %s/ivan-writing (CURSOR_INSTALL_IVAN_WRITING=1)\n' "${AGENTS_SKILLS_DIR}"
       ;;
     '')
-      if [[ -d "${AGENTS_SKILLS_DIR}/ivan-writing" && ! -f "${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed" ]]; then
+      if [[ -d "${AGENTS_SKILLS_DIR}/ivan-writing" && -r "${AGENTS_SKILLS_DIR}/ivan-writing" && -x "${AGENTS_SKILLS_DIR}/ivan-writing" && ! -f "${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed" ]]; then
         printf 'Would preserve existing %s/ivan-writing (not managed by this helper)\n' "${AGENTS_SKILLS_DIR}"
       fi
       if [[ -e "${target_dir}/skills/ivan-writing" || -L "${target_dir}/skills/ivan-writing" ]]; then
-        if [[ ! -f "${target_dir}/skills/ivan-writing/.cursor-managed" ]]; then
+        if ! ivan_marker_unobservable "${target_dir}/skills/ivan-writing" && [[ ! -f "${target_dir}/skills/ivan-writing/.cursor-managed" ]]; then
           printf 'Would preserve existing %s/skills/ivan-writing (not managed by this helper)\n' "${target_dir}"
         fi
       fi
@@ -1264,11 +1285,11 @@ install_assets_into() {
       install_personal_skill "ivan-writing" "${target_dir}"
       ;;
     '')
-      if [[ -d "${AGENTS_SKILLS_DIR}/ivan-writing" && ! -f "${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed" ]]; then
+      if [[ -d "${AGENTS_SKILLS_DIR}/ivan-writing" && -r "${AGENTS_SKILLS_DIR}/ivan-writing" && -x "${AGENTS_SKILLS_DIR}/ivan-writing" && ! -f "${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed" ]]; then
         printf 'Preserved existing agents-dir ivan-writing (not managed by this helper)\n'
       fi
       if [[ -e "${cursor_ivan}" || -L "${cursor_ivan}" ]]; then
-        if [[ ! -f "${cursor_ivan}/.cursor-managed" ]]; then
+        if ! ivan_marker_unobservable "${cursor_ivan}" && [[ ! -f "${cursor_ivan}/.cursor-managed" ]]; then
           printf 'Preserved existing skills/ivan-writing (not managed by this helper)\n'
         fi
       fi
@@ -1344,7 +1365,7 @@ check_target_readability() {
   fi
 
   if [[ -d "${target}/skills" ]]; then
-    for name in "${SKILLS[@]}" "${RETIRED_SKILLS[@]}" "${CANONICAL_SKILLS[@]}" ivan-writing; do
+    for name in "${SKILLS[@]}"; do
       if [[ -e "${target}/skills/${name}" || -L "${target}/skills/${name}" ]]; then
         check_recursive_readable "${target}/skills/${name}" "target/skills/${name}" || return 1
       fi
@@ -1352,11 +1373,18 @@ check_target_readability() {
   fi
 
   if [[ -d "${AGENTS_SKILLS_DIR}" ]]; then
-    for name in "${CANONICAL_SKILLS[@]}" "${HIVE_WRITING_SKILLS[@]}" ivan-writing; do
+    for name in "${CANONICAL_SKILLS[@]}"; do
       if [[ -e "${AGENTS_SKILLS_DIR}/${name}" || -L "${AGENTS_SKILLS_DIR}/${name}" ]]; then
         check_recursive_readable "${AGENTS_SKILLS_DIR}/${name}" "agents-skills/${name}" || return 1
       fi
     done
+    case "${CURSOR_INSTALL_IVAN_WRITING:-}" in
+      1)
+        if [[ -e "${AGENTS_SKILLS_DIR}/ivan-writing" || -L "${AGENTS_SKILLS_DIR}/ivan-writing" ]]; then
+          check_recursive_readable "${AGENTS_SKILLS_DIR}/ivan-writing" "agents-skills/ivan-writing" || return 1
+        fi
+        ;;
+    esac
   fi
 }
 
@@ -1532,6 +1560,7 @@ install_assets() {
 
   DECISION_COUNT=0
   AGENTS_IVAN_OPT_OUT_NOTED=0
+  AGENTS_HIVE_WRITING_NOTED=""
   for target_dir in "${TARGETS[@]}"; do
     install_assets_into "${root}" "${target_dir}"
   done
@@ -1551,6 +1580,7 @@ print_all_copy_plans() {
 
   DECISION_COUNT=0
   AGENTS_IVAN_OPT_OUT_NOTED=0
+  AGENTS_HIVE_WRITING_NOTED=""
   for target_dir in "${TARGETS[@]}"; do
     print_copy_plan "${root}" "${target_dir}"
   done

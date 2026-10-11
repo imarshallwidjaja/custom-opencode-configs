@@ -1044,7 +1044,7 @@ cmp -s "${REPO_FIXTURE}/.apm/prompts/reflect.prompt.md" "${td3}/commands/reflect
 cmp -s "${REPO_FIXTURE}/.apm/cursor/skills/agents-md-mastery/SKILL.md" "${td3}/skills/agents-md-mastery/SKILL.md" && pass "3ai: Cursor agents-md-mastery installed byte-for-byte" || fail "3aj: Cursor agents-md-mastery content changed during install"
 
 # ---------------------------------------------------------------------------
-# 4. Opt-out removes only helper-managed ivan-writing (in-directory marker)
+# 4. Opt-out leaves managed ivan-writing for a decision
 # ---------------------------------------------------------------------------
 printf '\n=== 4. Opt-out leaves managed ivan-writing for a decision ===\n'
 td4="${TMPDIR}/test4"; mkdir -p "${td4}"
@@ -1076,7 +1076,7 @@ CURSOR_CONFIG_DIR="${td5}" bash "${CURSOR_HELPER}" install 2>"${td5}/optout.log"
 [[ -f "${td5}/skills/ivan-writing/user-file.txt" ]] && pass "5b: unowned preserved" || fail "5c: unowned removed"
 
 # ---------------------------------------------------------------------------
-# 5d. Opt-in strips stale Cursor skills/ivan-writing
+# 5d. Opt-in leaves stale Cursor ivan-writing for a decision
 # ---------------------------------------------------------------------------
 printf '\n=== 5d. Opt-in leaves stale Cursor ivan-writing for a decision ===\n'
 td5d="${TMPDIR}/test5d"; mkdir -p "${td5d}/skills/ivan-writing"
@@ -1101,7 +1101,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 5e. Opt-out removes Cursor ivan-writing that still has .cursor-managed
+# 5e. Opt-out leaves Cursor ivan-writing with .cursor-managed for a decision
 # ---------------------------------------------------------------------------
 printf '\n=== 5e. Opt-out leaves Cursor ivan-writing with .cursor-managed for a decision ===\n'
 td5e="${TMPDIR}/test5e"; mkdir -p "${td5e}/skills/ivan-writing"
@@ -1386,7 +1386,7 @@ CURSOR_CONFIG_DIR="${td17}" bash "${CURSOR_HELPER}" install 2>"${td17}/log2" || 
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/user.txt" ]] && pass "17c: user-owned recreated dir preserved" || fail "17d: user dir removed despite missing marker"
 
 # ---------------------------------------------------------------------------
-# 17b. Stale Cursor copy of a shared skill is removed on install
+# 17b. Stale Cursor shared skill is left for a decision
 # ---------------------------------------------------------------------------
 printf '\n=== 17b. Stale Cursor shared skill is left for a decision ===\n'
 td17b="${TMPDIR}/test17b"; mkdir -p "${td17b}/skills/stop-slop" "${td17b}/skills/hard-cut"
@@ -4004,6 +4004,41 @@ then
   pass "70a: installer manifests, packaged skills, and Related Skills references agree"
 else
   fail "70a: installer manifests, packaged skills, and Related Skills references agree"
+fi
+
+# ---------------------------------------------------------------------------
+# 71. Unreadable leftover Cursor skill does not block a managed install
+# ---------------------------------------------------------------------------
+printf '\n=== 71. Unreadable leftover Cursor skill does not block a managed install ===\n'
+if [[ "$(id -u)" -eq 0 ]]; then
+  pass "71: SKIP - effective UID is root; kernel bypasses permission bits"
+else
+  td71="${TMPDIR}/test71"
+  mkdir -p "${td71}/skills/cymbal"
+  printf '%s\n' 'unreadable leftover cymbal' > "${td71}/skills/cymbal/SKILL.md"
+  chmod 000 "${td71}/skills/cymbal/SKILL.md"
+  build_fixture
+  sandbox_agents_skills
+  dry71_status=0
+  env -u CURSOR_CONFIG_DIRS -u CURSOR_INSTALL_IVAN_WRITING CURSOR_CONFIG_DIR="${td71}" bash "${CURSOR_HELPER}" install --dry-run >"${td71}/dry.out" 2>"${td71}/dry.err" || dry71_status=$?
+  [[ "${dry71_status}" -eq 1 ]] && pass "71a: dry-run exits 1" || fail "71b: dry-run exited ${dry71_status}: $(cat "${td71}/dry.err")"
+  grep -F "Would copy canonical .apm/skills/cymbal -> ${AGENTS_SKILLS_DIR}/cymbal" "${td71}/dry.out" >/dev/null && pass "71c: dry-run plans the managed cymbal copy" || fail "71d: dry-run stopped before the managed copy plan: $(cat "${td71}/dry.out")"
+  grep -Fqx "decision needed: conflict: ${td71}/skills/cymbal is outside the managed install path ${AGENTS_SKILLS_DIR}/cymbal; left in place" "${td71}/dry.err" && pass "71e: dry-run reports leftover cymbal" || fail "71f: dry-run omitted leftover cymbal: $(cat "${td71}/dry.err")"
+  [[ ! -e "${AGENTS_SKILLS_DIR}/cymbal" && "$(stat -c '%a' "${td71}/skills/cymbal/SKILL.md")" == "0" ]] && pass "71g: dry-run left the unreadable skill in place" || fail "71h: dry-run changed the unreadable skill"
+  install71_status=0
+  env -u CURSOR_CONFIG_DIRS -u CURSOR_INSTALL_IVAN_WRITING CURSOR_CONFIG_DIR="${td71}" bash "${CURSOR_HELPER}" install >"${td71}/install.out" 2>"${td71}/install.err" || install71_status=$?
+  [[ "${install71_status}" -eq 1 ]] && pass "71i: install exits 1" || fail "71j: install exited ${install71_status}: $(cat "${td71}/install.err")"
+  [[ -f "${td71}/skills/agents-md-mastery/SKILL.md" ]] && pass "71k: install wrote a managed Cursor skill" || fail "71l: managed Cursor skill missing"
+  grep -Fqx 'OK' "${AGENTS_SKILLS_DIR}/cymbal/SKILL.md" && pass "71m: install wrote managed cymbal" || fail "71n: managed cymbal missing"
+  [[ -e "${td71}/skills/cymbal/SKILL.md" && "$(stat -c '%a' "${td71}/skills/cymbal/SKILL.md")" == "0" ]] && pass "71o: install left the unreadable skill in place" || fail "71p: install removed or rewrote the unreadable skill"
+  grep -Fqx "decision needed: conflict: ${td71}/skills/cymbal is outside the managed install path ${AGENTS_SKILLS_DIR}/cymbal; left in place" "${td71}/install.err" && pass "71q: install reports leftover cymbal" || fail "71r: install omitted leftover cymbal: $(cat "${td71}/install.err")"
+  if grep -q 'not readable' "${td71}/dry.err" "${td71}/install.err"; then
+    fail "71s: preflight aborted on the report-only skill"
+  else
+    pass "71t: preflight did not abort on the report-only skill"
+  fi
+  chmod 644 "${td71}/skills/cymbal/SKILL.md"
+  grep -Fqx 'unreadable leftover cymbal' "${td71}/skills/cymbal/SKILL.md" && pass "71u: leftover cymbal content unchanged" || fail "71v: leftover cymbal content changed"
 fi
 
 # ---------------------------------------------------------------------------

@@ -140,11 +140,66 @@ list_agents_profiles() {
   done | sort
 }
 
+# Portable stand-in for GNU `realpath -m`: resolve the longest existing
+# directory prefix physically, then apply the missing components lexically.
+resolve_path() {
+  local path="$1" head tail="" part resolved
+  [[ "${path}" == /* ]] || path="${PWD}/${path}"
+  while [[ "${path}" == //* ]]; do path="${path#/}"; done
+  head="${path}"
+  while [[ ! -d "${head}" ]]; do
+    tail="${head##*/}/${tail}"
+    head="${head%/*}"
+    [[ -n "${head}" ]] || head="/"
+  done
+  resolved="$(cd -P -- "${head}" && pwd -P)" || return 1
+  while [[ -n "${tail}" ]]; do
+    part="${tail%%/*}"
+    tail="${tail#*/}"
+    case "${part}" in
+      ''|.) ;;
+      ..) resolved="${resolved%/*}"; [[ -n "${resolved}" ]] || resolved="/" ;;
+      *)
+        resolved="${resolved%/}/${part}"
+        if [[ -d "${resolved}" ]]; then
+          resolved="$(cd -P -- "${resolved}" && pwd -P)" || return 1
+        fi
+        ;;
+    esac
+  done
+  printf '%s\n' "${resolved}"
+}
+
+same_resolved_path() {
+  local left right
+  left="$(resolve_path "$1")" || return 1
+  right="$(resolve_path "$2")" || return 1
+  [[ "${left}" == "${right}" ]]
+}
+
+abort_if_agents_skills_aliased() {
+  local other="$1"
+  local label="$2"
+  if same_resolved_path "${AGENTS_SKILLS_DIR}" "${other}"; then
+    printf 'ERROR: AGENTS_SKILLS_DIR resolves to the same directory as %s (%s)\n' "${label}" "${other}" >&2
+    exit 1
+  fi
+}
+
 DECISION_COUNT=0
 
 note_conflict() {
   printf 'decision needed: conflict: %s is outside the managed install path %s; left in place\n' "$1" "$2" >&2
   DECISION_COUNT=$((DECISION_COUNT + 1))
+}
+
+note_conflict_if_outside() {
+  local path="$1"
+  local managed="$2"
+  if same_resolved_path "${path}" "${managed}"; then
+    return 0
+  fi
+  note_conflict "${path}" "${managed}"
 }
 
 note_unversioned() {
@@ -164,23 +219,23 @@ report_opencode_skill_decisions() {
   for skill_name in "${SHARED_SKILLS[@]}"; do
     path="${TARGET_DIR}/skills/${skill_name}"
     if [[ -e "${path}" || -L "${path}" ]]; then
-      note_conflict "${path}" "${AGENTS_SKILLS_DIR}/${skill_name}"
+      note_conflict_if_outside "${path}" "${AGENTS_SKILLS_DIR}/${skill_name}"
     fi
   done
   for skill_name in "${HIVE_WRITING_SKILLS[@]}"; do
     path="${AGENTS_SKILLS_DIR}/${skill_name}"
     if [[ -e "${path}" || -L "${path}" ]]; then
-      note_conflict "${path}" "Hive materialization"
+      note_conflict_if_outside "${path}" "Hive materialization"
     fi
     path="${TARGET_DIR}/skills/${skill_name}"
     if [[ -e "${path}" || -L "${path}" ]]; then
-      note_conflict "${path}" "Hive materialization"
+      note_conflict_if_outside "${path}" "Hive materialization"
     fi
   done
   for skill_name in "${HIVE_OWNED_SKILLS[@]}"; do
     path="${TARGET_DIR}/skills/${skill_name}"
     if [[ -e "${path}" || -L "${path}" ]]; then
-      note_conflict "${path}" "Hive materialization"
+      note_conflict_if_outside "${path}" "Hive materialization"
     fi
   done
   for skill_name in "${OPENCODE_RETIRED_SKILLS[@]}"; do
@@ -198,7 +253,7 @@ report_opencode_skill_decisions() {
           personal_name="$(basename "${personal_entry}")"
           path="${TARGET_DIR}/skills/${personal_name}"
           if [[ -e "${path}" || -L "${path}" ]]; then
-            note_conflict "${path}" "${AGENTS_SKILLS_DIR}/${personal_name}"
+            note_conflict_if_outside "${path}" "${AGENTS_SKILLS_DIR}/${personal_name}"
           fi
         done
       fi
@@ -207,6 +262,8 @@ report_opencode_skill_decisions() {
 }
 
 if [[ "${MODE}" == preview ]]; then
+  abort_if_agents_skills_aliased "${TARGET_DIR}" "OpenCode TARGET_DIR"
+  abort_if_agents_skills_aliased "${TARGET_DIR}/skills" "OpenCode TARGET_DIR/skills"
   printf 'Would install Opencode profile into %s\n' "${TARGET_DIR}"
   printf 'Would install shared skills into %s\n' "${AGENTS_SKILLS_DIR}"
   printf 'AGENTS profile: %s; mode: %s\n' "${AGENTS_PROFILE}" "${AGENTS_MODE}"
@@ -545,52 +602,6 @@ backup_agents_skill() {
     fi
     mkdir -p "${BACKUP_DIR}/agents-skills"
     cp -a "${path}" "${BACKUP_DIR}/agents-skills/${skill_name}"
-  fi
-}
-
-# Portable stand-in for GNU `realpath -m`: resolve the longest existing
-# directory prefix physically, then apply the missing components lexically.
-resolve_path() {
-  local path="$1" head tail="" part resolved
-  [[ "${path}" == /* ]] || path="${PWD}/${path}"
-  while [[ "${path}" == //* ]]; do path="${path#/}"; done
-  head="${path}"
-  while [[ ! -d "${head}" ]]; do
-    tail="${head##*/}/${tail}"
-    head="${head%/*}"
-    [[ -n "${head}" ]] || head="/"
-  done
-  resolved="$(cd -P -- "${head}" && pwd -P)" || return 1
-  while [[ -n "${tail}" ]]; do
-    part="${tail%%/*}"
-    tail="${tail#*/}"
-    case "${part}" in
-      ''|.) ;;
-      ..) resolved="${resolved%/*}"; [[ -n "${resolved}" ]] || resolved="/" ;;
-      *)
-        resolved="${resolved%/}/${part}"
-        if [[ -d "${resolved}" ]]; then
-          resolved="$(cd -P -- "${resolved}" && pwd -P)" || return 1
-        fi
-        ;;
-    esac
-  done
-  printf '%s\n' "${resolved}"
-}
-
-same_resolved_path() {
-  local left right
-  left="$(resolve_path "$1")" || return 1
-  right="$(resolve_path "$2")" || return 1
-  [[ "${left}" == "${right}" ]]
-}
-
-abort_if_agents_skills_aliased() {
-  local other="$1"
-  local label="$2"
-  if same_resolved_path "${AGENTS_SKILLS_DIR}" "${other}"; then
-    printf 'ERROR: AGENTS_SKILLS_DIR resolves to the same directory as %s (%s)\n' "${label}" "${other}" >&2
-    exit 1
   fi
 }
 
