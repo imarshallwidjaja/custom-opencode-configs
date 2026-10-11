@@ -63,7 +63,7 @@ build_fixture() {
   mkdir -p "${REPO_FIXTURE}"
 
   # Canonical skills (.apm/skills/)
-  for skill in cymbal hard-cut web-design-guidelines writing-skills; do
+  for skill in connecting-atlassian-tools cymbal hard-cut managing-work-in-jira web-design-guidelines writing-skills; do
     mkdir -p "${REPO_FIXTURE}/.apm/skills/${skill}"
     cat > "${REPO_FIXTURE}/.apm/skills/${skill}/SKILL.md" <<SKILL
 ---
@@ -83,6 +83,7 @@ SKILL
   stub_canonical_skill_tree decomposing-work
   stub_canonical_skill_tree running-agile-delivery
   stub_canonical_skill_tree writing-work-items
+  stub_canonical_skill_tree working-with-atlassian
 
   # Cursor asset root (.apm/cursor/)
   mkdir -p "${REPO_FIXTURE}/.apm/cursor/agents" "${REPO_FIXTURE}/.apm/cursor/commands" "${REPO_FIXTURE}/.apm/cursor/skills" "${REPO_FIXTURE}/.apm/cursor/rules"
@@ -3509,15 +3510,15 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 69. OpenCode installer retires shared Atlassian skills and preserves unmanaged skills
+# 69. OpenCode installer upserts shared Atlassian skills and preserves unmanaged skills
 # ---------------------------------------------------------------------------
-printf '\n=== 69. OpenCode installer retires shared Atlassian skills and preserves unmanaged skills ===\n'
+printf '\n=== 69. OpenCode installer upserts shared Atlassian skills and preserves unmanaged skills ===\n'
 build_fixture
 sandbox_agents_skills
 td69="${TMPDIR}/test69"
-for retired69 in working-with-atlassian managing-work-in-jira connecting-atlassian-tools; do
-  mkdir -p "${AGENTS_SKILLS_DIR}/${retired69}"
-  printf 'old managed skill: %s\n' "${retired69}" > "${AGENTS_SKILLS_DIR}/${retired69}/SKILL.md"
+for shared69 in connecting-atlassian-tools managing-work-in-jira working-with-atlassian; do
+  mkdir -p "${AGENTS_SKILLS_DIR}/${shared69}"
+  printf 'old managed skill: %s\n' "${shared69}" > "${AGENTS_SKILLS_DIR}/${shared69}/SKILL.md"
 done
 mkdir -p "${AGENTS_SKILLS_DIR}/user-managed"
 printf 'user-managed-sentinel\n' > "${AGENTS_SKILLS_DIR}/user-managed/SKILL.md"
@@ -3534,14 +3535,20 @@ printf '%s\n' 'stale leftover consolidate-test-suites' > "${td69}/skills/consoli
 printf '%s\n' 'stale leftover root-cause-finder' > "${td69}/skills/root-cause-finder/SKILL.md"
 printf '%s\n' 'keep-file' > "${td69}/skills/keep.txt"
 OPENCODE_CONFIG_DIR="${td69}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td69}/err" && pass "69a: shared install succeeded" || fail "69b: shared install failed: $(cat "${td69}/err")"
-for retired69 in working-with-atlassian managing-work-in-jira connecting-atlassian-tools; do
-  if [[ ! -e "${AGENTS_SKILLS_DIR}/${retired69}" ]] \
-    && grep -Fqx "old managed skill: ${retired69}" "${td69}/.backup/"*/"agents-skills/${retired69}/SKILL.md"; then
-    pass "69a: retired ${retired69} removed from shared destination and backed up"
+for shared69 in connecting-atlassian-tools managing-work-in-jira working-with-atlassian; do
+  if cmp -s "${REPO_FIXTURE}/.apm/skills/${shared69}/SKILL.md" "${AGENTS_SKILLS_DIR}/${shared69}/SKILL.md" \
+    && grep -Fqx "old managed skill: ${shared69}" "${td69}/.backup/"*/"agents-skills/${shared69}/SKILL.md" \
+    && [[ ! -e "${td69}/skills/${shared69}" && ! -L "${td69}/skills/${shared69}" ]]; then
+    pass "69a: ${shared69} replaced in agents dir, backed up, and left out of OpenCode skills"
   else
-    fail "69b: retired ${retired69} remains or lacks shared-destination backup"
+    fail "69b: ${shared69} was not upserted into the agents dir"
   fi
 done
+if cmp -s "${REPO_FIXTURE}/.apm/skills/working-with-atlassian/references/jql-essentials.md" "${AGENTS_SKILLS_DIR}/working-with-atlassian/references/jql-essentials.md"; then
+  pass "69a2: working-with-atlassian reference installed with the packaged skill"
+else
+  fail "69b2: working-with-atlassian reference missing or stale"
+fi
 grep -Fqx 'user-managed-sentinel' "${AGENTS_SKILLS_DIR}/user-managed/SKILL.md" && pass "69a: unrelated shared skill preserved" || fail "69b: unrelated shared skill changed"
 if grep -Fqx 'impeccable-sentinel-keep' "${td69}/skills/impeccable/SENTINEL"; then
   pass "69c: unmanaged impeccable survived"
@@ -3582,29 +3589,40 @@ OPENCODE_CONFIG_DIR="${td69b}" OPENCODE_AGENTS_PROFILE=personal-default bash "${
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "69b-e: ivan-writing installed to agents dir" || fail "69b-f: ivan-writing missing from agents dir"
 grep -Fqx 'keep-me-sentinel' "${td69b}/skills/keep-me/file.txt" && pass "69b-g: unmanaged skill preserved on personal install" || fail "69b-h: unmanaged skill removed on personal install"
 
-printf '\n=== 69c. Installers retire formerly managed Atlassian skills, including dangling symlinks ===\n'
+printf '\n=== 69c. Installers upsert shared Atlassian skills, including a dangling symlink ===\n'
 # working-with-atlassian and managing-work-in-jira are directories;
 # connecting-atlassian-tools is a dangling symlink that -e alone would miss.
-seed_retired_atlassian() {
-  local dir="$1" retired
-  for retired in working-with-atlassian managing-work-in-jira; do
-    mkdir -p "${dir}/${retired}"
-    printf 'old managed skill: %s\n' "${retired}" > "${dir}/${retired}/SKILL.md"
+seed_atlassian_sentinels() {
+  local dir="$1" name
+  for name in managing-work-in-jira working-with-atlassian; do
+    mkdir -p "${dir}/${name}"
+    printf 'old managed skill: %s\n' "${name}" > "${dir}/${name}/SKILL.md"
   done
   ln -s "${dir}/missing-target" "${dir}/connecting-atlassian-tools"
   mkdir -p "${dir}/user-managed"
   printf 'user-managed-sentinel\n' > "${dir}/user-managed/SKILL.md"
 }
-check_retired_atlassian() {
-  local label="$1" backup_root="$2" retired
-  for retired in working-with-atlassian managing-work-in-jira connecting-atlassian-tools; do
-    [[ ! -e "${AGENTS_SKILLS_DIR}/${retired}" && ! -L "${AGENTS_SKILLS_DIR}/${retired}" ]] \
-      && pass "${label}: ${retired} removed" || fail "${label}: ${retired} remains"
+check_upserted_atlassian() {
+  local label="$1" backup_root="$2" harness_skills="$3" source_root="$4" name
+  for name in connecting-atlassian-tools managing-work-in-jira working-with-atlassian; do
+    if cmp -s "${source_root}/.apm/skills/${name}/SKILL.md" "${AGENTS_SKILLS_DIR}/${name}/SKILL.md" \
+      && [[ ! -e "${harness_skills}/${name}" && ! -L "${harness_skills}/${name}" ]]; then
+      pass "${label}: ${name} installed into agents dir"
+    else
+      fail "${label}: ${name} missing from agents dir or copied into harness skills"
+    fi
   done
+  if cmp -s "${source_root}/.apm/skills/working-with-atlassian/references/jql-essentials.md" "${AGENTS_SKILLS_DIR}/working-with-atlassian/references/jql-essentials.md"; then
+    pass "${label}: working-with-atlassian reference installed"
+  else
+    fail "${label}: working-with-atlassian reference missing or stale"
+  fi
   grep -Fqx 'old managed skill: working-with-atlassian' "${backup_root}/agents-skills/working-with-atlassian/SKILL.md" \
-    && pass "${label}: directory backed up before removal" || fail "${label}: directory backup missing"
+    && pass "${label}: directory backed up before replacement" || fail "${label}: directory backup missing"
   [[ -L "${backup_root}/agents-skills/connecting-atlassian-tools" ]] \
     && pass "${label}: dangling symlink backed up as a symlink" || fail "${label}: dangling symlink backup missing"
+  [[ ! -L "${AGENTS_SKILLS_DIR}/connecting-atlassian-tools" && -f "${AGENTS_SKILLS_DIR}/connecting-atlassian-tools/SKILL.md" ]] \
+    && pass "${label}: dangling symlink replaced by packaged skill" || fail "${label}: dangling symlink was not replaced"
   grep -Fqx 'user-managed-sentinel' "${AGENTS_SKILLS_DIR}/user-managed/SKILL.md" \
     && pass "${label}: unrelated shared skill preserved" || fail "${label}: unrelated shared skill changed"
 }
@@ -3612,29 +3630,35 @@ check_retired_atlassian() {
 build_fixture
 sandbox_agents_skills
 td69c="${TMPDIR}/test69c-opencode"
-seed_retired_atlassian "${AGENTS_SKILLS_DIR}"
+seed_atlassian_sentinels "${AGENTS_SKILLS_DIR}"
 if OPENCODE_CONFIG_DIR="${td69c}" bash "${INSTALL_HELPER}" --apply >/dev/null 2>"${TMPDIR}/test69c.err"; then
-  check_retired_atlassian "69c-opencode" "$(ls -d "${td69c}/.backup/"* | head -n 1)"
+  check_upserted_atlassian "69c-opencode" "$(ls -d "${td69c}/.backup/"* | head -n 1)" "${td69c}/skills" "${REPO_FIXTURE}"
 else
   fail "69c-opencode: install failed: $(cat "${TMPDIR}/test69c.err")"
 fi
 
 sandbox_agents_skills
 td69c_cursor="${TMPDIR}/test69c-cursor"
-seed_retired_atlassian "${AGENTS_SKILLS_DIR}"
+seed_atlassian_sentinels "${AGENTS_SKILLS_DIR}"
 if env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td69c_cursor}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install --dry-run >"${TMPDIR}/dry69c.out" 2>"${TMPDIR}/dry69c.err"; then
   missing69c=""
-  for retired in working-with-atlassian managing-work-in-jira connecting-atlassian-tools; do
-    grep -Fqx "Would back up and remove formerly managed ${AGENTS_SKILLS_DIR}/${retired}" "${TMPDIR}/dry69c.out" || missing69c="${missing69c} ${retired}"
+  for name in connecting-atlassian-tools managing-work-in-jira working-with-atlassian; do
+    grep -Fqx "Would copy canonical .apm/skills/${name} -> ${AGENTS_SKILLS_DIR}/${name}" "${TMPDIR}/dry69c.out" || missing69c="${missing69c} ${name}"
   done
-  [[ -z "${missing69c}" ]] && pass "69c-cursor: dry-run describes each retirement" || fail "69c-cursor: dry-run omitted:${missing69c}"
+  [[ -z "${missing69c}" ]] && pass "69c-cursor: dry-run plans each shared install" || fail "69c-cursor: dry-run omitted:${missing69c}"
+  if grep -q 'formerly managed' "${TMPDIR}/dry69c.out"; then
+    fail "69c-cursor: dry-run still plans shared skill removal"
+  else
+    pass "69c-cursor: dry-run does not plan shared skill removal"
+  fi
   [[ -d "${AGENTS_SKILLS_DIR}/working-with-atlassian" && -L "${AGENTS_SKILLS_DIR}/connecting-atlassian-tools" ]] \
-    && pass "69c-cursor: dry-run leaves retired skills in place" || fail "69c-cursor: dry-run mutated retired skills"
+    && grep -Fqx 'old managed skill: working-with-atlassian' "${AGENTS_SKILLS_DIR}/working-with-atlassian/SKILL.md" \
+    && pass "69c-cursor: dry-run leaves existing skills in place" || fail "69c-cursor: dry-run mutated existing skills"
 else
   fail "69c-cursor: dry-run failed: $(cat "${TMPDIR}/dry69c.err")"
 fi
 if env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td69c_cursor}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install >/dev/null 2>"${TMPDIR}/install69c.err"; then
-  check_retired_atlassian "69c-cursor" "$(ls -d "${td69c_cursor}/.backup/"* | head -n 1)"
+  check_upserted_atlassian "69c-cursor" "$(ls -d "${td69c_cursor}/.backup/"* | head -n 1)" "${td69c_cursor}/skills" "${BASELINE_PWD}"
 else
   fail "69c-cursor: install failed: $(cat "${TMPDIR}/install69c.err")"
 fi
@@ -3868,12 +3892,16 @@ if opencode_shared | opencode_local != packaged:
     errors.append(f"installer manifests and .apm/skills differ: {sorted((opencode_shared | opencode_local) ^ packaged)}")
 if "aero-design" not in packaged:
     errors.append("aero-design is not packaged")
-for retired in ("working-with-atlassian", "managing-work-in-jira", "connecting-atlassian-tools"):
-    if retired in packaged:
-        errors.append(f"{retired} is still packaged")
-    for script in ("scripts/install-profile.sh", "scripts/cursor-assets.sh"):
-        if retired not in bash_array(script, "SHARED_RETIRED_SKILLS"):
-            errors.append(f"{retired} is missing from {script} shared skill upgrade cleanup")
+for skill in ("connecting-atlassian-tools", "managing-work-in-jira", "working-with-atlassian"):
+    if skill not in packaged:
+        errors.append(f"{skill} is not packaged")
+    if skill not in opencode_shared:
+        errors.append(f"{skill} is missing from OpenCode shared skills")
+    if skill not in cursor_shared:
+        errors.append(f"{skill} is missing from Cursor canonical skills")
+for script in ("scripts/install-profile.sh", "scripts/cursor-assets.sh"):
+    if "SHARED_RETIRED_SKILLS" in (root / script).read_text(encoding="utf-8"):
+        errors.append(f"{script} still names SHARED_RETIRED_SKILLS")
 for skill in sorted(packaged):
     for path in (root / ".apm/skills" / skill).rglob("*.md"):
         text = path.read_text(encoding="utf-8", errors="ignore")

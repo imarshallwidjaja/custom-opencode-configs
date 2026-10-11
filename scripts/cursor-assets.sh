@@ -60,22 +60,20 @@ RETIRED_SKILLS=(
 
 CANONICAL_SKILLS=(
   aero-design
+  connecting-atlassian-tools
   cymbal
   decomposing-work
   drawio-skill
   frontend-slides
   hard-cut
+  managing-work-in-jira
   react-best-practices
   resume-tailoring
   running-agile-delivery
   stop-design-slop
   web-design-guidelines
-  writing-work-items
-)
-SHARED_RETIRED_SKILLS=(
   working-with-atlassian
-  managing-work-in-jira
-  connecting-atlassian-tools
+  writing-work-items
 )
 HIVE_WRITING_SKILLS=(
   humanizer
@@ -607,6 +605,27 @@ source_manifests = (
         False,
     ),
     (
+        repo_root / '.apm' / 'skills' / 'connecting-atlassian-tools',
+        'connecting-atlassian-tools',
+        ('SKILL.md',),
+        None,
+        False,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'managing-work-in-jira',
+        'managing-work-in-jira',
+        ('SKILL.md',),
+        None,
+        False,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'working-with-atlassian',
+        'working-with-atlassian',
+        ('SKILL.md', 'references', 'references/jql-essentials.md'),
+        None,
+        False,
+    ),
+    (
         repo_root / '.apm' / 'skills' / 'web-design-guidelines',
         'web-design-guidelines',
         ('SKILL.md',),
@@ -1077,11 +1096,6 @@ print_copy_plan() {
       printf 'Would back up and remove stale %s/skills/%s\n' "${target_dir}" "${name}"
     fi
   done
-  for name in "${SHARED_RETIRED_SKILLS[@]}"; do
-    if [[ -e "${AGENTS_SKILLS_DIR}/${name}" || -L "${AGENTS_SKILLS_DIR}/${name}" ]]; then
-      printf 'Would back up and remove formerly managed %s/%s\n' "${AGENTS_SKILLS_DIR}" "${name}"
-    fi
-  done
   for name in "${HIVE_WRITING_SKILLS[@]}"; do
     if [[ -e "${AGENTS_SKILLS_DIR}/${name}" || -L "${AGENTS_SKILLS_DIR}/${name}" ]]; then
       printf 'Would back up and remove Hive writing skill %s/%s\n' "${AGENTS_SKILLS_DIR}" "${name}"
@@ -1218,13 +1232,6 @@ install_assets_into() {
   for name in "${CANONICAL_SKILLS[@]}"; do
     install_canonical_skill "${name}" "${target_dir}"
   done
-  for name in "${SHARED_RETIRED_SKILLS[@]}"; do
-    if [[ -e "${AGENTS_SKILLS_DIR}/${name}" || -L "${AGENTS_SKILLS_DIR}/${name}" ]]; then
-      backup_agents_skill "${target_dir}" "${name}"
-      rm -rf "${AGENTS_SKILLS_DIR:?}/${name}"
-      printf 'Backed up and removed formerly managed %s\n' "${AGENTS_SKILLS_DIR}/${name}"
-    fi
-  done
   for name in "${HIVE_WRITING_SKILLS[@]}"; do
     if [[ -e "${AGENTS_SKILLS_DIR}/${name}" || -L "${AGENTS_SKILLS_DIR}/${name}" ]]; then
       backup_agents_skill "${target_dir}" "${name}"
@@ -1337,7 +1344,7 @@ check_target_readability() {
   fi
 
   if [[ -d "${AGENTS_SKILLS_DIR}" ]]; then
-    for name in "${CANONICAL_SKILLS[@]}" "${SHARED_RETIRED_SKILLS[@]}" "${HIVE_WRITING_SKILLS[@]}" ivan-writing; do
+    for name in "${CANONICAL_SKILLS[@]}" "${HIVE_WRITING_SKILLS[@]}" ivan-writing; do
       if [[ -e "${AGENTS_SKILLS_DIR}/${name}" || -L "${AGENTS_SKILLS_DIR}/${name}" ]]; then
         check_recursive_readable "${AGENTS_SKILLS_DIR}/${name}" "agents-skills/${name}" || return 1
       fi
