@@ -2458,8 +2458,8 @@ if not shell_agents.is_file():
     errors.append("profiles/base/plugins/shell-agents.js missing")
 else:
     text = shell_agents.read_text(encoding="utf-8")
-    if "export default async function ShellAgentsPlugin" not in text or "tool.execute.after" not in text:
-        errors.append("shell-agents.js is not the Bash AGENTS.md discovery plugin")
+    if "tool.execute.after" not in text or 'ctx.tool.hook("execute.after"' not in text:
+        errors.append("shell-agents.js is not the shell AGENTS.md discovery plugin")
 shell_tests = root / "tests/shell-agents.test.js"
 if not shell_tests.is_file() or 'from "../profiles/base/plugins/shell-agents.js"' not in shell_tests.read_text(encoding="utf-8"):
     errors.append("tests/shell-agents.test.js must exercise profiles/base/plugins/shell-agents.js")

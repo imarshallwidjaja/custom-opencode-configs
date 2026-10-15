@@ -1,11 +1,22 @@
-// Extends OpenCode's nested AGENTS.md discovery to Bash output while deduplicating
-// only reminders still visible in active history. Verify with the adjacent Bun tests.
+// Extends OpenCode's nested AGENTS.md discovery to shell output while deduplicating
+// only reminders still visible in active history. OpenCode 1 loads `server` (Bash and
+// Read output); OpenCode 2 loads `setup` (shell output only). Verify with tests/shell-agents.test.js.
 import { readFile, realpath, stat } from "node:fs/promises"
+import os from "node:os"
 import path from "node:path"
 
 const INSTRUCTION_FILE = "AGENTS.md"
 const PLUGIN_METADATA = "shellAgents"
 const INSTRUCTION_PREFIX = "Instructions from: "
+// OpenCode 2 frame: a header line naming the canonical path and the rendered body length
+// in UTF-16 code units, the file content with BODY_PREFIX before every line, then a close
+// line. Headers count only at a line start, which no body line can be, so text quoted in a
+// body stays inert even when the host truncates the frame and joins later messages to it.
+const FRAME_OPEN = '<shell-agents version="1" path='
+const FRAME_LENGTH = / length="(\d{1,15})">\n/y
+const FRAME_CLOSE = "\n</shell-agents>"
+const BODY_PREFIX = "> "
+const LINE_BREAK = /\r\n|\r|\n/
 
 function isInside(root, target) {
   const relative = path.relative(root, target)
@@ -129,9 +140,17 @@ function responseData(response) {
   throw new Error("OpenCode returned an invalid session history response")
 }
 
+function errorMessage(error) {
+  return error instanceof Error ? error.message : String(error)
+}
+
+function diagnosticReminder(message) {
+  return `<system-reminder>\nshell-agents could not load directory instructions: ${message}\n</system-reminder>`
+}
+
 function diagnostic(output, error) {
-  const message = error instanceof Error ? error.message : String(error)
-  output.output += `\n\n<system-reminder>\nshell-agents could not load directory instructions: ${message}\n</system-reminder>`
+  const message = errorMessage(error)
+  output.output += `\n\n${diagnosticReminder(message)}`
   output.metadata = {
     ...(output.metadata && typeof output.metadata === "object" ? output.metadata : {}),
     [PLUGIN_METADATA]: {
@@ -141,7 +160,7 @@ function diagnostic(output, error) {
   }
 }
 
-export default async function ShellAgentsPlugin({ client, directory }) {
+async function ShellAgentsServer({ client, directory }) {
   const root = path.resolve(directory)
   const rootReal = await realpath(root)
   const sessions = new Map()
@@ -280,3 +299,203 @@ export default async function ShellAgentsPlugin({ client, directory }) {
     },
   }
 }
+
+function frame(entry) {
+  // Prefixing after each original line break keeps the content recoverable exactly.
+  const body = BODY_PREFIX + entry.content.replace(new RegExp(LINE_BREAK, "g"), (lineBreak) => lineBreak + BODY_PREFIX)
+  return `<system-reminder>\n${INSTRUCTION_PREFIX}${entry.filepath}\n${FRAME_OPEN}${JSON.stringify(entry.identity)} length="${body.length}">\n${body}${FRAME_CLOSE}\n</system-reminder>`
+}
+
+// Returns the claimed path when a complete frame starts at `start`.
+function framedPath(text, start) {
+  const quote = start + FRAME_OPEN.length
+  if (text[quote] !== '"') return
+  let end = quote + 1
+  while (end < text.length && text[end] !== '"') {
+    if (text[end] === "\n") return
+    end += text[end] === "\\" ? 2 : 1
+  }
+  if (end >= text.length) return
+  let filepath
+  try {
+    filepath = JSON.parse(text.slice(quote, end + 1))
+  } catch {
+    return
+  }
+  if (typeof filepath !== "string" || !path.isAbsolute(filepath)) return
+
+  FRAME_LENGTH.lastIndex = end + 1
+  const match = FRAME_LENGTH.exec(text)
+  if (!match) return
+  const bodyStart = FRAME_LENGTH.lastIndex
+  const bodyEnd = bodyStart + Number(match[1])
+  if (!text.startsWith(FRAME_CLOSE, bodyEnd)) return
+  // A truncated frame followed by other text leaves an unprefixed line inside the length.
+  if (!text.slice(bodyStart, bodyEnd).split(LINE_BREAK).every((line) => line.startsWith(BODY_PREFIX))) return
+  return filepath
+}
+
+function addFramedPaths(claims, text) {
+  if (typeof text !== "string") return
+  // Each header is read on its own; no body can hide or contain a line-start header.
+  const lines = `\n${text}`
+  const header = `\n${FRAME_OPEN}`
+  for (let at = lines.indexOf(header); at !== -1; at = lines.indexOf(header, at + 1)) {
+    const filepath = framedPath(lines, at + 1)
+    if (filepath) claims.add(filepath)
+  }
+}
+
+// Model messages from the `context` hook. Only text the model receives counts.
+function contextClaims(messages) {
+  const claims = new Set()
+  for (const message of messages) {
+    const content = typeof message?.content === "string" ? [{ type: "text", text: message.content }] : message?.content
+    if (!Array.isArray(content)) continue
+    for (const part of content) {
+      if (part?.type === "text") addFramedPaths(claims, part.text)
+      if (part?.type !== "tool-result") continue
+      if (part.result?.type === "text") addFramedPaths(claims, part.result.value)
+      if (part.result?.type === "content" && Array.isArray(part.result.value)) {
+        for (const item of part.result.value) if (item?.type === "text") addFramedPaths(claims, item.text)
+      }
+    }
+  }
+  return claims
+}
+
+// Public messages from `session.context`, used before this process has seen a `context`
+// hook for the session. Provider-native checkpoints are opaque, so they claim nothing.
+function historyClaims(messages) {
+  const claims = new Set()
+  for (const message of messages) {
+    switch (message?.type) {
+      case "user":
+        addFramedPaths(claims, message.text)
+        for (const skill of message.skills ?? []) addFramedPaths(claims, skill?.text)
+        break
+      case "synthetic":
+      case "skill":
+      case "system":
+        addFramedPaths(claims, message.text)
+        break
+      case "shell":
+        if (message.metadata?.background !== true) addFramedPaths(claims, message.output?.output)
+        break
+      case "assistant":
+        for (const part of message.content ?? []) {
+          if (part?.type === "text") addFramedPaths(claims, part.text)
+          if (part?.type === "tool" && part.state?.status === "completed") {
+            for (const item of part.state.content ?? []) if (item?.type === "text") addFramedPaths(claims, item.text)
+          }
+        }
+        break
+      case "compaction":
+        if (message.status === "completed" && message.providerContext === undefined) {
+          addFramedPaths(claims, message.summary)
+          addFramedPaths(claims, message.recent)
+        }
+        break
+    }
+  }
+  return claims
+}
+
+// Mirrors OpenCode 2's shell working-directory resolution, including `~` expansion.
+function shellDirectory(root, workdir) {
+  if (typeof workdir !== "string") return root
+  const home = os.homedir()
+  const expanded = workdir === "~" ? home : workdir.startsWith("~/") ? path.join(home, workdir.slice(2)) : workdir
+  return path.resolve(root, expanded)
+}
+
+function appendText(result, text) {
+  const content = typeof result.content === "string" ? [{ type: "text", text: result.content }] : result.content
+  if (!Array.isArray(content)) return false
+  result.content = [...content, { type: "text", text }]
+  return true
+}
+
+async function setupV2(ctx) {
+  // sessionID -> { claims: Set of canonical paths | undefined, seeding: Promise | undefined }
+  const sessions = new Map()
+
+  function recordFor(sessionID) {
+    let record = sessions.get(sessionID)
+    if (!record) {
+      record = { claims: undefined, seeding: undefined }
+      sessions.set(sessionID, record)
+    }
+    return record
+  }
+
+  function seed(sessionID, record) {
+    if (record.claims) return
+    if (!record.seeding) {
+      const seeding = (async () => historyClaims(await ctx.session.context({ sessionID })))()
+        .then((claims) => {
+          // A `context` hook that ran meanwhile replaced the record from newer history.
+          if (sessions.get(sessionID) === record && record.claims === undefined) record.claims = claims
+        })
+        .finally(() => {
+          if (record.seeding === seeding) record.seeding = undefined
+        })
+      record.seeding = seeding
+    }
+    return record.seeding
+  }
+
+  async function handleShell(event) {
+    // Bind to the current record before any await. A `context` hook that runs meanwhile
+    // starts a newer step with a new record, and this shell's result belongs to the old one.
+    const record = recordFor(event.sessionID)
+    const session = await ctx.session.get({ sessionID: event.sessionID })
+    const root = path.resolve(session.location.directory)
+    const cwd = shellDirectory(root, event.input?.workdir)
+    const entries = await instructionsFor(root, await realpath(root), cwd)
+    if (entries.length === 0) return
+
+    await seed(event.sessionID, record)
+    if (sessions.get(event.sessionID) !== record || !record.claims) return
+
+    // No awaits from here on, so concurrent shells cannot both deliver one file.
+    const fresh = entries.filter((entry) => !record.claims.has(entry.identity))
+    if (fresh.length === 0) return
+    for (const entry of fresh) {
+      if (!appendText(event.result, frame(entry))) throw new Error("OpenCode returned a shell result without model-facing content")
+    }
+    for (const entry of fresh) record.claims.add(entry.identity)
+  }
+
+  await ctx.session.hook("context", (event) => {
+    sessions.set(event.sessionID, { claims: contextClaims(event.messages), seeding: undefined })
+  })
+
+  await ctx.tool.hook("execute.after", async (event) => {
+    if (event.tool !== "shell" || event.status !== "completed") return
+    try {
+      await handleShell(event)
+    } catch (error) {
+      const message = errorMessage(error)
+      appendText(event.result, diagnosticReminder(message))
+      event.result.metadata = {
+        ...(event.result.metadata && typeof event.result.metadata === "object" ? event.result.metadata : {}),
+        [PLUGIN_METADATA]: { error: message },
+      }
+    }
+  })
+
+  const subscription = new AbortController()
+  void (async () => {
+    for await (const event of ctx.event.subscribe({ signal: subscription.signal })) {
+      if (event?.type === "session.deleted") sessions.delete(event.data?.sessionID)
+    }
+  })().catch(() => {}) // A lost subscription only stops pruning records of deleted sessions.
+
+  return () => {
+    subscription.abort()
+    sessions.clear()
+  }
+}
+
+export default { id: "shell-agents", server: ShellAgentsServer, setup: setupV2 }
