@@ -45,6 +45,12 @@ Every command supports `--json`. cymbal resolves the right DB automatically per
 repo; do not start by running `cymbal index` manually during normal use because
 queries auto-build and refresh the index.
 
+**Read-only investigations still use cymbal.** Instructions to investigate
+read-only or without mutation permit cymbal queries and the local index they
+create or refresh; that index is derived tooling state, not a project change.
+The allowance covers the index only: source, project configuration, and Git
+state stay unchanged.
+
 ## Command Details
 
 ### `search` - starting point
