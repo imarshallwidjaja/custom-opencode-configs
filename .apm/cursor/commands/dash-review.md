@@ -17,11 +17,11 @@ Launch terminal reviewers in a fresh Cursor subagent session. You launch every s
 A vulnerability-only request still belongs to `/vuln-review`. For every other request, choose the smallest useful reviewer set. Do not skip a reviewer the operator named, including `vulnerability-reviewer`.
 
 - When the operator names the reviewers, launch each named reviewer.
-- When the operator names no reviewer and the target is an implementation candidate, launch `code-reviewer` and `simplicity-reviewer`.
+- When the operator names no reviewer and the target is a source change, launch `code-reviewer` and `simplicity-reviewer` together on the same candidate. A bounded docs, tests, or mechanical edit gets `code-reviewer` alone.
 - When the operator names no reviewer and the question is which approach to take, launch `approach-advisor`.
 - When the operator names no reviewer and the question is whether a plan is ready, launch `plan-reviewer`.
 
-Give each reviewer the resolved target, the question it owns, known constraints, and this contract:
+Give each reviewer the resolved target and its root, the base or comparison range, the question it owns, the purpose or acceptance criteria when known, known constraints and the instruction files that govern the target, and leads marked unverified. Reviewers do not inherit your context. Add this contract:
 
 ```text
 This is a read-only review session.
@@ -30,6 +30,7 @@ Inspect the supplied target and return findings to the parent.
 Do not modify files.
 Do not apply patches.
 Do not create commits, branches, pull requests, plans, or worktrees.
+Do not run installs, builds, tests, or other commands that write state; name a command that would settle a question for the parent to run.
 Do not launch subagents.
 ```
 
@@ -41,4 +42,4 @@ Never modify files.
 Never apply patches.
 Never create commits, branches, pull requests, plans, or worktrees.
 
-Order findings by severity. For each finding, give severity, confidence, and a source anchor. Name coverage gaps: reviewer sessions that did not run, challenges that stayed unresolved, and parts of the target that were not reviewed. A result with no findings still states the target and the reviewers that ran.
+Adjudicate on evidence: spot-check the quoted anchor of each material finding, keep findings that survive the challenge, and report optional suggestions only as optional. Order findings by severity. For each finding, give severity, confidence, and a source anchor. Name coverage gaps: reviewer sessions that did not run, challenges that stayed unresolved, and parts of the target that were not reviewed. A result with no findings still states the target and the reviewers that ran.

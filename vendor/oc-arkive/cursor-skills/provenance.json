@@ -1,28 +1,370 @@
 {
-  "schemaVersion": 1,
-  "upstreamRepository": "https://github.com/imarshallwidjaja/agent-hive.git",
-  "commit": "caf2c7ab6e269495f8e2bed9eac7e0da7bb25d35",
-  "packageVersion": "2.3.5",
+  "commit": "e1d968c5e53cdb03c95849b32b7bc9cbb7de47fc",
+  "packageVersion": "5.0.0",
+  "schemaVersion": 2,
   "skills": {
+    "adversarial-review": {
+      "files": {
+        "LICENSE.pstack": {
+          "installedSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e",
+          "sourceSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e"
+        },
+        "SKILL.md": {
+          "installedSha256": "558d8bcef680fb301e5baa558ccb12c5931414f92c679b8a01dcf2f88cad33bc",
+          "sourceSha256": "5a317e7adabd484e158ceb5d239e607989b40741bc032b808b8247eb2e1b1aeb"
+        },
+        "UPSTREAM.md": {
+          "installedSha256": "cfd54ac0952cd2d2b0af0da532c9373907775cbb174051577039c728a348d93c",
+          "sourceSha256": "cfd54ac0952cd2d2b0af0da532c9373907775cbb174051577039c728a348d93c"
+        },
+        "references/impact-and-findings.md": {
+          "installedSha256": "b56ab5f0f24bc8764411ad1f3e2d2d841cdd18d9ea74dc44c49819d3089eb6c7",
+          "sourceSha256": "b56ab5f0f24bc8764411ad1f3e2d2d841cdd18d9ea74dc44c49819d3089eb6c7"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/adversarial-review"
+    },
+    "agents-md-mastery": {
+      "files": {
+        "SKILL.md": {
+          "installedSha256": "57fcece187debc2fdad58fc877b1a4c7a73959db804923508d590762abeeb2a9",
+          "sourceSha256": "a8b0643da56270ab1da8117b5daf78b9f290d89433601aef78644381fd1f8770"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/agents-md-mastery"
+    },
     "brainstorming": {
-      "sourcePath": "packages/opencode-hive/skills/brainstorming/SKILL.md",
-      "sourceSha256": "de2afa2ae9a629923f31cae39bb67f31bf2e7ef4b3752bc524333c7da939d506",
-      "installedSha256": "9868057a5cd3963eba3e5cf26eddbab11c15bd4d8bc470fa0d9679f1da84e58e"
+      "files": {
+        "LICENSE.pstack": {
+          "installedSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e",
+          "sourceSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e"
+        },
+        "SKILL.md": {
+          "installedSha256": "fb8155a1f08c70acd4ed680f8d1f443db1cac825dda4da64f8f511bcee5f2b0b",
+          "sourceSha256": "45a2c6851f231bc52de0bdb5bfbb535b031fae2e1ae4c098d706cc8434f500e8"
+        },
+        "UPSTREAM.md": {
+          "installedSha256": "b54c5b4f427dfdd92d18b92c6fe94664dbfb61d96f693d9a04aa009edc69ba11",
+          "sourceSha256": "b54c5b4f427dfdd92d18b92c6fe94664dbfb61d96f693d9a04aa009edc69ba11"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/brainstorming"
+    },
+    "code-design-principles": {
+      "files": {
+        "LICENSE": {
+          "installedSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e",
+          "sourceSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e"
+        },
+        "SKILL.md": {
+          "installedSha256": "3a669513106ded0a89f2c51cc6f6a4c7a1bfdad53d34340e0f2551f89330e139",
+          "sourceSha256": "db8e89e3536704373d119365a6ca4021a43b9b7480838a6b0e909d9be18e4f1e"
+        },
+        "UPSTREAM.md": {
+          "installedSha256": "56aa9d5abff21389b96013802825a4ee424191f5d5168c7505d0c3cb321c0fda",
+          "sourceSha256": "56aa9d5abff21389b96013802825a4ee424191f5d5168c7505d0c3cb321c0fda"
+        },
+        "references/boundaries-and-types.md": {
+          "installedSha256": "5a0c0f350bf7a767b64555f7c838db48a66f448749ac8431918b9dbf8e766e12",
+          "sourceSha256": "5a0c0f350bf7a767b64555f7c838db48a66f448749ac8431918b9dbf8e766e12"
+        },
+        "references/domain-modeling.md": {
+          "installedSha256": "8e5650ef95511b3e9d55e5081d4ce9658d1fd574b7d382ba9e3f5fc4dcc16554",
+          "sourceSha256": "8e5650ef95511b3e9d55e5081d4ce9658d1fd574b7d382ba9e3f5fc4dcc16554"
+        },
+        "references/lifecycle-and-migration.md": {
+          "installedSha256": "eef2d2b7a5576a5c0c236d7af672767220a9d910f0ac667442015611cdf146ca",
+          "sourceSha256": "191dda864adc9047d01f95af5ce62cab743c2c347ae64d97fac5e6bfe6896ff0"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/code-design-principles"
+    },
+    "complexity-audit": {
+      "files": {
+        "SKILL.md": {
+          "installedSha256": "215f7fdfd4938855339edfa89d6091d994ac25ebbc3a1a25257f0fe7382f55ee",
+          "sourceSha256": "bb118975241bef88ae4767b493e6c5e66844b6bb48e377c2dd68b3e1f8b02c18"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/complexity-audit"
+    },
+    "complexity-review": {
+      "files": {
+        "SKILL.md": {
+          "installedSha256": "a916ae8c0dd5b4062496607443937aee9c36a0da21b14ca808ce2e73b7a6aac0",
+          "sourceSha256": "ce309b6dfaf1af437a7f5d10059fe31bc5d621fd200e281f91180ed184abf138"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/complexity-review"
+    },
+    "grilling": {
+      "files": {
+        "SKILL.md": {
+          "installedSha256": "e3519a1f3191b2ec4c7bab6468ebb54485996e90384095bc950d6554d24d5bb5",
+          "sourceSha256": "b38a22b50cf4169e1a470c7044c58ac36cdf13922aa0e1f204aee417859451e5"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/grilling"
+    },
+    "how": {
+      "files": {
+        "LICENSE": {
+          "installedSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e",
+          "sourceSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e"
+        },
+        "SKILL.md": {
+          "installedSha256": "b4aa53e15ca9aac6c6de0b093d4fb8c972d7988b4e3723dbb9907fe102cc6996",
+          "sourceSha256": "b4aa53e15ca9aac6c6de0b093d4fb8c972d7988b4e3723dbb9907fe102cc6996"
+        },
+        "UPSTREAM.md": {
+          "installedSha256": "cfeae35e778addb821c3ea839c2e61e6a993a1f22aa4fc606f63a71b9eade149",
+          "sourceSha256": "cfeae35e778addb821c3ea839c2e61e6a993a1f22aa4fc606f63a71b9eade149"
+        },
+        "references/explanation.md": {
+          "installedSha256": "3738db53cb787895d328333bb4f6e66ebf1ac09329a6199b9ccf2952febf2d1a",
+          "sourceSha256": "3738db53cb787895d328333bb4f6e66ebf1ac09329a6199b9ccf2952febf2d1a"
+        },
+        "references/exploration.md": {
+          "installedSha256": "1d1650b8b4cf4112c09232525fcf5292a64a088637b7fffcb5e3f4550baf03a4",
+          "sourceSha256": "1d1650b8b4cf4112c09232525fcf5292a64a088637b7fffcb5e3f4550baf03a4"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/how"
+    },
+    "humanizer": {
+      "files": {
+        "LICENSE.antislop": {
+          "installedSha256": "07a42c539be40a446152c0657fa23a6b36e85b7c2d63aed4efc3ff020a1fd6ba",
+          "sourceSha256": "07a42c539be40a446152c0657fa23a6b36e85b7c2d63aed4efc3ff020a1fd6ba"
+        },
+        "LICENSE.blader": {
+          "installedSha256": "48a3aeaf664ddd1ae7ff250bb465a34af2e21224311735340f9940a3837f571b",
+          "sourceSha256": "48a3aeaf664ddd1ae7ff250bb465a34af2e21224311735340f9940a3837f571b"
+        },
+        "LICENSE.workhumanizer": {
+          "installedSha256": "a2c922f9b81b4f40347ddfa79c38eda0f1278b5a6d108bd4099b4da254c774ee",
+          "sourceSha256": "a2c922f9b81b4f40347ddfa79c38eda0f1278b5a6d108bd4099b4da254c774ee"
+        },
+        "SKILL.md": {
+          "installedSha256": "460694213e624758c70c8abd87078bea8cde6177b574b399dc39b3b73b914663",
+          "sourceSha256": "460694213e624758c70c8abd87078bea8cde6177b574b399dc39b3b73b914663"
+        },
+        "UPSTREAM.md": {
+          "installedSha256": "8ff43632ec31af6f4513db501f1046612640da3a7a289b4d1764cd639585a2ff",
+          "sourceSha256": "8ff43632ec31af6f4513db501f1046612640da3a7a289b4d1764cd639585a2ff"
+        },
+        "check.py": {
+          "installedSha256": "ab3a1a8dd2e166f04e2c4f94aadc72c69f5ddb345f72928323ef482adb086aa7",
+          "sourceSha256": "ab3a1a8dd2e166f04e2c4f94aadc72c69f5ddb345f72928323ef482adb086aa7"
+        },
+        "references/patterns.md": {
+          "installedSha256": "2c4fbcf5bd873ce3c5674312c02ca74de9018010f04892da95f4866189826504",
+          "sourceSha256": "2c4fbcf5bd873ce3c5674312c02ca74de9018010f04892da95f4866189826504"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/humanizer"
+    },
+    "pr-writing": {
+      "files": {
+        "SKILL.md": {
+          "installedSha256": "fc434472c95f1ca98eda3904ff25fefd6c0aab9fa77754ee23af6f40b4e38e7d",
+          "sourceSha256": "fc434472c95f1ca98eda3904ff25fefd6c0aab9fa77754ee23af6f40b4e38e7d"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/pr-writing"
+    },
+    "stop-slop": {
+      "files": {
+        "LICENSE": {
+          "installedSha256": "2e2b2beaf41cc0ce28485455a62aed81777cdcdf68702e142427aef1cd720f2c",
+          "sourceSha256": "2e2b2beaf41cc0ce28485455a62aed81777cdcdf68702e142427aef1cd720f2c"
+        },
+        "LICENSE.workhumanizer": {
+          "installedSha256": "a2c922f9b81b4f40347ddfa79c38eda0f1278b5a6d108bd4099b4da254c774ee",
+          "sourceSha256": "a2c922f9b81b4f40347ddfa79c38eda0f1278b5a6d108bd4099b4da254c774ee"
+        },
+        "SKILL.md": {
+          "installedSha256": "7aa1811be1929313c7a21880bd51ec015b58b63c2f2d9244db7ba4c574fab1f1",
+          "sourceSha256": "7aa1811be1929313c7a21880bd51ec015b58b63c2f2d9244db7ba4c574fab1f1"
+        },
+        "UPSTREAM.md": {
+          "installedSha256": "0497939dc2f07ebbb892063bf9c7fce9ee6f2061954c51ceedd856c122834c9c",
+          "sourceSha256": "0497939dc2f07ebbb892063bf9c7fce9ee6f2061954c51ceedd856c122834c9c"
+        },
+        "references/examples.md": {
+          "installedSha256": "519c79d5e16c12ed86536b0840499639f9871db01fc463374370232a58a171da",
+          "sourceSha256": "519c79d5e16c12ed86536b0840499639f9871db01fc463374370232a58a171da"
+        },
+        "references/phrases.md": {
+          "installedSha256": "4993471e701aeeda53f544b1d3f073dff32471b0d25e24297557b4f344f0d8a1",
+          "sourceSha256": "4993471e701aeeda53f544b1d3f073dff32471b0d25e24297557b4f344f0d8a1"
+        },
+        "references/structures.md": {
+          "installedSha256": "22b70997ad2d67fd791608b23f0344d6f82d917c7f1b176cd0b40d15416c0ea0",
+          "sourceSha256": "22b70997ad2d67fd791608b23f0344d6f82d917c7f1b176cd0b40d15416c0ea0"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/stop-slop"
     },
     "systematic-debugging": {
-      "sourcePath": "packages/opencode-hive/skills/systematic-debugging/SKILL.md",
-      "sourceSha256": "2129328be37aa1126c263eaed49e21d398a6d146f6972533443c550e371d8e0c",
-      "installedSha256": "8736443b6958f0c08369701ea0321f06b5d9eb26b7a11e92fba2ad0924a12c30"
+      "files": {
+        "LICENSE.pstack": {
+          "installedSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e",
+          "sourceSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e"
+        },
+        "LICENSE.superpowers": {
+          "installedSha256": "a37e0e9697144819e1d965176ac4ae5bc3fa02d11e7812036bbcadf6dafe2400",
+          "sourceSha256": "a37e0e9697144819e1d965176ac4ae5bc3fa02d11e7812036bbcadf6dafe2400"
+        },
+        "SKILL.md": {
+          "installedSha256": "f46114bc514d528e907dd37c4066440bc2ec5ba674445f3701ac029ad37f787f",
+          "sourceSha256": "0fe88f25c3a928d24718a5e3a025440e45785631e1649661e50c51617eb24f4b"
+        },
+        "UPSTREAM.md": {
+          "installedSha256": "4f9444c01030c4af85cf73dd3fa5b643cf1d87434177309aad0187587649d3e9",
+          "sourceSha256": "4f9444c01030c4af85cf73dd3fa5b643cf1d87434177309aad0187587649d3e9"
+        },
+        "references/diagnostic-techniques.md": {
+          "installedSha256": "0dff7c1b8df2fe70d7da6b8dddbe8c12629cbdbc17ce67981b527b411f1a846b",
+          "sourceSha256": "0dff7c1b8df2fe70d7da6b8dddbe8c12629cbdbc17ce67981b527b411f1a846b"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/systematic-debugging"
     },
     "test-driven-development": {
-      "sourcePath": "packages/opencode-hive/skills/test-driven-development/SKILL.md",
-      "sourceSha256": "a5eec9ed7842dec16ea1df1393fb74dd30af61583a251f23194dec47a31cac11",
-      "installedSha256": "a5eec9ed7842dec16ea1df1393fb74dd30af61583a251f23194dec47a31cac11"
+      "files": {
+        "LICENSE.pstack": {
+          "installedSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e",
+          "sourceSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e"
+        },
+        "SKILL.md": {
+          "installedSha256": "fab606cb6e085d0ddbd920a9bbc1608a90c6289b5510b2eacc4acafcd1679a9d",
+          "sourceSha256": "fab606cb6e085d0ddbd920a9bbc1608a90c6289b5510b2eacc4acafcd1679a9d"
+        },
+        "UPSTREAM.md": {
+          "installedSha256": "c9102d1cd0c74079a9c3cba34700b31d4eea9f1ed073fedf831a5adb41f1d414",
+          "sourceSha256": "c9102d1cd0c74079a9c3cba34700b31d4eea9f1ed073fedf831a5adb41f1d414"
+        },
+        "references/test-quality.md": {
+          "installedSha256": "837c908e5fd23a03e51066ee895bd405458bc9e6b53d758ec2ae65e43c3b18a7",
+          "sourceSha256": "837c908e5fd23a03e51066ee895bd405458bc9e6b53d758ec2ae65e43c3b18a7"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/test-driven-development"
+    },
+    "unslop": {
+      "files": {
+        "SKILL.md": {
+          "installedSha256": "8400b62a0d01b0798edcdc5de13058878f1068f828d64bc50d6de38ee1f97784",
+          "sourceSha256": "f2dcca5edbf806dcabd445c3fc3d6997da6f1533c0ca9e129563129174b5a4ba"
+        },
+        "UPSTREAM.md": {
+          "installedSha256": "5d8a30fdcdc49e227c9dc63cd17e9345a5b6fe83aa70857cf20b40fabe5169b7",
+          "sourceSha256": "5d8a30fdcdc49e227c9dc63cd17e9345a5b6fe83aa70857cf20b40fabe5169b7"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/unslop"
     },
     "verification": {
-      "sourcePath": "packages/opencode-hive/skills/verification/SKILL.md",
-      "sourceSha256": "4c0920e0ea4e9208714529b41b0a68ecefca8e7286dfe4ac3870dba9e5d2fe7e",
-      "installedSha256": "ad4ef5d3cd133a557d1d7579ae9a61f3b33a95ba01a6f5f637564eaba298e7c4"
+      "files": {
+        "LICENSE.pstack": {
+          "installedSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e",
+          "sourceSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e"
+        },
+        "SKILL.md": {
+          "installedSha256": "3b2d3fdaa030041185955f253729f841166ea5a0b68fb33905da0b867aff3199",
+          "sourceSha256": "3b2d3fdaa030041185955f253729f841166ea5a0b68fb33905da0b867aff3199"
+        },
+        "UPSTREAM.md": {
+          "installedSha256": "9e172cec4fe96177d4a1e575c101dd4f5f322cbeb1648dcb950cc2bc22b5d786",
+          "sourceSha256": "9e172cec4fe96177d4a1e575c101dd4f5f322cbeb1648dcb950cc2bc22b5d786"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/verification"
+    },
+    "why": {
+      "files": {
+        "LICENSE": {
+          "installedSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e",
+          "sourceSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e"
+        },
+        "SKILL.md": {
+          "installedSha256": "6cc8e870ca90c0880a91600c9a87f472d16c5dd4062c900e9c7f7578a87a9dce",
+          "sourceSha256": "6cc8e870ca90c0880a91600c9a87f472d16c5dd4062c900e9c7f7578a87a9dce"
+        },
+        "UPSTREAM.md": {
+          "installedSha256": "b10eaec139e5abd4d069ae3bfceefabc216747b383f0445ae0dd22063aa71f71",
+          "sourceSha256": "b10eaec139e5abd4d069ae3bfceefabc216747b383f0445ae0dd22063aa71f71"
+        },
+        "references/epistemics.md": {
+          "installedSha256": "5b54bfda36a5f31a48f531da89c293b43b89eb1d791fdb3905b781a443d83f7b",
+          "sourceSha256": "5b54bfda36a5f31a48f531da89c293b43b89eb1d791fdb3905b781a443d83f7b"
+        },
+        "references/investigator.md": {
+          "installedSha256": "94f7517e43900229af1cba058219bb9b3cbe9b18d21f26044cdc4349b5742755",
+          "sourceSha256": "94f7517e43900229af1cba058219bb9b3cbe9b18d21f26044cdc4349b5742755"
+        },
+        "references/sources.md": {
+          "installedSha256": "babb88bab2a68b401fde716a2358f15a0831d35b84b0de5882bae978e4ee130b",
+          "sourceSha256": "babb88bab2a68b401fde716a2358f15a0831d35b84b0de5882bae978e4ee130b"
+        },
+        "references/synthesis.md": {
+          "installedSha256": "2acb4bb3f44f0bc04ff4c3561a15ec6aae21dfb88b6d94605b9717e950c76d83",
+          "sourceSha256": "2acb4bb3f44f0bc04ff4c3561a15ec6aae21dfb88b6d94605b9717e950c76d83"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/why"
+    },
+    "writing-for-agents": {
+      "files": {
+        "LICENSE": {
+          "installedSha256": "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5",
+          "sourceSha256": "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5"
+        },
+        "SKILL-MECHANICS.md": {
+          "installedSha256": "d85c8c70f432a7d4bba7c070a2520c6395654869be2f68c2a2304144ae4de995",
+          "sourceSha256": "31db98c74101a3b4bdd38fd9ded25fc0f8d4646e3987c62a8eed5e7797ce99c5"
+        },
+        "SKILL.md": {
+          "installedSha256": "2c8824581cdd4e5d2628ef5b8761b618084098f8326ad1439656db72ec5387d2",
+          "sourceSha256": "2c8824581cdd4e5d2628ef5b8761b618084098f8326ad1439656db72ec5387d2"
+        },
+        "UPSTREAM.md": {
+          "installedSha256": "45318beaee1b6a804c2d3d7787b31510535541ca6846aa354e7b3702d718121a",
+          "sourceSha256": "45318beaee1b6a804c2d3d7787b31510535541ca6846aa354e7b3702d718121a"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/writing-for-agents"
+    },
+    "writing-for-humans": {
+      "files": {
+        "LICENSE.antislop": {
+          "installedSha256": "e71c6df42c2cba7bdafa73879227bb4c79aabac2a2c720e37bf607576da4eb85",
+          "sourceSha256": "e71c6df42c2cba7bdafa73879227bb4c79aabac2a2c720e37bf607576da4eb85"
+        },
+        "LICENSE.workhumanizer": {
+          "installedSha256": "a2c922f9b81b4f40347ddfa79c38eda0f1278b5a6d108bd4099b4da254c774ee",
+          "sourceSha256": "a2c922f9b81b4f40347ddfa79c38eda0f1278b5a6d108bd4099b4da254c774ee"
+        },
+        "SKILL.md": {
+          "installedSha256": "dbd0e234fc98adf685da7a4e84812ff8f004015d75923a9ec5a97e907456b5bc",
+          "sourceSha256": "dbd0e234fc98adf685da7a4e84812ff8f004015d75923a9ec5a97e907456b5bc"
+        },
+        "UPSTREAM.md": {
+          "installedSha256": "77e90dc7dae99705173750c2425a0bae04dd7054368a73bf5a2ef41fda9dd246",
+          "sourceSha256": "77e90dc7dae99705173750c2425a0bae04dd7054368a73bf5a2ef41fda9dd246"
+        },
+        "references/examples.md": {
+          "installedSha256": "9987f9de8a604826bf110380525981012742b432be775a0692f538e96e3db34d",
+          "sourceSha256": "9987f9de8a604826bf110380525981012742b432be775a0692f538e96e3db34d"
+        },
+        "references/sources.md": {
+          "installedSha256": "fa113e12e01867749e5acf7785b3efc0954972dfcc298373697c000ad1e34f94",
+          "sourceSha256": "3a8955aa836f330a5b76be65afd964eb52b6df0647da96f5e0b687beea693b91"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/writing-for-humans"
     }
-  }
+  },
+  "upstreamRepository": "https://github.com/imarshallwidjaja/agent-hive.git"
 }

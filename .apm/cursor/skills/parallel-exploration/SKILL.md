@@ -155,7 +155,7 @@ Launching the next scout only after the previous result returns defeats the fan-
 
 Do not launch a later question that needs an earlier answer. Make those questions independent, or run them in sequence.
 
-Scout is read-only. Use a writing specialist for implementation.
+Scout is read-only. Use a writing specialist for implementation. Do not instruct a scout to install, build, run tests, or reproduce a failure: those can write caches or state. Name such a check as a retrieval gap for the parent to run or to assign to a worker with the right isolation.
 
 ## Verification
 
@@ -166,3 +166,7 @@ After using this pattern, check:
 - [ ] The parent synthesized the findings into a coherent answer
 
 No numeric quota or artificial fan-out applies. Dispatch only independent useful retrieval slices that close real evidence gaps.
+
+## Provenance
+
+Locally maintained Cursor adapter of the `parallel-exploration` skill in Agent Hive (`oc-arkive` package 5.0.0, commit `e1d968c5e53cdb03c95849b32b7bc9cbb7de47fc`). The independent-slice fan-out and scout-retrieves, parent-reasons invariants are adapted by hand without Hive launch calls. This skill is not synced.

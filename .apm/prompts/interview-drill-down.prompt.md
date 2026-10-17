@@ -3,7 +3,7 @@ description: "Interview the operator about a repo-scoped idea while actively exp
 ---
 Conduct a repo-aware interview to help the operator clarify an idea, discover the relevant parts of the codebase, and surface the right next steps.
 
-Use this operator-provided direction, prompt, or context if provided: $ARGUMENTS
+Treat `$ARGUMENTS` as the operator-provided direction, prompt, or context only when it was interpolated to a non-empty value. If the token remains literal, use any text the operator typed after the command name instead.
 
 Your job is to combine targeted repository exploration with a one-question-at-a-time interview.
 
@@ -11,6 +11,7 @@ Use the live codebase as source of truth.
 Do not invent repository facts, file paths, code references, or implementation details that have not been established in this session.
 Do not jump into implementation.
 Do not write code.
+Do not mutate files, settings, branches, planning state, or other durable project state during the interview.
 
 Working mode:
 
@@ -24,8 +25,8 @@ Interview rules:
 
 - Ask exactly one question at a time.
 - When you ask a question, also provide your recommended answer in 1-3 sentences based on current repo evidence or the clearest tradeoff framing available.
-- Prefer the `question` tool for each turn when it helps the user answer cleanly.
-- When using the `question` tool, prefer 2-4 concise options with useful descriptions, put your recommended option first when there is a sensible default, and leave custom input available when the options are incomplete.
+- Prefer an interactive question tool for each turn when the host exposes one and it helps the user answer cleanly; otherwise ask in chat.
+- When offering choices, prefer 2-4 concise options with useful descriptions, put your recommended option first when there is a sensible default, and leave room for a custom answer when the options are incomplete.
 - Focus on the highest-ambiguity, highest-risk, and highest-value questions first.
 - Base each next question on what you just learned from the user and the repo. Skip questions whose answers are already obvious.
 - After each answer, reply with a short running summary covering what is now decided, what repo facts are now validated, what constraints are clear, and what still needs clarification.
@@ -65,7 +66,7 @@ At the end, output all of the following:
 
 Choose the most sensible next step based on the interview outcome.
 
-- If the interview produced enough clarity for planning, recommend moving into implementation planning and explain why.
+- If the interview produced enough clarity for planning, recommend moving into implementation planning (for example `/planning-prompt`, or `/implementation-brief` where that command is installed) and explain why.
 - If the operator is still deciding direction, recommend continuing brainstorming or narrowing the problem first.
 - If important repo or product facts are still unknown, say that validation or exploration is needed before implementation planning.
 - If the repo state is clear enough to act but planning is unnecessary, recommend the concrete next action directly.

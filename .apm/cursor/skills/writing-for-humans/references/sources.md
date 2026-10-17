@@ -1,6 +1,6 @@
 # Source notes
 
-This skill carries the operator-maintained `writing-for-humans` guidance imported into oc-arkive. It borrows useful principles from public writing guidance without claiming conformance to those standards.
+This skill carries the operator-maintained `writing-for-humans` guidance imported into this skill set. It borrows useful principles from public writing guidance without claiming conformance to those standards.
 
 - [ASD-STE100](https://asd-ste100.org/about_STE.html): one term for one thing, explicit actor and verb, condition/action/result in procedures. Keep technical vocabulary; do not import the controlled dictionary, hard sentence caps, semicolon ban, or aerospace restrictions.
 - [Plain language](https://www.iplfederation.org/iso-standard/): relevant, findable, understandable, usable. Shorter is not automatically clearer.

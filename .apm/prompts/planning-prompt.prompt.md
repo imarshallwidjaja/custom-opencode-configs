@@ -5,7 +5,7 @@ Turn the current exploration in this session into a strong base prompt for a pla
 
 Use the live codebase as source of truth. Revalidate the important references, assumptions, and scope against the current working tree before writing anything.
 
-Use this extra context if provided: $ARGUMENTS
+Treat `$ARGUMENTS` as extra context only when it was interpolated to a non-empty value. If the token remains literal, use any text the operator typed after the command name instead.
 
 Your job is to produce a single copy-paste-ready prompt that another agent can use to prepare the real implementation plan.
 
@@ -13,6 +13,7 @@ Do not produce the implementation plan itself.
 Do not write code.
 Do not give me a lightweight summary.
 Do not make the prompt generic or vague.
+Do not mutate files, settings, branches, planning state, or other durable project state.
 
 The prompt you write should clearly capture:
 
@@ -24,6 +25,7 @@ The prompt you write should clearly capture:
 - the expected implementation outcomes
 - the important repo constraints, parity constraints, and semantic constraints
 - the boundaries of what is in scope and what is not
+- the operator requirements and required skills that bind the work, and the integration authority already granted or still undecided (commit, merge, push)
 - the expectation that the next agent must do the research, validation, and planning work needed to produce an execution-ready implementation plan
 
 The result should be:

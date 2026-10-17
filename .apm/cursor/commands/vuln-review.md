@@ -18,6 +18,7 @@ A clean result applies only to the reviewed scope.
 
 Do not modify files.
 Do not include exploit steps, payloads, scans, or reproduction procedures.
+Do not run installs, builds, tests, or other commands that write state.
 Do not launch subagents.
 ```
 

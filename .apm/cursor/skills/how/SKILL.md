@@ -9,9 +9,9 @@ Explain a subsystem at the depth of a senior engineer onboarding a colleague: en
 
 ## Ground the explanation
 
-Identify the actual question and current checkout or artifact. Read [exploration](references/exploration.md) before gathering evidence and [explanation](references/explanation.md) before synthesizing it. A narrow question may need one direct trace. Use `parallel-exploration` only when independent bounded evidence slices justify delegation. No fixed explorer count or dedicated explainer agent is required.
+Identify the actual question and current checkout or artifact. Read [exploration](references/exploration.md) before gathering evidence and [explanation](references/explanation.md) before synthesizing it. A narrow question may need one direct trace. Use `parallel-exploration` only when independent bounded evidence slices justify delegation; no fixed explorer count or dedicated explainer agent is required.
 
-When delegation is permitted, the Cursor parent launches scouts. Scouts gather facts within their assigned slice and the parent owns the explanation. Give them source paths, the question, the slice, and the exploration reference. A terminal worker does its own authorized reading and returns evidence without spawning another layer.
+When delegation is permitted, Scouts gather facts within their assigned slice and the primary owns the explanation. Give them source paths, the question, the slice, and the exploration reference. A terminal worker does its own authorized reading and returns evidence without spawning another layer.
 
 Don't guess from names. Read the code. Preserve contradictions until the decisive source resolves them; show an unresolved connection as a gap.
 
@@ -22,4 +22,4 @@ Don't guess from names. Read the code. Preserve contradictions until the decisiv
 - Historical motivation belongs to `why` when explicitly requested or assigned. Do not infer author intent from mechanics or automatically launch a history sweep.
 - Return an explanation without editing code or persisting research as standing instructions.
 
-Use `writing-policy` for presentation. For a teaching request, infer the needed concepts from the conversation rather than quizzing the user. Give the smallest complete account that answers the request, then add depth when asked. A request for a thorough one-shot explanation still deserves the complete answer. No pacing theater, mandatory diagrams, or stock invitations.
+Use `unslop` for presentation. For a teaching request, infer the needed concepts from the conversation rather than quizzing the user. Give the smallest complete account that answers the request, then add depth when asked. A request for a thorough one-shot explanation still deserves the complete answer. No pacing theater, mandatory diagrams, or stock invitations.

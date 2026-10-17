@@ -14,10 +14,10 @@ Random fixes waste time and create new bugs. Quick patches mask underlying issue
 ## The Iron Law
 
 ```
-NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
+NO FIXES WITHOUT CAUSAL EVIDENCE FIRST
 ```
 
-If you haven't completed Phase 1, you cannot propose fixes.
+Until you can say what is wrong, where it first goes wrong, and why that produces the symptom, you cannot propose fixes. How much investigation that takes depends on what the evidence already shows; the bar below says when to stop.
 
 ## When to Use
 
@@ -41,137 +41,54 @@ Use for ANY technical issue:
 - You're in a hurry (rushing guarantees rework)
 - Manager wants it fixed NOW (systematic is faster than thrashing)
 
-## The Four Phases
+## The Causal-Evidence Bar
 
-Use each phase to resolve causal uncertainty before editing. A bounded defect may need only a focused error read, reproduction, and local comparison; expand investigation only where evidence leaves the cause uncertain.
+Investigate until the evidence meets this bar, then fix. No fixed sequence of steps has to run first.
 
-### Phase 1: Root Cause Investigation
+- **Observed**: you have seen the failure, as complete error text and stack or as a reproduction. When the mission allows only equivalent evidence such as a log or a report, name what stands in for the reproduction.
+- **Located**: you can point to the first wrong behavior, the earliest place where what happened departs from what should have happened, not only where the error surfaced.
+- **Explained**: you can say why that behavior produces the symptom, and each competing explanation you considered is excluded by evidence or named as still open.
 
-**BEFORE attempting ANY fix:**
+Settled evidence ends the search. When the stack trace lands on one changed line and a reproduction fails there the same way, reading that line and its caller is enough; instrumenting every component only delays the fix. Ambiguous evidence needs a discriminating observation, one that the competing causes predict differently. When a nightly job began failing on the day a dependency bump and a new cache layer both landed, and either explains the stale output, rerunning with only the dependency reverted separates them. Reading more logs does not.
 
-1. **Read Error Messages Carefully**
-   - Don't skip past errors or warnings
-   - They often contain the exact solution
-   - Read stack traces completely
-   - Note line numbers, file paths, error codes
+When you cannot meet the bar, say "I don't understand X", research it or ask for help; do not pretend to know.
 
-2. **Reproduce Consistently**
-   - Can you trigger it reliably?
-   - What are the exact steps?
-   - Does it happen every time?
-   - If not reproducible → gather more data, don't guess
+## Choose Techniques By Uncertainty
 
-3. **Check Recent Changes**
-   - What changed that could cause this?
-   - Git diff, recent commits
-   - New dependencies, config changes
-   - Environmental differences
+Pick the technique that answers the question the evidence leaves open. This table is enough to choose.
 
-4. **Gather Evidence in Multi-Component Systems**
+| Open question | Technique |
+|---|---|
+| What exactly failed? | Read the complete error and stack trace |
+| Can I trigger it? | Reproduce; when you cannot, gather more data |
+| What changed? | Diff, recent commits, dependencies, configuration, environment |
+| Which component boundary breaks? | Observe at the boundary the evidence points to first |
+| What does working code do differently? | Compare against a working example |
+| Which of several causes? | One hypothesis and the smallest discriminating test |
+| Is persistent state stale? | Inspect it or reproduce on an isolated copy |
+| Why is it slow? | Same workload and measurement surface before and after |
 
-   **WHEN existing evidence does not locate the failure across components (CI → build → signing, API → service → database):**
+A technique that writes state, runs risky behavior, or touches retained evidence stays inside your assignment's authority. A diagnosis-only assignment uses read-only forms and reports what it could not observe.
 
-   **Instrument only the boundaries needed to distinguish plausible causes. Reuse existing logs first and avoid exposing secrets:**
-   ```
-   For each relevant unresolved component boundary:
-     - Log what data enters component
-     - Log what data exits component
-     - Verify environment/config propagation
-     - Check state at each layer
+Read [references/diagnostic-techniques.md](references/diagnostic-techniques.md) when you need a technique's steps, the boundary-observation example, or the hypothesis, stale-state, slowness and shared-premise techniques.
 
-   Run once to gather evidence showing WHERE it breaks
-   THEN analyze evidence to identify failing component
-   THEN investigate that specific component
-   ```
+## Downstream Symptoms and Hidden Writes
 
-   **Example (multi-layer system):**
-   ```bash
-   # Layer 1: Workflow
-   echo "=== Secrets available in workflow: ==="
-   echo "IDENTITY: ${IDENTITY:+SET}${IDENTITY:-UNSET}"
+**WHEN the visible error is a contract, parse, null, schema, hydration, or state-ownership failure that may be downstream:**
 
-   # Layer 2: Build script
-   echo "=== Env vars in build script: ==="
-   env | grep IDENTITY || echo "IDENTITY not in environment"
+- Do not stop at the first contract, parsing, type, null, or schema error
+- State expected behavior, the invariant, and what definitely did not happen
+- Trace the causal chain from the intended action or event to the observed effect
+- Ask whether the request, mutation, or write should have happened at all
+- Identify the canonical source of truth and competing sources
+- Find the first unintended side effect or write; fix that layer first
+- Do not make a contract more permissive unless you can prove the observed payload is intended
 
-   # Layer 3: Signing script
-   echo "=== Keychain state: ==="
-   security list-keychains
-   security find-identity -v
+Hidden write checks: lifecycle hooks, callbacks, subscribers, watchers, interceptors, middleware, retries, background jobs, cache refreshers, persistence restore, scheduled tasks, startup code, observer-driven mirroring.
 
-   # Layer 4: Actual signing
-   codesign --sign "$IDENTITY" --verbose=4 "$APP"
-   ```
+For other deep-stack errors, keep tracing up until you find the source. Fix at source, not at symptom.
 
-   **This reveals:** Which layer fails (secrets → workflow ✓, workflow → build ✗)
-
-5. **Downstream Symptoms and Hidden Writes**
-
-   **WHEN the visible error is a contract, parse, null, schema, hydration, or state-ownership failure that may be downstream:**
-
-   - Do not stop at the first contract, parsing, type, null, or schema error
-   - State expected behavior, the invariant, and what definitely did not happen
-   - Trace the causal chain from the intended action or event to the observed effect
-   - Ask whether the request, mutation, or write should have happened at all
-   - Identify the canonical source of truth and competing sources
-   - Find the first unintended side effect or write; fix that layer first
-   - Do not make a contract more permissive unless you can prove the observed payload is intended
-
-   Hidden write checks: lifecycle hooks, callbacks, subscribers, watchers, interceptors, middleware, retries, background jobs, cache refreshers, persistence restore, scheduled tasks, startup code, observer-driven mirroring.
-
-   For other deep-stack errors, keep tracing up until you find the source. Fix at source, not at symptom.
-
-### Phase 2: Pattern Analysis
-
-**Find the pattern before fixing:**
-
-1. **Find Working Examples**
-   - Locate similar working code in same codebase
-   - What works that's similar to what's broken?
-
-2. **Compare Against References**
-   - Read the reference paths and contracts relevant to the suspected cause
-   - Expand to callers, dependencies, or the full reference when uncertainty requires it
-   - Understand the assumptions the fix relies on before applying it
-
-3. **Identify Differences**
-   - What's different between working and broken?
-   - List every difference, however small
-   - Don't assume "that can't matter"
-
-4. **Understand Dependencies**
-   - What other components does this need?
-   - What settings, config, environment?
-   - What assumptions does it make?
-
-### Phase 3: Hypothesis and Testing
-
-**Scientific method:**
-
-1. **Form Single Hypothesis**
-   - State clearly: "I think X is the root cause because Y"
-   - Write it down
-   - Be specific, not vague
-
-2. **Test Minimally**
-   - Make the SMALLEST possible change to test hypothesis
-   - One variable at a time
-   - Don't fix multiple things at once
-
-3. **Verify Before Continuing**
-   - Did it work? Yes → Phase 4
-   - Didn't work? Form NEW hypothesis
-   - DON'T add more fixes on top
-
-4. **When You Don't Know**
-   - Say "I don't understand X"
-   - Don't pretend to know
-   - Ask for help
-   - Research more
-
-### Phase 4: Implementation
-
-**Fix the root cause, not the symptom:**
+## Fix the Root Cause
 
 1. **Select Durable Testing and Verification**
    - Reproduction or equivalent root-cause evidence is required before a fix.
@@ -193,28 +110,15 @@ Use each phase to resolve causal uncertainty before editing. A bounded defect ma
    - Did existing relevant checks remain green?
    - Issue actually resolved?
 
-5. **If Fix Doesn't Work**
-   - STOP
-   - Count: How many fixes have you tried?
-   - If < 3: Return to Phase 1, re-analyze with new information
-   - **If ≥ 3: STOP and question the architecture (step 6 below)**
-   - Do not repeat the same approach without reassessing the evidence and assumptions
+## When a Fix Does Not Work
 
-6. **If 3+ Fixes Failed: Question Architecture**
+Preserve the failure and return to the causal question with the new evidence. Do not stack another speculative fix on the failed experiment.
 
-   **Pattern indicating architectural problem:**
-   - Each fix reveals new shared state/coupling/problem in different place
-   - Fixes require "massive refactoring" to implement
-   - Each fix creates new symptoms elsewhere
+When two or more fixes share a premise and fail the same gate, suspect the premise, not the fixes. The premise is the one sentence that every failed fix assumed. State it and choose evidence that could disprove it. Repeated failure is a reason to question architecture, not proof that architecture is wrong. Two attempts assumed the stale value came from the cache and both failed the same check; reading the value at the code that writes it tests that shared premise, where a third cache fix would not.
 
-   **STOP and question fundamentals:**
-   - Is this pattern fundamentally sound?
-   - Are we "sticking with it through sheer inertia"?
-   - Should we refactor architecture vs. continue fixing symptoms?
+**Attempt limits stay as the role sets them.** Reassessing a premise changes which question the next attempt investigates; it never resets or extends the role's retained attempt budget. A Forager keeps its three iterations and three failed approaches, and every failed attempt counts toward them. At the limit, follow the role's own safe recovery and reporting: a Forager stops editing, preserves retained state, and reports blocked with the attempts made, the premise tested and the evidence. A diagnosis-only assignment stays report-only throughout and reports the evidence, the hypotheses tested and untested, and a supported conclusion or the unresolved status. Ask the operator only when a material scope, authority, or product decision remains; subagents return that clarification to their parent.
 
-   Repeated failures warrant reassessment; they do not prove the architecture is wrong. Continue a new evidence-backed approach within the authorized scope. Ask the human only when the next step needs a scope, risk, or authorization decision.
-
-## Red Flags - STOP and Follow Process
+## Red Flags - Return to the Causal Question
 
 If you catch yourself thinking:
 - "Quick fix for now, investigate later"
@@ -226,12 +130,12 @@ If you catch yourself thinking:
 - "Pattern says X but I'll adapt it differently"
 - "Here are the main problems: [lists fixes without investigation]"
 - Proposing solutions before tracing data flow
-- **"One more fix attempt" (when already tried 2+)**
+- **"One more fix attempt" without new evidence about the shared premise**
 - **Each fix reveals new problem in different place**
 
-**ALL of these mean: STOP. Return to Phase 1.**
+**ALL of these mean: STOP. Return to the causal-evidence bar.**
 
-**If 3+ fixes failed:** Question the architecture (see Phase 4.6)
+Repeated failures sharing a premise call for the reassessment above; do not count attempts as proof of a cause.
 
 ## your human partner's Signals You're Doing It Wrong
 
@@ -242,50 +146,41 @@ If you catch yourself thinking:
 - "Ultrathink this" - Question fundamentals, not just symptoms
 - "We're stuck?" (frustrated) - Your approach isn't working
 
-**When you see these:** STOP. Return to Phase 1.
+**When you see these:** STOP. Return to the causal-evidence bar.
 
 ## Common Rationalizations
 
 | Excuse | Reality |
 |--------|---------|
-| "Issue is simple, don't need process" | Simple issues have root causes too. Process is fast for simple bugs. |
-| "Emergency, no time for process" | Systematic debugging is FASTER than guess-and-check thrashing. |
+| "Issue is simple, don't need process" | Simple issues have root causes too. The evidence bar is short for simple bugs, not absent. |
+| "Emergency, no time for process" | Establishing the cause is FASTER than guess-and-check thrashing. |
 | "Just try this first, then investigate" | First fix sets the pattern. Do it right from the start. |
 | "No new test means no verification is needed" | Every selected strategy still requires proportionate evidence that the defect is resolved. |
 | "Multiple fixes at once saves time" | Can't isolate what worked. Causes new bugs. |
-| "Reference too long, I'll guess" | Read the relevant contracts and expand until the causal uncertainty is resolved. |
+| "Reference too long, I'll adapt the pattern" | Partial understanding guarantees bugs. Read it completely. |
 | "I see the problem, let me fix it" | Seeing symptoms ≠ understanding root cause. |
-| "One more fix attempt" (after repeated failures) | Reassess evidence and architecture before selecting a new approach. |
+| "One more fix attempt" after repeated failures | Name the shared premise and the new discriminating evidence before another equivalent attempt. |
 
-## Quick Reference
+## When Investigation Finds No Local Root Cause
 
-| Phase | Key Activities | Success Criteria |
-|-------|---------------|------------------|
-| **1. Root Cause** | Read errors, reproduce, check changes, gather evidence | Understand WHAT and WHY |
-| **2. Pattern** | Find working examples, compare | Identify differences |
-| **3. Hypothesis** | Form theory, test minimally | Confirmed or new hypothesis |
-| **4. Implementation** | Select strategy, prepare if needed, fix, verify | Bug resolved with proportionate evidence |
+If investigation shows the issue is truly environmental, timing-dependent, or external:
 
-## When Process Reveals "No Root Cause"
+1. Document what you investigated
+2. Implement appropriate handling (retry, timeout, error message)
+3. Add monitoring/logging for future investigation
 
-If systematic investigation reveals issue is truly environmental, timing-dependent, or external:
+Before calling the cause external, state which local hypotheses were tested and what evidence excludes them. Missing evidence remains an open question.
 
-1. You've completed the process
-2. Document what you investigated
-3. Implement appropriate handling (retry, timeout, error message)
-4. Add monitoring/logging for future investigation
+## Protect State While Experimenting
 
-Distinguish evidence of an external cause from a cause that remains unknown. Report the latter as unresolved.
-
-## Supporting Techniques
-
-- Validate the demonstrated invariant at its owning boundary. Add another layer only when it owns a distinct demonstrated failure mode; avoid duplicating the same check throughout the stack.
-- Prefer condition-based waiting: poll a condition instead of arbitrary timeouts.
+- Restart bugs: suspect stale persistent state as well as code. Inspect or reproduce on an isolated copy; do not clear user-managed or tool-managed files, break locks, or discard retained evidence to test the hypothesis.
+- When evidence refutes a hypothesis, reverse only the isolated experimental change it motivated. Preserve the failure evidence and unrelated work. Belt-and-suspenders that "might help" is a hypothesis, not a fix.
+- Check for the pattern, not just the instance. Fix other instances only within the authorized scope; report those outside it.
 
 **Related skills:**
 - **test-driven-development** - Load only when strict TDD is the selected strategy
-- **the verification skill** - Verify fix worked before claiming success
+- **verification** - Verify fix worked before claiming success
 
-## Stopping Condition
+The causal-evidence bar and technique selection adapt the four-phase process from obra/superpowers (MIT, Copyright (c) 2025 Jesse Vincent); see `UPSTREAM.md` and `LICENSE.superpowers` in this skill for the source revision, the passages kept and what changed.
 
-Stop when the defect is resolved against the selected acceptance criteria and required checks pass. Expand verification only for new changes, failures, or concrete unresolved risk.
+The premise, restart-state, and hypothesis-reversal guidance is adapted from pstack; see `UPSTREAM.md` and `LICENSE.pstack` in this skill. These additions do not replace the candidate-evidence and recovery contracts of the calling role.

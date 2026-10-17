@@ -11,6 +11,6 @@ Answer the actual question, with a source anchor for the code or decision. Give:
 - Competing hypotheses when the evidence fits several accounts.
 - Concrete unanswered questions and source coverage, distinguishing searched-empty, unavailable, and not searched.
 
-Scale presentation to the question; do not print empty sections or force every tier into every answer. If this research informs a proposed change, describe what the evidence suggests preserving, changing, avoiding, or investigating. Those are attributed planning inputs. Leave them in the answer unless the operator names a destination for them.
+Scale presentation to the question; do not print empty sections or force every tier into every answer. If this research informs a proposed change, describe what the evidence suggests preserving, changing, avoiding, or investigating. Those are attributed planning inputs, not operator directives or automatic context writes.
 
 The value of this output comes from its honesty, not its authority. A reader who takes the answer to the original author should be well-positioned to ask the right follow-up questions. Don't optimize for looking decisive. Optimize for being useful.

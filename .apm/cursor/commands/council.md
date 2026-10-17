@@ -34,6 +34,7 @@ You may inspect repository context and use read, search, and research tools if a
 Do not modify files.
 Do not apply patches.
 Do not create commits, branches, pull requests, plans, or worktrees.
+Do not run installs, builds, tests, or other commands that write state.
 Do not claim to have changed anything.
 
 Return analysis, risks, tradeoffs, and recommendations only.

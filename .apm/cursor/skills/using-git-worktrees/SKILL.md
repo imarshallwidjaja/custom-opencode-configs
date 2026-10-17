@@ -9,6 +9,12 @@ description: Use when starting feature work that needs isolation from the curren
 
 Git worktrees create isolated workspaces that share the same repository. Use them when feature work, risky fixes, or parallel branches should not disturb the current checkout.
 
+## Native Isolation
+
+Cursor documents its own isolation: a subagent asked to run in an isolated environment gets its own Git worktree and branch, and `/worktree` runs the rest of a chat in a separate checkout (`/apply-worktree` brings the result back, `/delete-worktree` removes it). When the session exposes these and you can confirm the child's directory and branch are separate from the parent's, use them. Otherwise create the worktree yourself as below. This package does not validate the documented behavior, so confirm the placement by inspecting the path and branch instead of assuming it. A project's `.cursor/worktrees.json` may define the setup commands Cursor runs for a native worktree.
+
+Creating a worktree, natively or by hand, grants no authority to commit, merge, push, or delete anything. The integration authority settled before placement governs those actions.
+
 ## Directory Selection
 
 Use this priority order:
@@ -69,6 +75,7 @@ Report:
 
 - Worktree path
 - Branch name
+- The base branch and commit the worktree started from, as the destination identity for later integration
 - Setup command run, if any
 - Baseline verification command and result
 - Any pre-existing failures

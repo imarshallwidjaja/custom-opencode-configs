@@ -6,7 +6,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 DEFAULT_TARGET_DIR="${CURSOR_CONFIG_DIR:-${HOME}/.cursor}"
 AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-${HOME}/.agents/skills}"
-REFLECT_SOURCE="${REPO_ROOT}/.apm/prompts/reflect.prompt.md"
+EJ_SOURCE="${REPO_ROOT}/vendor/oc-arkive/engineering-judgment/engineering-judgment.md"
+# Compose separator shared by Rules and agent prompts: the Engineering Judgment
+# snapshot follows the source body after a horizontal rule.
+COMPOSE_SEPARATOR=$'\n---\n\n'
 
 AGENTS=(
   approach-advisor
@@ -17,6 +20,8 @@ AGENTS=(
   simplicity-reviewer
   vulnerability-reviewer
 )
+# Cursor-specific commands. Shared prompt-backed commands install from
+# .apm/prompts/<name>.prompt.md instead.
 COMMANDS=(
   compact-summary
   council-directive
@@ -25,9 +30,12 @@ COMMANDS=(
   grill
   implementation-brief
   interview
+  vuln-review
+)
+SHARED_COMMANDS=(
   interview-drill-down
   planning-prompt
-  vuln-review
+  reflect
 )
 SKILLS=(
   adversarial-review
@@ -48,15 +56,21 @@ SKILLS=(
   subagent-delegation
   systematic-debugging
   test-driven-development
+  unslop
   using-git-worktrees
   verification
   why
+  writing-for-agents
   writing-for-humans
-  writing-policy
 )
 RETIRED_SKILLS=(
   consolidate-test-suites
   root-cause-finder
+  writing-policy
+)
+# Skills a previous install may have left in the shared agents directory.
+RETIRED_AGENTS_SKILLS=(
+  writing-policy
 )
 
 CANONICAL_SKILLS=(
@@ -79,9 +93,37 @@ HIVE_BUNDLED_SKILLS=(
   humanizer
   stop-design-slop
   stop-slop
+  unslop
+  writing-for-agents
   writing-for-humans
-  writing-policy
 )
+# Delivered prompts must be usable without Agent Hive. These patterns reject
+# Hive and OpenCode runtime syntax in Rules, agents, commands, and skills, and
+# private data anywhere. Attribution files (UPSTREAM.md, LICENSE*) keep their
+# source wording, so only the private-data patterns apply to them.
+FORBIDDEN_PATTERN_SOURCE=$(cat <<'PY'
+hive_runtime_patterns = [
+    (re.compile(r'\bhive_[A-Za-z0-9_]+\b'), 'Hive tool name'),
+    (re.compile(r'\b(?:task|question|todowrite|subagent)\('), 'OpenCode-only tool call'),
+    (re.compile(r'\bskill\s*\(\s*\{'), 'native skill call'),
+    (re.compile(r'<!--\s*/?hive-host'), 'Hive host section marker'),
+    (re.compile(r'\b(?:hive-helper|hive-builder|hive-master|swarm-orchestrator|architect-planner)\b'), 'Hive role identifier'),
+    (re.compile(r'(?<![A-Za-z0-9_.-])\.hive/'), 'Hive state path'),
+    (re.compile(r'\b(?:functions|multi_tool_use)\.[A-Za-z0-9_]+\b'), 'OpenCode tool namespace'),
+    (re.compile(r'</?(?:tool_use|function_calls?|invoke|parameter)\b'), 'OpenCode XML tool-call syntax'),
+]
+private_patterns = [
+    (re.compile(r'/(?:home|Users)/[A-Za-z0-9._-]+(?:/|\b)'), 'absolute home-directory path'),
+    (re.compile(r'https?://(?:localhost|127\.0\.0\.1|0\.0\.0\.0)(?::\d+)?\b'), 'local proxy URL'),
+    (re.compile(r'\b(?:sk-(?:ant-|proj-)?[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16})\b'), 'obvious secret'),
+    (re.compile(r'-----BEGIN (?:RSA |OPENSSH |EC |DSA )?PRIVATE KEY-----'), 'private key'),
+]
+forbidden_patterns = hive_runtime_patterns + private_patterns
+attribution_name = re.compile(r'^(?:UPSTREAM\.md|LICENSE(?:\..+)?)$')
+PY
+)
+export FORBIDDEN_PATTERN_SOURCE
+
 DECISION_COUNT=0
 AGENTS_IVAN_OPT_OUT_NOTED=0
 AGENTS_HIVE_BUNDLED_NOTED=""
@@ -108,6 +150,12 @@ report_cursor_skill_decisions() {
 
   for name in "${RETIRED_SKILLS[@]}"; do
     path="${target_dir}/skills/${name}"
+    if [[ -e "${path}" || -L "${path}" ]]; then
+      note_unversioned "${path}"
+    fi
+  done
+  for name in "${RETIRED_AGENTS_SKILLS[@]}"; do
+    path="${AGENTS_SKILLS_DIR}/${name}"
     if [[ -e "${path}" || -L "${path}" ]]; then
       note_unversioned "${path}"
     fi
@@ -169,6 +217,7 @@ usage() {
   printf '  %s validate\n' "$(basename "$0")" >&2
   printf '  %s install [--dry-run]\n' "$(basename "$0")" >&2
   printf '  %s print-rules\n' "$(basename "$0")" >&2
+  printf '  %s print-agent <name>\n' "$(basename "$0")" >&2
   printf '\nInstall targets:\n' >&2
   printf '  CURSOR_CONFIG_DIR=/path/to/.cursor installs into one target.\n' >&2
   printf '  CURSOR_CONFIG_DIRS=/path/one;/path/two installs into multiple targets.\n' >&2
@@ -209,7 +258,8 @@ check_python() {
 validate_assets() {
   local root="$1"
   check_python
-  AGENT_NAMES="${AGENTS[*]}" COMMAND_NAMES="${COMMANDS[*]}" SKILL_NAMES="${SKILLS[*]}" python3 - "$root" "${REPO_ROOT}" "${CURSOR_INSTALL_IVAN_WRITING:-}" <<'PY'
+  AGENT_NAMES="${AGENTS[*]}" COMMAND_NAMES="${COMMANDS[*]}" SHARED_COMMAND_NAMES="${SHARED_COMMANDS[*]}" SKILL_NAMES="${SKILLS[*]}" RETIRED_SKILL_NAMES="${RETIRED_SKILLS[*]}" python3 - "$root" "${REPO_ROOT}" "${CURSOR_INSTALL_IVAN_WRITING:-}" <<'PY'
+import json
 import os
 import re
 import sys
@@ -221,7 +271,24 @@ install_personal = sys.argv[3] == '1'
 
 expected_agents = set(os.environ['AGENT_NAMES'].split())
 expected_commands = set(os.environ['COMMAND_NAMES'].split())
+shared_commands = set(os.environ['SHARED_COMMAND_NAMES'].split())
 expected_skills = set(os.environ['SKILL_NAMES'].split())
+retired_skills = set(os.environ['RETIRED_SKILL_NAMES'].split())
+# Subagents whose role is read-only. Cursor enforces readonly only when the
+# frontmatter says so, so the flag must match the role.
+writing_agents = {'forager'}
+# Hive skills Cursor does not ship because they drive Hive tools or state.
+undelivered_hive_skills = {
+    'background-delegation',
+    'context-engineering',
+    'dispatching-parallel-agents',
+    'executing-plans',
+    'hive-config',
+    'writing-plans',
+}
+appended_guidance_sentence = (
+    'Apply the Engineering Judgment section appended to this prompt within this role\'s current scope and finding bar.'
+)
 excluded_commands = {
     'approve-sync-plan',
     'hive-plan',
@@ -229,16 +296,7 @@ excluded_commands = {
     'start-execution',
 }
 
-forbidden_patterns = [
-    (re.compile(r'\bhive_[A-Za-z0-9_]+\b'), 'Hive tool name'),
-    (re.compile(r'\b(?:task|question|todowrite)\s*\('), 'OpenCode-only tool call'),
-    (re.compile(r'\b(?:functions|multi_tool_use)\.[A-Za-z0-9_]+\b'), 'OpenCode tool namespace'),
-    (re.compile(r'</?(?:tool_use|function_calls?|invoke|parameter)\b'), 'OpenCode XML tool-call syntax'),
-    (re.compile(r'/(?:home|Users)/[A-Za-z0-9._-]+(?:/|\b)'), 'absolute home-directory path'),
-    (re.compile(r'https?://(?:localhost|127\.0\.0\.1|0\.0\.0\.0)(?::\d+)?\b'), 'local proxy URL'),
-    (re.compile(r'\b(?:sk-(?:ant-|proj-)?[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16})\b'), 'obvious secret'),
-    (re.compile(r'-----BEGIN (?:RSA |OPENSSH |EC |DSA )?PRIVATE KEY-----'), 'private key'),
-]
+exec(os.environ['FORBIDDEN_PATTERN_SOURCE'])
 
 errors = []
 text_cache = {}
@@ -269,7 +327,7 @@ def read_text(path):
     text_cache[path] = text
     return text
 
-def parse_frontmatter(path, allowed_keys=None):
+def parse_frontmatter(path, allowed_keys=None, quoted_ok=False):
     text = read_text(path)
     lines = text.splitlines()
     if len(lines) < 3 or lines[0] != '---':
@@ -314,7 +372,7 @@ def parse_frontmatter(path, allowed_keys=None):
             fail(f'{display(path)} has unknown frontmatter key: {key}')
             continue
         val = value.strip()
-        if allowed_keys is not None:
+        if allowed_keys is not None and not quoted_ok:
             if val.startswith('"') or val.startswith("'"):
                 fail(f'{display(path)} has quoted {key} value: {val}')
                 continue
@@ -383,10 +441,10 @@ def validate_tree_root(directory, label):
             fail(f'{display(path)} is not a regular file or directory')
     return entries
 
-def validate_skill(path, expected_name, require_trigger=False, allowed_keys=None):
+def validate_skill(path, expected_name, require_trigger=False, allowed_keys=None, quoted_ok=False):
     if path.is_symlink() or not path.is_file():
         return
-    frontmatter = parse_frontmatter(path, allowed_keys=allowed_keys)
+    frontmatter = parse_frontmatter(path, allowed_keys=allowed_keys, quoted_ok=quoted_ok)
     if frontmatter.get('name') != expected_name:
         fail(f'{display(path)} frontmatter name must be {expected_name!r}')
     description = frontmatter.get('description', '')
@@ -427,7 +485,8 @@ def check_forbidden_content(path):
     if path.suffix.lower() in {'.gz'}:
         return
     text = read_text(path)
-    for pattern, label in forbidden_patterns:
+    patterns = private_patterns if attribution_name.match(path.name) else forbidden_patterns
+    for pattern, label in patterns:
         match = pattern.search(text)
         if match:
             fail(f'{display(path)} contains {label}: {match.group(0)}')
@@ -443,25 +502,37 @@ if not rules_file.is_file():
     fail('missing required file: rules/default-agent.md')
 
 check_exact_names(root / 'agents', '.md', expected_agents, 'agents')
-stale_reflect = root / 'commands' / 'reflect.md'
-if stale_reflect.exists() or stale_reflect.is_symlink():
-    fail('stale duplicate commands/reflect.md is present; use canonical .apm/prompts/reflect.prompt.md')
 check_exact_names(root / 'commands', '.md', expected_commands, 'commands')
 
-reflect_source = repo_root / '.apm' / 'prompts' / 'reflect.prompt.md'
-if reflect_source.is_symlink() or not reflect_source.is_file():
-    fail('missing canonical reflect source: .apm/prompts/reflect.prompt.md')
-else:
-    reflect_frontmatter = parse_frontmatter(reflect_source, allowed_keys={'description'})
-    if not reflect_frontmatter.get('description'):
-        fail('.apm/prompts/reflect.prompt.md frontmatter has empty description')
-    check_forbidden_content(reflect_source)
+# Shared commands live once under .apm/prompts and install into Cursor from there.
+for shared_name in sorted(shared_commands):
+    stale_copy = root / 'commands' / f'{shared_name}.md'
+    if stale_copy.exists() or stale_copy.is_symlink():
+        fail(f'stale duplicate commands/{shared_name}.md is present; use canonical .apm/prompts/{shared_name}.prompt.md')
+    shared_source = repo_root / '.apm' / 'prompts' / f'{shared_name}.prompt.md'
+    if shared_source.is_symlink() or not shared_source.is_file():
+        fail(f'missing canonical shared command source: .apm/prompts/{shared_name}.prompt.md')
+        continue
+    shared_frontmatter = parse_frontmatter(shared_source)
+    if set(shared_frontmatter) != {'description'} or not shared_frontmatter.get('description'):
+        fail(f'.apm/prompts/{shared_name}.prompt.md frontmatter must be exactly a non-empty description')
+    check_forbidden_content(shared_source)
 
 commands_dir = root / 'commands'
 if commands_dir.is_dir():
     excluded_found = sorted(name for name in excluded_commands if (commands_dir / f'{name}.md').exists())
     if excluded_found:
         fail(f'excluded commands are present: {excluded_found}')
+
+# Imported skills are described by the sync provenance: its per-file list is the
+# exact tree, so no second manifest is kept for them here.
+provenance_file = repo_root / 'vendor' / 'oc-arkive' / 'cursor-skills' / 'provenance.json'
+synced_names = set()
+if provenance_file.is_file() and not provenance_file.is_symlink():
+    try:
+        synced_names = set(json.loads(provenance_file.read_text(encoding='utf-8'))['skills'])
+    except (OSError, ValueError, KeyError, TypeError):
+        synced_names = set()
 
 skills_dir = root / 'skills'
 if skills_dir.is_dir():
@@ -483,16 +554,26 @@ for agent_name in expected_agents:
         fail(f'agents/{agent_name}.md frontmatter is missing description')
     if frontmatter.get('model') != 'inherit':
         fail(f'agents/{agent_name}.md frontmatter model must be inherit')
-    if frontmatter.get('readonly') not in {'true', 'false'}:
-        fail(f'agents/{agent_name}.md frontmatter readonly must be true or false')
+    expected_readonly = 'false' if agent_name in writing_agents else 'true'
+    if frontmatter.get('readonly') != expected_readonly:
+        fail(f'agents/{agent_name}.md frontmatter readonly must be {expected_readonly}')
+    agent_text = read_text(path)
+    if agent_text.count(appended_guidance_sentence) != 1:
+        fail(f'agents/{agent_name}.md must state the appended Engineering Judgment guidance exactly once')
+    if 'active Cursor Rules' in agent_text or 'User Rules' in agent_text:
+        fail(f'agents/{agent_name}.md must not rely on Rules inheritance; Cursor does not document that subagents receive User Rules')
 
 extra_skill_roots = {'stop-design-slop': {'assets', 'examples'}}
+extra_skill_files = {'stop-design-slop': {'LICENSE.impeccable'}}
 
 for skill_name in expected_skills:
     skill_dir = root / 'skills' / skill_name
     path = skill_dir / 'SKILL.md'
     if not path.is_file():
         fail(f'missing required file: skills/{skill_name}/SKILL.md')
+        continue
+    if skill_name in synced_names:
+        validate_skill(path, skill_name, allowed_keys=frozenset({'name', 'description'}), quoted_ok=True)
         continue
     allowed_extra_roots = {'references', 'scripts'} | extra_skill_roots.get(skill_name, set())
     unsupported_skill_entries = []
@@ -501,14 +582,59 @@ for skill_name in expected_skills:
             continue
         if entry.is_dir() and entry.name in allowed_extra_roots:
             continue
+        if entry.is_file() and entry.name in extra_skill_files.get(skill_name, set()):
+            continue
         unsupported_skill_entries.append(str(entry.relative_to(skill_dir)))
     if unsupported_skill_entries:
         fail(f'skills/{skill_name} contains unsupported entries: {unsupported_skill_entries}')
-    validate_skill(path, skill_name)
+    # Locally maintained skills keep strict, Cursor-safe frontmatter. stop-design-slop
+    # carries a nested metadata block and is validated against its own manifest.
+    if skill_name == 'stop-design-slop':
+        validate_skill(path, skill_name)
+    else:
+        validate_skill(path, skill_name, require_trigger=True, allowed_keys=frozenset({'name', 'description'}))
 
 for _, asset, kind in cursor_entries:
     if kind == 'file':
         check_forbidden_content(asset)
+
+# Reference closure: relative links inside a skill stay inside it and resolve,
+# and no delivered instruction points at a skill Cursor does not ship.
+link_pattern = re.compile(r'\]\(([^)\s]+)\)')
+fence_pattern = re.compile(r'^(```|~~~)')
+skill_name_pattern = {
+    name: re.compile(r'(?<![A-Za-z0-9_-])' + re.escape(name) + r'(?![A-Za-z0-9_-])')
+    for name in sorted(undelivered_hive_skills | retired_skills)
+}
+for _, asset, kind in cursor_entries:
+    if kind != 'file' or asset.suffix.lower() != '.md' or attribution_name.match(asset.name):
+        continue
+    text = read_text(asset)
+    for skill_ref, ref_pattern in ([] if asset == root / 'README.md' else skill_name_pattern.items()):
+        if ref_pattern.search(text):
+            fail(f'{display(asset)} references skill {skill_ref}, which Cursor does not ship')
+    relative_to_root = asset.relative_to(root)
+    if relative_to_root.parts[0] != 'skills' or len(relative_to_root.parts) < 3:
+        continue
+    skill_root = root / 'skills' / relative_to_root.parts[1]
+    in_fence = False
+    for line in text.splitlines():
+        if fence_pattern.match(line.strip()):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        for target in link_pattern.findall(line):
+            if re.match(r'^(?:[A-Za-z][A-Za-z0-9+.-]*:|#)', target):
+                continue
+            resolved = (asset.parent / target.split('#', 1)[0]).resolve(strict=False)
+            try:
+                resolved.relative_to(skill_root.resolve(strict=False))
+            except ValueError:
+                fail(f'{display(asset)} links outside its skill: {target}')
+                continue
+            if not resolved.exists():
+                fail(f'{display(asset)} links to a missing file: {target}')
 
 WRITING_ALLOWED_KEYS = frozenset({'name', 'description'})
 source_manifests = (
@@ -609,15 +735,10 @@ source_manifests = (
         WRITING_ALLOWED_KEYS,
     ),
     (
-        repo_root / '.apm' / 'cursor' / 'skills' / 'humanizer',
-        'humanizer',
-        ('SKILL.md', 'references', 'references/patterns.md'),
-        WRITING_ALLOWED_KEYS,
-    ),
-    (
         repo_root / '.apm' / 'cursor' / 'skills' / 'stop-design-slop',
         'stop-design-slop',
         (
+            'LICENSE.impeccable',
             'SKILL.md',
             'assets',
             'assets/anti-slop-principles.svg',
@@ -642,37 +763,6 @@ source_manifests = (
             'scripts/contrast_check.py',
         ),
         None,
-    ),
-    (
-        repo_root / '.apm' / 'cursor' / 'skills' / 'stop-slop',
-        'stop-slop',
-        (
-            'SKILL.md',
-            'references',
-            'references/examples.md',
-            'references/phrases.md',
-            'references/structures.md',
-        ),
-        WRITING_ALLOWED_KEYS,
-    ),
-    (
-        repo_root / '.apm' / 'cursor' / 'skills' / 'writing-for-humans',
-        'writing-for-humans',
-        (
-            'SKILL.md',
-            'references',
-            'references/examples.md',
-            'references/sources.md',
-        ),
-        WRITING_ALLOWED_KEYS,
-        True,
-    ),
-    (
-        repo_root / '.apm' / 'cursor' / 'skills' / 'writing-policy',
-        'writing-policy',
-        ('SKILL.md',),
-        WRITING_ALLOWED_KEYS,
-        True,
     ),
     (
         repo_root / '.apm' / 'skills' / 'cymbal',
@@ -883,12 +973,14 @@ validate_rules() {
   python3 - "$root" "${REPO_ROOT}" <<'PY'
 import hashlib
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
 repo_root = Path(sys.argv[2])
+exec(os.environ['FORBIDDEN_PATTERN_SOURCE'])
 rules = root / 'rules' / 'default-agent.md'
 vendor = repo_root / 'vendor' / 'oc-arkive' / 'engineering-judgment' / 'engineering-judgment.md'
 provenance_path = vendor.parent / 'provenance.json'
@@ -1003,21 +1095,34 @@ if composed.count(b'## Engineering Judgment') != 1:
     raise SystemExit(1)
 composed_text = composed.decode('utf-8')
 
-patterns = [
-    (re.compile(r'\bhive_[A-Za-z0-9_]+\b'), 'Hive tool name'),
-    (re.compile(r'\b(?:task|question|todowrite)\s*\('), 'OpenCode-only tool call'),
-    (re.compile(r'\b(?:functions|multi_tool_use)\.[A-Za-z0-9_]+\b'), 'OpenCode tool namespace'),
-    (re.compile(r'</?(?:tool_use|function_calls?|invoke|parameter)\b'), 'OpenCode XML tool-call syntax'),
-    (re.compile(r'/(?:home|Users)/[A-Za-z0-9._-]+(?:/|\b)'), 'absolute home-directory path'),
-    (re.compile(r'https?://(?:localhost|127\.0\.0\.1|0\.0\.0\.0)(?::\d+)?\b'), 'local proxy URL'),
-    (re.compile(r'\b(?:sk-(?:ant-|proj-)?[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16})\b'), 'obvious secret'),
-    (re.compile(r'-----BEGIN (?:RSA |OPENSSH |EC |DSA )?PRIVATE KEY-----'), 'private key'),
-]
-for pattern, label in patterns:
+for pattern, label in forbidden_patterns:
     match = pattern.search(composed_text)
     if match:
         print(f'Cursor rules validation failed: composed Rules contain {label}: {match.group(0)}', file=sys.stderr)
         sys.exit(1)
+
+# Each installed agent prompt is its source body plus the same Engineering
+# Judgment snapshot, with the source frontmatter intact.
+agents_directory = root / 'agents'
+for agent_path in sorted(agents_directory.glob('*.md')):
+    agent_bytes = agent_path.read_bytes()
+    composed_agent = agent_bytes + separator + vendor_bytes
+    composed_agent_text = composed_agent.decode('utf-8')
+    label = f'agents/{agent_path.name}'
+    if not composed_agent_text.startswith('---\nname: '):
+        print(f'Cursor rules validation failed: composed {label} lost its frontmatter', file=sys.stderr)
+        raise SystemExit(1)
+    if b'## Engineering Judgment' in agent_bytes:
+        print(f'Cursor rules validation failed: {label} source must not embed Engineering Judgment; it is appended at install', file=sys.stderr)
+        raise SystemExit(1)
+    if composed_agent.count(b'## Engineering Judgment') != 1 or composed_agent.count(vendor_bytes) != 1:
+        print(f'Cursor rules validation failed: composed {label} must contain Engineering Judgment exactly once', file=sys.stderr)
+        raise SystemExit(1)
+    for pattern, pattern_label in forbidden_patterns:
+        match = pattern.search(composed_agent_text)
+        if match:
+            print(f'Cursor rules validation failed: composed {label} contains {pattern_label}: {match.group(0)}', file=sys.stderr)
+            raise SystemExit(1)
 PY
 }
 
@@ -1025,20 +1130,17 @@ validate_cursor_hive_skills() {
   check_python
   python3 - "${REPO_ROOT}" <<'PY'
 import hashlib
+import importlib.util
 import json
 import re
 import sys
 from pathlib import Path
 
+sys.dont_write_bytecode = True
 repo_root = Path(sys.argv[1])
 provenance_path = repo_root / 'vendor' / 'oc-arkive' / 'cursor-skills' / 'provenance.json'
-expected_names = (
-    'brainstorming',
-    'systematic-debugging',
-    'test-driven-development',
-    'verification',
-)
-expected_skill_keys = {'sourcePath', 'sourceSha256', 'installedSha256'}
+skills_root = repo_root / '.apm' / 'cursor' / 'skills'
+sync_script = repo_root / 'scripts' / 'sync-cursor-hive-skills.py'
 expected_root_keys = {
     'schemaVersion',
     'upstreamRepository',
@@ -1046,6 +1148,8 @@ expected_root_keys = {
     'packageVersion',
     'skills',
 }
+expected_skill_keys = {'sourcePath', 'files'}
+expected_file_keys = {'sourceSha256', 'installedSha256'}
 
 def fail(message):
     print(f'Cursor Hive skills validation failed: {message}', file=sys.stderr)
@@ -1101,8 +1205,8 @@ if not isinstance(provenance, dict):
     fail('provenance root must be an object')
 if set(provenance) != expected_root_keys:
     fail(f'provenance keys must be exactly {sorted(expected_root_keys)}')
-if type(provenance['schemaVersion']) is not int or provenance['schemaVersion'] != 1:
-    fail('provenance schemaVersion must be integer 1')
+if type(provenance['schemaVersion']) is not int or provenance['schemaVersion'] != 2:
+    fail('provenance schemaVersion must be integer 2')
 if not isinstance(provenance['upstreamRepository'], str) or not provenance['upstreamRepository']:
     fail('provenance upstreamRepository must be a non-empty string')
 if not isinstance(provenance['commit'], str) or not re.fullmatch(r'[0-9a-f]{40}', provenance['commit']):
@@ -1110,45 +1214,71 @@ if not isinstance(provenance['commit'], str) or not re.fullmatch(r'[0-9a-f]{40}'
 if not isinstance(provenance['packageVersion'], str) or not provenance['packageVersion']:
     fail('provenance packageVersion must be a non-empty string')
 skills = provenance['skills']
-if not isinstance(skills, dict) or set(skills) != set(expected_names):
-    fail(f'provenance skills must be exactly {list(expected_names)}')
+if not isinstance(skills, dict) or not skills:
+    fail('provenance skills must be a non-empty object')
 
-for name in expected_names:
+# The sync script owns the imported and retired names; read them from it when
+# it ships alongside this validator.
+if sync_script.is_file() and not sync_script.is_symlink():
+    spec = importlib.util.spec_from_file_location('cursor_hive_skills_sync', sync_script)
+    sync_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sync_module)
+    if set(skills) != set(sync_module.IMPORTED_SKILLS):
+        fail(f'provenance skills must be exactly {sorted(sync_module.IMPORTED_SKILLS)}')
+    for retired in sync_module.RETIRED_SKILLS:
+        if (skills_root / retired).exists():
+            fail(f'retired skill {retired} is still present in .apm/cursor/skills')
+
+for name in sorted(skills):
     entry = skills[name]
     label = f'provenance skills.{name}'
     if not isinstance(entry, dict) or set(entry) != expected_skill_keys:
         fail(f'{label} keys must be exactly {sorted(expected_skill_keys)}')
-    source_path = entry['sourcePath']
-    expected_source = f'packages/opencode-hive/skills/{name}/SKILL.md'
-    if not isinstance(source_path, str) or source_path != expected_source:
+    expected_source = f'packages/opencode-hive/skills/{name}'
+    if entry['sourcePath'] != expected_source:
         fail(f'{label} sourcePath must be {expected_source}')
-    for field in ('sourceSha256', 'installedSha256'):
-        value = entry[field]
-        if not isinstance(value, str) or not re.fullmatch(r'[0-9a-f]{64}', value):
-            fail(f'{label} {field} must be a lowercase SHA-256')
-    skill_path = repo_root / '.apm' / 'cursor' / 'skills' / name / 'SKILL.md'
-    require_regular_file(skill_path, f'.apm/cursor/skills/{name}/SKILL.md', skill_path.parent)
-    skill_bytes = skill_path.read_bytes()
-    actual_hash = hashlib.sha256(skill_bytes).hexdigest()
-    expected_hash = entry['installedSha256']
-    if actual_hash != expected_hash:
-        fail(
-            f'.apm/cursor/skills/{name}/SKILL.md SHA-256 is {actual_hash}, expected {expected_hash}'
-        )
-    try:
-        skill_text = skill_bytes.decode('utf-8')
-    except UnicodeDecodeError as error:
-        fail(f'.apm/cursor/skills/{name}/SKILL.md is not valid UTF-8: {error}')
-    if 'skill(' in skill_text:
-        fail(f'.apm/cursor/skills/{name}/SKILL.md contains skill(')
-    if 'writing-plans' in skill_text:
-        fail(f'.apm/cursor/skills/{name}/SKILL.md contains writing-plans as a skill-call target')
-    if name == 'systematic-debugging':
-        if 'root-cause-finder' in skill_text:
-            fail(f'.apm/cursor/skills/{name}/SKILL.md contains root-cause-finder')
-        if 'first unintended' not in skill_text and 'hidden write' not in skill_text:
-            fail(f'.apm/cursor/skills/{name}/SKILL.md is missing the inlined downstream-symptom protocol')
+    files = entry['files']
+    if not isinstance(files, dict) or 'SKILL.md' not in files:
+        fail(f'{label} files must be an object that includes SKILL.md')
+    skill_directory = skills_root / name
+    if skill_directory.is_symlink() or not skill_directory.is_dir():
+        fail(f'.apm/cursor/skills/{name} must be a real directory')
+    actual = {
+        path.relative_to(skill_directory).as_posix()
+        for path in skill_directory.rglob('*')
+        if path.is_file() or path.is_symlink()
+    }
+    for missing in sorted(set(files) - actual):
+        fail(f'.apm/cursor/skills/{name}/{missing} is listed in provenance but missing')
+    for extra in sorted(actual - set(files)):
+        fail(f'.apm/cursor/skills/{name}/{extra} is not listed in provenance')
+    for relative in sorted(files):
+        file_entry = files[relative]
+        file_label = f'{label}.files.{relative}'
+        if not isinstance(file_entry, dict) or set(file_entry) != expected_file_keys:
+            fail(f'{file_label} keys must be exactly {sorted(expected_file_keys)}')
+        for field in sorted(expected_file_keys):
+            value = file_entry[field]
+            if not isinstance(value, str) or not re.fullmatch(r'[0-9a-f]{64}', value):
+                fail(f'{file_label} {field} must be a lowercase SHA-256')
+        installed_path = skill_directory / relative
+        require_regular_file(installed_path, f'.apm/cursor/skills/{name}/{relative}', skill_directory)
+        actual_hash = hashlib.sha256(installed_path.read_bytes()).hexdigest()
+        if actual_hash != file_entry['installedSha256']:
+            fail(
+                f'.apm/cursor/skills/{name}/{relative} SHA-256 is {actual_hash}, expected {file_entry["installedSha256"]}'
+            )
 PY
+}
+
+# An installed agent prompt is the source body followed by the pinned
+# Engineering Judgment snapshot, with the source frontmatter first.
+render_agent() {
+  local root="$1"
+  local name="$2"
+  cat "${root}/agents/${name}.md"
+  printf '%s' "${COMPOSE_SEPARATOR}"
+  cat "${EJ_SOURCE}"
 }
 
 print_copy_plan() {
@@ -1158,13 +1288,15 @@ print_copy_plan() {
   printf 'Target: %s\n' "${target_dir}"
   for name in "${AGENTS[@]}"; do
     source="${root}/agents/${name}.md"
-    printf 'Would copy %s -> %s\n' "${source#"${root}/"}" "${target_dir}/agents/${name}.md"
+    printf 'Would copy %s with pinned Engineering Judgment appended -> %s\n' "${source#"${root}/"}" "${target_dir}/agents/${name}.md"
   done
   for name in "${COMMANDS[@]}"; do
     source="${root}/commands/${name}.md"
     printf 'Would copy %s -> %s\n' "${source#"${root}/"}" "${target_dir}/commands/${name}.md"
   done
-  printf 'Would copy canonical .apm/prompts/reflect.prompt.md -> %s\n' "${target_dir}/commands/reflect.md"
+  for name in "${SHARED_COMMANDS[@]}"; do
+    printf 'Would copy canonical .apm/prompts/%s.prompt.md -> %s\n' "${name}" "${target_dir}/commands/${name}.md"
+  done
   for name in "${SKILLS[@]}"; do
     source="${root}/skills/${name}"
     printf 'Would copy %s -> %s\n' "${source#"${root}/"}" "${target_dir}/skills/${name}"
@@ -1250,7 +1382,7 @@ install_personal_skill() {
 install_assets_into() {
   local root="$1"
   local target_dir="$2"
-  local name
+  local name rendered
 
   BACKUP_DIR=""
   mkdir -p "${target_dir}/agents" "${target_dir}/commands" "${target_dir}/skills"
@@ -1258,8 +1390,11 @@ install_assets_into() {
   for name in "${AGENTS[@]}"; do
     backup_path "${target_dir}" "${target_dir}/agents/${name}.md"
     rm -rf "${target_dir}/agents/${name}.md"
-    install -m 0644 "${root}/agents/${name}.md" "${target_dir}/agents/${name}.md"
-    printf 'Copied agents/%s.md -> %s\n' "${name}" "${target_dir}/agents/${name}.md"
+    rendered="$(mktemp "${target_dir}/agents/.${name}.XXXXXX")"
+    render_agent "${root}" "${name}" > "${rendered}"
+    install -m 0644 "${rendered}" "${target_dir}/agents/${name}.md"
+    rm -f "${rendered}"
+    printf 'Copied agents/%s.md with pinned Engineering Judgment appended -> %s\n' "${name}" "${target_dir}/agents/${name}.md"
   done
   for name in "${COMMANDS[@]}"; do
     backup_path "${target_dir}" "${target_dir}/commands/${name}.md"
@@ -1267,10 +1402,12 @@ install_assets_into() {
     install -m 0644 "${root}/commands/${name}.md" "${target_dir}/commands/${name}.md"
     printf 'Copied commands/%s.md -> %s\n' "${name}" "${target_dir}/commands/${name}.md"
   done
-  backup_path "${target_dir}" "${target_dir}/commands/reflect.md"
-  rm -rf "${target_dir}/commands/reflect.md"
-  install -m 0644 "${REFLECT_SOURCE}" "${target_dir}/commands/reflect.md"
-  printf 'Copied canonical .apm/prompts/reflect.prompt.md -> %s\n' "${target_dir}/commands/reflect.md"
+  for name in "${SHARED_COMMANDS[@]}"; do
+    backup_path "${target_dir}" "${target_dir}/commands/${name}.md"
+    rm -rf "${target_dir}/commands/${name}.md"
+    install -m 0644 "${REPO_ROOT}/.apm/prompts/${name}.prompt.md" "${target_dir}/commands/${name}.md"
+    printf 'Copied canonical .apm/prompts/%s.prompt.md -> %s\n' "${name}" "${target_dir}/commands/${name}.md"
+  done
   for name in "${SKILLS[@]}"; do
     backup_path "${target_dir}" "${target_dir}/skills/${name}"
     rm -rf "${target_dir}/skills/${name}"
@@ -1354,7 +1491,7 @@ check_target_readability() {
   fi
 
   if [[ -d "${target}/commands" ]]; then
-    for name in "${COMMANDS[@]}" reflect; do
+    for name in "${COMMANDS[@]}" "${SHARED_COMMANDS[@]}"; do
       entry_path="${target}/commands/${name}.md"
       if [[ -e "${entry_path}" || -L "${entry_path}" ]]; then
         if [[ -d "${entry_path}" ]]; then
@@ -1592,7 +1729,7 @@ print_all_copy_plans() {
 
 main() {
   local command="${1:-}"
-  local root
+  local root name agent_known
 
   case "${command}" in
     validate)
@@ -1629,8 +1766,23 @@ main() {
       root="$(source_root)"
       validate_rules "${root}"
       cat "${root}/rules/default-agent.md"
-      printf '\n---\n\n'
-      cat "${REPO_ROOT}/vendor/oc-arkive/engineering-judgment/engineering-judgment.md"
+      printf '%s' "${COMPOSE_SEPARATOR}"
+      cat "${EJ_SOURCE}"
+      ;;
+    print-agent)
+      root="$(source_root)"
+      validate_rules "${root}"
+      agent_known=0
+      for name in "${AGENTS[@]}"; do
+        if [[ "${name}" == "${2:-}" ]]; then
+          agent_known=1
+        fi
+      done
+      if [[ "${agent_known}" -ne 1 ]]; then
+        usage
+        exit 1
+      fi
+      render_agent "${root}" "${2}"
       ;;
     *)
       usage

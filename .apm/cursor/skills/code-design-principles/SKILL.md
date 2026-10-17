@@ -11,7 +11,7 @@ The engineer who maintains the code next is a user too. Start from what callers 
 
 ## Read the branch you need
 
-- Choosing state or module ownership: [Model the domain](references/domain-modeling.md).
+- Choosing state or module ownership, or checking that a locally plausible edit cannot break a distant invariant: [Model the domain](references/domain-modeling.md).
 - Parsing, validation, typed invariants, or API boundaries: [Boundaries and types](references/boundaries-and-types.md).
 - Concurrent writers, retries, partial runs, or internal replacement: [Lifecycle and migration](references/lifecycle-and-migration.md).
 
@@ -19,4 +19,4 @@ Read the applicable reference before applying its tests. Existing project contra
 
 Explain the selected shape through its call sites, invariants, and failure consequences in the artifact already requested. A reviewer still needs evidence that a change violates a requirement or creates worthwhile in-scope complexity; a heuristic is a lead, not a finding.
 
-Debugging remains with `systematic-debugging`; completion evidence with `verification`; selected red-green work with `test-driven-development`. Worktree placement, session recovery, and merge policy belong to the Cursor parent rules and `using-git-worktrees`. This skill does not authorize clearing retained state, breaking locks, adopting live sessions, or deleting compatibility relied on by external consumers.
+Debugging remains with `systematic-debugging`; completion evidence with `verification`; selected red-green work with `test-driven-development`. Worktree placement, interrupted-writer recovery, and merge policy remain with `using-git-worktrees`, `orchestrating-ad-hoc-work`, and `finishing-a-development-branch`. This skill does not authorize clearing retained state, breaking locks, adopting live sessions, or deleting compatibility relied on by external consumers.

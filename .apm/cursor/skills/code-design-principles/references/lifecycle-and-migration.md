@@ -8,7 +8,7 @@ Treat "we need a lock" as a design smell to check, not the default answer. Elimi
 
 When sharing is real, enforce serialization structurally: lockfiles, sequential phases, exclusive ownership. Instructions and conventions are not concurrency control.
 
-This is a design principle for the system being changed. It does not change Cursor parent placement, session recovery, or merge policy, and it does not change the `using-git-worktrees` procedure. Independent worktrees can still share ports, fixtures, databases, or output paths.
+This is a design principle for the system being changed, not permission to alter a repository's lock, session, or worktree protocol. Independent worktrees can still share ports, fixtures, databases, or output paths.
 
 ## Make operations idempotent
 

@@ -1,6 +1,6 @@
 ---
 name: verification
-description: Use when claiming work is complete, fixed, passing, or independently verified; requires fresh command/tool evidence applicable to the tested candidate and inputs, proportional falsification checks, and concise PASS/FAIL/PARTIAL reporting
+description: Use before claiming work is complete, fixed, passing, or independently verified; requires applicable command/tool evidence, proportional falsification checks, and concise PASS/FAIL/PARTIAL reporting
 ---
 
 # Verification
@@ -29,7 +29,7 @@ Do not use this skill for:
 
 ### Completion Gate Mode
 
-Use this mode before your own completion claim. Keep the report compact, but include fresh command/tool evidence from this session and name the candidate and inputs that evidence covers.
+Use this mode before your own completion claim. Keep the report compact, but include observed command/tool evidence and identify the candidate and inputs it covers.
 
 ### Verification Report Mode
 
@@ -37,12 +37,14 @@ Use this mode when the task is explicitly to independently verify work. Be falsi
 
 ## Iron Laws
 
-- No completion claims without fresh command/tool evidence that applies to the candidate and inputs actually tested.
+- No completion claims without actual command output or tool-result evidence that applies to the candidate being claimed.
 - Rationalizations are not evidence.
-- Reading implementation alone cannot prove runtime behavior. Direct text inspection can verify text claims, with applicable syntax or format checks.
-- Agent reports, stale logs, similar checks, and confidence are not evidence. Worker prose is not evidence.
-- A branch result does not prove the integrated tree.
+- Reading code is not verification.
+- Worker reports are attributed evidence, not independent verification. A report must include the command/tool result and tested-candidate details; worker prose alone is not evidence.
+- A source-backed trace can expose tool output, but it does not attest the tested Git candidate, current integration, or mutable live/artifact inputs and is not a result cache.
+- Session recency neither proves nor invalidates evidence. Establish whether the tested candidate and relevant inputs still apply.
 - Verify the claim being made, not a nearby claim. Build proves build. Lint proves lint. Tests prove only what they exercise.
+- Check the real thing, not a proxy: read the written value, exercise the changed flow, or inspect the delivered artifact. If an observation is suspicious, investigate the observation method while preserving the original failure; do not explain a failed check away.
 
 ## Evidence Protocol
 
@@ -50,20 +52,19 @@ For each coherent claim group:
 
 1. Identify the claim.
 2. Choose the check that would fail if the claim is false.
-3. Run the command or observable tool check fresh.
-4. Read the output, exit code, status, screenshot, or tool result.
-5. Compare expected vs actual.
-6. Name the candidate and inputs actually tested, and decide whether they are the candidate and inputs in the claim.
-7. Report the command/tool, relevant output, and that applicability before making the claim.
+3. Observe the actual command output or tool result. Run the check on the current target when required output or applicability is unavailable.
+4. Identify the tested candidate and relevant inputs: branch/ref and commit, relevant dirty changes, fixtures, configuration, toolchain, generated artifacts, and live or deployed state as applicable.
+5. Compare the observed result with the expected signal and decide whether later changes affect the tested behavior or inputs.
+6. Report the command/tool, observed output, candidate, input applicability, and attribution before making the claim.
 
 ### Candidate and Input Applicability
 
-- Evidence applies to the candidate and relevant inputs it actually tested. A branch result proves that branch only. It does not prove the integrated tree.
+- Evidence applies to the candidate and relevant inputs it actually tested. A branch result proves that branch only; it does not prove integrated acceptance.
 - Record enough identity to distinguish the tested candidate, including relevant dirty changes and mutable fixture, configuration, toolchain, generated-artifact, or live-state inputs. Do not require exhaustive path manifests or result hashes for every check.
-- An earlier result covers a later claim only when the candidate and relevant inputs are unchanged, or there is a concrete brief reason the later change cannot affect the tested behavior. Otherwise run a fresh check.
+- Reuse evidence while the candidate and relevant inputs remain applicable. A later change may leave a result valid when there is a concrete, brief reason it cannot affect the tested behavior; elapsed time or a new session alone does not invalidate it, and a new commit identity alone neither keeps nor discards it. Component results from a failed aggregate count only with their actual recorded result and established independence of the relevant inputs and state from the failure; an unrun node never counts, and an approved aggregate is one invocation until an authorized amendment changes it.
+- A required early, feasibility, or pre-merge gate stays at its approved boundary. Each task-named integrated-only deferral must match a `## Final Verification` obligation with an owner, prerequisite, command, and expected signal. Resolve every such obligation on the integrated candidate before claiming acceptance.
 - If ownership or impact cannot be bounded, select a broader coherent existing check and report any missing check. Unknown impact is not an empty green result.
 - Required checks that are skipped, unrun, failed, or blocked are not PASS. Optional skips may be reported as skipped.
-- Do not report PASS when the command output is missing or applicability cannot be established.
 
 ## Rigor By Risk
 
@@ -74,18 +75,32 @@ For each coherent claim group:
 | API, tool, or public interface | Build/typecheck plus tests or consumer-style invocation |
 | Bug fix | Reproduce original symptom when practical, then verify fix and regression coverage |
 | Refactor with no behavior change | Existing behavior tests unchanged; check public API surface if exposed |
+| Performance | Compare baseline and treatment on the same workload and measurement surface; report noise and invalidation assumptions |
 | Config or infrastructure | Syntax validation, dry-run, or command that exercises the config |
 | Frontend behavior | Start app when practical, inspect rendered state or browser automation, and check console/network if available |
 | Data or migration | Verify schema/data shape, empty/boundary inputs, and data preservation where relevant |
 
 Scale up when the change touches persistence, auth, public APIs, deployment, concurrency, payments, or destructive operations. Scale down for typo-only or documentation-only changes.
 
+### End-to-end speedup claims
+
+A claim that a delivery schedule is faster needs evidence for the whole schedule the claim covers (initial validation, correction, integration) on the same workload and measurement surface as the baseline. Label each statement as a measured speedup, an observed elimination (a named costly execution that no longer runs), or a projected benefit from the schedule. A faster focused check supports a claim about that check only. Unknown timing is reported as unknown and is not a failure unless a measured goal requires it. Required coverage, candidate applicability, and aggregate authority are decided as above and by the plan's Verification Planning; a speedup claim never overrides them.
+
+### Measured numbers and eval results
+
+When a measured number or eval result is the evidence for a claim (a speedup, regression, throughput, latency, or eval score), establish what it measured. Do only as much as the claim needs.
+
+- Compare equivalent completed work: both sides did the same task on the same workload and measurement surface. Rule out what else the number could be measuring: errors, skipped or cached work, code that never ran, an untuned side left on default settings, noise, and a changed piece too small to account for the difference.
+- A causal claim ("faster because of X") needs an observed mechanism, such as a profile or system counters taken during the run and mapped to source; a reading of the code is a hypothesis. A descriptive delta can be reported with its mechanism labelled unknown.
+- State the run count and spread when noise could change the conclusion. For an eval result, check that every trial did the task and whether the gap holds across trials and scenarios.
+- A claim that rests on no measured number needs none of this, and routine verification gains no profiling or benchmark stage.
+
 ## Adversarial Probes
 
 For non-trivial behavior changes, run at least one probe that tries to break the implementation:
 - Boundary input: empty, zero, negative, long string, unicode, max value
 - Malformed input or missing required fields
-- Idempotency: same request or command twice
+- Idempotency: same request or command twice; interruption and retry from a safely isolated partial run
 - Orphan operation: missing or deleted ID
 - Concurrency: parallel operations against shared state
 - Browser interaction beyond page load
@@ -103,27 +118,26 @@ If a check fails:
 
 Use PARTIAL only for environmental or tool limitations, such as unavailable services, missing credentials, or a server that cannot start for reasons outside the change. Do not use PARTIAL for uncertainty when a check ran.
 
-After a correction, preserve the original failure and rerun checks whose candidate or inputs changed. A green result on a branch does not clear the integrated tree.
-
-## Stopping Condition
-
-Stop after acceptance criteria and required checks pass, including applicable review and packaging gates. Reopen verification only for new changes, failures, or concrete unresolved risk. Do not add probes or repeat equivalent checks merely to increase confidence.
+When output is missing or candidate applicability cannot be established, report UNVERIFIED or BLOCKED, never PASS. After a correction, preserve the original failure, verify the owning regression, and rerun affected consumer and integrated gates; unaffected results stay under the reuse rule above. An unexplained green retry does not resolve an intermittent failure.
 
 ## Output Formats
-
-These formats are illustrative, not mandatory per-item ceremony. Combine related claims in a compact report while preserving the check, observed result, and limitations.
 
 ### Completion Gate Mode
 
 ```markdown
-PASS: [claim] - `[exact command/tool]` returned [observed result].
-Candidate and inputs: [what was actually tested, and why it covers this claim].
-Not checked: [relevant limitation, if any].
+## Verification Evidence
+
+**Claim**: [claim]
+**Command/tool run**: [exact command or tool]
+**Output observed**: [relevant output excerpt]
+**Candidate and inputs**: [tested ref/commit, relevant dirty changes and mutable inputs, and why evidence still applies]
+**Attribution**: [direct observation or attributed worker result]
+**Result**: PASS / FAIL / PARTIAL / UNVERIFIED / BLOCKED
 ```
 
 ### Verification Report Mode
 
-Every PASS requires fresh command/tool evidence that applies to the candidate and inputs being claimed. Worker prose alone cannot support a PASS.
+Every PASS requires actual command/tool output and tested-candidate applicability. Worker prose alone cannot support a PASS.
 
 ```markdown
 ### Check: [what was verified]
@@ -134,9 +148,12 @@ Every PASS requires fresh command/tool evidence that applies to the candidate an
 [relevant output excerpt]
 
 **Candidate and inputs:**
-[what was actually tested, and why it covers this claim]
+[tested ref/commit, relevant dirty changes and mutable inputs, and why evidence still applies]
 
-**Result:** PASS / FAIL / PARTIAL
+**Attribution:**
+[direct observation or attributed worker result]
+
+**Result:** PASS / FAIL / PARTIAL / UNVERIFIED / BLOCKED
 
 VERDICT: PASS
 ```
@@ -146,6 +163,8 @@ End standalone reports with exactly one verdict line:
 - `VERDICT: FAIL`
 - `VERDICT: PARTIAL`
 
+The terminal verdict considers every required claim group. Any required `FAIL` makes the verdict `FAIL`. `PASS` requires an identified required-check set, a `PASS` result for every required group, and no missing required proof; an empty or incomplete set is missing proof. A required `PARTIAL`, `UNVERIFIED`, or `BLOCKED` result, or any other missing required proof, prevents `PASS`: use `PARTIAL` only when an environmental or tool limitation is the sole reason required proof is missing; otherwise use `FAIL`. A final `FAIL` means required acceptance failed or remains unproven; it does not imply that an executed command exited unsuccessfully. Report command failures separately from acceptance status.
+
 ## Anti-Rationalization Checklist
 
 Stop and run evidence when you are about to write:
@@ -153,10 +172,8 @@ Stop and run evidence when you are about to write:
 - "looks correct"
 - "probably passes"
 - "the agent said it passed"
-- "the worker wrote that it passed"
-- "the branch passed, so the integrated tree passed"
 - "the code path is obvious"
 - "similar tests passed"
 - "this is too small to test"
 
-No shortcuts. Run the command or tool check, read the output, then state the result.
+Once applicable required evidence and reviews are sufficient, stop; rerun only for an identified gap, invalidation, or new risk.

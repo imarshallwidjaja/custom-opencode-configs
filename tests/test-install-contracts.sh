@@ -23,6 +23,11 @@ sandbox_agents_skills() {
 sandbox_agents_skills
 
 REPO_FIXTURE="${TMPDIR}/reporoot"
+# Cursor skills that Hive also bundles, and the name the Cursor bundle retired.
+HIVE_BUNDLED_NAMES="humanizer stop-design-slop stop-slop unslop writing-for-agents writing-for-humans"
+HIVE_RETIRED_NAME=writing-policy
+# The OpenCode profile supports the oc-arkive v3.0.0 bundle, which still ships writing-policy and lacks unslop.
+OPENCODE_HIVE_BUNDLED_NAMES="humanizer stop-design-slop stop-slop writing-for-humans writing-policy"
 
 stub_canonical_skill_tree() {
   local skill_name="$1"
@@ -90,29 +95,43 @@ SKILL
 
   # Cursor agents
   for agent in approach-advisor code-reviewer forager plan-reviewer scout simplicity-reviewer vulnerability-reviewer; do
+    agent_readonly=true
+    [[ "${agent}" != forager ]] || agent_readonly=false
     cat > "${REPO_FIXTURE}/.apm/cursor/agents/${agent}.md" <<AGENT
 ---
 name: ${agent}
 description: Test agent ${agent}
 model: inherit
-readonly: false
+readonly: ${agent_readonly}
 ---
-OK
+Apply the Engineering Judgment section appended to this prompt within this role's current scope and finding bar.
 AGENT
   done
 
   # Cursor commands
-  for cmd in compact-summary council-directive council dash-review grill implementation-brief interview interview-drill-down planning-prompt vuln-review; do
+  for cmd in compact-summary council-directive council dash-review grill implementation-brief interview vuln-review; do
     echo "# ${cmd}" > "${REPO_FIXTURE}/.apm/cursor/commands/${cmd}.md"
   done
 
-  # OpenCode prompt-backed commands
+  # Shared prompt-backed commands
   mkdir -p "${REPO_FIXTURE}/.apm/prompts"
   cat > "${REPO_FIXTURE}/.apm/prompts/reflect.prompt.md" <<'PROMPT'
 ---
 description: Review this session and propose durable agent-memory learnings
 ---
 Propose durable learnings and wait for operator approval before editing memory files.
+PROMPT
+  cat > "${REPO_FIXTURE}/.apm/prompts/planning-prompt.prompt.md" <<'PROMPT'
+---
+description: Turn current exploration into a strong planning-agent prompt
+---
+Write one planning prompt from the exploration so far.
+PROMPT
+  cat > "${REPO_FIXTURE}/.apm/prompts/interview-drill-down.prompt.md" <<'PROMPT'
+---
+description: "Interview the operator about a repo-scoped idea. Use for a repo interview."
+---
+Ask one question at a time.
 PROMPT
 
   # Cursor rules
@@ -153,7 +172,7 @@ provenance = {
 PY
 
   # Cursor skills
-  for skill in adversarial-review agents-md-mastery brainstorming code-design-principles complexity-audit complexity-review finishing-a-development-branch grilling how humanizer orchestrating-ad-hoc-work parallel-exploration pr-writing stop-slop subagent-delegation systematic-debugging test-driven-development using-git-worktrees verification why writing-for-humans writing-policy; do
+  for skill in adversarial-review agents-md-mastery brainstorming code-design-principles complexity-audit complexity-review finishing-a-development-branch grilling how humanizer orchestrating-ad-hoc-work parallel-exploration pr-writing stop-slop subagent-delegation systematic-debugging test-driven-development unslop using-git-worktrees verification why writing-for-agents writing-for-humans; do
     mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/${skill}"
     cat > "${REPO_FIXTURE}/.apm/cursor/skills/${skill}/SKILL.md" <<SKILL
 ---
@@ -439,30 +458,28 @@ if not path.is_file():
 text = path.read_text(encoding="utf-8")
 lowered = text.lower()
 contracts = (
-    "evidence before durable instructions",
-    "signal",
-    "noise",
-    "hard-won safety",
+    "every entry must change agent behavior",
+    "prune test",
+    "progressive placement",
+    "write what exists",
     "item-level approval",
-    "scratchpad",
+    "nested `agents.md`",
+    "signal versus noise",
     "cursor user rules",
+    "scratchpad",
     "paste-ready",
-    "manual instructions",
-    "nested agents.md",
-    "observable behavior",
-    "generic best practices",
-    "bootstrap",
-    "prune",
+    "not applied",
+    "manual target",
 )
 missing = [contract for contract in contracts if contract not in lowered]
 if missing:
     raise SystemExit(f"skill is missing behavioral contracts: {missing}")
-if not re.search(r"one-off preferences.{0,120}(?:may|can).{0,120}(?:provisional|provisionally).{0,120}scratchpad", lowered, re.DOTALL):
-    raise SystemExit("skill must allow one-off preferences to be captured provisionally in scratchpad")
-if not re.search(r"(?:must not|do not).{0,160}(?:project instructions|project agents\.md).{0,160}global instructions.{0,160}cursor user rules.{0,200}(?:repeated|mature).{0,80}evidence", lowered, re.DOTALL):
-    raise SystemExit("skill must reserve promotion beyond scratchpad for repeated or mature evidence")
-if not re.search(r"only after.{0,80}(?:exact )?proposal.{0,80}item-level approval", lowered, re.DOTALL):
-    raise SystemExit("skill must require proposal and item-level approval before any accepted scratchpad write")
+if not re.search(r"cursor user rules are a manual target.{0,200}supplied or visible", lowered, re.DOTALL):
+    raise SystemExit("skill must keep Cursor User Rules a manual target that needs supplied or visible text")
+if not re.search(r"provisional one-off preference stays in the existing scratchpad.{0,160}(?:repeated|cross-project).{0,80}evidence", lowered, re.DOTALL):
+    raise SystemExit("skill must reserve promotion beyond scratchpad for repeated evidence and approval")
+if "do not auto-approve" not in lowered:
+    raise SystemExit("skill must require operator approval before durable edits")
 for pattern, label in (
     (r"\.(?:hive)(?:/|\b)", ".hive path"),
     (r"\b(?:agent hive|opencode)\b", "non-Cursor harness assumption"),
@@ -593,30 +610,41 @@ def validate(rule, skill, agents, docs):
     if re.search(r"(?:git )?branch (?:isolates? files|provides? (?:file isolation|true write isolation))", isolation_text, re.DOTALL):
         errors.append("a Git branch is incorrectly described as file isolation")
 
+    # The skill handoff procedure below owns the field list; the Rules only point at it.
     require_terms(errors, "default-rule handoff", routing, (
-        "self-contained", ("objective", "primary goal"), ("constraints", "scope"),
-        "file ownership", ("done criteria", "acceptance criteria"), "verification",
+        "self-contained", "primary goal",
+        "load `subagent-delegation` before preparing any worker or reviewer packet", "single list of packet fields",
     ))
     require_terms(errors, "skill handoff procedure", lane_prompt, (
         "objective", "expected output", "in scope", "out of scope", "evidence",
         "prior failures", "dependencies", "file ownership", "verification", "blockers", "final summary",
-        "artifact", "audience", "voice", "writing-policy", "parent-loaded",
+        "artifact", "audience", "voice", "`unslop`", "parent-loaded",
     ))
+    anchor_sentence = "Apply the Engineering Judgment section appended to this prompt within this role's current scope and finding bar."
     for name, text in agents.items():
         lowered_agent = text.casefold()
         require_terms(errors, f"{name} prose contract", lowered_agent, (
-            "load and apply", "writing-policy", "parent-loaded",
-            "artifact", "audience", "voice",
+            "load `unslop`", "handoff states the artifact, audience, voice",
         ))
-        policy_text = " ".join(line for line in lowered_agent.splitlines() if "writing-policy" in line)
-        if not re.search(r"cannot be resolved", policy_text):
-            errors.append(f"{name} writing-policy fallback missing unresolved-skill clause")
+        policy_text = " ".join(line for line in lowered_agent.splitlines() if "load `unslop`" in line)
+        if not re.search(r"cannot be loaded", policy_text):
+            errors.append(f"{name} unslop fallback missing unresolved-skill clause")
         if not re.search(r"preserv\w*.{0,60}(?:supplied )?facts", policy_text) or "uncertainty" not in policy_text:
-            errors.append(f"{name} writing-policy fallback must preserve supplied facts and uncertainty")
+            errors.append(f"{name} unslop fallback must preserve supplied facts and uncertainty")
         if not re.search(r"(?:do not|don't|forbids?).{0,40}invent", policy_text):
-            errors.append(f"{name} writing-policy fallback must forbid invented specifics")
+            errors.append(f"{name} unslop fallback must forbid invented specifics")
         if "what makes this read as machine-written" in lowered_agent:
             errors.append(f"{name} copied the full finish gate into the agent definition")
+        if text.count(anchor_sentence) != 1:
+            errors.append(f"{name} must point at the appended Engineering Judgment exactly once")
+        if "## engineering judgment" in lowered_agent or "active cursor rules" in lowered_agent or "user rules" in lowered_agent:
+            errors.append(f"{name} embeds or inherits Engineering Judgment instead of receiving it at install")
+        if "do not launch, ask for, or delegate to other subagents" not in lowered_agent:
+            errors.append(f"{name} is not terminal")
+        if name != "forager":
+            require_terms(errors, f"{name} read-only contract", lowered_agent, (
+                "`readonly: true`", "builds, tests", ("name the exact command", "name the command", "for the caller to run"),
+            ))
     if not re.search(r"fresh (?:named )?(?:subagent|child|session).{0,120}(?:failed|failure)", f"{routing}\n{failure}", re.DOTALL):
         errors.append("failed child recovery does not require a fresh child")
     require_terms(errors, "default-rule integration gates", routing, (
@@ -642,8 +670,30 @@ def validate(rule, skill, agents, docs):
     if "isolated" in description or "isolation" in description:
         errors.append("forager role identity incorrectly depends on isolation")
     require_terms(errors, "forager execution guidance", agents["forager"].casefold(), (
-        ("isolated copy when needed", "isolated working copy when needed", "worktree when needed"),
-        "do not delegate implementation", "no recursive delegation",
+        "do not delegate implementation", "do not launch, ask for, or delegate to other subagents",
+        "commit only when the assignment explicitly authorizes it", "exact commit sha",
+        "never reset or clean the whole tree", "reinspect it at coherent work milestones, committed or not,",
+    ))
+    destination_checkpoint = section(agents["forager"], "Destination Checkpoints")
+    require_terms(errors, "forager destination checkpoint drift handling", destination_checkpoint, (
+        "relevant, overlapping, uncertain", "stop and preserve the authorized state",
+        "with commit authority, preserve a coherent commit and return the verified commit sha",
+        "without commit authority, or before any commit exists", "changed and untracked files attributable",
+        "claim no commit",
+    ))
+    if "committed milestones" in destination_checkpoint or "your source pin" in destination_checkpoint:
+        errors.append("forager destination checkpoints still assume commit authority")
+    require_terms(errors, "default-rule parent contract", lowered_rule, (
+        "settle integration authority", "grants no git authority", ("report the blocker", "is a blocker"),
+        "native isolation", "confirm", "fresh child", "explicit operator instruction",
+        "does not own causal diagnosis", "paired correctness", "adversarial posture",
+        "copy such a requirement verbatim into every affected handoff",
+        "validated statically", "does not document that every child receives",
+    ))
+    require_terms(errors, "delegation skill handoff", lowered_skill, (
+        "governing workspace root", "binding decisions", "destination identity", "source commit sha",
+        "required skills, named exactly", "reviewer packets", "continue an existing child session only when",
+        "does not validate those documented capabilities",
     ))
 
     direct_first = re.compile(r"(?:handle|work|implement).{0,50}(?:directly|itself).{0,40}(?:first|by default)|subagents?.{0,30}(?:optional|only when useful)", re.DOTALL)
@@ -1011,7 +1061,7 @@ CURSOR_CONFIG_DIR="${td3}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/references/examples.md" ]] && pass "3g: examples.md" || fail "3h: examples.md not found"
 [[ ! -e "${td3}/skills/ivan-writing" ]] && pass "3c2: ivan-writing absent from Cursor skills" || fail "3d2: ivan-writing leaked into Cursor skills"
 [[ ! -e "${AGENTS_SKILLS_DIR}/stop-design-slop" ]] && pass "3y0: stop-design-slop absent from agents dir" || fail "3z0: stop-design-slop installed into agents dir"
-for hive_bundled in humanizer stop-design-slop stop-slop writing-for-humans writing-policy; do
+for hive_bundled in ${HIVE_BUNDLED_NAMES}; do
   mkdir -p "${AGENTS_SKILLS_DIR}/${hive_bundled}"
   printf 'stale agents %s\n' "${hive_bundled}" > "${AGENTS_SKILLS_DIR}/${hive_bundled}/SKILL.md"
 done
@@ -1022,8 +1072,9 @@ CURSOR_CONFIG_DIR="${td3}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}"
 [[ -f "${td3}/skills/stop-slop/references/examples.md" && -f "${td3}/skills/stop-slop/references/phrases.md" && -f "${td3}/skills/stop-slop/references/structures.md" ]] && pass "3i3: stop-slop references installed" || fail "3j3: stop-slop references missing"
 [[ -f "${td3}/skills/humanizer/SKILL.md" && -f "${td3}/skills/humanizer/references/patterns.md" ]] && pass "3k2: humanizer and patterns installed into Cursor skills" || fail "3l2: humanizer Cursor copy incomplete"
 [[ -f "${td3}/skills/writing-for-humans/SKILL.md" && -f "${td3}/skills/writing-for-humans/references/sources.md" && -f "${td3}/skills/writing-for-humans/references/examples.md" ]] && pass "3ae: writing-for-humans Cursor copy includes references" || fail "3af: writing-for-humans Cursor copy incomplete"
-[[ -f "${td3}/skills/writing-policy/SKILL.md" ]] && pass "3ag2: writing-policy installed into Cursor skills" || fail "3ah2: writing-policy missing from Cursor skills"
-for hive_bundled in humanizer stop-design-slop stop-slop writing-for-humans writing-policy; do
+[[ -f "${td3}/skills/unslop/SKILL.md" && -f "${td3}/skills/writing-for-agents/SKILL.md" ]] && pass "3ag2: unslop and writing-for-agents installed into Cursor skills" || fail "3ah2: unslop or writing-for-agents missing from Cursor skills"
+[[ ! -e "${td3}/skills/${HIVE_RETIRED_NAME}" ]] && pass "3ai2: retired ${HIVE_RETIRED_NAME} is not installed" || fail "3aj2: retired ${HIVE_RETIRED_NAME} was installed"
+for hive_bundled in ${HIVE_BUNDLED_NAMES}; do
   if grep -Fqx "stale agents ${hive_bundled}" "${AGENTS_SKILLS_DIR}/${hive_bundled}/SKILL.md" \
     && grep -Fqx "decision needed: conflict: ${AGENTS_SKILLS_DIR}/${hive_bundled} is outside the managed install path ${td3}/skills/${hive_bundled}; left in place" "${td3}/install-hive-writing.log" \
     && ! ls "${td3}/.backup/"*/agents-skills/"${hive_bundled}" >/dev/null 2>&1; then
@@ -1032,6 +1083,23 @@ for hive_bundled in humanizer stop-design-slop stop-slop writing-for-humans writ
     fail "3hw: ${hive_bundled} agents-dir copy was removed, backed up, or not reported"
   fi
 done
+retired_td3="${TMPDIR}/test3-retired"; mkdir -p "${retired_td3}/skills/${HIVE_RETIRED_NAME}"
+mkdir -p "${AGENTS_SKILLS_DIR}/${HIVE_RETIRED_NAME}"
+printf 'keep agents\n' > "${AGENTS_SKILLS_DIR}/${HIVE_RETIRED_NAME}/SKILL.md"
+printf 'keep cursor\n' > "${retired_td3}/skills/${HIVE_RETIRED_NAME}/SKILL.md"
+retired3_status=0
+CURSOR_CONFIG_DIR="${retired_td3}" bash "${CURSOR_HELPER}" install 2>"${retired_td3}/err" >/dev/null || retired3_status=$?
+if [[ "${retired3_status}" -eq 1 ]] \
+  && grep -Fqx 'keep agents' "${AGENTS_SKILLS_DIR}/${HIVE_RETIRED_NAME}/SKILL.md" \
+  && grep -Fqx 'keep cursor' "${retired_td3}/skills/${HIVE_RETIRED_NAME}/SKILL.md" \
+  && grep -Fqx "decision needed: unversioned: ${AGENTS_SKILLS_DIR}/${HIVE_RETIRED_NAME} is not packaged by this install; left in place" "${retired_td3}/err" \
+  && grep -Fqx "decision needed: unversioned: ${retired_td3}/skills/${HIVE_RETIRED_NAME} is not packaged by this install; left in place" "${retired_td3}/err" \
+  && ! ls "${retired_td3}/.backup/"*/skills/"${HIVE_RETIRED_NAME}" >/dev/null 2>&1; then
+  pass "3hr: retired ${HIVE_RETIRED_NAME} is preserved and reported as unversioned in both locations"
+else
+  fail "3hr: retired ${HIVE_RETIRED_NAME} was removed, backed up, or not reported: $(cat "${retired_td3}/err")"
+fi
+rm -rf "${AGENTS_SKILLS_DIR:?}/${HIVE_RETIRED_NAME}"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/SKILL.md" ]] && pass "3o: frontend-slides installed" || fail "3p: frontend-slides canonical skill not installed"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/viewport-base.css" ]] && pass "3q: frontend-slides viewport-base.css" || fail "3r: frontend-slides extra file not copied"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/scripts/build-standalone.py" ]] && pass "3ao: frontend-slides build-standalone.py" || fail "3ap: frontend-slides build-standalone.py not copied"
@@ -1207,10 +1275,10 @@ cmp -s "${REPO_FIXTURE}/profiles/base/agent_hive.json" "${td12}/agent_hive.json"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/SKILL.md" ]] && pass "12g: shared frontend-slides installed" || fail "12h: shared frontend-slides missing"
 [[ ! -e "${td12}/skills/frontend-slides" ]] && pass "12g2: frontend-slides absent from OpenCode skills" || fail "12h2: frontend-slides leaked into OpenCode skills"
 [[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/SKILL.md" ]] && pass "12i: shared drawio-skill installed" || fail "12j: shared drawio-skill missing"
-for hive_bundled in humanizer stop-design-slop stop-slop writing-for-humans writing-policy; do
+for hive_bundled in ${OPENCODE_HIVE_BUNDLED_NAMES}; do
   [[ ! -e "${AGENTS_SKILLS_DIR}/${hive_bundled}" && ! -e "${td12}/skills/${hive_bundled}" ]] && pass "12m0: ${hive_bundled} not created by OpenCode install" || fail "12n0: ${hive_bundled} was created by OpenCode install"
 done
-for hive_bundled in humanizer stop-design-slop stop-slop writing-for-humans writing-policy; do
+for hive_bundled in ${OPENCODE_HIVE_BUNDLED_NAMES}; do
   mkdir -p "${AGENTS_SKILLS_DIR}/${hive_bundled}" "${td12}/skills/${hive_bundled}"
   printf 'stale agents %s\n' "${hive_bundled}" > "${AGENTS_SKILLS_DIR}/${hive_bundled}/SKILL.md"
   printf 'stale opencode %s\n' "${hive_bundled}" > "${td12}/skills/${hive_bundled}/SKILL.md"
@@ -1218,7 +1286,7 @@ done
 hive12_status=0
 OPENCODE_CONFIG_DIR="${td12}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTALL_HELPER}" --apply 2>"${td12}/hive-writing.err" || hive12_status=$?
 [[ "${hive12_status}" -eq 1 ]] && pass "12m: reinstall exits 1 after leaving Hive-bundled leftovers" || fail "12n: reinstall with Hive-bundled leftovers exited ${hive12_status}: $(cat "${td12}/hive-writing.err")"
-for hive_bundled in humanizer stop-design-slop stop-slop writing-for-humans writing-policy; do
+for hive_bundled in ${OPENCODE_HIVE_BUNDLED_NAMES}; do
   if grep -Fqx "stale agents ${hive_bundled}" "${AGENTS_SKILLS_DIR}/${hive_bundled}/SKILL.md" \
     && grep -Fqx "stale opencode ${hive_bundled}" "${td12}/skills/${hive_bundled}/SKILL.md" \
     && grep -Fqx "decision needed: conflict: ${AGENTS_SKILLS_DIR}/${hive_bundled} is outside the managed install path Hive materialization; left in place" "${td12}/hive-writing.err" \
@@ -1540,9 +1608,9 @@ build_fixture
 # ---------------------------------------------------------------------------
 printf '\n=== 23. Unsupported extra subdirectory in canonical skill ===\n'
 td23="${TMPDIR}/test23"; mkdir -p "${td23}"
-mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/humanizer/scripts"
+mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/stop-design-slop/unexpected"
 ! CURSOR_CONFIG_DIR="${td23}" bash "${CURSOR_HELPER}" install --dry-run 2>"${td23}/err" || fail "23a: should have failed"
-grep -q -i 'scripts\|unsupported' "${td23}/err" && pass "23b: extra subdir detected" || fail "23c: wrong error: $(cat ${td23}/err)"
+grep -q -i 'unexpected\|unsupported' "${td23}/err" && pass "23b: extra subdir detected" || fail "23c: wrong error: $(cat ${td23}/err)"
 cursor_target_unmodified "${td23}" && pass "23d: no managed paths created" || fail "23e: target mutated"
 build_fixture
 
@@ -1571,22 +1639,22 @@ td25="${TMPDIR}/test25"; mkdir -p "${td25}"
 cursor_target_unmodified "${td25}" && pass "25d: no managed paths created" || fail "25e: target mutated"
 
 # ---------------------------------------------------------------------------
-# 26. Nested unsupported file under references/ in canonical stop-slop
+# 26. Nested unsupported file under references/ in stop-design-slop
 # ---------------------------------------------------------------------------
 printf '\n=== 26. Nested unsupported file under references/ (canonical, Cursor) ===\n'
 td26="${TMPDIR}/test26"; mkdir -p "${td26}"
-touch "${REPO_FIXTURE}/.apm/cursor/skills/stop-slop/references/extra.txt"
+touch "${REPO_FIXTURE}/.apm/cursor/skills/stop-design-slop/references/extra.txt"
 ! CURSOR_CONFIG_DIR="${td26}" bash "${CURSOR_HELPER}" install --dry-run 2>"${td26}/err" || fail "26a: should have failed"
 grep -q 'extra\|unsupported' "${td26}/err" && pass "26b: nested extra file rejected" || fail "26c: wrong error: $(cat ${td26}/err)"
 cursor_target_unmodified "${td26}" && pass "26d: no managed paths created" || fail "26e: target mutated"
 build_fixture
 
 # ---------------------------------------------------------------------------
-# 27. Nested subdirectory under references/ in canonical humanizer
+# 27. Nested subdirectory under references/ in stop-design-slop
 # ---------------------------------------------------------------------------
 printf '\n=== 27. Nested subdirectory under references/ (canonical, Cursor) ===\n'
 td27="${TMPDIR}/test27"; mkdir -p "${td27}"
-mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/humanizer/references/subdir"
+mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/stop-design-slop/references/subdir"
 ! CURSOR_CONFIG_DIR="${td27}" bash "${CURSOR_HELPER}" install --dry-run 2>"${td27}/err" || fail "27a: should have failed"
 grep -q 'subdir\|unsupported' "${td27}/err" && pass "27b: nested subdir rejected" || fail "27c: wrong error: $(cat ${td27}/err)"
 cursor_target_unmodified "${td27}" && pass "27d: no managed paths created" || fail "27e: target mutated"
@@ -2315,80 +2383,23 @@ for name in list(agents) + list(custom):
 if configured_inherited_skills("forager-documents")[:2] != ["verification", router]:
     errors.append("forager-documents configured inherited skills must start with verification then writing-policy")
 
-skill_path = root / ".apm/cursor/skills/writing-policy/SKILL.md"
+# The Cursor bundle routes prose through unslop, which is imported whole; keep only the routing contract the Rules and agents rely on.
+skill_path = root / ".apm/cursor/skills/unslop/SKILL.md"
 if not skill_path.is_file():
-    errors.append("missing .apm/cursor/skills/writing-policy/SKILL.md")
+    errors.append("missing .apm/cursor/skills/unslop/SKILL.md")
 else:
     skill_text = skill_path.read_text(encoding="utf-8")
-    if not skill_text.startswith("---\n"):
-        errors.append("writing-policy missing YAML frontmatter")
-    else:
-        closing = skill_text.find("\n---\n", 4)
-        if closing < 0:
-            errors.append("writing-policy frontmatter is not closed")
-        else:
-            front = skill_text[4:closing]
-            body = skill_text[closing + 5 :]
-            if "name: writing-policy" not in front:
-                errors.append("writing-policy frontmatter name is wrong")
-            desc = ""
-            for line in front.splitlines():
-                if line.startswith("description:"):
-                    desc = line.split(":", 1)[1].strip()
-                    break
-            if not desc.startswith("Use when"):
-                errors.append("writing-policy description must begin with Use when")
-            lowered_desc = desc.casefold()
-            if "human-facing prose" not in lowered_desc or "delegat" not in lowered_desc:
-                errors.append("writing-policy description must trigger for human-facing and delegated prose")
-            words = len(body.split())
-            if words > 420:
-                errors.append(f"writing-policy instructional body is {words} words, expected at most 420")
-            lowered_body = body.casefold()
-            if "ivan-writing" in lowered_body:
-                errors.append("portable writing-policy must not name ivan-writing")
-            for phrase in (
-                "parent-loaded skills do not imply child loading",
-                "artifact",
-                "audience",
-                "voice",
-            ):
-                if phrase not in lowered_body:
-                    errors.append(f"writing-policy body missing {phrase!r}")
-            route_lines = [
-                line.strip().lstrip("- ").strip()
-                for line in lowered_body.splitlines()
-                if line.strip().startswith("-")
-            ]
-
-            def route_matching(*needles):
-                return [line for line in route_lines if all(needle in line for needle in needles)]
-
-            cadence = route_matching("cadence", "structure", "rewrite")
-            if not cadence or "writing-for-humans" not in cadence[0] or "stop-slop" not in cadence[0]:
-                errors.append("cadence/structure rewrite must load writing-for-humans plus stop-slop")
-            vocab = route_matching("vocabulary", "register")
-            if not vocab:
-                errors.append("writing-policy missing vocabulary/register rewrite route")
-            else:
-                missing_vocab = [
-                    term for term in (
-                        "attribution", "formatting", "chat-artifact", "writing-for-humans", "humanizer",
-                    ) if term not in vocab[0]
-                ]
-                if missing_vocab:
-                    errors.append(f"vocabulary/register rewrite must load writing-for-humans plus humanizer; missing {missing_vocab}")
-            broad = [line for line in route_lines if "slop-heavy" in line]
-            if not broad or "writing-for-humans" not in broad[0] or "both" not in broad[0]:
-                errors.append("broadly slop-heavy rewrite must load writing-for-humans plus both overlays")
-            voice_routes = [line for line in route_lines if "personal voice" in line]
-            if not voice_routes:
-                errors.append("writing-policy missing personal voice overlay route")
-            else:
-                voice = " ".join(voice_routes)
-                for required in ("applicable instructions", "operator", "availability alone does not select"):
-                    if required not in voice:
-                        errors.append(f"writing-policy personal-voice route missing {required!r}")
+    lowered_skill = skill_text.casefold()
+    if "name: unslop" not in skill_text.split("\n---\n", 2)[0]:
+        errors.append("unslop frontmatter name is wrong")
+    for required in ("parent-loaded skills do not imply child loading", "artifact", "audience", "writing-for-humans", "writing-for-agents", "humanizer", "stop-slop", "stop-design-slop"):
+        if required not in lowered_skill:
+            errors.append(f"unslop is missing {required!r}")
+    if "ivan-writing" in lowered_skill.replace("a personal voice overlay", ""):
+        errors.append("portable unslop must not name ivan-writing")
+for retired_name in ("writing-policy",):
+    if (root / ".apm/cursor/skills" / retired_name).exists():
+        errors.append(f"retired {retired_name} is still in the Cursor skill set")
 
 if list((root / "profiles/optional").glob("agent_hive.*.json")):
     errors.append("optional bundles must not overlay Agent Hive config")
@@ -2500,7 +2511,7 @@ printf '\n=== 67. Cursor Engineering Judgment portability contracts ===\n'
 vendor_rel='vendor/oc-arkive/engineering-judgment/engineering-judgment.md'
 provenance_rel='vendor/oc-arkive/engineering-judgment/provenance.json'
 sync_rel='scripts/sync-engineering-judgment.py'
-anchor='Apply Engineering Judgment from active Cursor Rules within this role'"'"'s current scope and finding bar.'
+anchor='Apply the Engineering Judgment section appended to this prompt within this role'"'"'s current scope and finding bar.'
 
 if [[ -f "${BASELINE_PWD}/${vendor_rel}" && ! -L "${BASELINE_PWD}/${vendor_rel}" && -f "${BASELINE_PWD}/${provenance_rel}" && ! -L "${BASELINE_PWD}/${provenance_rel}" ]]; then
   pass "67a: vendored Engineering Judgment and provenance are regular files"
@@ -2923,24 +2934,69 @@ from pathlib import Path
 
 root = Path(sys.argv[1])
 anchor = sys.argv[2]
-selected = {'forager', 'plan-reviewer', 'code-reviewer', 'simplicity-reviewer', 'approach-advisor', 'vulnerability-reviewer'}
-excluded = {'scout'}
+selected = {'forager', 'scout', 'plan-reviewer', 'code-reviewer', 'simplicity-reviewer', 'approach-advisor', 'vulnerability-reviewer'}
 errors = []
 for name in selected:
     text = (root / f'.apm/cursor/agents/{name}.md').read_text(encoding='utf-8')
     if text.count(anchor) != 1:
         errors.append(f'{name} anchor count is {text.count(anchor)}')
-for name in excluded:
-    text = (root / f'.apm/cursor/agents/{name}.md').read_text(encoding='utf-8')
-    if 'Engineering Judgment' in text:
-        errors.append(f'{name} must remain unchanged')
+    if '## Engineering Judgment' in text:
+        errors.append(f'{name} embeds the snapshot instead of receiving it at install')
 if errors:
     raise SystemExit('\n'.join(errors))
 PY
 then
-  pass "67p: selected Cursor roles have one scoped anchor and excluded roles remain unchanged"
+  pass "67p: every Cursor role points once at the Engineering Judgment appended at install"
 else
   fail "67p: Cursor role anchor contract is not satisfied"
+fi
+
+# 67p2. Installed agent prompts: source frontmatter first, then the pinned snapshot exactly once.
+td67t="${TMPDIR}/cursor67t"
+mkdir -p "${td67t}"
+sandbox_agents_skills
+dry67t_out="${TMPDIR}/dry67t.out"
+env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td67t}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install --dry-run >"${dry67t_out}" 2>"${TMPDIR}/dry67t.err" || true
+env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td67t}" "${BASELINE_PWD}/scripts/cursor-assets.sh" install >"${TMPDIR}/install67t.out" 2>"${TMPDIR}/install67t.err" || true
+if python3 - "${BASELINE_PWD}" "${td67t}" "${dry67t_out}" <<'PY'
+import subprocess
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+target = Path(sys.argv[2])
+dry_run = Path(sys.argv[3]).read_text(encoding='utf-8')
+judgment = (root / 'vendor/oc-arkive/engineering-judgment/engineering-judgment.md').read_bytes()
+errors = []
+names = sorted(path.stem for path in (root / '.apm/cursor/agents').glob('*.md'))
+if len(names) != 7:
+    errors.append(f'expected seven agents, found {names}')
+for name in names:
+    source = (root / f'.apm/cursor/agents/{name}.md').read_bytes()
+    installed = (target / f'agents/{name}.md').read_bytes()
+    expected = source + b'\n---\n\n' + judgment
+    if installed != expected:
+        errors.append(f'installed {name} is not source + separator + pinned snapshot')
+    if not installed.startswith(b'---\nname: ' + name.encode() + b'\n'):
+        errors.append(f'installed {name} lost its frontmatter')
+    if installed.count(b'## Engineering Judgment') != 1:
+        errors.append(f'installed {name} must carry Engineering Judgment exactly once')
+    printed = subprocess.run([str(root / 'scripts/cursor-assets.sh'), 'print-agent', name], capture_output=True, check=False)
+    if printed.returncode != 0 or printed.stdout != installed:
+        errors.append(f'print-agent {name} does not match the installed prompt')
+    line = f'Would copy agents/{name}.md with pinned Engineering Judgment appended -> {target}/agents/{name}.md'
+    if line not in dry_run:
+        errors.append(f'dry-run does not describe the composed {name} prompt')
+unknown = subprocess.run([str(root / 'scripts/cursor-assets.sh'), 'print-agent', 'not-an-agent'], capture_output=True, check=False)
+if unknown.returncode == 0:
+    errors.append('print-agent accepted an unknown agent name')
+if errors:
+    raise SystemExit('\n'.join(errors))
+PY
+then
+  pass "67p2: installed agent prompts, print-agent, and the dry-run plan agree on source + pinned Engineering Judgment"
+else
+  fail "67p2: installed agent prompts do not match the composed source, print-agent, or dry-run plan"
 fi
 
 if python3 - "${BASELINE_PWD}" <<'PY'
@@ -3017,9 +3073,10 @@ for relative in docs:
     text = (root / relative).read_text(encoding='utf-8')
     lowered = text.casefold()
     required = (
-        ('provenance-pinned to oc-arkive 4.0.0', 'Engineering Judgment provenance pin'),
+        ('provenance-pinned to oc-arkive 5.0.0', 'Engineering Judgment provenance pin'),
         ('opencode receives engineering judgment from the installed plugin', 'OpenCode delivery'),
         ('cursor cannot load the plugin prompt directly', 'Cursor plugin limitation'),
+        ('each installed agent file carries', 'agent composition'),
     )
     for phrase, label in required:
         if phrase.casefold() not in lowered:
@@ -3033,8 +3090,8 @@ for relative in docs:
 vendor = root / 'vendor/oc-arkive/engineering-judgment/engineering-judgment.md'
 provenance = json.loads((vendor.parent / 'provenance.json').read_text(encoding='utf-8'))
 expected_release = {
-    'commit': 'aa999dd89b3ab1073a2cf9dd83a802051e923f1e',
-    'packageVersion': '4.0.0',
+    'commit': 'e1d968c5e53cdb03c95849b32b7bc9cbb7de47fc',
+    'packageVersion': '5.0.0',
 }
 for field, expected in expected_release.items():
     if provenance.get(field) != expected:
@@ -3093,7 +3150,7 @@ fi
 td68b="${TMPDIR}/opencode68b"
 mkdir -p "${td68b}"
 sandbox_agents_skills
-for hive_bundled in humanizer stop-design-slop stop-slop writing-for-humans writing-policy; do
+for hive_bundled in ${OPENCODE_HIVE_BUNDLED_NAMES}; do
   mkdir -p "${AGENTS_SKILLS_DIR}/${hive_bundled}" "${td68b}/skills/${hive_bundled}"
   printf 'stale agents %s\n' "${hive_bundled}" > "${AGENTS_SKILLS_DIR}/${hive_bundled}/SKILL.md"
   printf 'stale opencode %s\n' "${hive_bundled}" > "${td68b}/skills/${hive_bundled}/SKILL.md"
@@ -3146,6 +3203,7 @@ fi
 
 if python3 - "${BASELINE_PWD}" <<'PY'
 import hashlib
+import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -3154,55 +3212,50 @@ root = Path(sys.argv[1])
 provenance_path = root / 'vendor/oc-arkive/cursor-skills/provenance.json'
 if provenance_path.is_symlink() or not provenance_path.is_file():
     raise SystemExit('cursor-skills provenance.json must be a regular file')
+sys.dont_write_bytecode = True
+spec = importlib.util.spec_from_file_location('cursor_hive_skills_sync', root / 'scripts/sync-cursor-hive-skills.py')
+sync = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(sync)
 provenance = json.loads(provenance_path.read_text(encoding='utf-8'))
-expected_names = (
-    'brainstorming',
-    'systematic-debugging',
-    'test-driven-development',
-    'verification',
-)
-if provenance.get('commit') != 'caf2c7ab6e269495f8e2bed9eac7e0da7bb25d35':
-    raise SystemExit(f'unexpected Hive skill pin: {provenance.get("commit")!r}')
-skills = provenance.get('skills')
-if not isinstance(skills, dict) or set(skills) != set(expected_names):
-    raise SystemExit(f'provenance skills must be exactly {list(expected_names)}')
 errors = []
-for name in expected_names:
-    path = root / '.apm/cursor/skills' / name / 'SKILL.md'
-    if path.is_symlink() or not path.is_file():
-        errors.append(f'{name} SKILL.md must be a regular file')
+if provenance.get('schemaVersion') != 2:
+    errors.append('provenance schemaVersion must be 2')
+if provenance.get('commit') != 'e1d968c5e53cdb03c95849b32b7bc9cbb7de47fc' or provenance.get('packageVersion') != '5.0.0':
+    errors.append(f'unexpected Hive skill pin: {provenance.get("commit")!r} {provenance.get("packageVersion")!r}')
+engineering = json.loads((root / 'vendor/oc-arkive/engineering-judgment/provenance.json').read_text(encoding='utf-8'))
+if engineering.get('commit') != provenance.get('commit') or engineering.get('packageVersion') != provenance.get('packageVersion'):
+    errors.append('skills and Engineering Judgment must share one source pin')
+skills = provenance.get('skills')
+if not isinstance(skills, dict) or set(skills) != set(sync.IMPORTED_SKILLS):
+    errors.append('provenance skills must be exactly the sync script IMPORTED_SKILLS')
+for name in sorted(set(skills or {}) & set(sync.IMPORTED_SKILLS)):
+    directory = root / '.apm/cursor/skills' / name
+    listed = skills[name]['files']
+    actual = sorted(path.relative_to(directory).as_posix() for path in directory.rglob('*') if path.is_file())
+    if sorted(listed) != actual:
+        errors.append(f'{name} tree differs from provenance: {sorted(set(listed) ^ set(actual))}')
         continue
-    content = path.read_bytes()
-    actual = hashlib.sha256(content).hexdigest()
-    expected = skills[name].get('installedSha256')
-    if actual != expected:
-        errors.append(f'{name} installedSha256 is {actual}, expected {expected}')
-    text = content.decode('utf-8')
-    if 'skill(' in text:
-        errors.append(f'{name} still contains skill(')
-    if 'writing-plans' in text:
-        errors.append(f'{name} still contains writing-plans')
-    if name == 'systematic-debugging':
-        for forbidden in (
-            'available in this directory',
-            'in this directory',
-            'root-cause-tracing.md',
-            'defense-in-depth.md',
-            'condition-based-waiting.md',
-        ):
-            if forbidden in text:
-                errors.append(f'{name} still contains {forbidden!r}')
-        if 'root-cause-finder' in text:
-            errors.append(f'{name} still names root-cause-finder')
-        if 'first unintended' not in text and 'hidden write' not in text:
-            errors.append(f'{name} must inline the downstream-symptom or hidden-write protocol')
+    for relative, entry in listed.items():
+        if hashlib.sha256((directory / relative).read_bytes()).hexdigest() != entry['installedSha256']:
+            errors.append(f'{name}/{relative} installedSha256 does not match')
+    text = (directory / 'SKILL.md').read_text(encoding='utf-8')
+    if 'hive-host' in text or 'skill({' in text:
+        errors.append(f'{name} SKILL.md still contains host markers or a native skill call')
+for retired in sync.RETIRED_SKILLS:
+    if (root / '.apm/cursor/skills' / retired).exists():
+        errors.append(f'retired skill {retired} is still present')
+for required in ('LICENSE.pstack',):
+    if not (root / '.apm/cursor/skills/verification' / required).is_file():
+        errors.append(f'verification is missing {required}')
+if not (root / '.apm/cursor/skills/humanizer/check.py').is_file():
+    errors.append('humanizer is missing its check.py script')
 if errors:
     raise SystemExit('\n'.join(errors))
 PY
 then
-  pass "68e: vendored Cursor Hive skills match provenance hashes and have no skill() or companion-file leftovers"
+  pass "68e: vendored Cursor Hive skills are full trees pinned by per-file hashes, share the Engineering Judgment pin, and carry licenses and scripts"
 else
-  fail "68e: vendored Cursor Hive skills do not match provenance or still contain OpenCode skill calls"
+  fail "68e: vendored Cursor Hive skills do not match provenance, share one pin, or lost licenses and scripts"
 fi
 
 if "${BASELINE_PWD}/scripts/cursor-assets.sh" validate >"${TMPDIR}/validate68f.out" 2>"${TMPDIR}/validate68f.err"; then
@@ -3217,148 +3270,185 @@ else
   fail "68g: fixture without cursor-skills provenance failed validation or unexpectedly shipped provenance"
 fi
 
+# Builds a committed upstream skill source from the sync script's own import
+# list and rewrite table, with host sections and attribution files. A mutation
+# argument breaks one rule the sync must enforce.
+cat > "${TMPDIR}/make-upstream68.py" <<'PY'
+import importlib.util
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+script, destination, mutation = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3]
+sys.dont_write_bytecode = True
+spec = importlib.util.spec_from_file_location('cursor_hive_skills_sync', script)
+sync = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(sync)
+skills = destination / 'packages/opencode-hive/skills'
+for name in sync.IMPORTED_SKILLS:
+    files = {
+        'SKILL.md': f'---\nname: {name}\ndescription: Use when testing fixture {name}.\n---\n\n# {name}\n\nShared text for {name}.\n\n',
+    }
+    for relative, old, _new in sync.CURSOR_REWRITES.get(name, ()):
+        files[relative] = files.get(relative, '') + old + '\n\n'
+    files['references/notes.md'] = f'# Notes for {name}\n'
+    files['UPSTREAM.md'] = 'Attribution mentions hive_status and skill({ name: "x" }) from the source.\n'
+    files['LICENSE'] = f'MIT fixture license for {name}\n'
+    if name == 'humanizer':
+        files['check.py'] = '#!/usr/bin/env python3\nprint("ok")\n'
+    if name == 'brainstorming':
+        files['SKILL.md'] += (
+            'Shared before.\n'
+            '<!-- hive-host opencode-v1 -->\n'
+            'V1 ONLY TEXT\n'
+            '<!-- /hive-host -->\n'
+            '<!-- hive-host opencode-v2 -->\n'
+            'V2 ONLY TEXT\n'
+            '<!-- /hive-host -->\n'
+            'Shared after.\n'
+        )
+    if mutation == 'unknown-host' and name == 'how':
+        files['SKILL.md'] += '<!-- hive-host cursor -->\nx\n<!-- /hive-host -->\n'
+    if mutation == 'unclosed' and name == 'how':
+        files['SKILL.md'] += '<!-- hive-host opencode-v1 -->\nx\n'
+    if mutation == 'stray-close' and name == 'how':
+        files['SKILL.md'] += '<!-- /hive-host -->\n'
+    if mutation == 'inline-marker' and name == 'how':
+        files['SKILL.md'] += 'text <!-- hive-host opencode-v1 --> inline\n'
+    if mutation == 'residue' and name == 'how':
+        files['SKILL.md'] += 'Load it with skill({ name: "verification" }).\n'
+    if mutation == 'drift' and name == 'grilling':
+        relative, old, _new = sync.CURSOR_REWRITES['grilling'][0]
+        files[relative] = files[relative].replace(old, 'changed upstream wording')
+    for relative, content in files.items():
+        path = skills / name / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding='utf-8')
+(destination / 'packages/opencode-hive/package.json').write_text(
+    '{\n  "name": "oc-arkive",\n  "version": "9.8.7",\n  "repository": {"type": "git", "url": "https://example.test/agent-hive.git"}\n}\n',
+    encoding='utf-8',
+)
+environment = {key: value for key, value in os.environ.items() if not key.startswith('GIT_')}
+environment.update(GIT_AUTHOR_NAME='Fixture', GIT_AUTHOR_EMAIL='fixture@example.test', GIT_COMMITTER_NAME='Fixture', GIT_COMMITTER_EMAIL='fixture@example.test')
+for command in (['init', '-q'], ['add', '.'], ['commit', '-qm', 'fixture']):
+    subprocess.run(['git', '-C', str(destination), *command], check=True, env=environment)
+PY
+cat > "${TMPDIR}/tree-digest68.py" <<'PY'
+import hashlib
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+digest = hashlib.sha256()
+for path in sorted(root.rglob('*')):
+    if path.is_file():
+        digest.update(path.relative_to(root).as_posix().encode())
+        digest.update(path.read_bytes())
+print(digest.hexdigest())
+PY
+sync68_digest() { python3 "${TMPDIR}/tree-digest68.py" "${REPO_FIXTURE}/.apm/cursor/skills"; python3 "${TMPDIR}/tree-digest68.py" "${REPO_FIXTURE}/vendor/oc-arkive/cursor-skills"; }
+
 upstream68="${TMPDIR}/upstream68"
-mkdir -p "${upstream68}/packages/opencode-hive/skills"
-for skill68 in brainstorming systematic-debugging test-driven-development verification; do
-  mkdir -p "${upstream68}/packages/opencode-hive/skills/${skill68}"
-done
-cat > "${upstream68}/packages/opencode-hive/skills/brainstorming/SKILL.md" <<'SKILL'
----
-name: brainstorming
-description: Use when testing fixture Hive brainstorming.
----
-Use \`skill({ name: "writing-plans" })\` after design.
-SKILL
-cat > "${upstream68}/packages/opencode-hive/skills/systematic-debugging/SKILL.md" <<'SKILL'
----
-name: systematic-debugging
-description: Use when testing fixture Hive systematic debugging.
----
-Load \`test-driven-development\` then **skill({ name: "verification" })**.
-SKILL
-cat > "${upstream68}/packages/opencode-hive/skills/test-driven-development/SKILL.md" <<'SKILL'
----
-name: test-driven-development
-description: Use when testing fixture Hive TDD.
----
-TDD body.
-SKILL
-cat > "${upstream68}/packages/opencode-hive/skills/verification/SKILL.md" <<'SKILL'
----
-name: verification
-description: Use when testing fixture Hive verification.
----
-Verify claims.
-SKILL
-cat > "${upstream68}/packages/opencode-hive/package.json" <<'JSON'
-{
-  "name": "oc-arkive",
-  "version": "9.8.7",
-  "repository": {
-    "type": "git",
-    "url": "https://example.test/agent-hive.git",
-    "directory": "packages/opencode-hive"
-  }
-}
-JSON
-git -C "${upstream68}" init -q
-git -C "${upstream68}" add .
-git -C "${upstream68}" -c user.name=Fixture -c user.email=fixture@example.test commit -qm fixture
+mkdir -p "${upstream68}"
+python3 "${TMPDIR}/make-upstream68.py" "${REPO_FIXTURE}/${hive_skill_sync_rel}" "${upstream68}" none
 commit68="$(git -C "${upstream68}" rev-parse HEAD)"
 printf '%s\n' 'dirty checkout must not be read' > "${upstream68}/packages/opencode-hive/skills/brainstorming/SKILL.md"
+mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/writing-policy" "${REPO_FIXTURE}/.apm/cursor/skills/humanizer/stale-dir"
+printf 'retired\n' > "${REPO_FIXTURE}/.apm/cursor/skills/writing-policy/SKILL.md"
+printf 'stale\n' > "${REPO_FIXTURE}/.apm/cursor/skills/humanizer/stale-dir/old.txt"
+local68_before="$(cat "${REPO_FIXTURE}/.apm/cursor/skills/subagent-delegation/SKILL.md")"
 
 if [[ -x "${REPO_FIXTURE}/${hive_skill_sync_rel}" ]]; then
   if "${REPO_FIXTURE}/${hive_skill_sync_rel}" --source-repo "${upstream68}" --ref HEAD >"${TMPDIR}/sync68.out" 2>"${TMPDIR}/sync68.err"; then
-    if python3 - "${REPO_FIXTURE}" "${commit68}" <<'PY'
+    printf '%s\n' "${local68_before}" > "${TMPDIR}/local68-before.txt"
+    if python3 - "${REPO_FIXTURE}" "${commit68}" "${TMPDIR}/sync68.out" "${TMPDIR}/local68-before.txt" <<'PY'
 import hashlib
+import importlib.util
 import json
 import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
 commit = sys.argv[2]
-
-def normalize(text):
-    text = text.replace('\r\n', '\n').replace('\r', '\n')
-    if not text.endswith('\n'):
-        text += '\n'
-    return text
-
-sources = {
-    'brainstorming': normalize(
-        '---\nname: brainstorming\ndescription: Use when testing fixture Hive brainstorming.\n---\n'
-        'Use \\`skill({ name: "writing-plans" })\\` after design.\n'
-    ),
-    'systematic-debugging': normalize(
-        '---\nname: systematic-debugging\ndescription: Use when testing fixture Hive systematic debugging.\n---\n'
-        'Load \\`test-driven-development\\` then **skill({ name: "verification" })**.\n'
-    ),
-    'test-driven-development': normalize(
-        '---\nname: test-driven-development\ndescription: Use when testing fixture Hive TDD.\n---\n'
-        'TDD body.\n'
-    ),
-    'verification': normalize(
-        '---\nname: verification\ndescription: Use when testing fixture Hive verification.\n---\n'
-        'Verify claims.\n'
-    ),
-}
-installed = {
-    'brainstorming': normalize(
-        '---\nname: brainstorming\ndescription: Use when testing fixture Hive brainstorming.\n---\n'
-        'Use `the planning-prompt or implementation-brief command` after design.\n'
-    ),
-    'systematic-debugging': normalize(
-        '---\nname: systematic-debugging\ndescription: Use when testing fixture Hive systematic debugging.\n---\n'
-        'Load `test-driven-development` then **the verification skill**.\n'
-    ),
-    'test-driven-development': sources['test-driven-development'],
-    'verification': sources['verification'],
-}
-expected_skills = {}
-for name in (
-    'brainstorming',
-    'systematic-debugging',
-    'test-driven-development',
-    'verification',
-):
-    path = root / '.apm/cursor/skills' / name / 'SKILL.md'
-    expected = installed[name].encode('utf-8')
-    if path.read_bytes() != expected:
-        raise SystemExit(f'{name} installed bytes did not match transformed committed source')
-    expected_skills[name] = {
-        'sourcePath': f'packages/opencode-hive/skills/{name}/SKILL.md',
-        'sourceSha256': hashlib.sha256(sources[name].encode('utf-8')).hexdigest(),
-        'installedSha256': hashlib.sha256(expected).hexdigest(),
-    }
-mastery = (root / '.apm/cursor/skills/agents-md-mastery/SKILL.md').read_text(encoding='utf-8')
-if 'fixture Cursor skill agents-md-mastery' not in mastery:
-    raise SystemExit('sync overwrote Cursor agents-md-mastery')
+output = Path(sys.argv[3]).read_text(encoding='utf-8')
+sys.dont_write_bytecode = True
+spec = importlib.util.spec_from_file_location('cursor_hive_skills_sync', root / 'scripts/sync-cursor-hive-skills.py')
+sync = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(sync)
+skills = root / '.apm/cursor/skills'
+errors = []
 provenance = json.loads((root / 'vendor/oc-arkive/cursor-skills/provenance.json').read_text(encoding='utf-8'))
-expected_provenance = {
-    'schemaVersion': 1,
-    'upstreamRepository': 'https://example.test/agent-hive.git',
-    'commit': commit,
-    'packageVersion': '9.8.7',
-    'skills': expected_skills,
-}
-if provenance != expected_provenance:
-    raise SystemExit(f'wrong provenance: {provenance!r}')
+if (provenance['schemaVersion'], provenance['commit'], provenance['packageVersion'], provenance['upstreamRepository']) != (2, commit, '9.8.7', 'https://example.test/agent-hive.git'):
+    errors.append(f'wrong provenance header: {provenance!r}')
+if set(provenance['skills']) != set(sync.IMPORTED_SKILLS):
+    errors.append('provenance must list exactly the imported skills')
+for name in sync.IMPORTED_SKILLS:
+    directory = skills / name
+    listed = provenance['skills'][name]['files']
+    actual = sorted(path.relative_to(directory).as_posix() for path in directory.rglob('*') if path.is_file())
+    if sorted(listed) != actual:
+        errors.append(f'{name} tree {actual} differs from provenance {sorted(listed)}')
+        continue
+    for relative, entry in listed.items():
+        if hashlib.sha256((directory / relative).read_bytes()).hexdigest() != entry['installedSha256']:
+            errors.append(f'{name}/{relative} installed hash is wrong')
+    for required in ('SKILL.md', 'LICENSE', 'UPSTREAM.md', 'references/notes.md'):
+        if required not in listed:
+            errors.append(f'{name} dropped {required}')
+    for relative, old, new in sync.CURSOR_REWRITES.get(name, ()):
+        text = (directory / relative).read_text(encoding='utf-8')
+        if new not in text or (old not in new and old in text):
+            errors.append(f'{name}/{relative} rewrite was not applied exactly')
+brainstorming = (skills / 'brainstorming/SKILL.md').read_text(encoding='utf-8')
+if 'V1 ONLY TEXT' in brainstorming or 'V2 ONLY TEXT' in brainstorming or 'hive-host' in brainstorming:
+    errors.append('host sections were not dropped from brainstorming')
+if 'Shared before.\nShared after.' not in brainstorming and 'Shared before.\n\nShared after.' not in brainstorming:
+    errors.append('shared text around the dropped host sections was not kept')
+if 'dirty checkout' in brainstorming:
+    errors.append('sync read the dirty working tree instead of the committed source')
+attribution = (skills / 'humanizer/UPSTREAM.md').read_text(encoding='utf-8')
+if 'hive_status' not in attribution or 'skill({ name: "x" })' not in attribution:
+    errors.append('attribution files must keep their source wording')
+if not (skills / 'humanizer/check.py').is_file():
+    errors.append('script was not synced')
+if (skills / 'writing-policy').exists() or 'removed stale imported skill writing-policy' not in output:
+    errors.append('retired skill was not removed and reported')
+if (skills / 'humanizer/stale-dir').exists() or 'removed stale file humanizer/stale-dir/old.txt' not in output:
+    errors.append('stale file inside an imported skill was not removed and reported')
+if (skills / 'subagent-delegation/SKILL.md').read_text(encoding='utf-8') != Path(sys.argv[4]).read_text(encoding='utf-8'):
+    errors.append('a locally maintained skill was touched')
+source = json.loads(json.dumps(provenance))['skills']['humanizer']['files']['UPSTREAM.md']
+if source['sourceSha256'] != hashlib.sha256(attribution.encode('utf-8')).hexdigest():
+    errors.append('attribution sourceSha256 must equal its installed bytes')
+if errors:
+    raise SystemExit('\n'.join(errors))
 PY
     then
-      pass "68i: sync reads committed Git objects, ignores dirty checkout, and writes transformed skills with deterministic provenance"
+      pass "68i: sync reads committed Git objects, renders host sections for Cursor, applies exact rewrites, keeps licenses, scripts, and attribution, and reports stale files and retired skills"
     else
-      fail "68i: sync output or provenance was incorrect"
+      fail "68i: sync output, rendering, or provenance was incorrect"
     fi
 
+    if "${CURSOR_HELPER}" validate >"${TMPDIR}/validate68i.out" 2>"${TMPDIR}/validate68i.err"; then
+      pass "68i2: validation accepts the synced tree, including attribution files that name the source runtime"
+    else
+      fail "68i2: validation rejected the freshly synced tree: $(cat "${TMPDIR}/validate68i.err")"
+    fi
+
+    digest68_first="$(sync68_digest)"
+    "${REPO_FIXTURE}/${hive_skill_sync_rel}" --source-repo "${upstream68}" --ref HEAD >"${TMPDIR}/sync68b.out" 2>"${TMPDIR}/sync68b.err"
+    [[ "${digest68_first}" == "$(sync68_digest)" ]] && pass "68j: repeated sync from the same commit is byte-for-byte deterministic" || fail "68j: repeated sync changed the output tree or provenance"
+
     git -C "${upstream68}" checkout -q -- packages/opencode-hive/skills/brainstorming/SKILL.md
-    replace_fixture_text "${upstream68}/packages/opencode-hive/skills/brainstorming/SKILL.md" 'after design.' 'Replacement object guidance.'
+    printf '%s\n' 'Replacement object guidance.' > "${upstream68}/packages/opencode-hive/skills/how/references/notes.md"
     git -C "${upstream68}" add .
     git -C "${upstream68}" -c user.name=Fixture -c user.email=fixture@example.test commit -qm replacement
     replacement68="$(git -C "${upstream68}" rev-parse HEAD)"
     git -C "${upstream68}" replace "${commit68}" "${replacement68}"
     if "${REPO_FIXTURE}/${hive_skill_sync_rel}" --source-repo "${upstream68}" --ref "${commit68}" >"${TMPDIR}/sync68-replace.out" 2>"${TMPDIR}/sync68-replace.err" &&
-      grep -q 'after design.' "${REPO_FIXTURE}/.apm/cursor/skills/brainstorming/SKILL.md" &&
-      ! grep -q 'Replacement object guidance' "${REPO_FIXTURE}/.apm/cursor/skills/brainstorming/SKILL.md" &&
+      grep -q 'Notes for how' "${REPO_FIXTURE}/.apm/cursor/skills/how/references/notes.md" &&
+      ! grep -q 'Replacement object guidance' "${REPO_FIXTURE}/.apm/cursor/skills/how/references/notes.md" &&
       grep -q "${commit68}" "${REPO_FIXTURE}/${hive_skill_provenance_rel}"; then
       pass "68k: skill sync ignores Git replacement objects for commit and tree identity"
     else
@@ -3368,8 +3458,8 @@ PY
     git -C "${upstream68}" reset -q --hard "${commit68}"
 
     redirected68="${TMPDIR}/redirected68"
-    mkdir -p "${redirected68}/packages/opencode-hive/skills/brainstorming"
-    printf '%s\n' 'Ambient GIT_DIR content must not be synced.' > "${redirected68}/packages/opencode-hive/skills/brainstorming/SKILL.md"
+    mkdir -p "${redirected68}/packages/opencode-hive/skills/how"
+    printf '%s\n' 'Ambient GIT_DIR content must not be synced.' > "${redirected68}/packages/opencode-hive/skills/how/SKILL.md"
     cat > "${redirected68}/packages/opencode-hive/package.json" <<'JSON'
 {
   "name": "oc-arkive",
@@ -3381,8 +3471,7 @@ JSON
     git -C "${redirected68}" add .
     git -C "${redirected68}" -c user.name=Fixture -c user.email=fixture@example.test commit -qm redirected
     if GIT_DIR="${redirected68}/.git" "${REPO_FIXTURE}/${hive_skill_sync_rel}" --source-repo "${upstream68}" --ref HEAD >"${TMPDIR}/sync68-git-dir.out" 2>"${TMPDIR}/sync68-git-dir.err" &&
-      grep -q 'after design.' "${REPO_FIXTURE}/.apm/cursor/skills/brainstorming/SKILL.md" &&
-      ! grep -q 'Ambient GIT_DIR content' "${REPO_FIXTURE}/.apm/cursor/skills/brainstorming/SKILL.md" &&
+      ! grep -q 'Ambient GIT_DIR content' "${REPO_FIXTURE}/.apm/cursor/skills/how/SKILL.md" &&
       grep -q "${commit68}" "${REPO_FIXTURE}/${hive_skill_provenance_rel}" &&
       grep -q 'https://example.test/agent-hive.git' "${REPO_FIXTURE}/${hive_skill_provenance_rel}"; then
       pass "68l: skill sync ignores ambient GIT_DIR repository redirection"
@@ -3390,12 +3479,104 @@ JSON
       fail "68l: ambient GIT_DIR redirected synced skill content or provenance"
     fi
 
-    printf '\nTampered.\n' >> "${REPO_FIXTURE}/.apm/cursor/skills/brainstorming/SKILL.md"
+    skill68="${REPO_FIXTURE}/.apm/cursor/skills/verification"
+    cp "${skill68}/SKILL.md" "${TMPDIR}/verification68.bak"
+    printf '\nTampered.\n' >> "${skill68}/SKILL.md"
     if ! "${CURSOR_HELPER}" validate >"${TMPDIR}/tamper68.out" 2>"${TMPDIR}/tamper68.err" &&
-      grep -Eqi 'hash|sha-?256' "${TMPDIR}/tamper68.err"; then
-      pass "68m: cursor-skills installed hash tampering is rejected when provenance is present"
+      grep -Eqi 'sha-?256' "${TMPDIR}/tamper68.err"; then
+      pass "68m: installed file hash tampering is rejected when provenance is present"
     else
-      fail "68m: cursor-skills hash tampering was accepted or returned the wrong error"
+      fail "68m: hash tampering was accepted or returned the wrong error"
+    fi
+    cp "${TMPDIR}/verification68.bak" "${skill68}/SKILL.md"
+    printf 'extra\n' > "${skill68}/EXTRA.md"
+    if ! "${CURSOR_HELPER}" validate >"${TMPDIR}/extra68.out" 2>"${TMPDIR}/extra68.err" &&
+      grep -q 'EXTRA.md is not listed in provenance' "${TMPDIR}/extra68.err"; then
+      pass "68m2: an unlisted file in an imported skill is rejected"
+    else
+      fail "68m2: unlisted file was accepted or returned the wrong error: $(cat "${TMPDIR}/extra68.err")"
+    fi
+    rm -f "${skill68}/EXTRA.md"
+    mv "${skill68}/LICENSE.pstack" "${TMPDIR}/license68.bak" 2>/dev/null || mv "${skill68}/LICENSE" "${TMPDIR}/license68.bak"
+    if ! "${CURSOR_HELPER}" validate >"${TMPDIR}/missing68.out" 2>"${TMPDIR}/missing68.err" &&
+      grep -q 'is listed in provenance but missing' "${TMPDIR}/missing68.err"; then
+      pass "68m3: a missing licence or reference file is rejected"
+    else
+      fail "68m3: missing file was accepted or returned the wrong error: $(cat "${TMPDIR}/missing68.err")"
+    fi
+    mv "${TMPDIR}/license68.bak" "${skill68}/LICENSE" 2>/dev/null || true
+    "${CURSOR_HELPER}" validate >/dev/null 2>&1 && pass "68m4: restored tree validates again" || fail "68m4: restored tree no longer validates"
+
+    for mutation68 in unknown-host unclosed stray-close inline-marker residue drift; do
+      broken68="${TMPDIR}/broken68-${mutation68}"
+      mkdir -p "${broken68}"
+      python3 "${TMPDIR}/make-upstream68.py" "${REPO_FIXTURE}/${hive_skill_sync_rel}" "${broken68}" "${mutation68}"
+      digest68_before="$(sync68_digest)"
+      if ! "${REPO_FIXTURE}/${hive_skill_sync_rel}" --source-repo "${broken68}" --ref HEAD >"${broken68}/out" 2>"${broken68}/err" \
+        && grep -q 'Cursor Hive skills sync failed' "${broken68}/err" \
+        && [[ "${digest68_before}" == "$(sync68_digest)" ]]; then
+        pass "68r: sync rejects ${mutation68} before writing anything"
+      else
+        fail "68r: sync accepted ${mutation68} or wrote output before failing: $(cat "${broken68}/err")"
+      fi
+    done
+
+    # Earlier provenance never grants deletion rights: a hostile or malformed
+    # prior file must fail the sync before it touches the shared skill set, a
+    # sentinel in .apm/skills, or a locally owned Cursor skill.
+    mkdir -p "${REPO_FIXTURE}/.apm/skills/sentinel-shared" "${REPO_FIXTURE}/.apm/cursor/skills/local-user-skill"
+    printf 'keep\n' > "${REPO_FIXTURE}/.apm/skills/sentinel-shared/SKILL.md"
+    printf 'keep\n' > "${REPO_FIXTURE}/.apm/cursor/skills/local-user-skill/SKILL.md"
+    provenance68="${REPO_FIXTURE}/${hive_skill_provenance_rel}"
+    cp "${provenance68}" "${TMPDIR}/provenance68.good"
+    tree68_digest() { python3 "${TMPDIR}/tree-digest68.py" "${REPO_FIXTURE}/.apm"; python3 "${TMPDIR}/tree-digest68.py" "${REPO_FIXTURE}/vendor"; }
+    for case68 in traversal absolute nested uppercase empty-name stop-design-slop local-user-skill not-object skills-missing skills-list invalid-json; do
+      python3 - "${provenance68}" "${case68}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path, case = Path(sys.argv[1]), sys.argv[2]
+names = {
+    'traversal': '../../skills',
+    'absolute': '/tmp/outside-skill',
+    'nested': 'writing-policy/../local-user-skill',
+    'uppercase': 'Writing_Policy',
+    'empty-name': '',
+    'stop-design-slop': 'stop-design-slop',
+    'local-user-skill': 'local-user-skill',
+}
+if case in names:
+    text = json.dumps({'skills': {names[case]: {}}})
+elif case == 'not-object':
+    text = '[]'
+elif case == 'skills-missing':
+    text = '{}'
+elif case == 'skills-list':
+    text = '{"skills": ["writing-policy"]}'
+else:
+    text = '{'
+path.write_text(text, encoding='utf-8')
+PY
+      tree68_before="$(tree68_digest)"
+      if ! "${REPO_FIXTURE}/${hive_skill_sync_rel}" --source-repo "${upstream68}" --ref HEAD >"${TMPDIR}/prev68-${case68}.out" 2>"${TMPDIR}/prev68-${case68}.err" \
+        && grep -q 'Cursor Hive skills sync failed' "${TMPDIR}/prev68-${case68}.err" \
+        && [[ "${tree68_before}" == "$(tree68_digest)" ]] \
+        && [[ -f "${REPO_FIXTURE}/.apm/skills/sentinel-shared/SKILL.md" && -f "${REPO_FIXTURE}/.apm/cursor/skills/local-user-skill/SKILL.md" && -f "${REPO_FIXTURE}/.apm/cursor/skills/stop-design-slop/SKILL.md" ]]; then
+        pass "68s0: prior provenance ${case68} fails the sync without touching any file"
+      else
+        fail "68s0: prior provenance ${case68} was accepted or changed files: $(cat "${TMPDIR}/prev68-${case68}.err")"
+      fi
+    done
+    # Absent or valid prior metadata still syncs, removes only the retired skill, and leaves local skills alone.
+    mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/writing-policy"
+    printf 'retired\n' > "${REPO_FIXTURE}/.apm/cursor/skills/writing-policy/SKILL.md"
+    rm -f "${provenance68}"
+    if "${REPO_FIXTURE}/${hive_skill_sync_rel}" --source-repo "${upstream68}" --ref HEAD >"${TMPDIR}/prev68-first.out" 2>"${TMPDIR}/prev68-first.err" \
+      && [[ ! -e "${REPO_FIXTURE}/.apm/cursor/skills/writing-policy" && -f "${REPO_FIXTURE}/.apm/skills/sentinel-shared/SKILL.md" && -f "${REPO_FIXTURE}/.apm/cursor/skills/local-user-skill/SKILL.md" ]]; then
+      pass "68s1: first sync without provenance succeeds, removes only the retired skill, and keeps local skills"
+    else
+      fail "68s1: first sync without provenance failed or removed the wrong directory: $(cat "${TMPDIR}/prev68-first.err")"
     fi
   else
     fail "68i: skill sync failed: $(cat "${TMPDIR}/sync68.err")"
@@ -3409,6 +3590,7 @@ else
   fail "68l: ambient GIT_DIR behavior unavailable"
   fail "68m: provenance tamper check unavailable"
 fi
+build_fixture
 
 if python3 - "${BASELINE_PWD}" <<'PY'
 import sys
@@ -3476,10 +3658,65 @@ else
   fail "68o: TDD auto-trigger wording was not updated"
 fi
 
+# Commit authority settled before placement follows a lane through recovery,
+# result identity, integration, and closure: a commit-authorized lane returns a
+# verified commit, a lane that must not commit returns its dirty candidate.
+if python3 - "${BASELINE_PWD}" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1]) / '.apm/cursor'
+orchestration = ' '.join((root / 'skills/orchestrating-ad-hoc-work/SKILL.md').read_text(encoding='utf-8').split())
+forager = ' '.join((root / 'agents/forager.md').read_text(encoding='utf-8').split())
+delegation = ' '.join((root / 'skills/subagent-delegation/SKILL.md').read_text(encoding='utf-8').split())
+finishing = ' '.join((root / 'skills/finishing-a-development-branch/SKILL.md').read_text(encoding='utf-8').split())
+errors = []
+for label, text, terms in (
+    ('orchestration (commit-authorized lane)', orchestration, (
+        'With commit authority, merge the pinned commit into the clean integration checkout',
+        'a commit it verified in its own session',
+        'with commit authority that is a committed, integrated predecessor',
+    )),
+    ('orchestration (lane that must not commit)', orchestration, (
+        'never gains it from a failure, a retry, or a successor',
+        'creates no commit and returns the base identity, the attributable changed and untracked files, and the checks it ran against that dirty tree',
+        'never describes HEAD as covering the uncommitted result',
+        'apply only the attributable changed and untracked files of the verified dirty candidate',
+        'when it holds no conflicting user work',
+        "the result to return under the lane's original commit authority",
+        'or the applied uncommitted change set',
+    )),
+    ('forager', forager, (
+        'any assignment that says not to commit',
+        'never claim HEAD covers the dirty result',
+        'Without commit authority, the base branch and commit, the changed and untracked files attributable to this assignment',
+    )),
+    ('delegation', delegation, ('A child without commit authority returns the base identity',)),
+    ('finishing', finishing, ('an uncommitted change set applied to the destination',)),
+):
+    for term in terms:
+        if term not in text:
+            errors.append(f'{label} is missing: {term}')
+for stale in ('verified, committed, integrated predecessor', 'and the commit to return', 'returns a commit it verified in its own session: a new commit, or the existing candidate when it needed no edits.\n'):
+    if stale in orchestration:
+        errors.append(f'orchestration still requires a commit unconditionally: {stale!r}')
+for sentence in re.split(r'(?<=[.!?]) ', orchestration):
+    if ('pinned commit' in sentence or 'returns a commit' in sentence) and 'commit authority' not in sentence and 'Merge the pinned' not in sentence and 'With commit authority' not in sentence:
+        errors.append(f'unconditional commit requirement: {sentence}')
+if errors:
+    raise SystemExit('\n'.join(errors))
+PY
+then
+  pass "68o2: commit authority follows a lane through recovery, result identity, integration, and closure"
+else
+  fail "68o2: orchestration, forager, delegation, or finishing guidance contradicts no-commit lanes"
+fi
+
 td68p="${TMPDIR}/cursor68p"
 mkdir -p "${td68p}"
 sandbox_agents_skills
-for hive_bundled in humanizer stop-design-slop stop-slop writing-for-humans writing-policy; do
+for hive_bundled in ${HIVE_BUNDLED_NAMES}; do
   mkdir -p "${AGENTS_SKILLS_DIR}/${hive_bundled}"
   printf 'stale agents %s\n' "${hive_bundled}" > "${AGENTS_SKILLS_DIR}/${hive_bundled}/SKILL.md"
 done
@@ -3498,42 +3735,38 @@ agents = Path(sys.argv[3])
 err = Path(sys.argv[4]).read_text(encoding='utf-8')
 provenance = json.loads((root / 'vendor/oc-arkive/cursor-skills/provenance.json').read_text(encoding='utf-8'))
 errors = []
-for name in (
-    'brainstorming',
-    'systematic-debugging',
-    'test-driven-development',
-    'verification',
-):
-    path = installed / 'skills' / name / 'SKILL.md'
-    if path.is_symlink() or not path.is_file():
-        errors.append(f'installed {name} SKILL.md must be a regular file')
+for name, entry in provenance['skills'].items():
+    installed_directory = installed / 'skills' / name
+    actual_files = sorted(path.relative_to(installed_directory).as_posix() for path in installed_directory.rglob('*') if path.is_file())
+    if actual_files != sorted(entry['files']):
+        errors.append(f'installed {name} tree differs from provenance: {sorted(set(actual_files) ^ set(entry["files"]))}')
         continue
-    actual = hashlib.sha256(path.read_bytes()).hexdigest()
-    expected = provenance['skills'][name]['installedSha256']
-    if actual != expected:
-        errors.append(f'installed {name} sha256 is {actual}, expected {expected}')
-writing_files = {
-    'humanizer': ('SKILL.md', 'references/patterns.md'),
-    'stop-design-slop': ('SKILL.md', 'assets/salience-hierarchy.svg', 'examples/README.md', 'references/review-rubric.md', 'scripts/audit_ui.py', 'scripts/contrast_check.py'),
-    'stop-slop': ('SKILL.md', 'references/examples.md', 'references/phrases.md', 'references/structures.md'),
-    'writing-for-humans': ('SKILL.md', 'references/examples.md', 'references/sources.md'),
-    'writing-policy': ('SKILL.md',),
-}
-for name, relatives in writing_files.items():
+    for relative, hashes in entry['files'].items():
+        target = installed_directory / relative
+        if target.is_symlink() or not target.is_file():
+            errors.append(f'installed {name}/{relative} must be a regular file')
+            continue
+        actual = hashlib.sha256(target.read_bytes()).hexdigest()
+        if actual != hashes['installedSha256']:
+            errors.append(f'installed {name}/{relative} sha256 is {actual}, expected {hashes["installedSha256"]}')
+# The imported skills are covered by the provenance loop above; only the locally owned stop-design-slop needs its own byte check.
+local_files = ('SKILL.md', 'assets/salience-hierarchy.svg', 'examples/README.md', 'references/review-rubric.md', 'scripts/audit_ui.py', 'scripts/contrast_check.py', 'LICENSE.impeccable')
+for relative in local_files:
+    source = root / '.apm/cursor/skills/stop-design-slop' / relative
+    target = installed / 'skills/stop-design-slop' / relative
+    if target.is_symlink() or not target.is_file():
+        errors.append(f'installed stop-design-slop/{relative} must be a regular file')
+    elif source.read_bytes() != target.read_bytes():
+        errors.append(f'installed stop-design-slop/{relative} does not match the Cursor copy')
+for name in ('humanizer', 'stop-design-slop', 'stop-slop', 'unslop', 'writing-for-agents', 'writing-for-humans'):
     stale = agents / name / 'SKILL.md'
     if not stale.is_file() or stale.read_text(encoding='utf-8') != f'stale agents {name}\n':
         errors.append(f'{name} agents copy was not left in place')
     line = f'decision needed: conflict: {agents / name} is outside the managed install path {installed / "skills" / name}; left in place'
     if line not in err:
         errors.append(f'missing decision line for {agents / name}')
-    for relative in relatives:
-        source = root / '.apm/cursor/skills' / name / relative
-        target = installed / 'skills' / name / relative
-        if target.is_symlink() or not target.is_file():
-            errors.append(f'installed {name}/{relative} must be a regular file')
-            continue
-        if source.read_bytes() != target.read_bytes():
-            errors.append(f'installed {name}/{relative} does not match the Cursor copy')
+if (installed / 'skills' / 'writing-policy').exists():
+    errors.append('retired writing-policy was installed')
 if errors:
     raise SystemExit('\n'.join(errors))
 PY
@@ -3577,6 +3810,154 @@ if [[ "${install68q_status}" -eq 1 ]]; then
   fi
 else
   fail "68q-e: leftover Cursor retired-skill install exited ${install68q_status}: $(cat "${TMPDIR}/install68q.err")"
+fi
+
+# ---------------------------------------------------------------------------
+# 68s. Delivered prompts are usable without Agent Hive
+# ---------------------------------------------------------------------------
+printf '\n=== 68s. Delivered prompts reject Hive runtime syntax and broken references ===\n'
+
+# Each case mutates one delivered asset in a fresh fixture, then expects validation to fail naming the cause.
+expect_validate_fail() {
+  local label="$1" expected="$2" log="${TMPDIR}/validate-leak.err"
+  if ! "${CURSOR_HELPER}" validate >"${TMPDIR}/validate-leak.out" 2>"${log}" && grep -Fq -- "${expected}" "${log}"; then
+    pass "68s: ${label}"
+  else
+    fail "68s: ${label}: $(cat "${log}")"
+  fi
+  build_fixture
+}
+
+build_fixture
+printf '\n<!-- hive-host opencode-v1 -->\nV1\n<!-- /hive-host -->\n' >> "${REPO_FIXTURE}/.apm/cursor/skills/how/SKILL.md"
+expect_validate_fail "skill with a leaked host section marker is rejected" "Hive host section marker"
+
+printf '\nLoad it with skill({ name: "verification" }).\n' >> "${REPO_FIXTURE}/.apm/cursor/skills/how/SKILL.md"
+expect_validate_fail "skill with a native skill call is rejected" "native skill call"
+
+printf '\nCall hive_status first.\n' >> "${REPO_FIXTURE}/.apm/cursor/agents/forager.md"
+expect_validate_fail "agent naming a Hive tool is rejected" "Hive tool name"
+
+printf '\nDispatch hive-builder.\n' >> "${REPO_FIXTURE}/.apm/cursor/commands/grill.md"
+expect_validate_fail "command naming a Hive role is rejected" "Hive role identifier"
+
+printf '\nRead .hive/features first.\n' >> "${REPO_FIXTURE}/.apm/cursor/rules/default-agent.md"
+expect_validate_fail "Rules naming Hive state paths are rejected" "Hive state path"
+
+printf '\nUse task(subagent_type) here.\n' >> "${REPO_FIXTURE}/.apm/cursor/skills/how/SKILL.md"
+expect_validate_fail "OpenCode task call syntax is rejected" "OpenCode-only tool call"
+
+printf '\nSee writing-plans for the plan.\n' >> "${REPO_FIXTURE}/.apm/cursor/skills/how/SKILL.md"
+expect_validate_fail "reference to a Hive skill Cursor does not ship is rejected" "references skill writing-plans"
+
+printf '\nLoad writing-policy first.\n' >> "${REPO_FIXTURE}/.apm/cursor/agents/scout.md"
+expect_validate_fail "reference to the retired writing-policy is rejected" "references skill writing-policy"
+
+mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/how/references"
+printf '\nSee [notes](references/missing.md).\n' >> "${REPO_FIXTURE}/.apm/cursor/skills/how/SKILL.md"
+expect_validate_fail "link to a missing skill file is rejected" "links to a missing file"
+
+printf '\nSee [outside](../humanizer/SKILL.md).\n' >> "${REPO_FIXTURE}/.apm/cursor/skills/how/SKILL.md"
+expect_validate_fail "link out of its skill is rejected" "links outside its skill"
+
+sed -i 's/^readonly: true$/readonly: false/' "${REPO_FIXTURE}/.apm/cursor/agents/scout.md"
+expect_validate_fail "read-only role with readonly false is rejected" "readonly must be true"
+
+sed -i 's/^readonly: false$/readonly: true/' "${REPO_FIXTURE}/.apm/cursor/agents/forager.md"
+expect_validate_fail "write-capable forager with readonly true is rejected" "readonly must be false"
+
+python3 - "${REPO_FIXTURE}/.apm/cursor/agents/code-reviewer.md" <<'PY'
+import sys
+from pathlib import Path
+path = Path(sys.argv[1])
+path.write_text(path.read_text(encoding='utf-8').replace("Apply the Engineering Judgment section appended to this prompt within this role's current scope and finding bar.", "Apply Engineering Judgment from active Cursor Rules within this role's current scope and finding bar."), encoding='utf-8')
+PY
+expect_validate_fail "agent that relies on Rules inheritance is rejected" "appended Engineering Judgment guidance exactly once"
+
+printf '\n## Engineering Judgment\n\nCopied by hand.\n' >> "${REPO_FIXTURE}/.apm/cursor/agents/plan-reviewer.md"
+expect_validate_fail "agent embedding the snapshot is rejected" "must not embed Engineering Judgment"
+
+cp "${REPO_FIXTURE}/.apm/prompts/planning-prompt.prompt.md" "${REPO_FIXTURE}/.apm/cursor/commands/planning-prompt.md"
+expect_validate_fail "shared command duplicated under Cursor commands is rejected" "stale duplicate commands/planning-prompt.md"
+
+rm -f "${REPO_FIXTURE}/.apm/prompts/interview-drill-down.prompt.md"
+expect_validate_fail "shared command without its canonical source is rejected" "missing canonical shared command source"
+
+# Installers agree on the Hive-bundled and retired classification.
+if python3 - "${BASELINE_PWD}" <<'PY'
+import importlib.util
+import re
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+
+def array(path, name):
+    match = re.search(rf'^{name}=\(\n(.*?)\n\)', (root / path).read_text(encoding='utf-8'), re.MULTILINE | re.DOTALL)
+    if not match:
+        raise SystemExit(f'{path} has no {name} array')
+    return {line.strip() for line in match.group(1).splitlines() if line.strip() and not line.strip().startswith('#')}
+
+sys.dont_write_bytecode = True
+spec = importlib.util.spec_from_file_location('cursor_hive_skills_sync', root / 'scripts/sync-cursor-hive-skills.py')
+sync = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(sync)
+errors = []
+cursor_bundled = array('scripts/cursor-assets.sh', 'HIVE_BUNDLED_SKILLS')
+opencode_bundled = array('scripts/install-profile.sh', 'HIVE_BUNDLED_SKILLS')
+# The Cursor bundle is pinned to a newer Agent Hive source than the OpenCode baseline, so the two sets differ on purpose.
+if cursor_bundled != {'humanizer', 'stop-design-slop', 'stop-slop', 'unslop', 'writing-for-agents', 'writing-for-humans'}:
+    errors.append(f'Cursor Hive-bundled skills drifted: {sorted(cursor_bundled)}')
+if opencode_bundled != {'humanizer', 'stop-design-slop', 'stop-slop', 'writing-for-humans', 'writing-policy'}:
+    errors.append(f'OpenCode Hive-bundled skills must match the oc-arkive v3.0.0 baseline: {sorted(opencode_bundled)}')
+if 'writing-policy' in cursor_bundled:
+    errors.append('retired writing-policy must not be classified as Hive-bundled for Cursor')
+if 'writing-policy' not in array('scripts/cursor-assets.sh', 'RETIRED_SKILLS') or 'writing-policy' not in array('scripts/cursor-assets.sh', 'RETIRED_AGENTS_SKILLS'):
+    errors.append('cursor-assets.sh must report a leftover writing-policy in the Cursor and agents skills directories')
+cursor_skills = array('scripts/cursor-assets.sh', 'SKILLS')
+if not set(sync.IMPORTED_SKILLS) <= cursor_skills:
+    errors.append(f'imported skills missing from the Cursor install list: {sorted(set(sync.IMPORTED_SKILLS) - cursor_skills)}')
+if set(sync.RETIRED_SKILLS) & cursor_skills:
+    errors.append('a retired skill is still in the Cursor install list')
+if not cursor_bundled <= (cursor_skills):
+    errors.append('every Hive-bundled skill must be installed for Cursor')
+shared_commands = array('scripts/cursor-assets.sh', 'SHARED_COMMANDS')
+prompts = {path.name[:-len('.prompt.md')] for path in (root / '.apm/prompts').glob('*.prompt.md')}
+if shared_commands != prompts:
+    errors.append(f'shared commands {sorted(shared_commands)} differ from .apm/prompts {sorted(prompts)}')
+if errors:
+    raise SystemExit('\n'.join(errors))
+PY
+then
+  pass "68t: each installer classifies Hive-bundled and retired skills for its own baseline, and sync, install list, and shared commands agree"
+else
+  fail "68t: installer classification, sync list, or shared command list drifted"
+fi
+
+# Shared prompts keep argument handling that works in OpenCode and Cursor.
+if python3 - "${BASELINE_PWD}" <<'PY'
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+errors = []
+for name in ('planning-prompt', 'interview-drill-down', 'reflect'):
+    text = (root / f'.apm/prompts/{name}.prompt.md').read_text(encoding='utf-8')
+    if '$ARGUMENTS' not in text or 'interpolated' not in text:
+        errors.append(f'{name} must treat $ARGUMENTS as input only when it was interpolated')
+    if 'literal' not in text:
+        errors.append(f'{name} must handle a literal $ARGUMENTS token')
+    if '`question` tool' in text:
+        errors.append(f'{name} names an OpenCode-only question tool')
+    if (root / f'.apm/cursor/commands/{name}.md').exists():
+        errors.append(f'{name} has a divergent Cursor copy')
+if errors:
+    raise SystemExit('\n'.join(errors))
+PY
+then
+  pass "68u: shared prompts handle interpolated and literal arguments and have no divergent Cursor copy"
+else
+  fail "68u: shared prompt argument handling or single-source contract is wrong"
 fi
 
 # ---------------------------------------------------------------------------

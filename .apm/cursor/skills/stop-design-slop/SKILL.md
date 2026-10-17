@@ -1,6 +1,6 @@
 ---
 name: stop-design-slop
-description: Use when designing, generating, reviewing, refactoring, or polishing product interfaces, dashboards, landing pages, data applications, design systems, or frontend code, or when a UI is described as premium, modern, clean, minimal, or SaaS without stronger product-specific direction.
+description: Use when designing, generating, reviewing, refining, redesigning, or polishing product interfaces, dashboards, landing pages, data applications, design systems, mockups, or frontend code, or when a UI is described as premium, modern, clean, minimal, or SaaS without stronger product-specific direction.
 metadata:
   version: "1.0.0"
   evidence_basis: "HCI research, accessibility standards, major design systems, and 2024-2026 GenAI design-fixation/homogenization research"
@@ -43,6 +43,31 @@ Acceptable answers usually refer to one or more of:
 "It looks modern", "it feels premium", "this is standard SaaS", and "the component library does this" are insufficient.
 
 Removing slop does not produce good design. A result that is merely clean, flat, and grey has also failed; add one governing idea, one clear focal point per screen, and one deliberate accent on purpose.
+
+## Mode, brief, and kind of change
+
+Load with `unslop`, which holds the shared philosophy and the prose side of the same work (copy, labels, captions). This skill carries the visual depth.
+
+**Pick the mode from the surface requested, not from the product.** A tool's landing page is Persuade, and its documentation is Read.
+
+- **Operate:** the person completes a task in an app, dashboard, editor, console, or settings screen. Scanning, consistency, and real working conditions outrank expression, and density follows the task. Brand lives in precise details.
+- **Read:** the person understands something in docs, articles, guides, or a changelog. Structure for comprehension first, then make the reading pleasant.
+- **Persuade:** the person decides and acts on a landing page, campaign, or pricing page. The page earns attention with the product's real proof or action.
+
+When the artifact is the work itself, such as a portfolio or a gallery, let it lead and let the interface recede.
+
+**The brief wins.** Honor a pinned brand, font, palette, era, material, or component system, even when it resembles a pattern named in the anti-pattern rules. Components supply behavior: keep the accessibility and interaction a library provides, and treat composition, type, density, shape, and surfaces as the product's own decisions.
+
+**Refinement preserves; redesign replaces.** Words like polish, tighten, fix, align, quiet down, or simplify mean refinement: the incumbent identity, behavior, copy, and everything outside the requested scope stay. Words like redesign, new direction, or "start over visually" mean redesign: product truth, content, function, native affordances, and constraints stay, and the old look becomes evidence about what to replace. Take the smaller reading when the request is ambiguous, or ask one question if the difference changes the work.
+
+- For refinement, read the incumbent first: inspect the target and at least one representative source of its visual truth (tokens, theme, CSS, a component, or an asset), because a missing design document does not make the project new. Name the defect with the vocabulary in `references/terminology.md`, take the smallest structural change that resolves it (hierarchy and order, grouping, type, spacing, then surfaces and effects), reuse the project's tokens and components, and ask before replacing factual copy or adding a claim, figure, or customer reference.
+- For redesign, replace the visual language as a whole so tokens, components, and copy tone move together, and choose the replacement from a governing composition idea rather than from a split between old and new.
+
+**Motion meets the same question.** It communicates a state change, hierarchy, or continuity, and its intensity follows how often it happens and what it says, not a fixed setting.
+
+**Role boundary.** This skill does not change what a role may do. A read-only reviewer diagnoses and describes the structural change; a role that edits applies it. The tests below are prompts for judgment, not pass or fail gates, and a recorded check names what was inspected or computed.
+
+The mode definitions, the brief-wins rule, and the refinement and redesign split adapt `impeccable` (Apache 2.0) as carried in Agent Hive's `stop-design-slop`; `LICENSE.impeccable` holds the notice. This skill is locally maintained.
 
 ---
 

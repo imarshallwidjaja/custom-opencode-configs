@@ -32,7 +32,9 @@ Inspect the branch diff before recommending merge, pull request, or discard acti
 
 ## Step 3: Present Options
 
-If the user already chose an exact integration and cleanup path, skip this menu and execute that authorization after the required checks. Existing authorization satisfies confirmation for the named branches, worktrees, and actions; ask again only if the scope changed, ownership is uncertain, or new destructive risk was not covered.
+If the user already chose an exact integration and cleanup path, or the integration authority was settled before the work was placed (for example an approved local commit or squash path), skip this menu and execute that authorization after the required checks. Existing authorization satisfies confirmation for the named branches, worktrees, and actions; ask again only if the scope changed, ownership is uncertain, or new destructive risk was not covered. When no commit permission exists, do not commit to reach a menu choice: integrate as uncommitted changes only when the destination holds no conflicting user work, and otherwise ask at this decision.
+
+Before integrating a worker's result (a commit, or an uncommitted change set applied to the destination), compare the destination branch and commit with the identity recorded when the work was placed. If it moved, inspect what changed and reconcile before merging; do not silently refresh the recorded identity.
 
 Otherwise, present these choices plainly:
 
@@ -50,7 +52,7 @@ Do not choose for the user unless they already gave explicit instructions.
 - Confirm the branch diff matches the intended change before switching branches.
 - Switch to the base branch.
 - Update it if the user expects that workflow.
-- Merge or squash the development branch according to repository convention.
+- Merge or squash the development branch according to repository convention; prefer a squash when worker commit churn is not useful. A worktree commit does not authorize this step by itself.
 - Run verification again on the merged result.
 - Delete the development branch only after the merge and verification succeed.
 
@@ -79,6 +81,7 @@ Do not choose for the user unless they already gave explicit instructions.
 - Do not force-push unless explicitly requested.
 - Do not delete branches or worktrees without confirmation.
 - Do not include unrelated changes in a commit, merge, or pull request.
+- Do not stash, revert, or commit the user's existing changes in the destination without explicit permission.
 
 ## Completion Report
 

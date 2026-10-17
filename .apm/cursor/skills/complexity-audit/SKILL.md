@@ -5,7 +5,7 @@ description: Use when the operator explicitly asks for a one-shot complexity aud
 
 # Complexity Audit
 
-Report complexity findings. Do not apply fixes. Keep the pass complexity-only. Run it only when the operator asks for a complexity audit. This pass does not replace `simplicity-reviewer`.
+Report complexity findings. Do not apply fixes. Keep the pass complexity-only. This pass does not replace `simplicity-reviewer`.
 
 ## Scope
 

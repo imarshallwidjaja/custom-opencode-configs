@@ -19,6 +19,7 @@ The brief must clearly define:
 - the strongest solution leads already identified
 - the expected solution outcomes
 - the repo and parity constraints that must be preserved
+- the operator requirements and required skills that bind the work, and the integration authority already granted or still undecided (commit, merge, push)
 - what the receiving agent must validate, research, and resolve in order to produce an execution-ready implementation plan
 
 The brief should be detailed, concrete, and strong enough that the receiving agent can begin immediately without follow-up steering.
