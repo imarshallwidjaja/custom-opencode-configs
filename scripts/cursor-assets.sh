@@ -43,6 +43,7 @@ SKILLS=(
   orchestrating-ad-hoc-work
   parallel-exploration
   pr-writing
+  stop-design-slop
   stop-slop
   subagent-delegation
   systematic-debugging
@@ -70,20 +71,20 @@ CANONICAL_SKILLS=(
   react-best-practices
   resume-tailoring
   running-agile-delivery
-  stop-design-slop
   web-design-guidelines
   working-with-atlassian
   writing-work-items
 )
-HIVE_WRITING_SKILLS=(
+HIVE_BUNDLED_SKILLS=(
   humanizer
+  stop-design-slop
   stop-slop
   writing-for-humans
   writing-policy
 )
 DECISION_COUNT=0
 AGENTS_IVAN_OPT_OUT_NOTED=0
-AGENTS_HIVE_WRITING_NOTED=""
+AGENTS_HIVE_BUNDLED_NOTED=""
 
 note_conflict() {
   printf 'decision needed: conflict: %s is outside the managed install path %s; left in place\n' "$1" "$2" >&2
@@ -117,13 +118,13 @@ report_cursor_skill_decisions() {
       note_conflict "${path}" "${AGENTS_SKILLS_DIR}/${name}"
     fi
   done
-  for name in "${HIVE_WRITING_SKILLS[@]}"; do
+  for name in "${HIVE_BUNDLED_SKILLS[@]}"; do
     path="${AGENTS_SKILLS_DIR}/${name}"
-    case " ${AGENTS_HIVE_WRITING_NOTED} " in
+    case " ${AGENTS_HIVE_BUNDLED_NOTED} " in
       *" ${name} "*) ;;
       *)
         if [[ -e "${path}" || -L "${path}" ]]; then
-          AGENTS_HIVE_WRITING_NOTED="${AGENTS_HIVE_WRITING_NOTED} ${name}"
+          AGENTS_HIVE_BUNDLED_NOTED="${AGENTS_HIVE_BUNDLED_NOTED} ${name}"
           note_conflict "${path}" "${target_dir}/skills/${name}"
         fi
         ;;
@@ -485,13 +486,15 @@ for agent_name in expected_agents:
     if frontmatter.get('readonly') not in {'true', 'false'}:
         fail(f'agents/{agent_name}.md frontmatter readonly must be true or false')
 
+extra_skill_roots = {'stop-design-slop': {'assets', 'examples'}}
+
 for skill_name in expected_skills:
     skill_dir = root / 'skills' / skill_name
     path = skill_dir / 'SKILL.md'
     if not path.is_file():
         fail(f'missing required file: skills/{skill_name}/SKILL.md')
         continue
-    allowed_extra_roots = {'references', 'scripts'}
+    allowed_extra_roots = {'references', 'scripts'} | extra_skill_roots.get(skill_name, set())
     unsupported_skill_entries = []
     for entry in sorted(skill_dir.iterdir(), key=lambda p: p.name):
         if entry == path:
@@ -612,7 +615,7 @@ source_manifests = (
         WRITING_ALLOWED_KEYS,
     ),
     (
-        repo_root / '.apm' / 'skills' / 'stop-design-slop',
+        repo_root / '.apm' / 'cursor' / 'skills' / 'stop-design-slop',
         'stop-design-slop',
         (
             'SKILL.md',
@@ -1560,7 +1563,7 @@ install_assets() {
 
   DECISION_COUNT=0
   AGENTS_IVAN_OPT_OUT_NOTED=0
-  AGENTS_HIVE_WRITING_NOTED=""
+  AGENTS_HIVE_BUNDLED_NOTED=""
   for target_dir in "${TARGETS[@]}"; do
     install_assets_into "${root}" "${target_dir}"
   done
@@ -1580,7 +1583,7 @@ print_all_copy_plans() {
 
   DECISION_COUNT=0
   AGENTS_IVAN_OPT_OUT_NOTED=0
-  AGENTS_HIVE_WRITING_NOTED=""
+  AGENTS_HIVE_BUNDLED_NOTED=""
   for target_dir in "${TARGETS[@]}"; do
     print_copy_plan "${root}" "${target_dir}"
   done

@@ -54,13 +54,13 @@ SHARED_SKILLS=(
   react-best-practices
   resume-tailoring
   running-agile-delivery
-  stop-design-slop
   web-design-guidelines
   working-with-atlassian
   writing-work-items
 )
-HIVE_WRITING_SKILLS=(
+HIVE_BUNDLED_SKILLS=(
   humanizer
+  stop-design-slop
   stop-slop
   writing-for-humans
   writing-policy
@@ -222,7 +222,7 @@ report_opencode_skill_decisions() {
       note_conflict_if_outside "${path}" "${AGENTS_SKILLS_DIR}/${skill_name}"
     fi
   done
-  for skill_name in "${HIVE_WRITING_SKILLS[@]}"; do
+  for skill_name in "${HIVE_BUNDLED_SKILLS[@]}"; do
     path="${AGENTS_SKILLS_DIR}/${skill_name}"
     if [[ -e "${path}" || -L "${path}" ]]; then
       note_conflict_if_outside "${path}" "Hive materialization"
