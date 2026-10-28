@@ -173,7 +173,7 @@ provenance = {
 PY
 
   # Cursor skills
-  for skill in adversarial-review agents-md-mastery brainstorming code-design-principles complexity-audit complexity-review finishing-a-development-branch grilling how humanizer orchestrating-ad-hoc-work parallel-exploration pr-writing stop-slop subagent-delegation systematic-debugging test-driven-development unslop using-git-worktrees verification why writing-for-agents writing-for-humans; do
+  for skill in adversarial-review agents-md-mastery brainstorming code-design-principles complexity-audit complexity-review finishing-a-development-branch grilling how humanizer orchestrating-ad-hoc-work parallel-exploration pr-writing project-verification stop-slop subagent-delegation systematic-debugging test-driven-development unslop using-git-worktrees verification why writing-for-agents writing-for-humans; do
     mkdir -p "${REPO_FIXTURE}/.apm/cursor/skills/${skill}"
     cat > "${REPO_FIXTURE}/.apm/cursor/skills/${skill}/SKILL.md" <<SKILL
 ---
@@ -3090,7 +3090,7 @@ for relative in docs:
     text = (root / relative).read_text(encoding='utf-8')
     lowered = text.casefold()
     required = (
-        ('provenance-pinned to oc-arkive 5.0.0', 'Engineering Judgment provenance pin'),
+        ('provenance-pinned to oc-arkive 5.1.0', 'Engineering Judgment provenance pin'),
         ('opencode receives engineering judgment from the installed plugin', 'OpenCode delivery'),
         ('cursor cannot load the plugin prompt directly', 'Cursor plugin limitation'),
         ('each installed agent file carries', 'agent composition'),
@@ -3107,8 +3107,8 @@ for relative in docs:
 vendor = root / 'vendor/oc-arkive/engineering-judgment/engineering-judgment.md'
 provenance = json.loads((vendor.parent / 'provenance.json').read_text(encoding='utf-8'))
 expected_release = {
-    'commit': 'e1d968c5e53cdb03c95849b32b7bc9cbb7de47fc',
-    'packageVersion': '5.0.0',
+    'commit': 'd8de1e7691ebf3716afc0e3469c8743ca64169fb',
+    'packageVersion': '5.1.0',
 }
 for field, expected in expected_release.items():
     if provenance.get(field) != expected:
@@ -3237,7 +3237,7 @@ provenance = json.loads(provenance_path.read_text(encoding='utf-8'))
 errors = []
 if provenance.get('schemaVersion') != 2:
     errors.append('provenance schemaVersion must be 2')
-if provenance.get('commit') != 'e1d968c5e53cdb03c95849b32b7bc9cbb7de47fc' or provenance.get('packageVersion') != '5.0.0':
+if provenance.get('commit') != 'd8de1e7691ebf3716afc0e3469c8743ca64169fb' or provenance.get('packageVersion') != '5.1.0':
     errors.append(f'unexpected Hive skill pin: {provenance.get("commit")!r} {provenance.get("packageVersion")!r}')
 engineering = json.loads((root / 'vendor/oc-arkive/engineering-judgment/provenance.json').read_text(encoding='utf-8'))
 if engineering.get('commit') != provenance.get('commit') or engineering.get('packageVersion') != provenance.get('packageVersion'):
@@ -3255,9 +3255,20 @@ for name in sorted(set(skills or {}) & set(sync.IMPORTED_SKILLS)):
     for relative, entry in listed.items():
         if hashlib.sha256((directory / relative).read_bytes()).hexdigest() != entry['installedSha256']:
             errors.append(f'{name}/{relative} installedSha256 does not match')
-    text = (directory / 'SKILL.md').read_text(encoding='utf-8')
-    if 'hive-host' in text or 'skill({' in text:
-        errors.append(f'{name} SKILL.md still contains host markers or a native skill call')
+    for relative in listed:
+        if not relative.endswith('.md') or sync.ATTRIBUTION_NAMES.match(Path(relative).name):
+            continue
+        text = (directory / relative).read_text(encoding='utf-8')
+        for pattern, label in sync.RESIDUE_PATTERNS:
+            if pattern.search(text):
+                errors.append(f'{name}/{relative} still contains {label} after Cursor rendering')
+# Skills named by imported skills must be delivered: verification and
+# systematic-debugging route to project-verification, which ships as a full tree.
+for name in ('verification', 'systematic-debugging'):
+    if '`project-verification`' not in (root / '.apm/cursor/skills' / name / 'SKILL.md').read_text(encoding='utf-8'):
+        errors.append(f'{name} no longer names project-verification; revisit the dependency closure')
+if sorted(skills.get('project-verification', {}).get('files', {})) != ['LICENSE.pstack', 'SKILL.md', 'UPSTREAM.md', 'references/formal-verification.md']:
+    errors.append('project-verification must be imported as its complete tree')
 for retired in sync.RETIRED_SKILLS:
     if (root / '.apm/cursor/skills' / retired).exists():
         errors.append(f'retired skill {retired} is still present')
@@ -3335,6 +3346,14 @@ for name in sync.IMPORTED_SKILLS:
         files['SKILL.md'] += 'text <!-- hive-host opencode-v1 --> inline\n'
     if mutation == 'residue' and name == 'how':
         files['SKILL.md'] += 'Load it with skill({ name: "verification" }).\n'
+    prose_residue = {
+        'residue-native-skill': 'Load it with the native skill tool.\n',
+        'residue-hive': 'Follow the Hive plan before editing.\n',
+        'residue-opencode': 'Run this inside OpenCode.\n',
+        'residue-oc-arkive': 'Install oc-arkive first.\n',
+    }
+    if mutation in prose_residue and name == 'how':
+        files['SKILL.md'] += prose_residue[mutation]
     if mutation == 'drift' and name == 'grilling':
         relative, old, _new = sync.CURSOR_REWRITES['grilling'][0]
         files[relative] = files[relative].replace(old, 'changed upstream wording')
@@ -3524,13 +3543,21 @@ JSON
     mv "${TMPDIR}/license68.bak" "${skill68}/LICENSE" 2>/dev/null || true
     "${CURSOR_HELPER}" validate >/dev/null 2>&1 && pass "68m4: restored tree validates again" || fail "68m4: restored tree no longer validates"
 
-    for mutation68 in unknown-host unclosed stray-close inline-marker residue drift; do
+    for mutation68 in unknown-host unclosed stray-close inline-marker residue residue-native-skill residue-hive residue-opencode residue-oc-arkive drift; do
       broken68="${TMPDIR}/broken68-${mutation68}"
+      case "${mutation68}" in
+        residue) expected68='native skill call' ;;
+        residue-native-skill) expected68='OpenCode native skill reference' ;;
+        residue-hive) expected68='Hive runtime name' ;;
+        residue-opencode | residue-oc-arkive) expected68='OpenCode runtime name' ;;
+        *) expected68='Cursor Hive skills sync failed' ;;
+      esac
       mkdir -p "${broken68}"
       python3 "${TMPDIR}/make-upstream68.py" "${REPO_FIXTURE}/${hive_skill_sync_rel}" "${broken68}" "${mutation68}"
       digest68_before="$(sync68_digest)"
       if ! "${REPO_FIXTURE}/${hive_skill_sync_rel}" --source-repo "${broken68}" --ref HEAD >"${broken68}/out" 2>"${broken68}/err" \
         && grep -q 'Cursor Hive skills sync failed' "${broken68}/err" \
+        && grep -q "${expected68}" "${broken68}/err" \
         && [[ "${digest68_before}" == "$(sync68_digest)" ]]; then
         pass "68r: sync rejects ${mutation68} before writing anything"
       else

@@ -51,6 +51,7 @@ SKILLS=(
   orchestrating-ad-hoc-work
   parallel-exploration
   pr-writing
+  project-verification
   stop-design-slop
   stop-slop
   subagent-delegation
@@ -285,6 +286,7 @@ undelivered_hive_skills = {
     'dispatching-parallel-agents',
     'executing-plans',
     'hive-config',
+    'starting-ad-hoc-implementation',
     'writing-plans',
 }
 appended_guidance_sentence = (

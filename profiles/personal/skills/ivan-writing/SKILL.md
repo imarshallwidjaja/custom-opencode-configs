@@ -36,7 +36,7 @@ Before releasing draft text, compare it to the source material for:
 - **Required detail:** If the source names a specific technology ("Postgres"), keep it. If the source only says "database", do not upgrade to a named product.
 - **Relationships and evidence:** Check actor, object, condition, and both sides of each comparison against the source. Resolve ambiguity only when the source supports the resolution; otherwise retain or flag it. Keep measured and expected claims, source inspection and exercised behavior, and technical checks and scientific or named-use conclusions distinct. A retained exact result is not a reproduced analysis; comparisons or missing records alone do not establish whole-study validity or explain every scientific mismatch.
 
-The comparison is between claims. A scope limit is preserved when the draft states what the thing covers or where an excluded capability lives; the Boundaries and alternatives section of `writing-for-humans` decides which exclusions stay and in what form.
+The comparison is between claims. A scope limit is preserved when the draft states what the thing covers or where an excluded capability lives. The installed `writing-for-humans` guidance on rejected alternatives and any boundary rules decides which exclusions stay and in what form.
 
 Fix every mismatch before output. If a claim cannot be sourced to the input, remove or flag it rather than leaving an unsupported statement.
 

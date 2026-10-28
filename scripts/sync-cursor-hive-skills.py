@@ -46,6 +46,7 @@ IMPORTED_SKILLS = (
     'how',
     'humanizer',
     'pr-writing',
+    'project-verification',
     'stop-slop',
     'systematic-debugging',
     'test-driven-development',
@@ -71,6 +72,10 @@ RESIDUE_PATTERNS = (
     (re.compile(r'hive-host'), 'host section marker'),
     (re.compile(r'skill\(\s*\{'), 'native skill call'),
     (re.compile(r'\bhive_[A-Za-z0-9_]+'), 'Hive tool name'),
+    # Natural-language runtime names: Hive roles and state, OpenCode's skill tool.
+    (re.compile(r'\bHive\b'), 'Hive runtime name'),
+    (re.compile(r'\b(?:OpenCode|oc-arkive)\b'), 'OpenCode runtime name'),
+    (re.compile(r'\bnative skill\b'), 'OpenCode native skill reference'),
 )
 
 CURSOR_REWRITES = {
@@ -155,6 +160,11 @@ CURSOR_REWRITES = {
             '`code-reviewer` keeps `APPROVE/REQUEST_CHANGES/NEEDS_DISCUSSION`',
             '`code-reviewer` keeps `NO_BLOCKING_FINDINGS/REQUEST_CHANGES/NEEDS_DISCUSSION`',
         ),
+        (
+            'SKILL.md',
+            "The code reviewer's assessment is APPROVE with No action.",
+            "The code reviewer's assessment is NO_BLOCKING_FINDINGS with No action.",
+        ),
     ),
     'grilling': (
         (
@@ -183,6 +193,23 @@ CURSOR_REWRITES = {
             'it does not authorize planning, implementation, state mutation, or another workflow.',
         ),
     ),
+    'project-verification': (
+        (
+            'SKILL.md',
+            "- Architect and a plan-first Hive primary keep planning first; this skill shapes the plan's tasks. Hive Builder runs the work through its ordinary ad-hoc lifecycle.",
+            "- Cursor Plan mode, or a plan the operator supplies, keeps planning first; this skill shapes the plan's tasks. Otherwise the default Agent runs the work through its ordinary ad-hoc lifecycle.",
+        ),
+        (
+            'SKILL.md',
+            "Create no native skill as the project's guide by default. When the operator asks for one, it must be loaded through the native skill tool, which reading its file does not replace, and the copy the host loaded must match the candidate under test rather than a cached or parent copy.",
+            "Create no skill as the project's guide by default. When the operator asks for one, Cursor applies it or you read its installed `SKILL.md`; the copy used must match the candidate under test rather than a cached or parent copy.",
+        ),
+        (
+            'SKILL.md',
+            'or a native skill that already covers the ground',
+            'or an installed skill that already covers the ground',
+        ),
+    ),
     'systematic-debugging': (
         (
             'SKILL.md',
@@ -206,6 +233,13 @@ CURSOR_REWRITES = {
             'SKILL.md',
             'load the skills it names with the native skill tool before drafting or repair',
             'load the skills it names, applying each skill or reading its installed `SKILL.md` when Cursor does not apply it automatically, before drafting or repair',
+        ),
+    ),
+    'verification': (
+        (
+            'SKILL.md',
+            "Hive prescribes no location, filename, heading, or format for either, so do not search the tree for a guide no instruction names. When the pointer names a native skill, load it with the native skill tool, because reading its file does not load it, and confirm the loaded copy is the candidate's; when it is unavailable, report that and keep this skill's baseline without searching generated skill caches for a copy.",
+            "No location, filename, heading, or format is prescribed for either, so do not search the tree for a guide no instruction names. When the pointer names a skill, apply it or read its installed `SKILL.md` when Cursor does not apply it automatically, and confirm the copy used is the candidate's; when it is unavailable, report that and keep this skill's baseline without searching other installed or cached copies for a substitute.",
         ),
     ),
     'writing-for-agents': (

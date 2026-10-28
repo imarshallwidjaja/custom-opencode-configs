@@ -68,7 +68,7 @@ Pick the technique that answers the question the evidence leaves open. This tabl
 | Is persistent state stale? | Inspect it or reproduce on an isolated copy |
 | Why is it slow? | Same workload and measurement surface before and after |
 
-A technique that writes state, runs risky behavior, or touches retained evidence stays inside your assignment's authority. A diagnosis-only assignment uses read-only forms and reports what it could not observe.
+A technique that writes state, runs risky behavior, or touches retained evidence stays inside your assignment's authority. A diagnosis-only assignment uses read-only forms unless it names isolated scratch or runtime reproduction. That reproduction may materialize the submitted candidate's existing bytes and normal build output in a disposable placement; it authors no fix and leaves the original source under diagnosis as found. The diagnosis reports what it could not observe.
 
 Read [references/diagnostic-techniques.md](references/diagnostic-techniques.md) when you need a technique's steps, the boundary-observation example, or the hypothesis, stale-state, slowness and shared-premise techniques.
 
@@ -92,7 +92,7 @@ For other deep-stack errors, keep tracing up until you find the source. Fix at s
 
 1. **Select Durable Testing and Verification**
    - Reproduction or equivalent root-cause evidence is required before a fix.
-   - Select the durable testing and verification strategy from the defect, repository evidence, and mission.
+   - Select the durable testing and verification strategy from the defect, repository evidence, and mission. When the owning checks are not already settled, load `verification` and select them from the candidate repository's verification guidance with its Choosing Checks method. A regression test or temporary probe for this defect stays part of the diagnosis or fix; `project-verification` applies only when durable verification capability is the requested work.
    - Use strict TDD only when that strategy is selected; then load `test-driven-development` and observe the expected failure before implementation.
    - Other valid strategies include characterization tests before changing uncertain legacy behavior, tests alongside or after implementation when behavior is clear or design needs exploration, existing contract coverage for a pure internal refactor, and proportionate no-new-test verification with concrete rationale.
 

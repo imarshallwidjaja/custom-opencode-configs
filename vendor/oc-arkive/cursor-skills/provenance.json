@@ -1,6 +1,6 @@
 {
-  "commit": "e1d968c5e53cdb03c95849b32b7bc9cbb7de47fc",
-  "packageVersion": "5.0.0",
+  "commit": "d8de1e7691ebf3716afc0e3469c8743ca64169fb",
+  "packageVersion": "5.1.0",
   "schemaVersion": 2,
   "skills": {
     "adversarial-review": {
@@ -10,7 +10,7 @@
           "sourceSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e"
         },
         "SKILL.md": {
-          "installedSha256": "558d8bcef680fb301e5baa558ccb12c5931414f92c679b8a01dcf2f88cad33bc",
+          "installedSha256": "18e3bc1aa5b842f2abbac6149f73237cb11df94a89844fa3c97f9cf748b81ed3",
           "sourceSha256": "5a317e7adabd484e158ceb5d239e607989b40741bc032b808b8247eb2e1b1aeb"
         },
         "UPSTREAM.md": {
@@ -173,6 +173,27 @@
       },
       "sourcePath": "packages/opencode-hive/skills/pr-writing"
     },
+    "project-verification": {
+      "files": {
+        "LICENSE.pstack": {
+          "installedSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e",
+          "sourceSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e"
+        },
+        "SKILL.md": {
+          "installedSha256": "405aff2ed057597ad9f5ee1050d88c2b8d9d77224c9f5e4b7bb6cc7228dcdba3",
+          "sourceSha256": "05a697400c4db176f22422d282bb8b431386a94baf7dfcd97c1095fec9cbc561"
+        },
+        "UPSTREAM.md": {
+          "installedSha256": "3f53f4af1adde0955f19853b2e36804e43aa2379637af573a9e4165457d6ab89",
+          "sourceSha256": "3f53f4af1adde0955f19853b2e36804e43aa2379637af573a9e4165457d6ab89"
+        },
+        "references/formal-verification.md": {
+          "installedSha256": "f2e0d3791a7d5a95d0ba49aa2397044cb8d3e87194aef4216dd4e2a0571566b1",
+          "sourceSha256": "f2e0d3791a7d5a95d0ba49aa2397044cb8d3e87194aef4216dd4e2a0571566b1"
+        }
+      },
+      "sourcePath": "packages/opencode-hive/skills/project-verification"
+    },
     "stop-slop": {
       "files": {
         "LICENSE": {
@@ -217,16 +238,16 @@
           "sourceSha256": "a37e0e9697144819e1d965176ac4ae5bc3fa02d11e7812036bbcadf6dafe2400"
         },
         "SKILL.md": {
-          "installedSha256": "f46114bc514d528e907dd37c4066440bc2ec5ba674445f3701ac029ad37f787f",
-          "sourceSha256": "0fe88f25c3a928d24718a5e3a025440e45785631e1649661e50c51617eb24f4b"
+          "installedSha256": "b49acc38d77655bfc27aeb8403e45d528e64c373495144654960353e79bbc0b1",
+          "sourceSha256": "9af1116dbdce1d1f10544d1cc349e47254732f77802fdd7348c956c31a2d5105"
         },
         "UPSTREAM.md": {
           "installedSha256": "4f9444c01030c4af85cf73dd3fa5b643cf1d87434177309aad0187587649d3e9",
           "sourceSha256": "4f9444c01030c4af85cf73dd3fa5b643cf1d87434177309aad0187587649d3e9"
         },
         "references/diagnostic-techniques.md": {
-          "installedSha256": "0dff7c1b8df2fe70d7da6b8dddbe8c12629cbdbc17ce67981b527b411f1a846b",
-          "sourceSha256": "0dff7c1b8df2fe70d7da6b8dddbe8c12629cbdbc17ce67981b527b411f1a846b"
+          "installedSha256": "30502f79b56a1083ceb3f6cb2fb553fd7a7825d7c64274d27b8d9dc9c7f1b9e1",
+          "sourceSha256": "30502f79b56a1083ceb3f6cb2fb553fd7a7825d7c64274d27b8d9dc9c7f1b9e1"
         }
       },
       "sourcePath": "packages/opencode-hive/skills/systematic-debugging"
@@ -272,8 +293,8 @@
           "sourceSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e"
         },
         "SKILL.md": {
-          "installedSha256": "3b2d3fdaa030041185955f253729f841166ea5a0b68fb33905da0b867aff3199",
-          "sourceSha256": "3b2d3fdaa030041185955f253729f841166ea5a0b68fb33905da0b867aff3199"
+          "installedSha256": "8de1e38dbb489bbe6208b7df1fdb78123ae6779cd158296056a136b2864e1937",
+          "sourceSha256": "b59e3164b903759caf64b25b4f9f095692cd28c86873a0addb5352c26e8312f1"
         },
         "UPSTREAM.md": {
           "installedSha256": "9e172cec4fe96177d4a1e575c101dd4f5f322cbeb1648dcb950cc2bc22b5d786",
@@ -347,16 +368,16 @@
           "sourceSha256": "a2c922f9b81b4f40347ddfa79c38eda0f1278b5a6d108bd4099b4da254c774ee"
         },
         "SKILL.md": {
-          "installedSha256": "dbd0e234fc98adf685da7a4e84812ff8f004015d75923a9ec5a97e907456b5bc",
-          "sourceSha256": "dbd0e234fc98adf685da7a4e84812ff8f004015d75923a9ec5a97e907456b5bc"
+          "installedSha256": "588efba7e65c4a415175bff7a7279568670ff2f361840cc57c56631028816d0b",
+          "sourceSha256": "588efba7e65c4a415175bff7a7279568670ff2f361840cc57c56631028816d0b"
         },
         "UPSTREAM.md": {
-          "installedSha256": "77e90dc7dae99705173750c2425a0bae04dd7054368a73bf5a2ef41fda9dd246",
-          "sourceSha256": "77e90dc7dae99705173750c2425a0bae04dd7054368a73bf5a2ef41fda9dd246"
+          "installedSha256": "ced1bf82fe542ee5e77635da57dbececfcc45f60f97a8423809b5e9e387f8400",
+          "sourceSha256": "ced1bf82fe542ee5e77635da57dbececfcc45f60f97a8423809b5e9e387f8400"
         },
         "references/examples.md": {
-          "installedSha256": "9987f9de8a604826bf110380525981012742b432be775a0692f538e96e3db34d",
-          "sourceSha256": "9987f9de8a604826bf110380525981012742b432be775a0692f538e96e3db34d"
+          "installedSha256": "6c6de9702c6fe8214e43bc68307a30134c06353602d09c0001355fcfc25401c5",
+          "sourceSha256": "6c6de9702c6fe8214e43bc68307a30134c06353602d09c0001355fcfc25401c5"
         },
         "references/sources.md": {
           "installedSha256": "fa113e12e01867749e5acf7785b3efc0954972dfcc298373697c000ad1e34f94",

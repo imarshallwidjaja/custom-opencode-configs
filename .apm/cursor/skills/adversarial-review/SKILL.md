@@ -44,7 +44,7 @@ The posture changes where you look. The report keeps whatever format the role re
 Fictional diff for review against a stated requirement. A change adds `readTimeout(settings)` returning `settings.network.timeoutMs`, and the requirement says a settings file may omit the `network` section.
 
 - Source supports a defect: the only caller passes the parsed file straight through, an omitted section is valid, and the quoted line `return settings.network.timeoutMs;` dereferences `undefined`. The finding rests on that path and the requirement. It is a source-based finding; it does not show that anything ran or that a test fails.
-- Guarded control: every caller reaches `readTimeout` through a loader that fills defaults, and a test pins that. The same concern is cleared, with the loader and the test named in Coverage. The code reviewer's assessment is APPROVE with No action. A simplicity reviewer finds nothing to remove (ALREADY_MINIMAL), and an extra internal check in `readTimeout` would duplicate the loader's guarantee.
+- Guarded control: every caller reaches `readTimeout` through a loader that fills defaults, and a test pins that. The same concern is cleared, with the loader and the test named in Coverage. The code reviewer's assessment is NO_BLOCKING_FINDINGS with No action. A simplicity reviewer finds nothing to remove (ALREADY_MINIMAL), and an extra internal check in `readTimeout` would duplicate the loader's guarantee.
 
 ## Review Inputs
 
