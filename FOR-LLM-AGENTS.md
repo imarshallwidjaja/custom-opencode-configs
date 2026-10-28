@@ -264,7 +264,7 @@ Do you want the neutral shared profile, the personal-default profile with the au
 Explain the options like this:
 
 - `shared`: the safest team-friendly default
-- `personal-default`: the shared rules plus Ivan's voice skill; select that voice only for prose published, submitted, or sent as Ivan. Internal reports stay neutral unless requested. PR and review drafts require explicit operator selection of personal voice under `pr-writing`.
+- `personal-default`: the shared rules plus `ivan-writing` for technical/product prose to or as Ivan and other prose published, submitted, or sent as Ivan. Register does not imply personal voice. Internal reports stay neutral unless requested. PR and review drafts require explicit operator selection of personal voice under `pr-writing`.
 - `shared-context-improved`: the shared profile plus strong routing rules for `ast-grep`, `context7`, and optional `cymbal`
 - `personal-context-improved`: the personal-default profile plus the same context-improved routing rules
 

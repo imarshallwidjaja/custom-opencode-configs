@@ -115,7 +115,7 @@ Load `agents-md-mastery` for any AGENTS.md edit, including additions.
 
 Use `writing-policy` for human-facing prose and prose handoffs. Follow its conditional depth-skill routing and preserve the task's required output format.
 
-Load `ivan-writing` for prose intended to be published, submitted, or sent as Ivan, whether or not first-person. Internal worker reports stay neutral unless requested. Neutral, team, or third-party voice still overrides when explicit. Casual remains opt-in. PR and review drafts require explicit operator selection of personal voice under `pr-writing`.
+Load `ivan-writing` for technical or product prose prepared to or as Ivan, and for other prose published, submitted, or sent as Ivan. Register does not imply personal voice: preserve requested neutral, team, or third-party authorship. Internal worker reports stay neutral unless requested. Casual remains opt-in. PR and review drafts require explicit operator selection of personal voice under `pr-writing`.
 
 ## Browser Usage
 

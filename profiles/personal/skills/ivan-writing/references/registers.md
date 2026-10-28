@@ -2,11 +2,11 @@
 
 Reference for register-specific writing guidance.
 
-## Technical / Operator
+## Technical / Product
 
-Default register. Write for a technical peer inside the org. Assume platform names and common acronyms are understood unless the audience says otherwise. Use concrete nouns: DAG, collection, schema, hook, transform document, source of truth, validation gate. Prefer hands-on verbs: built, operated, debugged, standardised, automated, supported, triaged, maintained, hardened, owned, integrated. Define the system, name components, state prerequisites, then give the workflow. Explain what must exist before something can run. Prefer prerequisites, inputs, state, handoff points, and failure boundaries over broad capability claims.
+Default for technical and product prose to or as Ivan. Select vocabulary for the reader: an engineer may know a schema or DAG; a product stakeholder may need a short explanation. Preserve a precise domain term or identifier when it matters and define it in context when needed. Keep one name for each thing and make actors and relationships explicit. Prefer precision to compression, without a controlled dictionary or sentence-length cap.
 
-Pragmatic writing is not automatically short. Keep the technical detail needed to operate or evaluate the system, and cut only filler, repeated framing, and interpretation instructions. Describe what an unfamiliar system does before introducing its project, repository, or code name.
+Keep the detail needed to understand, operate, or evaluate the subject. For systems, name prerequisites, inputs, outputs, handoffs, and failure boundaries when relevant. Describe what an unfamiliar system does before introducing its project, repository, or code name.
 
 For evaluative writing, start with classification or main judgment, then move from operating model to technical evidence. Keep related issues grouped instead of forcing one issue per paragraph. Prove soft skills through observable handoffs: who brought the request, what had to be clarified, what constraint shaped the decision, what was shipped, and how other people could operate it afterwards.
 
@@ -26,10 +26,10 @@ Ownership follows the source. Use "I", "we", a named team, or a third party only
 
 Write what you think. Natural qualifiers: "I think," "seems," "from what I can tell," "bit unclear honestly." Be direct and simple. Sentence fragments and conversational rhythm are fine. Present facts as personal observation, not reported research. Close plainly ("Cheers," not "Kind regards").
 
-Avoid performative formality. Do not over-polish into operator-voice cadence. Do not use this register for resumes, cover letters, criteria responses, or professional application documents.
+Avoid performative formality. Keep the conversational rhythm distinct from the technical/product document register. Do not use this register for resumes, cover letters, criteria responses, or professional application documents.
 
-Hard guard: casual register is opt-in. Default remains operator voice. Trigger only when the task is a casual email, informal message, class assignment, or the user explicitly asks for a casual tone.
+Casual register is opt-in: use it for a requested casual email, informal message, class assignment, or explicitly casual tone.
 
 ## Neutral / Team / Third-Party
 
-When explicit team/third-party voice is requested, override Ivan voice. Use the shared profile's writing rules: start with operating context, define things early, name concrete objects, explain prerequisites, keep issues grouped. Omit first-person ownership claims, personal friction signals, and opinionated word choice preferences.
+When neutral, team, or third-party voice is requested, preserve that authorship while applying the register suited to the reader and task. Do not invent personal or team ownership.

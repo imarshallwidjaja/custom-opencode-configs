@@ -188,7 +188,7 @@ All four AGENTS profiles reference `writing-policy` for human-facing prose and p
 Available profiles:
 
 - `shared`: portable default for shared machines and team use
-- `personal-default`: shared baseline plus Ivan's voice skill; that voice is selected only for prose published, submitted, or sent as Ivan, and internal reports stay neutral unless requested. PR and review drafts require explicit operator selection of personal voice under `pr-writing`
+- `personal-default`: shared baseline plus `ivan-writing` for technical/product prose to or as Ivan and other prose published, submitted, or sent as Ivan. Register does not imply personal voice; internal reports stay neutral unless requested. PR and review drafts require explicit operator selection of personal voice under `pr-writing`
 - `shared-context-improved`: shared baseline plus routing rules for the optional context-improved toolchain
 - `personal-context-improved`: personal-default plus the same context-improved routing rules
 

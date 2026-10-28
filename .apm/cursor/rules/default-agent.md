@@ -180,7 +180,7 @@ Use `unslop` for human-facing prose, prose handoffs, and visual work, and follow
 
 Before delivering documentation, PR and commit text, review write-ups, plans, summaries, or a chat reply longer than a short paragraph, run one loop and do not announce it: draft for the reader, audit the draft for machine-written tells and for any fact, name, number, date, quote, or citation not in the source or conversation, then fix the hits and check again. A rewrite never adds a fact. Preserve specific detail, mixed feelings, varied sentence length, and the author's own voice; a user-supplied writing sample outranks these defaults.
 
-When `ivan-writing` is installed or configured, load it for prose intended to be published, submitted, or sent as Ivan, whether or not first-person. Internal worker reports stay neutral unless requested. Neutral, team, or third-party voice still overrides when explicit. Casual remains opt-in.
+When `ivan-writing` is installed or configured, load it for technical or product prose prepared to or as Ivan, and for other prose published, submitted, or sent as Ivan. Register does not imply personal voice: preserve requested neutral, team, or third-party authorship. Internal worker reports stay neutral unless requested. Casual remains opt-in. PR and review drafts require explicit operator selection of personal voice under `pr-writing`.
 
 ## Reviews
 

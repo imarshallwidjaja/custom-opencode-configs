@@ -6,7 +6,7 @@ The accompanying config targets `oc-arkive` v3.0.0 and requires OpenCode >= 1.18
 
 All four profiles share the same baseline quality, delegation, verification, search, browser, handoff, worktree, and document-conversion rules. Interactive browser work routes to `chrome-devtools`. Their `## Prose policy` section references `writing-policy` for prose routing and delegated propagation, including each child's own skill loads and the task's required output format. `writing-for-humans` owns drafting, the finish pass, and durable naming. `stop-slop` and `humanizer` load conditionally for matching rewrite problems. The three document-focused Hive roles auto-load `writing-policy` and `writing-for-humans`; `adversarial-documentation-reviewer` also retains `adversarial-review`.
 
-The `personal-*` profiles install Ivan's voice skill and load `ivan-writing` only for prose published, submitted, or sent as Ivan; internal worker reports stay neutral unless requested. PR and review drafts require explicit operator selection of personal voice under `pr-writing`. The `shared*` profiles omit that voice layer. The `*-context-improved` profiles add strong explicit routing rules for the optional context-improved toolchain; the plain profiles use the baseline routing without those explicit assumptions.
+The `personal-*` profiles install `ivan-writing` and load it for technical/product prose to or as Ivan and other prose published, submitted, or sent as Ivan. Register does not imply personal voice; internal worker reports stay neutral unless requested. PR and review drafts require explicit operator selection of personal voice under `pr-writing`. The `shared*` profiles omit that personal layer. The `*-context-improved` profiles add strong explicit routing rules for the optional context-improved toolchain; the plain profiles use the baseline routing without those explicit assumptions.
 
 These profile references name the skills. OpenCode loads Hive's copies of `writing-policy`, `writing-for-humans`, `stop-slop`, `humanizer`, and `stop-design-slop`. `scripts/install-profile.sh` leaves leftover copies of those five in `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}` and in the OpenCode config `skills/` directory, prints a `decision needed` conflict line for each, and exits 1 after the install finishes. Cursor installs its copies, including `stop-design-slop`, only into the Cursor config `skills/` directory and leaves an agents-dir copy in place with the same kind of conflict line. A leftover in `~/.claude/skills` still shadows Hive and is not reported by either installer. The fifteen shared canonical skills in the root README install once into `${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}` for both Cursor and OpenCode and are not copied into Cursor `skills/` or the OpenCode config `skills/` directory. The Cursor bundle is pinned to a newer Agent Hive source commit and uses `unslop` and `writing-for-agents` in place of `writing-policy`; `CURSOR.md` explains the pin and the Cursor install lists.
 
@@ -34,15 +34,15 @@ Use this when:
 
 ### `personal-default.md`
 
-Purpose: The shared profile plus Ivan's voice skill. That voice is selected only for prose published, submitted, or sent as Ivan; internal worker reports stay neutral unless requested. PR and review drafts require explicit operator selection of personal voice under `pr-writing`.
+Purpose: The shared profile plus Ivan's writing skill for technical/product prose to or as Ivan and other prose published, submitted, or sent as Ivan. Register does not imply personal voice; internal worker reports stay neutral unless requested. PR and review drafts require explicit operator selection of personal voice under `pr-writing`.
 
 Use this when:
 
-- you want Ivan's voice available for prose published, submitted, or sent as Ivan
+- you want Ivan's technical/product register for prose to or as Ivan and his voice for other prose published, submitted, or sent as Ivan
 - you are comfortable with a more opinionated `AGENTS.md`
 - you want a ready-made profile instead of writing a personal one from scratch
 
-The `ivan-writing` skill is installed automatically by `scripts/install-profile.sh` when this profile is selected. It provides register-specific guidance (technical/operator, professional/application, casual/informal) and voice/cadence/word-choice rules. It is not the default for internal worker reports.
+The `ivan-writing` skill is installed automatically by `scripts/install-profile.sh` when this profile is selected. It provides register-specific guidance (technical/product, professional/application, casual/informal) and personal voice conventions.
 
 ### `shared-context-improved.md`
 
@@ -62,7 +62,7 @@ Purpose: The personal-default profile plus strong routing rules for the optional
 
 Use this when:
 
-- you want the same Ivan-voice selection as personal-default: published, submitted, or sent as Ivan, with internal reports remaining neutral unless requested
+- you want the same writing guidance as personal-default, with internal reports remaining neutral unless requested
 - you have enabled `profiles/optional/opencode.context-improved.json`
 - you have applied `./scripts/enable-optional.sh context-improved` or installed this AGENTS profile with `./scripts/install-profile.sh --apply`
 - you want the AGENTS policy to assume the context-improved tool bundle is present

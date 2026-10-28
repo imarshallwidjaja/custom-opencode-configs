@@ -1056,10 +1056,12 @@ cursor_target_unmodified "${td2}" && pass "2b: no managed paths created after in
 printf '\n=== 3. Opt-in install (marker inside) ===\n'
 td3="${TMPDIR}/test3"; mkdir -p "${td3}"
 sandbox_agents_skills
+cp -a "${BASELINE_PWD}/profiles/personal/skills/ivan-writing/." "${REPO_FIXTURE}/profiles/personal/skills/ivan-writing/"
 CURSOR_CONFIG_DIR="${td3}" CURSOR_INSTALL_IVAN_WRITING=1 bash "${CURSOR_HELPER}" install 2>"${td3}/install.log" && pass "3a: opt-in install succeeded" || fail "3b: opt-in install failed"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "3c: ivan-writing SKILL.md" || fail "3d: ivan-writing SKILL.md not found"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/references/registers.md" ]] && pass "3e: registers.md" || fail "3f: registers.md not found"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/references/examples.md" ]] && pass "3g: examples.md" || fail "3h: examples.md not found"
+diff -r --exclude=.cursor-managed "${BASELINE_PWD}/profiles/personal/skills/ivan-writing" "${AGENTS_SKILLS_DIR}/ivan-writing" >/dev/null && pass "3: Cursor installs the complete personal source tree" || fail "3: Cursor personal skill differs from source"
 [[ ! -e "${td3}/skills/ivan-writing" ]] && pass "3c2: ivan-writing absent from Cursor skills" || fail "3d2: ivan-writing leaked into Cursor skills"
 [[ ! -e "${AGENTS_SKILLS_DIR}/stop-design-slop" ]] && pass "3y0: stop-design-slop absent from agents dir" || fail "3z0: stop-design-slop installed into agents dir"
 for hive_bundled in ${HIVE_BUNDLED_NAMES}; do
@@ -1490,9 +1492,12 @@ printf '\n=== 17c. Personal OpenCode ivan-writing goes to agents dir ===\n'
 td17c="${TMPDIR}/test17c"; mkdir -p "${td17c}"
 build_fixture
 sandbox_agents_skills
+cp -a "${BASELINE_PWD}/profiles/personal/skills/ivan-writing/." "${REPO_FIXTURE}/profiles/personal/skills/ivan-writing/"
+cp "${BASELINE_PWD}/profiles/agents/personal-default.md" "${REPO_FIXTURE}/profiles/agents/personal-default.md"
 OPENCODE_CONFIG_DIR="${td17c}" OPENCODE_AGENTS_PROFILE=personal-default bash "${INSTALL_HELPER}" --apply 2>"${td17c}/err" && pass "17c-a: personal install succeeded" || fail "17c-b: personal install failed: $(cat "${td17c}/err")"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "17c-c: ivan-writing in agents dir" || fail "17c-d: ivan-writing missing from agents dir"
 [[ ! -e "${td17c}/skills/ivan-writing" ]] && pass "17c-e: ivan-writing absent from OpenCode skills" || fail "17c-f: ivan-writing leaked into OpenCode skills"
+diff -r "${BASELINE_PWD}/profiles/personal/skills/ivan-writing" "${AGENTS_SKILLS_DIR}/ivan-writing" >/dev/null && cmp -s "${BASELINE_PWD}/profiles/agents/personal-default.md" "${td17c}/AGENTS.md" && pass "17c: OpenCode installs the personal source tree and loading guidance" || fail "17c: installed personal source tree or loading guidance differs"
 
 printf '\n=== 17c. OpenCode backs up dangling canonical and personal skills ===\n'
 for profile17c in shared personal-default; do
@@ -2448,8 +2453,10 @@ for profile_path in sorted((root / "profiles/agents").glob("*.md")):
     if "Write in Ivan's voice by default" in text:
         errors.append(f"{rel} still defaults to Ivan voice")
     if rel.startswith("profiles/agents/personal-"):
-        if "published, submitted, or sent as Ivan" not in text:
-            errors.append(f"{rel} must load ivan-writing for published/submitted/sent prose")
+        if "technical or product prose prepared to or as Ivan" not in text or "published, submitted, or sent as Ivan" not in text:
+            errors.append(f"{rel} must load ivan-writing for technical/product prose to or as Ivan and authored prose")
+        if "preserve requested neutral, team, or third-party authorship" not in text:
+            errors.append(f"{rel} must preserve requested authorship")
         if "Internal worker reports stay neutral" not in text:
             errors.append(f"{rel} must keep internal worker reports neutral unless requested")
         if "PR and review drafts require explicit operator selection of personal voice under `pr-writing`." not in text:
@@ -2466,6 +2473,12 @@ elif "installed or configured" not in cursor_rules:
     errors.append("default-agent.md must load ivan-writing only when installed or configured")
 if "published, submitted, or sent as Ivan" not in cursor_rules:
     errors.append("default-agent.md must load ivan-writing for published/submitted/sent prose")
+if "technical or product prose prepared to or as Ivan" not in cursor_rules:
+    errors.append("default-agent.md must load ivan-writing for technical/product prose to or as Ivan")
+if "preserve requested neutral, team, or third-party authorship" not in cursor_rules:
+    errors.append("default-agent.md must preserve requested authorship")
+if "PR and review drafts require explicit operator selection of personal voice under `pr-writing`." not in cursor_rules:
+    errors.append("default-agent.md must require explicit personal-voice selection for PR and review drafts")
 
 if not plugin_path.is_file():
     errors.append("profiles/base/plugins/dcg-guard.js missing")
