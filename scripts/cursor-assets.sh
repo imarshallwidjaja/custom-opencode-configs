@@ -85,6 +85,7 @@ CANONICAL_SKILLS=(
   react-best-practices
   resume-tailoring
   running-agile-delivery
+  ui-mockups
   web-design-guidelines
   working-with-atlassian
   writing-work-items
@@ -899,6 +900,20 @@ source_manifests = (
         repo_root / '.apm' / 'skills' / 'running-agile-delivery',
         'running-agile-delivery',
         ('SKILL.md',),
+        WRITING_ALLOWED_KEYS,
+        True,
+    ),
+    (
+        repo_root / '.apm' / 'skills' / 'ui-mockups',
+        'ui-mockups',
+        (
+            'SKILL.md',
+            'references',
+            'references/reference-study.md',
+            'references/storyboards.md',
+            'scripts',
+            'scripts/compose_storyboard.py',
+        ),
         WRITING_ALLOWED_KEYS,
         True,
     ),

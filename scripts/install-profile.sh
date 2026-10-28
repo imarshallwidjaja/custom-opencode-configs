@@ -54,6 +54,7 @@ SHARED_SKILLS=(
   react-best-practices
   resume-tailoring
   running-agile-delivery
+  ui-mockups
   web-design-guidelines
   working-with-atlassian
   writing-work-items

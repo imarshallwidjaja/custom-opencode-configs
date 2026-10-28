@@ -87,6 +87,7 @@ SKILL
   stub_canonical_skill_tree aero-design
   stub_canonical_skill_tree decomposing-work
   stub_canonical_skill_tree running-agile-delivery
+  stub_canonical_skill_tree ui-mockups
   stub_canonical_skill_tree writing-work-items
   stub_canonical_skill_tree working-with-atlassian
 
@@ -1106,6 +1107,7 @@ rm -rf "${AGENTS_SKILLS_DIR:?}/${HIVE_RETIRED_NAME}"
 [[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/SKILL.md" ]] && pass "3s: drawio-skill installed" || fail "3t: drawio-skill canonical skill not installed"
 [[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/bin/run" ]] && pass "3u: drawio-skill bin/run" || fail "3v: drawio-skill extra file not copied"
 [[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/data/shape-index.json.gz" ]] && pass "3w: drawio-skill gzip index" || fail "3x: drawio-skill gzip index not copied"
+diff -r "${REPO_FIXTURE}/.apm/skills/ui-mockups" "${AGENTS_SKILLS_DIR}/ui-mockups" >/dev/null && [[ -f "${AGENTS_SKILLS_DIR}/ui-mockups/references/storyboards.md" && -f "${AGENTS_SKILLS_DIR}/ui-mockups/scripts/compose_storyboard.py" && ! -e "${td3}/skills/ui-mockups" ]] && pass "3ar: ui-mockups complete tree installed once into agents dir, not Cursor skills" || fail "3as: ui-mockups tree incomplete or misplaced by Cursor install"
 diff -r "${REPO_FIXTURE}/.apm/cursor/skills/stop-design-slop" "${td3}/skills/stop-design-slop" >/dev/null && [[ -f "${td3}/skills/stop-design-slop/references/review-rubric.md" && -f "${td3}/skills/stop-design-slop/scripts/contrast_check.py" && -f "${td3}/skills/stop-design-slop/assets/salience-hierarchy.svg" && -f "${td3}/skills/stop-design-slop/examples/README.md" ]] && pass "3y: stop-design-slop complete tree installed into Cursor skills" || fail "3z: stop-design-slop Cursor copy incomplete"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/.cursor-managed" ]] && pass "3m: marker inside ivan-writing" || fail "3n: marker not inside ivan-writing"
 [[ -f "${td3}/skills/agents-md-mastery/SKILL.md" ]] && pass "3ak: Cursor-specific skill still in Cursor skills" || fail "3al: Cursor-specific skill missing from Cursor skills"
@@ -1275,6 +1277,7 @@ cmp -s "${REPO_FIXTURE}/profiles/base/agent_hive.json" "${td12}/agent_hive.json"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/SKILL.md" ]] && pass "12g: shared frontend-slides installed" || fail "12h: shared frontend-slides missing"
 [[ ! -e "${td12}/skills/frontend-slides" ]] && pass "12g2: frontend-slides absent from OpenCode skills" || fail "12h2: frontend-slides leaked into OpenCode skills"
 [[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/SKILL.md" ]] && pass "12i: shared drawio-skill installed" || fail "12j: shared drawio-skill missing"
+diff -r "${REPO_FIXTURE}/.apm/skills/ui-mockups" "${AGENTS_SKILLS_DIR}/ui-mockups" >/dev/null && [[ ! -e "${td12}/skills/ui-mockups" ]] && pass "12i2: shared ui-mockups tree installed once into agents dir, not OpenCode skills" || fail "12j2: ui-mockups tree incomplete or misplaced by OpenCode install"
 for hive_bundled in ${OPENCODE_HIVE_BUNDLED_NAMES}; do
   [[ ! -e "${AGENTS_SKILLS_DIR}/${hive_bundled}" && ! -e "${td12}/skills/${hive_bundled}" ]] && pass "12m0: ${hive_bundled} not created by OpenCode install" || fail "12n0: ${hive_bundled} was created by OpenCode install"
 done
@@ -1410,6 +1413,7 @@ CURSOR_CONFIG_DIRS="${td15a};${td15b}" bash "${CURSOR_HELPER}" install 2>"${TMPD
 [[ -f "${td15a}/skills/stop-slop/SKILL.md" && -f "${td15b}/skills/stop-slop/SKILL.md" && -f "${td15a}/skills/stop-slop/references/examples.md" && -f "${td15b}/skills/stop-slop/references/phrases.md" ]] && pass "15e: stop-slop installed into both Cursor targets" || fail "15f: stop-slop missing from a Cursor target"
 [[ -f "${AGENTS_SKILLS_DIR}/frontend-slides/SKILL.md" ]] && pass "15k: shared frontend-slides in agents dir" || fail "15l: multi-root missing frontend-slides"
 [[ -f "${AGENTS_SKILLS_DIR}/drawio-skill/SKILL.md" ]] && pass "15m: shared drawio-skill in agents dir" || fail "15n: multi-root missing drawio-skill"
+diff -r "${REPO_FIXTURE}/.apm/skills/ui-mockups" "${AGENTS_SKILLS_DIR}/ui-mockups" >/dev/null && [[ ! -e "${td15a}/skills/ui-mockups" && ! -e "${td15b}/skills/ui-mockups" ]] && pass "15m2: multi-root ui-mockups tree in agents dir only, not either Cursor target" || fail "15n2: multi-root ui-mockups tree incomplete or misplaced"
 [[ ! -e "${AGENTS_SKILLS_DIR}/stop-design-slop" ]] && diff -r "${REPO_FIXTURE}/.apm/cursor/skills/stop-design-slop" "${td15a}/skills/stop-design-slop" >/dev/null && diff -r "${REPO_FIXTURE}/.apm/cursor/skills/stop-design-slop" "${td15b}/skills/stop-design-slop" >/dev/null && pass "15o: stop-design-slop installed in full into both Cursor targets, not the agents dir" || fail "15p: multi-root stop-design-slop placement wrong"
 [[ ! -e "${AGENTS_SKILLS_DIR}/writing-for-humans" && -f "${td15a}/skills/writing-for-humans/references/sources.md" && -f "${td15b}/skills/writing-for-humans/references/sources.md" ]] && pass "15q: writing-for-humans installed only into Cursor targets" || fail "15r: multi-root writing-for-humans placement wrong"
 [[ -f "${td15a}/agents/forager.md" ]] && pass "15g: first target agent" || fail "15h: first target missing agent"
@@ -4364,7 +4368,7 @@ if opencode_shared | opencode_local != packaged:
     errors.append(f"installer manifests and .apm/skills differ: {sorted((opencode_shared | opencode_local) ^ packaged)}")
 if "aero-design" not in packaged:
     errors.append("aero-design is not packaged")
-for skill in ("connecting-atlassian-tools", "managing-work-in-jira", "working-with-atlassian"):
+for skill in ("connecting-atlassian-tools", "managing-work-in-jira", "ui-mockups", "working-with-atlassian"):
     if skill not in packaged:
         errors.append(f"{skill} is not packaged")
     if skill not in opencode_shared:
@@ -4372,6 +4376,12 @@ for skill in ("connecting-atlassian-tools", "managing-work-in-jira", "working-wi
     if skill not in cursor_shared:
         errors.append(f"{skill} is missing from Cursor canonical skills")
 cursor_skills = bash_array("scripts/cursor-assets.sh", "SKILLS")
+mockups = root / ".apm/skills/ui-mockups"
+for link in re.findall(r"\]\((references/[^)\s]+)\)", (mockups / "SKILL.md").read_text(encoding="utf-8")):
+    if not (mockups / link).is_file():
+        errors.append(f"ui-mockups links to missing file {link}")
+if not (mockups / "scripts/compose_storyboard.py").is_file():
+    errors.append("ui-mockups is missing its storyboard helper")
 for script in ("scripts/install-profile.sh", "scripts/cursor-assets.sh"):
     if "stop-design-slop" not in bash_array(script, "HIVE_BUNDLED_SKILLS"):
         errors.append(f"{script} does not report stop-design-slop leftovers as Hive-bundled")
