@@ -7,7 +7,7 @@ description: Use when writing technical or product prose to or as Ivan, or when 
 
 Ivan's writing rules. Precedence: facts/meaning/ownership/claim strength/uncertainty > explicit task/audience/register/format > Ivan profile > generic cleanup.
 
-Portable clarity is owned by `writing-for-humans` and the active prose router. This skill selects Ivan's register and, when appropriate, personal voice.
+Portable clarity is owned by `writing-for-humans` and the active prose router. For substantial prose, load `writing-for-humans` before drafting and apply its audience, technical clarity, and artifact guidance where relevant. This skill selects Ivan's register and, when appropriate, personal voice.
 
 Use the technical/product register for technical or product prose prepared to Ivan or authored as Ivan. Voice and register are separate: preserve requested neutral, team, or third-party authorship. Internal worker reports stay neutral unless requested. PR and review drafts require explicit operator selection of personal voice under `pr-writing`.
 
