@@ -1,6 +1,6 @@
 {
-  "commit": "d8de1e7691ebf3716afc0e3469c8743ca64169fb",
-  "packageVersion": "5.1.0",
+  "commit": "bce587395000ebdb4d381d2ad183b2673b374065",
+  "packageVersion": "5.2.0",
   "schemaVersion": 2,
   "skills": {
     "adversarial-review": {
@@ -180,12 +180,12 @@
           "sourceSha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e"
         },
         "SKILL.md": {
-          "installedSha256": "405aff2ed057597ad9f5ee1050d88c2b8d9d77224c9f5e4b7bb6cc7228dcdba3",
-          "sourceSha256": "05a697400c4db176f22422d282bb8b431386a94baf7dfcd97c1095fec9cbc561"
+          "installedSha256": "6da52b19c31f4b0924c62577f36a246869222f1b2652acfe58e45daaca0af035",
+          "sourceSha256": "4a5787b6e49aeb400a7a29a7e176611356079ef2e9db65b324bfc8c238a982c2"
         },
         "UPSTREAM.md": {
-          "installedSha256": "3f53f4af1adde0955f19853b2e36804e43aa2379637af573a9e4165457d6ab89",
-          "sourceSha256": "3f53f4af1adde0955f19853b2e36804e43aa2379637af573a9e4165457d6ab89"
+          "installedSha256": "9e5d11175168bfab74700151061c237fc95b4246508974843e26ab33c6d3e78f",
+          "sourceSha256": "9e5d11175168bfab74700151061c237fc95b4246508974843e26ab33c6d3e78f"
         },
         "references/formal-verification.md": {
           "installedSha256": "f2e0d3791a7d5a95d0ba49aa2397044cb8d3e87194aef4216dd4e2a0571566b1",
@@ -238,8 +238,8 @@
           "sourceSha256": "a37e0e9697144819e1d965176ac4ae5bc3fa02d11e7812036bbcadf6dafe2400"
         },
         "SKILL.md": {
-          "installedSha256": "b49acc38d77655bfc27aeb8403e45d528e64c373495144654960353e79bbc0b1",
-          "sourceSha256": "9af1116dbdce1d1f10544d1cc349e47254732f77802fdd7348c956c31a2d5105"
+          "installedSha256": "a4c72b35628c5fa4c1f42c919a87727f40e894ad5b2b0a49782f6dce45545559",
+          "sourceSha256": "c8697f1da4b5b98a082c2b895de7437946fe14b7669e81d0217206851b1785ee"
         },
         "UPSTREAM.md": {
           "installedSha256": "4f9444c01030c4af85cf73dd3fa5b643cf1d87434177309aad0187587649d3e9",

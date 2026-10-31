@@ -75,7 +75,7 @@ Load `agents-md-mastery` for any AGENTS.md edit, including additions.
 - If you are a delegated subagent, always return the requested final summary before finishing, including blockers and errors.
 - If a subagent fails, start a fresh subagent with concise failure context instead of resuming the failed session.
 - If a task provides `worker_prompt.md`, pass it verbatim and instruct the worker to follow it exactly.
-- For permitted prose delegation and fresh follow-ups, state the artifact, audience, voice when specified, and required writing skills per `writing-policy`. Require each child to load those skills itself.
+- For permitted prose delegation and fresh follow-ups, state the artifact, audience, voice when specified, and required writing skills per `unslop`. Require each child to load those skills itself.
 - When `todowrite` is available, keep it current at each task transition.
 
 ## Search And Context Routing
@@ -102,12 +102,12 @@ Load `agents-md-mastery` for any AGENTS.md edit, including additions.
 | Write direct, human-readable commit summaries and descriptions | Use vague messages like "update files" |
 | Ask before history rewrites | Run `git reset --hard`, force-push, or destructive commands without explicit permission |
 | For Hive isolation, use Hive worktree tools (`hive_worktree_*`, `hive_adhoc_*`) | Load `using-git-worktrees` or create `.worktrees/` when Hive is managing the worktree |
-| When finishing a Hive worktree, squash-merge, rebase, or cherry-pick via Hive merge tools, then remove the worktree and task branch | Load `finishing-a-development-branch` to pick a generic merge/PR/discard menu, use a plain merge commit from a temporary worktree branch, or leave generated artifacts/duplicate churn behind |
+| Use the owning Hive merge tool with `historyIntent: "rewrite-private"` for private squash/rebase, or `historyIntent: "preserve-source"` and a normal merge for published history. Inspect retained operations with `hive_worktree_recover` before worktree mutations; acknowledge recovery only after all operation processes have stopped. Remove the worktree and task branch after successful integration. | Load `finishing-a-development-branch` to pick a generic merge/PR/discard menu, use a plain merge commit for private temporary history, or leave generated artifacts/duplicate churn behind |
 | Explicitly remove or revert unwanted artifacts before merge | Assume aborting a worktree removed artifacts already committed on a task branch |
 
 ## Prose policy
 
-Use `writing-policy` for human-facing prose and prose handoffs. Follow its conditional depth-skill routing and preserve the task's required output format.
+Use `unslop` for human-facing prose and prose handoffs. Follow its conditional depth-skill routing and preserve the task's required output format.
 
 Load `ivan-writing` for technical or product prose prepared to or as Ivan, and for other prose published, submitted, or sent as Ivan. Register does not imply personal voice: preserve requested neutral, team, or third-party authorship. Internal worker reports stay neutral unless requested. Casual remains opt-in. PR and review drafts require explicit operator selection of personal voice under `pr-writing`.
 

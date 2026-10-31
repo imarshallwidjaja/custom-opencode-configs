@@ -35,6 +35,11 @@ OPENCODE_LOCAL_SKILLS=(
   writing-skills
 )
 OPENCODE_RETIRED_SKILLS=(
+  code-reviewer
+  docker-mastery
+  verification-before-completion
+  verification-reviewer
+  writing-policy
   ast-grep
   using-git-worktrees
   finishing-a-development-branch
@@ -60,28 +65,34 @@ SHARED_SKILLS=(
   writing-work-items
 )
 HIVE_BUNDLED_SKILLS=(
-  humanizer
-  stop-design-slop
-  stop-slop
-  writing-for-humans
-  writing-policy
-)
-HIVE_OWNED_SKILLS=(
   adversarial-review
   agents-md-mastery
   background-delegation
   brainstorming
-  code-reviewer
+  code-design-principles
+  complexity-audit
+  complexity-review
+  context-engineering
   dispatching-parallel-agents
-  docker-mastery
   executing-plans
   grilling
+  hive-config
+  how
+  humanizer
+  orchestrating-ad-hoc-work
   parallel-exploration
+  pr-writing
+  project-verification
+  starting-ad-hoc-implementation
+  stop-design-slop
+  stop-slop
   systematic-debugging
   test-driven-development
+  unslop
   verification
-  verification-before-completion
-  verification-reviewer
+  why
+  writing-for-agents
+  writing-for-humans
   writing-plans
 )
 AGENTS_SOURCE="${REPO_ROOT}/profiles/agents/${AGENTS_PROFILE}.md"
@@ -233,13 +244,11 @@ report_opencode_skill_decisions() {
       note_conflict_if_outside "${path}" "Hive materialization"
     fi
   done
-  for skill_name in "${HIVE_OWNED_SKILLS[@]}"; do
-    path="${TARGET_DIR}/skills/${skill_name}"
-    if [[ -e "${path}" || -L "${path}" ]]; then
-      note_conflict_if_outside "${path}" "Hive materialization"
-    fi
-  done
   for skill_name in "${OPENCODE_RETIRED_SKILLS[@]}"; do
+    path="${AGENTS_SKILLS_DIR}/${skill_name}"
+    if [[ -e "${path}" || -L "${path}" ]]; then
+      note_unversioned "${path}"
+    fi
     path="${TARGET_DIR}/skills/${skill_name}"
     if [[ -e "${path}" || -L "${path}" ]]; then
       note_unversioned "${path}"

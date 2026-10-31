@@ -26,8 +26,9 @@ REPO_FIXTURE="${TMPDIR}/reporoot"
 # Cursor skills that Hive also bundles, and the name the Cursor bundle retired.
 HIVE_BUNDLED_NAMES="humanizer stop-design-slop stop-slop unslop writing-for-agents writing-for-humans"
 HIVE_RETIRED_NAME=writing-policy
-# The OpenCode profile supports the oc-arkive v3.0.0 bundle, which still ships writing-policy and lacks unslop.
-OPENCODE_HIVE_BUNDLED_NAMES="humanizer stop-design-slop stop-slop writing-for-humans writing-policy"
+OPENCODE_HIVE_BUNDLED_NAMES="adversarial-review agents-md-mastery background-delegation brainstorming code-design-principles complexity-audit complexity-review context-engineering dispatching-parallel-agents executing-plans grilling hive-config how humanizer orchestrating-ad-hoc-work parallel-exploration pr-writing project-verification starting-ad-hoc-implementation stop-design-slop stop-slop systematic-debugging test-driven-development unslop verification why writing-for-agents writing-for-humans writing-plans"
+OPENCODE_RETIRED_NAMES="writing-policy code-reviewer docker-mastery verification-before-completion verification-reviewer ast-grep using-git-worktrees finishing-a-development-branch consolidate-test-suites root-cause-finder context-mode"
+OPENCODE_SHADOW_NAMES="${OPENCODE_HIVE_BUNDLED_NAMES} ${OPENCODE_RETIRED_NAMES}"
 
 stub_canonical_skill_tree() {
   local skill_name="$1"
@@ -383,6 +384,46 @@ for cli_case in preview help unknown positional empty duplicate-apply duplicate-
   done
 done
 set --
+
+# Every current or retired Hive name is preserved and reported in both roots.
+printf '\n=== OpenCode Hive shadow classification ===\n'
+shadow_scope="${TMPDIR}/hive-shadows"
+mkdir -p "${shadow_scope}/target/skills" "${shadow_scope}/shared" "${shadow_scope}/home"
+for shadow_name in ${OPENCODE_SHADOW_NAMES}; do
+  for shadow_root in "${shadow_scope}/target/skills" "${shadow_scope}/shared"; do
+    mkdir -p "${shadow_root}/${shadow_name}"
+    printf 'keep %s\n' "${shadow_name}" > "${shadow_root}/${shadow_name}/SKILL.md"
+  done
+done
+shadow_before="$(snapshot_tree "${shadow_scope}")"
+shadow_status=0
+HOME="${shadow_scope}/home" PATH=/usr/bin:/bin OPENCODE_CONFIG_DIR="${shadow_scope}/target" AGENTS_SKILLS_DIR="${shadow_scope}/shared" \
+  bash "${INSTALL_HELPER}" >"${TMPDIR}/hive-shadow-preview.log" 2>&1 || shadow_status=$?
+[[ "${shadow_status}" -eq 1 && "${shadow_before}" == "$(snapshot_tree "${shadow_scope}")" ]] \
+  && pass "Hive shadow preview exits 1 without mutation" || fail "Hive shadow preview status or preservation"
+for shadow_mode in preview apply; do
+  if [[ "${shadow_mode}" == apply ]]; then
+    shadow_status=0
+    HOME="${shadow_scope}/home" PATH=/usr/bin:/bin OPENCODE_CONFIG_DIR="${shadow_scope}/target" AGENTS_SKILLS_DIR="${shadow_scope}/shared" \
+      bash "${INSTALL_HELPER}" --apply >"${TMPDIR}/hive-shadow-apply.log" 2>&1 || shadow_status=$?
+    [[ "${shadow_status}" -eq 1 && -f "${shadow_scope}/target/agent_hive.json" ]] \
+      && pass "Hive shadow apply completes managed install then exits 1" || fail "Hive shadow apply aggregate exit"
+  fi
+  for shadow_name in ${OPENCODE_SHADOW_NAMES}; do
+    case " ${OPENCODE_HIVE_BUNDLED_NAMES} " in
+      *" ${shadow_name} "*) shadow_classification="conflict"; shadow_description="is outside the managed install path Hive materialization" ;;
+      *) shadow_classification="unversioned"; shadow_description="is not packaged by this install" ;;
+    esac
+    for shadow_root in "${shadow_scope}/target/skills" "${shadow_scope}/shared"; do
+      if grep -Fqx "keep ${shadow_name}" "${shadow_root}/${shadow_name}/SKILL.md" \
+        && grep -Fqx "decision needed: ${shadow_classification}: ${shadow_root}/${shadow_name} ${shadow_description}; left in place" "${TMPDIR}/hive-shadow-${shadow_mode}.log"; then
+        pass "${shadow_mode}: preserved and reported ${shadow_root##*/}/${shadow_name}"
+      else
+        fail "${shadow_mode}: missed or changed ${shadow_root}/${shadow_name}"
+      fi
+    done
+  done
+done
 
 # Preflight: helpers exist
 # ---------------------------------------------------------------------------
@@ -1313,7 +1354,6 @@ done
 [[ -z "${retired12}" ]] && pass "12y: retired OpenCode workflow skills are not installed" || fail "12z: retired OpenCode workflow skills still installed:${retired12}"
 [[ -f "${td12}/commands/reflect.md" ]] && pass "12o: OpenCode reflect command installed" || fail "12p: OpenCode reflect command missing"
 cmp -s "${REPO_FIXTURE}/.apm/prompts/reflect.prompt.md" "${td12}/commands/reflect.md" && pass "12q: OpenCode reflect content installed byte-for-byte" || fail "12r: OpenCode reflect content changed during install"
-[[ ! -e "${td12}/skills/agents-md-mastery" ]] && pass "12s: OpenCode installer excludes Cursor agents-md-mastery" || fail "12t: OpenCode installer leaked Cursor agents-md-mastery"
 build_fixture
 
 # ---------------------------------------------------------------------------
@@ -2359,7 +2399,7 @@ for path, value in walk(hive):
         errors.append(f"shared Agent Hive config contains personal-only skill {value} at {path}")
 
 depth = {"writing-for-humans", "humanizer", "stop-slop"}
-router = "writing-policy"
+router = "unslop"
 configured_no_skills = {"hive-helper"}
 for name, expected in docs_specialists.items():
     skills = configured_inherited_skills(name)
@@ -2390,7 +2430,7 @@ for name in list(agents) + list(custom):
     if name not in docs_specialists and depth.intersection(skills):
         errors.append(f"{name} must not auto-load prose depth skills {sorted(depth.intersection(skills))}")
 if configured_inherited_skills("forager-documents")[:2] != ["verification", router]:
-    errors.append("forager-documents configured inherited skills must start with verification then writing-policy")
+    errors.append("forager-documents configured inherited skills must start with verification then unslop")
 
 # The Cursor bundle routes prose through unslop, which is imported whole; keep only the routing contract the Rules and agents rely on.
 skill_path = root / ".apm/cursor/skills/unslop/SKILL.md"
@@ -2438,8 +2478,8 @@ for profile_path in sorted((root / "profiles/agents").glob("*.md")):
         errors.append(f"{rel} must have one short Prose policy section")
     else:
         prose = prose_sections[0]
-        if "Use `writing-policy` for human-facing prose and prose handoffs." not in prose:
-            errors.append(f"{rel} must reference writing-policy in its Prose policy section")
+        if "Use `unslop` for human-facing prose and prose handoffs." not in prose:
+            errors.append(f"{rel} must reference unslop in its Prose policy section")
         if "conditional depth-skill routing" not in prose or "required output format" not in prose:
             errors.append(f"{rel} must retain conditional prose routing and required output format")
         if len(prose.split()) > 100:
@@ -3090,7 +3130,7 @@ for relative in docs:
     text = (root / relative).read_text(encoding='utf-8')
     lowered = text.casefold()
     required = (
-        ('provenance-pinned to oc-arkive 5.1.0', 'Engineering Judgment provenance pin'),
+        ('bce587395000ebdb4d381d2ad183b2673b374065', 'Engineering Judgment provenance pin'),
         ('opencode receives engineering judgment from the installed plugin', 'OpenCode delivery'),
         ('cursor cannot load the plugin prompt directly', 'Cursor plugin limitation'),
         ('each installed agent file carries', 'agent composition'),
@@ -3107,8 +3147,8 @@ for relative in docs:
 vendor = root / 'vendor/oc-arkive/engineering-judgment/engineering-judgment.md'
 provenance = json.loads((vendor.parent / 'provenance.json').read_text(encoding='utf-8'))
 expected_release = {
-    'commit': 'd8de1e7691ebf3716afc0e3469c8743ca64169fb',
-    'packageVersion': '5.1.0',
+    'commit': 'bce587395000ebdb4d381d2ad183b2673b374065',
+    'packageVersion': '5.2.0',
 }
 for field, expected in expected_release.items():
     if provenance.get(field) != expected:
@@ -3184,12 +3224,12 @@ agents = Path(sys.argv[2])
 err = Path(sys.argv[3]).read_text(encoding='utf-8')
 skills = target / 'skills'
 errors = []
-for name in ('brainstorming', 'systematic-debugging', 'test-driven-development', 'ast-grep', 'using-git-worktrees', 'finishing-a-development-branch', 'consolidate-test-suites', 'root-cause-finder', 'context-mode'):
+for name in ('ast-grep', 'using-git-worktrees', 'finishing-a-development-branch', 'consolidate-test-suites', 'root-cause-finder', 'context-mode'):
     if (skills / name).exists():
         errors.append(f'installed OpenCode skill {name}')
-    if name in ('brainstorming', 'systematic-debugging', 'test-driven-development', 'ast-grep') and (agents / name).exists():
+    if (agents / name).exists():
         errors.append(f'installed agents skill {name}')
-for name in ('humanizer', 'stop-design-slop', 'stop-slop', 'writing-for-humans', 'writing-policy'):
+for name in ('brainstorming', 'systematic-debugging', 'test-driven-development', 'humanizer', 'stop-design-slop', 'stop-slop', 'writing-for-humans', 'unslop', 'writing-for-agents'):
     if (skills / name / 'SKILL.md').read_text(encoding='utf-8') != f'stale opencode {name}\n':
         errors.append(f'{name} OpenCode copy was not left in place')
     if (agents / name / 'SKILL.md').read_text(encoding='utf-8') != f'stale agents {name}\n':
@@ -3237,7 +3277,7 @@ provenance = json.loads(provenance_path.read_text(encoding='utf-8'))
 errors = []
 if provenance.get('schemaVersion') != 2:
     errors.append('provenance schemaVersion must be 2')
-if provenance.get('commit') != 'd8de1e7691ebf3716afc0e3469c8743ca64169fb' or provenance.get('packageVersion') != '5.1.0':
+if provenance.get('commit') != 'bce587395000ebdb4d381d2ad183b2673b374065' or provenance.get('packageVersion') != '5.2.0':
     errors.append(f'unexpected Hive skill pin: {provenance.get("commit")!r} {provenance.get("packageVersion")!r}')
 engineering = json.loads((root / 'vendor/oc-arkive/engineering-judgment/provenance.json').read_text(encoding='utf-8'))
 if engineering.get('commit') != provenance.get('commit') or engineering.get('packageVersion') != provenance.get('packageVersion'):
@@ -3928,7 +3968,7 @@ rm -f "${REPO_FIXTURE}/.apm/prompts/interview-drill-down.prompt.md"
 expect_validate_fail "shared command without its canonical source is rejected" "missing canonical shared command source"
 
 # Installers agree on the Hive-bundled and retired classification.
-if python3 - "${BASELINE_PWD}" <<'PY'
+if python3 - "${BASELINE_PWD}" "${OPENCODE_HIVE_BUNDLED_NAMES}" <<'PY'
 import importlib.util
 import re
 import sys
@@ -3949,11 +3989,14 @@ spec.loader.exec_module(sync)
 errors = []
 cursor_bundled = array('scripts/cursor-assets.sh', 'HIVE_BUNDLED_SKILLS')
 opencode_bundled = array('scripts/install-profile.sh', 'HIVE_BUNDLED_SKILLS')
-# The Cursor bundle is pinned to a newer Agent Hive source than the OpenCode baseline, so the two sets differ on purpose.
+# Cursor installs a selected subset; OpenCode detects every plugin-owned name.
 if cursor_bundled != {'humanizer', 'stop-design-slop', 'stop-slop', 'unslop', 'writing-for-agents', 'writing-for-humans'}:
     errors.append(f'Cursor Hive-bundled skills drifted: {sorted(cursor_bundled)}')
-if opencode_bundled != {'humanizer', 'stop-design-slop', 'stop-slop', 'writing-for-humans', 'writing-policy'}:
-    errors.append(f'OpenCode Hive-bundled skills must match the oc-arkive v3.0.0 baseline: {sorted(opencode_bundled)}')
+expected_opencode = set(sys.argv[2].split())
+if opencode_bundled != expected_opencode:
+    errors.append(f'OpenCode Hive-bundled skills must match all 29 current names: {sorted(opencode_bundled)}')
+if 'writing-policy' not in array('scripts/install-profile.sh', 'OPENCODE_RETIRED_SKILLS'):
+    errors.append('OpenCode must report retired writing-policy')
 if 'writing-policy' in cursor_bundled:
     errors.append('retired writing-policy must not be classified as Hive-bundled for Cursor')
 if 'writing-policy' not in array('scripts/cursor-assets.sh', 'RETIRED_SKILLS') or 'writing-policy' not in array('scripts/cursor-assets.sh', 'RETIRED_AGENTS_SKILLS'):
@@ -3976,6 +4019,44 @@ then
   pass "68t: each installer classifies Hive-bundled and retired skills for its own baseline, and sync, install list, and shared commands agree"
 else
   fail "68t: installer classification, sync list, or shared command list drifted"
+fi
+
+# Base-profile compatibility and merge/recovery instructions are public contracts.
+if python3 - "${BASELINE_PWD}" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+errors = []
+for name, heading in (
+    ('README.md', '## Requirements'),
+    ('FOR-LLM-AGENTS.md', '### 2. Check the required base prerequisites'),
+):
+    text = (root / name).read_text(encoding='utf-8')
+    section = re.split(r'^#{1,3} ', text.split(heading + '\n', 1)[1], maxsplit=1, flags=re.MULTILINE)[0]
+    if 'OpenCode v1 >= 1.18.30' not in section or 'This profile targets OpenCode v1 only.' not in section:
+        errors.append(f'{name}: base prerequisites must retain the v1 floor and v1-only scope')
+    if re.search(r'\bv2\b|OpenCode 2', section, re.IGNORECASE):
+        errors.append(f'{name}: base prerequisites must not claim v2 support')
+for name in ('README.md', 'FOR-LLM-AGENTS.md', 'profiles/agents/README.md', 'profiles/optional/README.md'):
+    if 'Ownership and skill inventory were checked against `oc-arkive` 5.2.0' not in (root / name).read_text(encoding='utf-8'):
+        errors.append(f'{name}: missing scoped ownership/inventory baseline')
+merge_do = 'Use the owning Hive merge tool with `historyIntent: "rewrite-private"` for private squash/rebase, or `historyIntent: "preserve-source"` and a normal merge for published history. Inspect retained operations with `hive_worktree_recover` before worktree mutations; acknowledge recovery only after all operation processes have stopped. Remove the worktree and task branch after successful integration.'
+merge_dont = 'Load `finishing-a-development-branch` to pick a generic merge/PR/discard menu, use a plain merge commit for private temporary history, or leave generated artifacts/duplicate churn behind'
+for profile in ('shared', 'shared-context-improved', 'personal-default', 'personal-context-improved'):
+    text = (root / f'profiles/agents/{profile}.md').read_text(encoding='utf-8')
+    if text.count(f'| {merge_do} | {merge_dont} |') != 1:
+        errors.append(f'{profile}: missing exact merge history intent and guarded recovery row')
+    if 'cherry-pick via Hive merge tools' in text:
+        errors.append(f'{profile}: obsolete merge instruction remains')
+if errors:
+    raise SystemExit('\n'.join(errors))
+PY
+then
+  pass "base docs retain v1-only compatibility and all four profiles retain merge/recovery contract"
+else
+  fail "base compatibility or profile merge/recovery contract drifted"
 fi
 
 # Shared prompts keep argument handling that works in OpenCode and Cursor.

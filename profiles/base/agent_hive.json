@@ -90,7 +90,7 @@
       "model": "openai/gpt-6-luna",
       "variant": "high",
       "autoLoadSkills": [
-        "writing-policy",
+        "unslop",
         "writing-for-humans"
       ]
     },
@@ -129,7 +129,7 @@
       "model": "openai/gpt-6-luna",
       "variant": "high",
       "autoLoadSkills": [
-        "writing-policy",
+        "unslop",
         "writing-for-humans"
       ]
     },
@@ -140,7 +140,7 @@
       "variant": "medium",
       "autoLoadSkills": [
         "adversarial-review",
-        "writing-policy",
+        "unslop",
         "writing-for-humans"
       ]
     },
