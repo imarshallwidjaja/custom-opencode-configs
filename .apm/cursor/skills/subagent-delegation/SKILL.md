@@ -36,7 +36,7 @@ Each Cursor subagent or lane prompt must be self-contained and Cursor-native. Do
 - Goal and acceptance criteria
 - Target root, and the governing workspace root when it differs
 - Files or areas in scope, and files or areas out of scope
-- File ownership: the paths or worktree this child may change, and the paths concurrent siblings own
+- File ownership: the responsibility this child owns, the worktree or placement it may change, and the exact paths concurrent siblings or a public contract own. Cited files are discovery leads, not an allowlist; name exact paths only where siblings or a public contract meet, and keep any hard boundary the operator wrote
 - Preserved contracts: behavior, interfaces, and persisted shapes that must not change
 - Binding decisions in force, each with the reason the worker needs it; mark sketches and private hints as illustrative so the worker may adapt them
 - Known facts and evidence with file and line references; do not write "based on your findings"
@@ -44,9 +44,9 @@ Each Cursor subagent or lane prompt must be self-contained and Cursor-native. Do
 - Dependencies and assumptions
 - Constraints, including standing operator requirements copied verbatim
 - Pointers to governing instructions
-- Authority: the mission mode (implement, fix, refactor, or report-only diagnosis), whether the child commits and returns a source commit SHA, and the decisions made only in this session. A child without commit authority returns the base identity, its attributable changed and untracked files, and the checks it ran. In-place and diagnosis missions authorize no commit; merge, push, and cleanup stay with the parent
-- Destination identity: the inspected path, full ref, and commit, and the instruction to reinspect it at coherent milestones and before returning
-- Verification commands expected for that lane, and the candidate each result must cover
+- Authority: the mission mode (implement, fix, refactor, or report-only diagnosis, which includes verify-only work coupled to the lane), whether the child commits and returns a source commit SHA (one per repository when several are involved), and the decisions made only in this session. A child without commit authority returns the base identity, its attributable changed and untracked files, and the checks it ran. In-place and diagnosis missions authorize no commit; integration, push, and cleanup stay with the parent, and a source-side merge happens only under a reconciliation assignment (below). Standalone diagnosis, experiments, and verify-only runs go to `investigator` with an experiment assignment (below)
+- Destination identity: the checkpoint recorded at placement, as path, full ref, and commit (one identity per repository when several are involved), and the instruction to reinspect it at coherent milestones and before returning
+- Verification commands expected for that lane, and the candidate each result must cover. When the checks are not settled, say so; the child then selects them with `verification`, starting from the candidate repository's own guidance
 - Required skills, named exactly. The child loads each one itself, because parent-loaded skills do not propagate
 - Required final summary format
 - Prose contract: for a prose deliverable, state the artifact, audience, voice when specified, and the required writing skills, and require the child to load `unslop` and those skills itself
@@ -64,6 +64,56 @@ Binding decision: the check lives in loadClientConfig because the socket layer m
 Checks: run the package test file and type-check; report their output with the commit you tested.
 Authority: fix and commit in /work/client and return the exact commit SHA. Do not merge, push, or clean up.
 Destination: /work/client, refs/heads/main, 9f3c2a1. Reinspect before returning and report any movement that touches config.ts.
+```
+
+## Reconciliation Assignments
+
+When the destination's same path and ref moved in a way that touches the lane, keep the original checkpoint A unchanged and record the newly observed target T (path, full ref, immutable commit) as a separate identity. A different path or ref, or unrelated history, is not reconciled; ask the operator. Only a lane with commit authority gets a reconciliation assignment, and only after its previous writer has ended. It goes to a fresh `forager` in the same placement and states:
+
+- That it is a reconciliation, with commit authority
+- A, the original checkpoint, as comparison history
+- S, the current verified source pin
+- T, the target to merge, with path, full ref, and commit
+- The checks to run on the combined result and the files the move touched
+- The return: the new verified pin S' and the T commit it merged
+
+With several repositories, the assignment carries A, S, and T per repository. A lane without commit authority gets no reconciliation assignment: its worker returns the drift as a blocker, and the parent settles it with the operator. Recheck the destination against T immediately before integration; a further move needs a new decision and a new checkpoint, never an overwrite of A or T.
+
+Shape of a reconciliation assignment (fictional repository):
+
+```text
+Reconcile, with commit authority, in /work/client-worktrees/negative-timeout (the previous writer has ended).
+A (original checkpoint): /work/client, refs/heads/main, 9f3c2a1. Keep for comparison; do not merge it.
+S (current verified source pin): 4b7e0d2.
+T (target to merge): /work/client, refs/heads/main, c81a5f9. It touched packages/client/src/config.ts.
+Merge c81a5f9 into 4b7e0d2 with a normal merge, adapt the timeout check, run the package tests and type-check, and commit.
+Return S' and the T commit you merged. Report, do not chase, any move past c81a5f9.
+```
+
+## Experiment Assignments
+
+An `investigator` assignment follows the Rules' Experiments section. It names:
+
+- The question, the mode (assess, reproduce or diagnose, experiment, or verify only), and the operator instruction that covers the run
+- The subject: for a repository candidate, the checkout, the ref or commit, and the relevant staged, unstaged, and untracked changes, never a HEAD standing in for an uncommitted candidate; for runtime work, the URL, session, service, or environment and its resources; for an assessment, the materials to read
+- The behavior, journeys, or outputs to exercise and the evidence that would show them working or failing
+- The allowed variants, effects, resources, and scratch paths
+- The placement path and branch for a repository run, or the original checkout only under the Rules' fallback conditions
+- The evidence destination outside every checkout and placement the run exercises or removes
+- The stopping conditions, and who cleans up what
+
+A source assessment omits the run, placement, and cleanup fields.
+
+Shape of an experiment assignment (fictional repository):
+
+```text
+Mode: reproduce. Question: does loadClientConfig accept timeoutMs: -1 on the submitted candidate?
+Authority: the operator asked to debug this failure locally; installs, a build, and the package tests are covered.
+Candidate: /work/client at 9f3c2a1 plus the unstaged diff to packages/client/src/config.ts and the untracked fixture packages/client/fixtures/negative.json.
+Placement: /work/client-worktrees/repro-negative-timeout on branch repro-negative-timeout at 9f3c2a1; apply the diff and copy the fixture before the first run.
+Variants: one logging probe in config.ts is allowed; label its delta.
+Evidence: write logs and the test output to /tmp/client-repro-evidence/.
+Stop: when the failure reproduces with a supported cause, or after the unchanged candidate and the probe both run. Clean up your probe and scaffolding; the parent removes the worktree.
 ```
 
 ## Reviewer Packets
@@ -96,7 +146,7 @@ For writing Cursor subagents or lanes, assign ownership up front:
 - Parallel writing lanes each get their own git worktree or isolated copy. One writer may use the shared checkout when no other writer is active. If a separate placement cannot be created, report the blocker. Do not put two writers in one checkout, even on disjoint paths.
 - Direct shared-checkout edits remain valid for a single writer: an explicit request to continue existing uncommitted work, a small mechanical edit on a clean tree with no other writer, or work already inside the isolated directory.
 - Keep the parent as integration owner, responsible for reading final summaries, inspecting diffs, resolving conflicts, and running combined verification.
-- A scout that must understand a failure still only retrieves evidence; the parent reasons over it, and non-trivial diagnosis goes to `forager` or `approach-advisor` as a report-only mission.
+- A scout that must understand a failure still only retrieves evidence; the parent reasons over it. Non-trivial standalone diagnosis goes to `investigator` or `approach-advisor` as a report-only mission, and diagnosis coupled to an implementation lane stays with its `forager`.
 
 ## Failure Handling
 
@@ -125,7 +175,8 @@ After lanes finish:
 - Resolve conflicts intentionally and rerun affected checks.
 - Commit only under the integration authority settled before placement and only with the recorded command output.
 - Cleanup isolated working directories and temporary artifacts only after integration, verification, diff review, and review gates are complete.
-- Prefer squash-style integration when it keeps main history compact and worker commit churn is not useful. Preserve branch history only when the topology itself carries useful information or the user asks for it.
+- Declare each repository's history intent before integrating. Squash private worker history when churn is not useful; integrate published commits with a normal merge and verify `git merge-base --is-ancestor <published-tip> <destination>` before removing the source. `finishing-a-development-branch` holds the steps.
+- An experiment lane has no integration step: its evidence is the result, and it closes after cleanup.
 
 ## Red Flags
 
@@ -141,7 +192,10 @@ After lanes finish:
 - Recursive delegation by a worker or reviewer.
 - Parent implementation that duplicates an active or completed delegated lane.
 - Treating worktree creation as permission to commit, merge, or push.
+- A worker merging the destination into its source without a reconciliation assignment, or merging checkpoint A instead of the recorded target T.
+- Merging or applying an investigator's variant code, or treating its evidence as a delivered patch.
+- Keeping the only copy of experiment or failure evidence inside a worktree Cursor may prune.
 
 ## Provenance
 
-Cursor-only skill with no Hive source skill. Its worker and reviewer handoff fields adapt the worker-assignment, review-handoff, and review-follow-up guidance in the agent prompts of Agent Hive (`oc-arkive` package 5.0.0, commit `e1d968c5e53cdb03c95849b32b7bc9cbb7de47fc`) and the invariants of its parallel-dispatch skill, by hand and without Hive tools. This skill is not synced.
+Cursor-only skill with no Hive source skill. Its worker, experiment, and reviewer handoff fields adapt the worker-assignment, experiment-method, review-handoff, and review-follow-up guidance in the agent prompts of Agent Hive (`oc-arkive` package 5.2.0, commit `bce587395000ebdb4d381d2ad183b2673b374065`) and the invariants of its parallel-dispatch skill, by hand and without Hive tools. This skill is not synced.

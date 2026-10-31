@@ -7,14 +7,17 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 DEFAULT_TARGET_DIR="${CURSOR_CONFIG_DIR:-${HOME}/.cursor}"
 AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-${HOME}/.agents/skills}"
 EJ_SOURCE="${REPO_ROOT}/vendor/oc-arkive/engineering-judgment/engineering-judgment.md"
-# Compose separator shared by Rules and agent prompts: the Engineering Judgment
-# snapshot follows the source body after a horizontal rule.
+# Compose separator shared by Rules and agent prompts: the capability contract
+# from the asset root, then the Engineering Judgment snapshot, follow the source
+# body after a horizontal rule.
 COMPOSE_SEPARATOR=$'\n---\n\n'
+CAPABILITY_CONTRACT_PATH="rules/capability-contract.md"
 
 AGENTS=(
   approach-advisor
   code-reviewer
   forager
+  investigator
   plan-reviewer
   scout
   simplicity-reviewer
@@ -276,9 +279,11 @@ expected_commands = set(os.environ['COMMAND_NAMES'].split())
 shared_commands = set(os.environ['SHARED_COMMAND_NAMES'].split())
 expected_skills = set(os.environ['SKILL_NAMES'].split())
 retired_skills = set(os.environ['RETIRED_SKILL_NAMES'].split())
-# Subagents whose role is read-only. Cursor enforces readonly only when the
-# frontmatter says so, so the flag must match the role.
-writing_agents = {'forager'}
+# Subagents that write files: forager implements, and investigator writes only
+# scratch files and probes in an authorized experiment placement. Every other
+# role is read-only, and Cursor enforces readonly only when the frontmatter says
+# so, so the flag must match the role.
+writing_agents = {'forager', 'investigator'}
 # Hive skills Cursor does not ship because they drive Hive tools or state.
 undelivered_hive_skills = {
     'background-delegation',
@@ -503,6 +508,19 @@ for required_dir in ('agents', 'commands', 'skills', 'rules'):
 rules_file = root / 'rules' / 'default-agent.md'
 if not rules_file.is_file():
     fail('missing required file: rules/default-agent.md')
+if not (root / 'rules' / 'capability-contract.md').is_file():
+    fail('missing required file: rules/capability-contract.md')
+
+# The Rules route every installed agent: the Cursor Subagents section lists each
+# roster name exactly once as a "- `name`:" line, and names no other agent.
+if rules_file.is_file():
+    route_section = re.search(r'^## Cursor Subagents\n(.*?)(?=^## |\Z)', read_text(rules_file), re.MULTILINE | re.DOTALL)
+    routed = re.findall(r'^- `([a-z0-9-]+)`:', route_section.group(1), re.MULTILINE) if route_section else []
+    for agent_name in sorted(expected_agents):
+        if routed.count(agent_name) != 1:
+            fail(f'rules/default-agent.md Cursor Subagents must route `{agent_name}` exactly once; found {routed.count(agent_name)}')
+    for agent_name in sorted(set(routed) - expected_agents):
+        fail(f'rules/default-agent.md Cursor Subagents routes `{agent_name}`, which is not an installed agent')
 
 check_exact_names(root / 'agents', '.md', expected_agents, 'agents')
 check_exact_names(root / 'commands', '.md', expected_commands, 'commands')
@@ -738,7 +756,7 @@ source_manifests = (
         WRITING_ALLOWED_KEYS,
     ),
     (
-        repo_root / '.apm' / 'cursor' / 'skills' / 'stop-design-slop',
+        root / 'skills' / 'stop-design-slop',
         'stop-design-slop',
         (
             'LICENSE.impeccable',
@@ -999,6 +1017,7 @@ root = Path(sys.argv[1])
 repo_root = Path(sys.argv[2])
 exec(os.environ['FORBIDDEN_PATTERN_SOURCE'])
 rules = root / 'rules' / 'default-agent.md'
+contract = root / 'rules' / 'capability-contract.md'
 vendor = repo_root / 'vendor' / 'oc-arkive' / 'engineering-judgment' / 'engineering-judgment.md'
 provenance_path = vendor.parent / 'provenance.json'
 
@@ -1029,11 +1048,14 @@ def require_regular_file(path, label, expected_root):
         raise SystemExit(1)
 
 require_regular_file(rules, 'rules/default-agent.md', root)
+require_regular_file(contract, 'rules/capability-contract.md', root)
 require_regular_file(vendor, 'vendor/oc-arkive/engineering-judgment/engineering-judgment.md', vendor.parent)
 require_regular_file(provenance_path, 'vendor/oc-arkive/engineering-judgment/provenance.json', vendor.parent)
 
 try:
     rules_bytes = rules.read_bytes()
+    contract_bytes = contract.read_bytes()
+    contract_bytes.decode('utf-8')
     vendor_bytes = vendor.read_bytes()
     provenance_bytes = provenance_path.read_bytes()
     text = rules_bytes.decode('utf-8')
@@ -1045,6 +1067,7 @@ except UnicodeDecodeError as error:
 
 for label, content in (
     ('rules/default-agent.md', rules_bytes),
+    ('rules/capability-contract.md', contract_bytes),
     ('engineering-judgment.md', vendor_bytes),
     ('provenance.json', provenance_bytes),
 ):
@@ -1102,14 +1125,31 @@ if not vendor_text.startswith('## Engineering Judgment\n'):
     print('Cursor rules validation failed: engineering-judgment.md is missing its expected heading', file=sys.stderr)
     raise SystemExit(1)
 
+# The capability contract is shared by the parent Rules and every agent file, so
+# it has one source and two section headings that appear nowhere else.
+contract_headings = (b'## Required Skills\n', b'## Capability-Based Tool Selection\n')
+if not contract_bytes.startswith(contract_headings[0]) or any(contract_bytes.count(heading) != 1 for heading in contract_headings):
+    print('Cursor rules validation failed: rules/capability-contract.md must hold the Required Skills and Capability-Based Tool Selection sections once each', file=sys.stderr)
+    raise SystemExit(1)
+
 separator = b'\n---\n\n'
-composed = rules_bytes + separator + vendor_bytes
-if composed.count(separator) != 1 or composed.count(vendor_bytes) != 1:
-    print('Cursor rules validation failed: composed Rules must contain one separator and one vendored philosophy', file=sys.stderr)
-    raise SystemExit(1)
-if composed.count(b'## Engineering Judgment') != 1:
-    print('Cursor rules validation failed: composed Rules must contain Engineering Judgment exactly once', file=sys.stderr)
-    raise SystemExit(1)
+appendix = separator + contract_bytes + b'\n' + vendor_bytes
+
+def check_composition(composed, label, separators=1):
+    # An agent's frontmatter closes with the same bytes as the separator.
+    if composed.count(separator) != separators or composed.count(vendor_bytes) != 1 or composed.count(contract_bytes) != 1:
+        print(f'Cursor rules validation failed: {label} must contain {separators} compose separator(s), one capability contract, and one vendored philosophy', file=sys.stderr)
+        raise SystemExit(1)
+    if composed.count(b'## Engineering Judgment') != 1:
+        print(f'Cursor rules validation failed: {label} must contain Engineering Judgment exactly once', file=sys.stderr)
+        raise SystemExit(1)
+    for heading in contract_headings:
+        if composed.count(heading) != 1:
+            print(f'Cursor rules validation failed: {label} must contain the capability contract exactly once', file=sys.stderr)
+            raise SystemExit(1)
+
+composed = rules_bytes + appendix
+check_composition(composed, 'composed Rules')
 composed_text = composed.decode('utf-8')
 
 for pattern, label in forbidden_patterns:
@@ -1118,12 +1158,12 @@ for pattern, label in forbidden_patterns:
         print(f'Cursor rules validation failed: composed Rules contain {label}: {match.group(0)}', file=sys.stderr)
         sys.exit(1)
 
-# Each installed agent prompt is its source body plus the same Engineering
-# Judgment snapshot, with the source frontmatter intact.
+# Each installed agent prompt is its source body plus the same appendix as the
+# Rules, with the source frontmatter intact.
 agents_directory = root / 'agents'
 for agent_path in sorted(agents_directory.glob('*.md')):
     agent_bytes = agent_path.read_bytes()
-    composed_agent = agent_bytes + separator + vendor_bytes
+    composed_agent = agent_bytes + appendix
     composed_agent_text = composed_agent.decode('utf-8')
     label = f'agents/{agent_path.name}'
     if not composed_agent_text.startswith('---\nname: '):
@@ -1132,9 +1172,10 @@ for agent_path in sorted(agents_directory.glob('*.md')):
     if b'## Engineering Judgment' in agent_bytes:
         print(f'Cursor rules validation failed: {label} source must not embed Engineering Judgment; it is appended at install', file=sys.stderr)
         raise SystemExit(1)
-    if composed_agent.count(b'## Engineering Judgment') != 1 or composed_agent.count(vendor_bytes) != 1:
-        print(f'Cursor rules validation failed: composed {label} must contain Engineering Judgment exactly once', file=sys.stderr)
+    if any(heading in agent_bytes for heading in contract_headings):
+        print(f'Cursor rules validation failed: {label} source must not embed the capability contract; it is appended at install', file=sys.stderr)
         raise SystemExit(1)
+    check_composition(composed_agent, f'composed {label}', separators=agent_bytes.count(separator) + 1)
     for pattern, pattern_label in forbidden_patterns:
         match = pattern.search(composed_agent_text)
         if match:
@@ -1144,8 +1185,9 @@ PY
 }
 
 validate_cursor_hive_skills() {
+  local root="$1"
   check_python
-  python3 - "${REPO_ROOT}" <<'PY'
+  python3 - "${REPO_ROOT}" "${root}" <<'PY'
 import hashlib
 import importlib.util
 import json
@@ -1156,7 +1198,9 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 repo_root = Path(sys.argv[1])
 provenance_path = repo_root / 'vendor' / 'oc-arkive' / 'cursor-skills' / 'provenance.json'
-skills_root = repo_root / '.apm' / 'cursor' / 'skills'
+# Imported skills live under the selected Cursor asset root.
+skills_root = Path(sys.argv[2]) / 'skills'
+skills_label = skills_root.relative_to(repo_root).as_posix()
 sync_script = repo_root / 'scripts' / 'sync-cursor-hive-skills.py'
 expected_root_keys = {
     'schemaVersion',
@@ -1244,7 +1288,7 @@ if sync_script.is_file() and not sync_script.is_symlink():
         fail(f'provenance skills must be exactly {sorted(sync_module.IMPORTED_SKILLS)}')
     for retired in sync_module.RETIRED_SKILLS:
         if (skills_root / retired).exists():
-            fail(f'retired skill {retired} is still present in .apm/cursor/skills')
+            fail(f'retired skill {retired} is still present in {skills_label}')
 
 for name in sorted(skills):
     entry = skills[name]
@@ -1259,16 +1303,16 @@ for name in sorted(skills):
         fail(f'{label} files must be an object that includes SKILL.md')
     skill_directory = skills_root / name
     if skill_directory.is_symlink() or not skill_directory.is_dir():
-        fail(f'.apm/cursor/skills/{name} must be a real directory')
+        fail(f'{skills_label}/{name} must be a real directory')
     actual = {
         path.relative_to(skill_directory).as_posix()
         for path in skill_directory.rglob('*')
         if path.is_file() or path.is_symlink()
     }
     for missing in sorted(set(files) - actual):
-        fail(f'.apm/cursor/skills/{name}/{missing} is listed in provenance but missing')
+        fail(f'{skills_label}/{name}/{missing} is listed in provenance but missing')
     for extra in sorted(actual - set(files)):
-        fail(f'.apm/cursor/skills/{name}/{extra} is not listed in provenance')
+        fail(f'{skills_label}/{name}/{extra} is not listed in provenance')
     for relative in sorted(files):
         file_entry = files[relative]
         file_label = f'{label}.files.{relative}'
@@ -1279,23 +1323,33 @@ for name in sorted(skills):
             if not isinstance(value, str) or not re.fullmatch(r'[0-9a-f]{64}', value):
                 fail(f'{file_label} {field} must be a lowercase SHA-256')
         installed_path = skill_directory / relative
-        require_regular_file(installed_path, f'.apm/cursor/skills/{name}/{relative}', skill_directory)
+        require_regular_file(installed_path, f'{skills_label}/{name}/{relative}', skill_directory)
         actual_hash = hashlib.sha256(installed_path.read_bytes()).hexdigest()
         if actual_hash != file_entry['installedSha256']:
             fail(
-                f'.apm/cursor/skills/{name}/{relative} SHA-256 is {actual_hash}, expected {file_entry["installedSha256"]}'
+                f'{skills_label}/{name}/{relative} SHA-256 is {actual_hash}, expected {file_entry["installedSha256"]}'
             )
 PY
 }
 
-# An installed agent prompt is the source body followed by the pinned
-# Engineering Judgment snapshot, with the source frontmatter first.
+# The appendix shared by the printed Rules and every installed agent prompt:
+# one separator, the capability contract, a blank line, and the pinned
+# Engineering Judgment snapshot.
+render_appendix() {
+  local root="$1"
+  printf '%s' "${COMPOSE_SEPARATOR}"
+  cat "${root}/${CAPABILITY_CONTRACT_PATH}"
+  printf '\n'
+  cat "${EJ_SOURCE}"
+}
+
+# An installed agent prompt is the source body followed by the appendix, with
+# the source frontmatter first.
 render_agent() {
   local root="$1"
   local name="$2"
   cat "${root}/agents/${name}.md"
-  printf '%s' "${COMPOSE_SEPARATOR}"
-  cat "${EJ_SOURCE}"
+  render_appendix "${root}"
 }
 
 print_copy_plan() {
@@ -1305,7 +1359,7 @@ print_copy_plan() {
   printf 'Target: %s\n' "${target_dir}"
   for name in "${AGENTS[@]}"; do
     source="${root}/agents/${name}.md"
-    printf 'Would copy %s with pinned Engineering Judgment appended -> %s\n' "${source#"${root}/"}" "${target_dir}/agents/${name}.md"
+    printf 'Would copy %s with the capability contract and pinned Engineering Judgment appended -> %s\n' "${source#"${root}/"}" "${target_dir}/agents/${name}.md"
   done
   for name in "${COMMANDS[@]}"; do
     source="${root}/commands/${name}.md"
@@ -1342,14 +1396,22 @@ print_copy_plan() {
 BACKUP_DIR=""
 BACKUP_BASENAME="custom-opencode-configs-cursor-$(date +%Y%m%d-%H%M%S)"
 
+# One backup directory per target per run, created on first use. mktemp keeps it
+# unique when two runs start in the same second, so a rerun cannot overwrite an
+# earlier backup of the original files.
+ensure_backup_dir() {
+  local target_dir="$1"
+  if [[ -z "${BACKUP_DIR}" ]]; then
+    mkdir -p "${target_dir}/.backup"
+    BACKUP_DIR="$(mktemp -d "${target_dir}/.backup/${BACKUP_BASENAME}.XXXXXX")"
+  fi
+}
+
 backup_path() {
   local target_dir="$1"
   local path="$2"
   if [[ -e "${path}" ]]; then
-    if [[ -z "${BACKUP_DIR}" ]]; then
-      BACKUP_DIR="${target_dir}/.backup/${BACKUP_BASENAME}"
-      mkdir -p "${BACKUP_DIR}"
-    fi
+    ensure_backup_dir "${target_dir}"
     mkdir -p "${BACKUP_DIR}/$(dirname "${path#"${target_dir}/"}")"
     cp -a "${path}" "${BACKUP_DIR}/${path#"${target_dir}/"}"
   fi
@@ -1360,10 +1422,7 @@ backup_agents_skill() {
   local skill_name="$2"
   local path="${AGENTS_SKILLS_DIR}/${skill_name}"
   if [[ -e "${path}" || -L "${path}" ]]; then
-    if [[ -z "${BACKUP_DIR}" ]]; then
-      BACKUP_DIR="${target_dir}/.backup/${BACKUP_BASENAME}"
-      mkdir -p "${BACKUP_DIR}"
-    fi
+    ensure_backup_dir "${target_dir}"
     mkdir -p "${BACKUP_DIR}/agents-skills"
     cp -a "${path}" "${BACKUP_DIR}/agents-skills/${skill_name}"
   fi
@@ -1411,7 +1470,7 @@ install_assets_into() {
     render_agent "${root}" "${name}" > "${rendered}"
     install -m 0644 "${rendered}" "${target_dir}/agents/${name}.md"
     rm -f "${rendered}"
-    printf 'Copied agents/%s.md with pinned Engineering Judgment appended -> %s\n' "${name}" "${target_dir}/agents/${name}.md"
+    printf 'Copied agents/%s.md with the capability contract and pinned Engineering Judgment appended -> %s\n' "${name}" "${target_dir}/agents/${name}.md"
   done
   for name in "${COMMANDS[@]}"; do
     backup_path "${target_dir}" "${target_dir}/commands/${name}.md"
@@ -1546,7 +1605,7 @@ check_target_readability() {
 }
 
 preflight_targets() {
-  local target dir path relative backup_root
+  local target dir path relative
   for target in "$@"; do
     if [[ ( -e "${target}" || -L "${target}" ) && ! -d "${target}" ]]; then
       printf 'ERROR: target exists and is not a directory: %s\n' "${target}" >&2
@@ -1581,20 +1640,6 @@ preflight_targets() {
         fi
         if [[ ! -w "${path}" || ! -x "${path}" ]]; then
           printf 'ERROR: required target path is not writable/traversable: %s\n' "${path}" >&2
-          return 1
-        fi
-      fi
-    done
-
-    backup_root="${target}/.backup/${BACKUP_BASENAME}"
-    for path in "${backup_root}" "${backup_root}/agents" "${backup_root}/commands" "${backup_root}/skills"; do
-      if [[ -e "${path}" || -L "${path}" ]]; then
-        if [[ -L "${path}" || ! -d "${path}" ]]; then
-          printf 'ERROR: required backup path is not a directory: %s\n' "${path}" >&2
-          return 1
-        fi
-        if [[ ! -w "${path}" || ! -x "${path}" ]]; then
-          printf 'ERROR: required backup path is not writable/traversable: %s\n' "${path}" >&2
           return 1
         fi
       fi
@@ -1754,7 +1799,7 @@ main() {
       root="$(source_root)"
       validate_assets "${root}"
       validate_rules "${root}"
-      validate_cursor_hive_skills
+      validate_cursor_hive_skills "${root}"
       printf 'Cursor asset validation passed\n'
       ;;
     install)
@@ -1764,13 +1809,13 @@ main() {
         '')
           validate_assets "${root}"
           validate_rules "${root}"
-          validate_cursor_hive_skills
+          validate_cursor_hive_skills "${root}"
           install_assets "${root}"
           ;;
         --dry-run)
           validate_assets "${root}"
           validate_rules "${root}"
-          validate_cursor_hive_skills
+          validate_cursor_hive_skills "${root}"
           print_all_copy_plans "${root}"
           ;;
         *)
@@ -1783,8 +1828,7 @@ main() {
       root="$(source_root)"
       validate_rules "${root}"
       cat "${root}/rules/default-agent.md"
-      printf '%s' "${COMPOSE_SEPARATOR}"
-      cat "${EJ_SOURCE}"
+      render_appendix "${root}"
       ;;
     print-agent)
       root="$(source_root)"

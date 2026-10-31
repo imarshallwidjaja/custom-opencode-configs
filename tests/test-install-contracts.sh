@@ -96,9 +96,9 @@ SKILL
   mkdir -p "${REPO_FIXTURE}/.apm/cursor/agents" "${REPO_FIXTURE}/.apm/cursor/commands" "${REPO_FIXTURE}/.apm/cursor/skills" "${REPO_FIXTURE}/.apm/cursor/rules"
 
   # Cursor agents
-  for agent in approach-advisor code-reviewer forager plan-reviewer scout simplicity-reviewer vulnerability-reviewer; do
+  for agent in approach-advisor code-reviewer forager investigator plan-reviewer scout simplicity-reviewer vulnerability-reviewer; do
     agent_readonly=true
-    [[ "${agent}" != forager ]] || agent_readonly=false
+    [[ "${agent}" != forager && "${agent}" != investigator ]] || agent_readonly=false
     cat > "${REPO_FIXTURE}/.apm/cursor/agents/${agent}.md" <<AGENT
 ---
 name: ${agent}
@@ -141,7 +141,27 @@ PROMPT
   cat > "${REPO_FIXTURE}/.apm/cursor/rules/default-agent.md" <<'RULES'
 # Default Agent
 Be helpful. Use plain language. Avoid Hive tools.
+
+## Cursor Subagents
+
+- `approach-advisor`: advice.
+- `code-reviewer`: review.
+- `forager`: implementation.
+- `investigator`: experiments.
+- `plan-reviewer`: plan review.
+- `scout`: retrieval.
+- `simplicity-reviewer`: simplicity review.
+- `vulnerability-reviewer`: vulnerability review.
 RULES
+  cat > "${REPO_FIXTURE}/.apm/cursor/rules/capability-contract.md" <<'CONTRACT'
+## Required Skills
+
+Fixture skill contract.
+
+## Capability-Based Tool Selection
+
+Fixture capability contract.
+CONTRACT
 
   # Provenance-pinned Engineering Judgment vendor
   mkdir -p "${REPO_FIXTURE}/vendor/oc-arkive/engineering-judgment"
@@ -619,6 +639,7 @@ def validate(rule, skill, agents, docs):
     route_contracts = {
         "scout": (("read-only",), ("code",), ("docs", "documentation"), ("research", "context retrieval")),
         "forager": (("ordinary", "bounded"), ("implementation",), ("bug fix",), ("refactor",), ("tests", "testing"), ("documentation", "docs")),
+        "investigator": (("standalone diagnosis",), ("reproduction",), ("experiments",), ("verify-only",), ("evidence and a conclusion",), ("never a product patch",)),
         "approach-advisor": (("read-only",), ("direction", "approach"), ("uncertain", "costly to reverse", "costly-to-reverse")),
         "plan-reviewer": (("read-only",), ("plan",), ("readiness", "ready"), ("requested", "artifact")),
         "code-reviewer": (("read-only",), ("completed",), ("correctness",), ("risk", "regression")),
@@ -686,7 +707,7 @@ def validate(rule, skill, agents, docs):
             errors.append(f"{name} embeds or inherits Engineering Judgment instead of receiving it at install")
         if "do not launch, ask for, or delegate to other subagents" not in lowered_agent:
             errors.append(f"{name} is not terminal")
-        if name != "forager":
+        if name not in {"forager", "investigator"}:
             require_terms(errors, f"{name} read-only contract", lowered_agent, (
                 "`readonly: true`", "builds, tests", ("name the exact command", "name the command", "for the caller to run"),
             ))
@@ -768,7 +789,7 @@ def validate(rule, skill, agents, docs):
 rule = load(".apm/cursor/rules/default-agent.md")
 skill = load(".apm/cursor/skills/subagent-delegation/SKILL.md")
 agents = {name: load(f".apm/cursor/agents/{name}.md") for name in (
-    "scout", "forager", "approach-advisor", "plan-reviewer", "code-reviewer", "simplicity-reviewer",
+    "scout", "forager", "investigator", "approach-advisor", "plan-reviewer", "code-reviewer", "simplicity-reviewer",
     "vulnerability-reviewer",
 )}
 docs = {name: load(name) for name in ("README.md", "CURSOR.md", "FOR-LLM-AGENTS.md", ".apm/cursor/README.md")}
@@ -784,6 +805,7 @@ negative_cases = {
     ),
     "removed scout mapping": rule.replace("- `scout`:", "- `removed-scout`:", 1),
     "removed forager mapping": rule.replace("- `forager`:", "- `removed-forager`:", 1),
+    "removed investigator mapping": rule.replace("- `investigator`:", "- `removed-investigator`:", 1),
     "branch as isolation": rule.replace(
         "Separate context is not filesystem isolation.",
         "A Git branch isolates files for each child.",
@@ -3289,19 +3311,20 @@ root = Path(sys.argv[1])
 actual = Path(sys.argv[2]).read_bytes()
 stderr = Path(sys.argv[3]).read_bytes()
 rules = (root / '.apm/cursor/rules/default-agent.md').read_bytes()
+contract = (root / '.apm/cursor/rules/capability-contract.md').read_bytes()
 judgment = (root / 'vendor/oc-arkive/engineering-judgment/engineering-judgment.md').read_bytes()
-expected = rules + b'\n---\n\n' + judgment
+expected = rules + b'\n---\n\n' + contract + b'\n' + judgment
 if actual != expected:
-    raise SystemExit('print-rules output does not match rules + one separator + vendor')
-if actual.count(judgment) != 1 or actual.count(b'\n---\n') != 1:
-    raise SystemExit('vendor body or separator was not included exactly once')
+    raise SystemExit('print-rules output does not match rules + one separator + capability contract + vendor')
+if actual.count(judgment) != 1 or actual.count(contract) != 1 or actual.count(b'\n---\n') != 1:
+    raise SystemExit('contract, vendor body, or separator was not included exactly once')
 if stderr:
     raise SystemExit(f'print-rules emitted status chatter: {stderr!r}')
 if b'provenance' in actual.lower() or b'0123456789abcdef0123456789abcdef01234567' in actual:
     raise SystemExit('print-rules leaked provenance chatter')
 PY
 then
-  pass "67o: print-rules emits paste-ready ordered composition exactly once"
+  pass "67o: print-rules emits paste-ready ordered composition (Rules, capability contract, Engineering Judgment) exactly once"
 else
   fail "67o: print-rules composition or stdout contract is wrong"
 fi
@@ -3312,14 +3335,14 @@ from pathlib import Path
 
 root = Path(sys.argv[1])
 anchor = sys.argv[2]
-selected = {'forager', 'scout', 'plan-reviewer', 'code-reviewer', 'simplicity-reviewer', 'approach-advisor', 'vulnerability-reviewer'}
+selected = {'forager', 'investigator', 'scout', 'plan-reviewer', 'code-reviewer', 'simplicity-reviewer', 'approach-advisor', 'vulnerability-reviewer'}
 errors = []
 for name in selected:
     text = (root / f'.apm/cursor/agents/{name}.md').read_text(encoding='utf-8')
     if text.count(anchor) != 1:
         errors.append(f'{name} anchor count is {text.count(anchor)}')
-    if '## Engineering Judgment' in text:
-        errors.append(f'{name} embeds the snapshot instead of receiving it at install')
+    if '## Engineering Judgment' in text or '## Capability-Based Tool Selection' in text:
+        errors.append(f'{name} embeds the snapshot or capability contract instead of receiving it at install')
 if errors:
     raise SystemExit('\n'.join(errors))
 PY
@@ -3345,24 +3368,25 @@ root = Path(sys.argv[1])
 target = Path(sys.argv[2])
 dry_run = Path(sys.argv[3]).read_text(encoding='utf-8')
 judgment = (root / 'vendor/oc-arkive/engineering-judgment/engineering-judgment.md').read_bytes()
+contract = (root / '.apm/cursor/rules/capability-contract.md').read_bytes()
 errors = []
 names = sorted(path.stem for path in (root / '.apm/cursor/agents').glob('*.md'))
-if len(names) != 7:
-    errors.append(f'expected seven agents, found {names}')
+if len(names) != 8:
+    errors.append(f'expected eight agents, found {names}')
 for name in names:
     source = (root / f'.apm/cursor/agents/{name}.md').read_bytes()
     installed = (target / f'agents/{name}.md').read_bytes()
-    expected = source + b'\n---\n\n' + judgment
+    expected = source + b'\n---\n\n' + contract + b'\n' + judgment
     if installed != expected:
-        errors.append(f'installed {name} is not source + separator + pinned snapshot')
+        errors.append(f'installed {name} is not source + separator + capability contract + pinned snapshot')
     if not installed.startswith(b'---\nname: ' + name.encode() + b'\n'):
         errors.append(f'installed {name} lost its frontmatter')
-    if installed.count(b'## Engineering Judgment') != 1:
-        errors.append(f'installed {name} must carry Engineering Judgment exactly once')
+    if installed.count(b'## Engineering Judgment') != 1 or installed.count(b'## Required Skills\n') != 1 or installed.count(b'## Capability-Based Tool Selection\n') != 1:
+        errors.append(f'installed {name} must carry the capability contract and Engineering Judgment exactly once')
     printed = subprocess.run([str(root / 'scripts/cursor-assets.sh'), 'print-agent', name], capture_output=True, check=False)
     if printed.returncode != 0 or printed.stdout != installed:
         errors.append(f'print-agent {name} does not match the installed prompt')
-    line = f'Would copy agents/{name}.md with pinned Engineering Judgment appended -> {target}/agents/{name}.md'
+    line = f'Would copy agents/{name}.md with the capability contract and pinned Engineering Judgment appended -> {target}/agents/{name}.md'
     if line not in dry_run:
         errors.append(f'dry-run does not describe the composed {name} prompt')
 unknown = subprocess.run([str(root / 'scripts/cursor-assets.sh'), 'print-agent', 'not-an-agent'], capture_output=True, check=False)
@@ -3372,7 +3396,7 @@ if errors:
     raise SystemExit('\n'.join(errors))
 PY
 then
-  pass "67p2: installed agent prompts, print-agent, and the dry-run plan agree on source + pinned Engineering Judgment"
+  pass "67p2: installed agent prompts, print-agent, and the dry-run plan agree on source + capability contract + pinned Engineering Judgment"
 else
   fail "67p2: installed agent prompts do not match the composed source, print-agent, or dry-run plan"
 fi
@@ -4116,6 +4140,286 @@ then
   pass "68o2: commit authority follows a lane through recovery, result identity, integration, and closure"
 else
   fail "68o2: orchestration, forager, delegation, or finishing guidance contradicts no-commit lanes"
+fi
+
+# 68o3. Static scenarios for the Cursor experiment, integration, capability, and
+# review-authority contracts. These check delivered wording only; they are not a
+# model-compliance or live Cursor test.
+if python3 - "${BASELINE_PWD}" <<'PY'
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1]) / '.apm/cursor'
+paths = {
+    'rules': 'rules/default-agent.md',
+    'contract': 'rules/capability-contract.md',
+    'investigator': 'agents/investigator.md',
+    'forager': 'agents/forager.md',
+    'code-reviewer': 'agents/code-reviewer.md',
+    'plan-reviewer': 'agents/plan-reviewer.md',
+    'delegation': 'skills/subagent-delegation/SKILL.md',
+    'orchestration': 'skills/orchestrating-ad-hoc-work/SKILL.md',
+    'exploration': 'skills/parallel-exploration/SKILL.md',
+    'finishing': 'skills/finishing-a-development-branch/SKILL.md',
+    'worktrees': 'skills/using-git-worktrees/SKILL.md',
+    'dash-review': 'commands/dash-review.md',
+    'vuln-review': 'commands/vuln-review.md',
+    'interview': 'commands/interview.md',
+    'council': 'commands/council.md',
+}
+texts = {key: ' '.join((root / relative).read_text(encoding='utf-8').split()) for key, relative in paths.items()}
+
+# (scenario, file, required passage).
+required = [
+    ('investigator modes', 'investigator', '- Assess: answer from source, contracts, and supplied evidence.'),
+    ('investigator modes', 'investigator', '- Reproduce or diagnose: run the unchanged candidate'),
+    ('investigator modes', 'investigator', '- Experiment: when the assignment scopes them'),
+    ('investigator modes', 'investigator', '- Verify only: run the named checks against the candidate as it stands.'),
+    ('investigator modes', 'investigator', 'readonly: false'),
+    ('investigator modes', 'investigator', 'Write access is not implementation authority.'),
+    ('failed verify-only makes no fix', 'investigator', 'Change no source, test, fixture, snapshot, or gate, even when a check fails.'),
+    ('failed verify-only makes no fix', 'forager', 'A verify-only mission changes no candidate source, test, fixture, snapshot, or gate, even when a check fails.'),
+    ('failed verify-only makes no fix', 'rules', 'A verify-only assignment changes no source, test, fixture, snapshot, or gate, even when a check fails.'),
+    ('failed verify-only makes no fix', 'rules', 'A failed check is a finding or a gap, not a fix.'),
+    ('experiment is never integrated', 'rules', 'An experiment never commits, merges, or applies its code to the destination'),
+    ('experiment is never integrated', 'investigator', 'Variant code is reproduction evidence, never a delivered patch'),
+    ('experiment is never integrated', 'orchestration', 'never enters the integration order'),
+    ('experiment is never integrated', 'delegation', 'An experiment lane has no integration step'),
+    ('experiment is never integrated', 'worktrees', 'it is never merged'),
+    ('experiment evidence survives cleanup', 'rules', 'name an evidence destination outside every checkout and placement the run exercises or removes'),
+    ('experiment evidence survives cleanup', 'investigator', 'Cursor may prune older worktrees'),
+    ('experiment evidence survives cleanup', 'worktrees', 'Keep evidence, logs, and anything needed after a run outside every worktree'),
+    ('published ancestry proof', 'rules', 'git merge-base --is-ancestor <published-tip> <destination>'),
+    ('published ancestry proof', 'rules', 'File-tree equality does not prove ancestry.'),
+    ('published ancestry proof', 'finishing', 'require exit status 0'),
+    ('published ancestry proof', 'finishing', 'has no observable proof that it preserves commits or ancestry'),
+    ('published ancestry proof', 'orchestration', 'git merge-base --is-ancestor <published-tip> <destination>'),
+    ('dirty candidate and repository maps', 'rules', 'do not invent a commit for an uncommitted candidate'),
+    ('dirty candidate and repository maps', 'rules', 'one commit per repository, as a map when several repositories are involved'),
+    ('dirty candidate and repository maps', 'delegation', 'never a HEAD standing in for an uncommitted candidate'),
+    ('dirty candidate and repository maps', 'delegation', 'one identity per repository when several are involved'),
+    ('dirty candidate and repository maps', 'orchestration', 'keep a map from repository to its checkpoint A, any newer target T kept separately, and its verified pin'),
+    ('dirty candidate and repository maps', 'finishing', 'keep a map from repository to its checkpoint A, any newer target T kept separately, and its verified pin'),
+    # A is the placement checkpoint, S the verified source pin, T the newer target.
+    ('reconciliation merges T into S', 'forager', "Then merge T's commit into S with a normal merge, never A's commit"),
+    ('reconciliation merges T into S', 'forager', "Return the new verified pin S' and the T commit you merged."),
+    ('reconciliation merges T into S', 'forager', 'It stays as comparison history.'),
+    ('reconciliation merges T into S', 'delegation', 'S, the current verified source pin'),
+    ('reconciliation merges T into S', 'delegation', "Merge c81a5f9 into 4b7e0d2 with a normal merge"),
+    ('reconciliation merges T into S', 'orchestration', "it merges T's commit into S normally, without rewriting source history"),
+    ('reconciliation merges T into S', 'finishing', "it merges T's commit into S without rewriting source history"),
+    ('reconciliation merges T into S', 'rules', "merges T's commit into S without rewriting source history"),
+    ('A is never overwritten', 'orchestration', 'Pass A through unchanged; it stays the comparison history, and no later observation overwrites it.'),
+    ('A is never overwritten', 'orchestration', 'record the newly observed target T (path, full ref, immutable commit) separately from A'),
+    ('A is never overwritten', 'finishing', 'Never overwrite A or T with a later observation'),
+    ('A is never overwritten', 'rules', 'never an overwrite of A or T'),
+    ('A is never overwritten', 'delegation', 'never an overwrite of A or T'),
+    ('reconciliation needs explicit commit authority', 'forager', 'It must say it is a reconciliation, carry commit authority'),
+    ('reconciliation needs explicit commit authority', 'forager', 'No other assignment authorizes a merge'),
+    ('reconciliation needs explicit commit authority', 'forager', 'The only merge you run is the source-side merge a reconciliation assignment names'),
+    ('reconciliation needs explicit commit authority', 'rules', 'Source-side reconciliation is a narrow `forager` allowance: only a lane with commit authority'),
+    ('reconciliation needs explicit commit authority', 'delegation', 'Only a lane with commit authority gets a reconciliation assignment'),
+    ('no commit authority returns drift', 'forager', 'Without commit authority, run no merge and create no commit; return the drift as a blocker'),
+    ('no commit authority returns drift', 'delegation', 'A lane without commit authority gets no reconciliation assignment'),
+    ('no commit authority returns drift', 'orchestration', 'Without commit authority, no worker merges or commits'),
+    ('no commit authority returns drift', 'finishing', 'Without commit authority, no worker merges or commits'),
+    ('no commit authority returns drift', 'rules', 'Without commit authority, no worker merges or commits'),
+    ('wrong target stops', 'forager', 'Stop and report instead of merging when the path or ref differs, histories are unrelated'),
+    ('wrong target stops', 'orchestration', 'a different path or ref, or unrelated history, stops for an operator decision'),
+    ('wrong target stops', 'rules', 'a different path or ref, or unrelated history, stops for an operator decision'),
+    ('evidence lanes never merge', 'forager', 'Diagnose and verify-only missions never merge or commit.'),
+    ('evidence lanes never merge', 'investigator', 'Commits, merges, pushes, pull requests, branch switches, and worktree creation or removal stay with the caller.'),
+    ('integration stays with the parent', 'forager', 'Integration into the destination, push, pull request, publish, release, branch switching, and cleanup stay with the caller.'),
+    ('integration stays with the parent', 'rules', 'Integration into the destination, push, publish, pull requests, branch switching, and cleanup stay with the parent.'),
+    ('experiment assignment fields live in delegation', 'rules', 'Load `subagent-delegation` and send the fields its Experiment Assignments section lists.'),
+    ('required skill propagation', 'contract', 'Every agent, the parent and each subagent, loads each required skill itself'),
+    ('required skill propagation', 'contract', 'a parent or sibling load does not count'),
+    ('required skill propagation', 'contract', 'say that you read it manually'),
+    ('required skill propagation', 'contract', 'never claim a load that did not happen'),
+    ('required skill propagation', 'delegation', 'Required skills, named exactly'),
+    ('missing capability', 'contract', 'report the missing capability and what it leaves unestablished'),
+    ('missing capability', 'contract', 'Do not install, configure, or enable a tool or integration'),
+    ('missing capability', 'contract', 'project dependency installs, builds, and test runs that an authorized implementation or experiment assignment covers remain ordinary work'),
+    ('review authority boundary', 'rules', 'does not by itself authorize running development code'),
+    ('review authority boundary', 'rules', 'The investigator is an execution worker, not a reviewer'),
+    ('review authority boundary', 'dash-review', 'Proceed only when an operator instruction already covers'),
+    ('review authority boundary', 'dash-review', 'The investigator is not a reviewer'),
+    ('review authority boundary', 'vuln-review', '`vulnerability-reviewer` stays non-executing.'),
+    ('review authority boundary', 'vuln-review', 'No request extends to exploiting a live system'),
+    ('review authority boundary', 'council', '`forager` and `investigator` write files, so they are never councillors'),
+    ('diagnosis ownership', 'forager', 'Standalone diagnosis, experiments, and verify-only runs belong to `investigator`.'),
+    ('diagnosis ownership', 'rules', 'Diagnosis coupled to an implementation lane stays with that lane\'s `forager`'),
+    ('diagnosis ownership', 'exploration', 'A question that needs running code goes to `investigator`'),
+    ('responsibility scoping', 'forager', 'discovery leads, not an allowlist'),
+    ('responsibility scoping', 'delegation', 'Cited files are discovery leads, not an allowlist'),
+    ('responsibility scoping', 'code-reviewer', 'Files the plan or handoff did not cite are expected when they serve the goal'),
+    ('responsibility scoping', 'plan-reviewer', 'A predicted list of files to edit is not required'),
+    ('recovery without Hive tools', 'rules', 'Cursor exposes no Hive board, trace, or recovery tool.'),
+    ('recovery without Hive tools', 'rules', 'report that uncertainty and wait or ask instead of guessing'),
+    ('recovery without Hive tools', 'orchestration', 'preserve the failure evidence outside the placement'),
+    ('interview alignment', 'interview', 'Load the `grilling` skill'),
+    ('interview alignment', 'interview', 'three-way alignment confirmation'),
+    ('interview alignment', 'interview', "Cursor's Plan mode"),
+]
+forbidden = [
+    ('retired forager reproduction rule', 'forager', 'needs an explicit implementation mission with isolation'),
+    ('fictional Hive command in interview', 'interview', '/hive-plan'),
+    ('stale adapter baseline', 'delegation', 'e1d968c5e53cdb03c95849b32b7bc9cbb7de47fc'),
+    ('stale adapter baseline', 'orchestration', 'e1d968c5e53cdb03c95849b32b7bc9cbb7de47fc'),
+    ('stale adapter baseline', 'exploration', 'e1d968c5e53cdb03c95849b32b7bc9cbb7de47fc'),
+    ('ambiguous reconciliation target', 'rules', 'merges the recorded target'),
+    ('ambiguous reconciliation target', 'orchestration', 'merges the recorded target'),
+    ('ambiguous reconciliation target', 'finishing', 'merges the recorded target'),
+    ('blanket forager merge ban', 'forager', 'Merge, push, pull request, publish, release, branch switching, and cleanup stay with the caller.'),
+    ('duplicated experiment field list', 'rules', 'State the question and candidate, the operator instruction that covers the run'),
+]
+
+def check(current):
+    errors = []
+    for scenario, key, passage in required:
+        if passage not in current[key]:
+            errors.append(f'{scenario}: {paths[key]} is missing: {passage}')
+    for scenario, key, passage in forbidden:
+        if passage in current[key]:
+            errors.append(f'{scenario}: {paths[key]} still contains: {passage}')
+    return errors
+
+errors = check(texts)
+if errors:
+    raise SystemExit('\n'.join(errors))
+PY
+then
+  pass "68o3: Cursor experiment, integration, reconciliation, capability, and review-authority scenarios hold"
+else
+  fail "68o3: a Cursor experiment, integration, reconciliation, capability, or review-authority scenario is missing"
+fi
+
+# 68o4. The validator rejects a broken roster, write capability, or capability
+# contract before any install target changes.
+printf '\n=== 68o4. Cursor validator rejects broken roster, readonly, and contract composition ===\n'
+for case68o4 in missing-route unknown-route readonly-flip embedded-contract missing-contract; do
+  build_fixture
+  td68o4="${TMPDIR}/cursor68o4-${case68o4}"
+  mkdir -p "${td68o4}"
+  case "${case68o4}" in
+    missing-route)
+      replace_fixture_text "${REPO_FIXTURE}/.apm/cursor/rules/default-agent.md" '- `investigator`: experiments.' ''
+      expected68o4='must route `investigator` exactly once'
+      ;;
+    unknown-route)
+      printf -- '- `ghost-worker`: unknown.\n' >> "${REPO_FIXTURE}/.apm/cursor/rules/default-agent.md"
+      expected68o4='routes `ghost-worker`, which is not an installed agent'
+      ;;
+    readonly-flip)
+      replace_fixture_text "${REPO_FIXTURE}/.apm/cursor/agents/investigator.md" 'readonly: false' 'readonly: true'
+      expected68o4='agents/investigator.md frontmatter readonly must be false'
+      ;;
+    embedded-contract)
+      printf '\n## Capability-Based Tool Selection\n\nCopied.\n' >> "${REPO_FIXTURE}/.apm/cursor/agents/scout.md"
+      expected68o4='must not embed the capability contract'
+      ;;
+    missing-contract)
+      rm "${REPO_FIXTURE}/.apm/cursor/rules/capability-contract.md"
+      expected68o4='rules/capability-contract.md'
+      ;;
+  esac
+  if ! env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td68o4}" bash "${CURSOR_HELPER}" install >"${TMPDIR}/68o4-${case68o4}.out" 2>"${TMPDIR}/68o4-${case68o4}.err" \
+    && grep -Fq "${expected68o4}" "${TMPDIR}/68o4-${case68o4}.err" \
+    && cursor_target_unmodified "${td68o4}"; then
+    pass "68o4-${case68o4}: validation rejected the fixture before any target change"
+  else
+    fail "68o4-${case68o4}: validation accepted the fixture or reported the wrong error: $(cat "${TMPDIR}/68o4-${case68o4}.err")"
+  fi
+done
+build_fixture
+
+# 68o5. Two Cursor installs in the same second keep separate backup directories,
+# so the second run cannot overwrite the first run's copy of the original files.
+printf '\n=== 68o5. Same-second Cursor reinstall keeps the original backup ===\n'
+td68o5="${TMPDIR}/cursor68o5"
+mkdir -p "${td68o5}/agents" "${TMPDIR}/fixed-date-bin-68o5"
+cat > "${TMPDIR}/fixed-date-bin-68o5/date" <<EOF
+#!/usr/bin/env bash
+if [[ "\$1" == "+%Y%m%d-%H%M%S" ]]; then echo 20260101-000000; else exec $(command -v date) "\$@"; fi
+EOF
+chmod +x "${TMPDIR}/fixed-date-bin-68o5/date"
+printf 'original forager\n' > "${td68o5}/agents/forager.md"
+sandbox_agents_skills
+rapid68o5_ok=1
+for rapid68o5 in 1 2; do
+  PATH="${TMPDIR}/fixed-date-bin-68o5:${PATH}" env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td68o5}" bash "${CURSOR_HELPER}" install >"${TMPDIR}/68o5-${rapid68o5}.out" 2>&1 || rapid68o5_ok=0
+done
+if [[ "${rapid68o5_ok}" -eq 1 ]] && python3 - "${td68o5}/.backup" <<'PY'
+import sys
+from pathlib import Path
+dirs = sorted(Path(sys.argv[1]).iterdir())
+assert len(dirs) == 2 and all(d.name.startswith('custom-opencode-configs-cursor-20260101-000000.') for d in dirs), dirs
+originals = [d for d in dirs if (d / 'agents/forager.md').read_bytes() == b'original forager\n']
+assert len(originals) == 1, [d.name for d in dirs]
+PY
+then
+  pass "68o5: same-second Cursor reinstall keeps the original agent backup"
+else
+  fail "68o5: same-second Cursor reinstall lost or merged a backup: $(cat "${TMPDIR}"/68o5-*.out)"
+fi
+
+# 68o6. The documented fallback root cursor-assets/ works with the real asset
+# tree and the real imported-skill provenance: validation and install read the
+# selected root, and an edited imported file fails before any target write.
+printf '\n=== 68o6. Real Cursor assets validate and install from the cursor-assets fallback root ===\n'
+fallback68o6="${TMPDIR}/fallback68o6"
+mkdir -p "${fallback68o6}"
+( cd "${BASELINE_PWD}" && git ls-files -z -- .apm vendor scripts/cursor-assets.sh scripts/sync-cursor-hive-skills.py profiles/personal ) \
+  | ( cd "${BASELINE_PWD}" && xargs -0 cp --parents -t "${fallback68o6}" )
+mv "${fallback68o6}/.apm/cursor" "${fallback68o6}/cursor-assets"
+td68o6="${TMPDIR}/cursor68o6"
+sandbox_agents_skills
+if [[ ! -e "${fallback68o6}/.apm/cursor" && -f "${fallback68o6}/vendor/oc-arkive/cursor-skills/provenance.json" ]] \
+  && bash "${fallback68o6}/scripts/cursor-assets.sh" validate >"${TMPDIR}/68o6-validate.out" 2>"${TMPDIR}/68o6-validate.err" \
+  && env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td68o6}" bash "${fallback68o6}/scripts/cursor-assets.sh" install >"${TMPDIR}/68o6-install.out" 2>"${TMPDIR}/68o6-install.err" \
+  && python3 - "${fallback68o6}" "${td68o6}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+root, target = Path(sys.argv[1]), Path(sys.argv[2])
+source = root / 'cursor-assets'
+appendix = b'\n---\n\n' + (source / 'rules/capability-contract.md').read_bytes() + b'\n' + (root / 'vendor/oc-arkive/engineering-judgment/engineering-judgment.md').read_bytes()
+errors = []
+
+def tree(directory):
+    return {path.relative_to(directory).as_posix(): path.read_bytes() for path in directory.rglob('*') if path.is_file()}
+
+agents = sorted(path.stem for path in (source / 'agents').glob('*.md'))
+if len(agents) != 8 or sorted(path.stem for path in (target / 'agents').glob('*.md')) != agents:
+    errors.append(f'installed agents do not match the fallback roster: {agents}')
+for name in agents:
+    if (target / f'agents/{name}.md').read_bytes() != (source / f'agents/{name}.md').read_bytes() + appendix:
+        errors.append(f'agents/{name}.md is not the fallback source plus the appendix')
+provenance = json.loads((root / 'vendor/oc-arkive/cursor-skills/provenance.json').read_text(encoding='utf-8'))
+for name in sorted(path.name for path in (source / 'skills').iterdir()):
+    installed = tree(target / 'skills' / name)
+    if installed != tree(source / 'skills' / name):
+        errors.append(f'skills/{name} differs from the fallback source')
+    if name in provenance['skills'] and set(installed) != set(provenance['skills'][name]['files']):
+        errors.append(f'skills/{name} does not match its provenance file list')
+if errors:
+    raise SystemExit('\n'.join(errors))
+PY
+then
+  pass "68o6: real assets and provenance validate and install from cursor-assets/"
+else
+  fail "68o6: fallback-root validate or install failed: $(cat "${TMPDIR}"/68o6-validate.err "${TMPDIR}"/68o6-install.err 2>/dev/null)"
+fi
+printf 'Tampered line.\n' >> "${fallback68o6}/cursor-assets/skills/how/SKILL.md"
+td68o6t="${TMPDIR}/cursor68o6-tampered"
+mkdir -p "${td68o6t}"
+if ! env -u CURSOR_CONFIG_DIRS CURSOR_CONFIG_DIR="${td68o6t}" bash "${fallback68o6}/scripts/cursor-assets.sh" install >"${TMPDIR}/68o6-tampered.out" 2>"${TMPDIR}/68o6-tampered.err" \
+  && grep -Fq 'Cursor Hive skills validation failed: cursor-assets/skills/how/SKILL.md SHA-256 is' "${TMPDIR}/68o6-tampered.err" \
+  && cursor_target_unmodified "${td68o6t}"; then
+  pass "68o6-tampered: an edited imported skill under cursor-assets/ fails validation before any target change"
+else
+  fail "68o6-tampered: fallback-root validation accepted an edited imported skill or changed the target: $(cat "${TMPDIR}/68o6-tampered.err")"
 fi
 
 td68p="${TMPDIR}/cursor68p"

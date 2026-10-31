@@ -26,8 +26,10 @@ If the session fails, retry `vulnerability-reviewer` in a new fresh session rath
 
 If `vulnerability-reviewer` is not available, stop and report that.
 
-Never modify files.
-Never apply patches.
-Never create commits, branches, pull requests, plans, or worktrees.
+`vulnerability-reviewer` stays non-executing. A local reproduction of a lead is a runtime exercise under Runtime Exercise In Reviews in the default Agent Rules: run it through `investigator` only when an operator instruction covers its purpose, candidate, and effects, inside a covered local placement, with evidence kept outside it. Reviewing a lead does not by itself permit running code; otherwise report the lead as unresolved with the missing proof. No request extends to exploiting a live system, scanning remote networks or hosts, sending private data out, or starting remediation.
+
+Never modify the reviewed source.
+Never apply patches or begin remediation.
+Never create commits, pull requests, or plans. Outside an authorized runtime exercise, never create branches or worktrees.
 
 Return evidenced paths from attacker-controlled input to a missing control and concrete impact. Include severity, confidence, source locations, and coverage gaps. Leave out exploit steps, payloads, scans, and reproduction procedures. When the scope shows no confirmed path, say that no confirmed vulnerability was found in the reviewed scope, then list unresolved leads and coverage gaps.

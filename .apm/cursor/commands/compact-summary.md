@@ -39,7 +39,7 @@ Output exactly the Markdown structure below and keep the section order unchanged
 ## Critical Context
 
 - [important technical facts, errors, open questions, or "(none)"]
-- [each unresolved delegated lane: child agent, owned paths or worktree, state, the candidate (branch and commit) and destination identity, termination evidence marked observed or inferred, and any required review still outstanding; omit when no lane exists]
+- [each unresolved delegated lane: child agent, owned responsibility or placement, state, the candidate (branch and commit, or the dirty file set) and destination identity, declared history intent, the evidence destination for an experiment lane, termination evidence marked observed or inferred, and any required review still outstanding; omit when no lane exists]
 - [operator requirements and required skills that every affected handoff must repeat; list agent IDs only as identifiers, never as permission to resume a child]
 
 ## Relevant Files

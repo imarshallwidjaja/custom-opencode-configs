@@ -34,9 +34,16 @@ Inspect the branch diff before recommending merge, pull request, or discard acti
 
 If the user already chose an exact integration and cleanup path, or the integration authority was settled before the work was placed (for example an approved local commit or squash path), skip this menu and execute that authorization after the required checks. Existing authorization satisfies confirmation for the named branches, worktrees, and actions; ask again only if the scope changed, ownership is uncertain, or new destructive risk was not covered. When no commit permission exists, do not commit to reach a menu choice: integrate as uncommitted changes only when the destination holds no conflicting user work, and otherwise ask at this decision.
 
-Before integrating a worker's result (a commit, or an uncommitted change set applied to the destination), compare the destination branch and commit with the identity recorded when the work was placed. If it moved, inspect what changed and reconcile before merging; do not silently refresh the recorded identity.
+Before integrating a worker's result (a commit, or an uncommitted change set applied to the destination), compare the destination path, full ref, and commit immediately before you integrate with the checkpoint A recorded when the work was placed, or with the newer target T when a reconciliation already merged T. Integrate only the verified source pin the worker returned, not a HEAD you discovered later. If the destination moved in a way that touches the change, overlaps it, or cannot be judged, stop. When the same path and ref moved, record the newly observed target T (path, full ref, immutable commit) separately from A. With commit authority, after the previous writer has ended, a fresh `forager` gets a reconciliation assignment carrying A, the current verified source pin S, and T (see `subagent-delegation`): it merges T's commit into S without rewriting source history and returns a fresh pin S'; the combined delta is reviewed and S' is verified before integration. Without commit authority, no worker merges or commits; settle the drift with the operator. A different path or ref, or unrelated history, also stops for an operator decision. Never overwrite A or T with a later observation: a further move needs a new decision and a new checkpoint.
 
-Otherwise, present these choices plainly:
+Declare the history intent for each repository before integrating:
+
+- **Private history**: unpublished commits created for this work under authority settled before placement. It may be squashed into one polished commit, or rebased when every commit is independently valuable.
+- **Published history**: any source commit already pushed, shared, or relied on elsewhere. Its ancestry must survive: integrate it with a normal merge that keeps those commits and their messages. Never recreate it by squash, rebase, cherry-pick, or message rewriting.
+
+With several repositories, keep a map from repository to its checkpoint A, any newer target T kept separately, and its verified pin, integrate and check each one, and report each outcome separately, including partial ones. Nothing here is atomic.
+
+When no integration path is authorized yet, present these choices plainly:
 
 1. Merge back to the base branch locally.
 2. Push and create a pull request.
@@ -52,9 +59,12 @@ Do not choose for the user unless they already gave explicit instructions.
 - Confirm the branch diff matches the intended change before switching branches.
 - Switch to the base branch.
 - Update it if the user expects that workflow.
-- Merge or squash the development branch according to repository convention; prefer a squash when worker commit churn is not useful. A worktree commit does not authorize this step by itself.
+- Integrate by the declared history intent: squash private history when worker commit churn is not useful, or merge published history normally (for example `git merge --no-ff <branch>`). A worktree commit does not authorize this step by itself.
 - Run verification again on the merged result.
-- Delete the development branch only after the merge and verification succeed.
+- For published history, run `git merge-base --is-ancestor <published-tip> <destination>` and require exit status 0. File-tree equality does not prove ancestry. If the check fails, stop and keep the source branch and worktree.
+- Delete the development branch and worktree only after the merge, verification, and any required ancestry check succeed.
+
+Cursor's `/apply-worktree` brings a worktree's changes into the main checkout. This package has no observable proof that it preserves commits or ancestry, so use it only for private history, and run the ancestry check above whenever published commits are involved.
 
 ### Push And Create Pull Request
 
@@ -82,13 +92,14 @@ Do not choose for the user unless they already gave explicit instructions.
 - Do not delete branches or worktrees without confirmation.
 - Do not include unrelated changes in a commit, merge, or pull request.
 - Do not stash, revert, or commit the user's existing changes in the destination without explicit permission.
+- Do not squash, rebase, or cherry-pick commits that are already published.
 
 ## Completion Report
 
 Report:
 
-- Chosen option
-- Branch and base branch
+- Chosen option and declared history intent
+- Branch, base branch, and for each repository the checkpoint A, any reconciled target T, and the source commit
 - Commands run
-- Verification result
+- Verification result, and the ancestry check output for published history
 - Remaining branch or worktree state

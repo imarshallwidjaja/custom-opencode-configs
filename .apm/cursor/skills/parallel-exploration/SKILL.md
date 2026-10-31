@@ -13,7 +13,7 @@ Use one independently answerable, non-overlapping, context-bounded question per 
 
 The Cursor parent launches the `scout` subagents. This is read-only exploration. It is allowed during planning, including when there is no feature and no approved implementation.
 
-This skill is for read-only research. Parallel implementation uses `orchestrating-ad-hoc-work` when that skill's trigger matches. Select scouts by the retrieval output needed. A read-only request for diagnosis, correctness judgment, tradeoffs, or solution selection stays with the reasoning owner. Scout may retrieve bounded source evidence for it.
+This skill is for read-only research. Parallel implementation uses `orchestrating-ad-hoc-work` when that skill's trigger matches. Select scouts by the retrieval output needed. A read-only request for diagnosis, correctness judgment, tradeoffs, or solution selection stays with the reasoning owner. Scout may retrieve bounded source evidence for it. A question that needs running code goes to `investigator` under the Rules' Experiments section, not to scout.
 
 ## When to Use
 
@@ -155,7 +155,7 @@ Launching the next scout only after the previous result returns defeats the fan-
 
 Do not launch a later question that needs an earlier answer. Make those questions independent, or run them in sequence.
 
-Scout is read-only. Use a writing specialist for implementation. Do not instruct a scout to install, build, run tests, or reproduce a failure: those can write caches or state. Name such a check as a retrieval gap for the parent to run or to assign to a worker with the right isolation.
+Scout is read-only. Use a writing specialist for implementation. Do not instruct a scout to install, build, run tests, or reproduce a failure: those can write caches or state. Name such a check as a retrieval gap for the parent to run or to assign to `investigator` with a placement under the Rules' Experiments section.
 
 ## Verification
 
@@ -169,4 +169,4 @@ No numeric quota or artificial fan-out applies. Dispatch only independent useful
 
 ## Provenance
 
-Locally maintained Cursor adapter of the `parallel-exploration` skill in Agent Hive (`oc-arkive` package 5.0.0, commit `e1d968c5e53cdb03c95849b32b7bc9cbb7de47fc`). The independent-slice fan-out and scout-retrieves, parent-reasons invariants are adapted by hand without Hive launch calls. This skill is not synced.
+Locally maintained Cursor adapter of the `parallel-exploration` skill in Agent Hive (`oc-arkive` package 5.2.0, commit `bce587395000ebdb4d381d2ad183b2673b374065`). The independent-slice fan-out and scout-retrieves, parent-reasons invariants are adapted by hand without Hive launch calls. This skill is not synced.

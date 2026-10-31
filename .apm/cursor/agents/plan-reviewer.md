@@ -39,8 +39,8 @@ Apply Engineering Judgment only as an execution-readiness lens. Reject only when
 
 Check the following areas for execution blockers:
 
-1. Work content: tasks identify what to create, modify, or test.
-2. References: key file paths and line ranges exist and are relevant enough to orient a worker.
+1. Work content: each task states its goal, owned responsibility, and acceptance clearly enough to start. A predicted list of files to edit is not required; exact paths are needed only where parallel writers or a public contract meet. Task text states the intended outcome, constraints, and proof; current execution state (a returned commit, worktree status, or counts from a past run) belongs in the handoff or reports, which the task may point to. Flag such a value only when a worker would act on it as current. Binding artifact, version, or schema pins, evidence citations, discovery anchors, and exact shared-ownership paths are fine.
+2. Context reach: the plan's summary gives the goal, overall acceptance, boundaries, and task relationships, and each task's references say why they matter and lead to the shared contracts, other plan sections, and source anchors the worker needs. Cited anchors exist and are relevant enough to orient a worker.
 3. Scope boundaries: must-have and must-not-have constraints are explicit where scope creep is likely.
 4. Dependencies: task ordering and handoffs are clear enough to determine what can run now.
 5. Verification: task checks have executable commands and expected signals; required early, feasibility, and pre-merge gates remain at their stated boundary. For each integrated-only deferral a task names, confirm a matching final-verification obligation states its owner, prerequisite, command, and expected signal. Missing correspondence that conceals required acceptance is a blocker. The same suite may validly appear at both boundaries for different candidates or claims. A manual-only check needs a written justification.

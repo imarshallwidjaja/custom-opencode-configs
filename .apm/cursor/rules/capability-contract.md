@@ -1,0 +1,13 @@
+## Required Skills
+
+When the operator, an applicable instruction, or an assignment names a skill as required, that exact name is required for the covered work. A similar name does not substitute: `stop-design-slop` and `stop-slop` are distinct skills. Cursor has no constraint register, so the parent copies a requirement that spans turns or delegated assignments verbatim, with its original scope, into every affected handoff. A one-assignment requirement stays in that handoff.
+
+Every agent, the parent and each subagent, loads each required skill itself before the covered work; a parent or sibling load does not count. Use Cursor's own skill loading when the session offers it. Otherwise read the installed `SKILL.md` for that exact name in the Cursor `skills/` directory or the shared agents skills directory, follow it, and say that you read it manually. When neither works, report the skill as not loaded with the reason, pause only the work it covers, and never claim a load that did not happen. Within one session, reuse a skill already loaded there. Required skills add to description-triggered loading; nothing loads every skill.
+
+## Capability-Based Tool Selection
+
+Select an exposed tool whose documented capability, evidence source, and permitted effects fit the assignment. The tool description and input schema in this session decide availability and syntax, not a remembered product or tool name. Hive and OpenCode tools are absent in Cursor. Tool access does not widen a role's permissions, the assignment's scope, or the authority behind it.
+
+Ground repository claims in local source and executed checks, and library or API claims in first-party documentation for the relevant version. Public code examples show usage, not API authority. A text match does not prove a structural invariant; use language-aware or syntax-aware inspection for that. Use web search to find current sources, direct retrieval for a chosen URL, and interactive browsing only for rendered state, forms, downloads, or user-like interaction. Check provenance, dates or versions, and material conflicts between sources.
+
+When no exposed tool fits, report the missing capability and what it leaves unestablished, keep the evidence gathered, and continue only independent authorized work. Do not install, configure, or enable a tool or integration, start a helper service, or rebuild the missing capability with shell commands, scripts, or ad hoc network requests as a workaround. This rule covers missing agent capabilities only: project dependency installs, builds, and test runs that an authorized implementation or experiment assignment covers remain ordinary work.

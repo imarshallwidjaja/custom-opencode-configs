@@ -20,7 +20,7 @@ Prioritize clarifying:
 - what output the operator wants back
 - whether the council should run in the current session or a new session
 
-Refer to named Cursor subagents when recommending `include`. Do not hardcode obsolete alias-to-member tables or mutable implementation workers as council seats.
+Refer to named Cursor subagents when recommending `include`. Do not hardcode obsolete alias-to-member tables or writing workers (`forager`, `investigator`) as council seats.
 
 If the best member set is still unclear, recommend the smallest useful set of named Cursor subagents and explain why.
 

@@ -15,6 +15,12 @@ Cursor documents its own isolation: a subagent asked to run in an isolated envir
 
 Creating a worktree, natively or by hand, grants no authority to commit, merge, push, or delete anything. The integration authority settled before placement governs those actions.
 
+## Cleanup And Evidence
+
+Cursor can prune older worktrees automatically to limit disk use. Its documentation says the cleanup keeps only the newest worktrees up to a machine-wide cap across every workspace, and that worktrees created outside its manager, including ones made with `git worktree add` or `/worktree`, are eligible. Keep evidence, logs, and anything needed after a run outside every worktree, and record the path and branch of each worktree you rely on. Do not change Cursor's cleanup settings unless the operator asks.
+
+The parent removes the temporary worktrees it created. An experiment worktree is removed once its execution has ended and its evidence is kept outside it; it is never merged. An implementation worktree is removed only after integration, verification, and any required ancestry check succeed. Ignored dependency installs and build output alone do not block removal; tracked or untracked changes do, so report them and keep the worktree.
+
 ## Directory Selection
 
 Use this priority order:
@@ -53,6 +59,14 @@ git worktree add "$path" -b "$branch_name"
 cd "$path"
 ```
 
+For an experiment at a named commit, start the branch there:
+
+```bash
+git worktree add -b "$branch_name" "$path" "$commit"
+```
+
+Then apply the candidate's relevant staged and unstaged diff and copy its relevant untracked files, which a Git diff omits, so the placement matches the named candidate.
+
 For a global location, use a path like:
 
 ```bash
@@ -85,4 +99,4 @@ Report:
 - Do not create a project-local worktree without ignore verification.
 - Do not assume a directory when project instructions specify one.
 - Do not skip baseline verification unless no relevant command exists.
-- Do not delete a worktree or branch without explicit user authorization. An existing instruction covering the exact integration and cleanup actions satisfies confirmation; do not ask again unless scope, ownership, or destructive risk has changed. Verify integration and ownership before cleanup, and preserve unrelated work.
+- Do not delete a worktree or branch without explicit user authorization. An existing instruction covering the exact integration and cleanup actions satisfies confirmation, and an experiment the operator authorized covers removing the temporary worktree the parent created for it; do not ask again unless scope, ownership, or destructive risk has changed. Verify integration (or kept evidence, for an experiment) and ownership before cleanup, and preserve unrelated work.

@@ -21,7 +21,7 @@ Normalize the request into these council directive fields:
 - assumptions needing validation
 - desired output
 
-Use only councillors identified for this run from named Cursor subagents resolved through `include`. Do not substitute stale aliases, excluded agents, unrequested or invented agents, or duplicates back into the run.
+Use only councillors identified for this run from named Cursor subagents resolved through `include`. Do not substitute stale aliases, excluded agents, unrequested or invented agents, or duplicates back into the run. Council seats are read-only: `forager` and `investigator` write files, so they are never councillors even when named; report them as excluded.
 
 Run the council by invoking each identified councillor in a fresh Cursor subagent session. Use Cursor subagents in parallel when the environment supports it and the councillors are independent. Otherwise, run them serially or ask the operator to run the named councillors. If a councillor session fails, retry it in a new fresh session rather than resuming the failed one.
 

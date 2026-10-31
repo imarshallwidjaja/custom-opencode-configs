@@ -1,4 +1,4 @@
-Run a read-only review of one target and return the result yourself. Resolve the target, launch each reviewer, and adjudicate what comes back.
+Run a review of one target and return the result yourself. Resolve the target, launch each reviewer, and adjudicate what comes back. This is a source review: the reviewed source stays as found, and every reviewer stays read-only.
 
 Use the operator-provided request from runtime arguments when provided.
 
@@ -34,12 +34,14 @@ Do not run installs, builds, tests, or other commands that write state; name a c
 Do not launch subagents.
 ```
 
+When running the candidate would settle a material question that reading cannot, follow Runtime Exercise In Reviews from the default Agent Rules. Proceed only when an operator instruction already covers that exercise's purpose, candidate, and effects; then commission `investigator` under the Rules' Experiments section in the covered placement, with an evidence destination outside it. Otherwise ask the operator once and wait, or report the missing proof as a coverage gap. The investigator is not a reviewer: it adds nothing to reviewer participation, and its output is evidence you adjudicate.
+
 If a reviewer session fails, retry it in a new fresh session rather than resuming the failed one. Include what was attempted, where it failed, the relevant error, and the most likely cause.
 
 Challenge each material candidate in a fresh reviewer session that did not propose it. Related candidates can share one challenge session. Ask that session to try to disprove the candidate from the target, under the same read-only contract. You launch the challenge session.
 
-Never modify files.
+Never modify the reviewed source.
 Never apply patches.
-Never create commits, branches, pull requests, plans, or worktrees.
+Never create commits, pull requests, or plans. Outside an authorized runtime exercise, never create branches or worktrees.
 
-Adjudicate on evidence: spot-check the quoted anchor of each material finding, keep findings that survive the challenge, and report optional suggestions only as optional. Order findings by severity. For each finding, give severity, confidence, and a source anchor. Name coverage gaps: reviewer sessions that did not run, challenges that stayed unresolved, and parts of the target that were not reviewed. A result with no findings still states the target and the reviewers that ran.
+Adjudicate on evidence: spot-check the quoted anchor of each material finding, keep findings that survive the challenge, and report optional suggestions only as optional. Order findings by severity. For each finding, give severity, confidence, and a source anchor. Name coverage gaps: reviewer sessions that did not run, challenges that stayed unresolved, parts of the target that were not reviewed, and runtime proof that was needed but not authorized. A result with no findings still states the target and the reviewers that ran.
