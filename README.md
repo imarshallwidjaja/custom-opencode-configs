@@ -186,9 +186,11 @@ Use this workflow only after deciding that the installed Hive routing should rep
 
 ### AGENTS profiles
 
-The installer uses `profiles/agents/shared.md` by default. Select another profile with `OPENCODE_AGENTS_PROFILE`. All four profiles include request-over-skill defaults, source citations for skill-driven pauses, and a stopping condition after required verification gates; preserve `Request And Skill Precedence` when merging into an existing profile. See `profiles/agents/README.md` for the operating-policy details and `CURSOR.md` for the equivalent manually pasted Cursor Rules.
+The installer uses `profiles/agents/shared.md` by default. Select another profile with `OPENCODE_AGENTS_PROFILE`. All four profiles include request-over-skill defaults and source citations for skill-driven pauses in `Request And Skill Precedence`, and a stopping condition after acceptance and required verification gates in `Quality Gates`; preserve both sections when merging into an existing profile. See `profiles/agents/README.md` for the operating-policy details and `CURSOR.md` for the equivalent manually pasted Cursor Rules.
 
 All four AGENTS profiles reference `unslop` for human-facing prose and prose handoffs. It owns conditional depth-skill routing and child-load requirements; `writing-for-humans` owns drafting, the finish pass, and durable naming. OpenCode loads Hive's copies of these skills, `writing-for-agents`, `stop-slop`, and `humanizer`. The installer preserves and reports their local shadows in both skill roots along with every other current Hive name. `writing-policy` is retired and preserved/reportable as unversioned. Cursor installs its own copies into the Cursor config `skills/` directory and leaves an agents-dir copy in place with a conflict line. A leftover in `~/.claude/skills` still shadows the Hive bundle and is not reported by either installer. `CURSOR.md` explains the pinned Cursor imports and host separation.
+
+All four carry the shared current operating policy: workflow corrections, bounded verification and failure evidence, prerequisite-scoped delegation, runtime provenance, published-history preservation, and evidence-based self-improvement. Personal and context-improved additions stay confined to their respective variants. Machine-specific AWS configuration, home paths, and service names are excluded.
 
 Available profiles:
 
@@ -212,6 +214,8 @@ OPENCODE_AGENTS_PROFILE=personal-context-improved ./scripts/install-profile.sh -
 ```
 
 The two `*-context-improved` profiles require `jq`, `uvx`, and a non-blank `secrets/context7` file in the target Opencode config directory (see [MCP API keys](#mcp-api-keys)). The installer preflights those dependencies before changing anything and applies the matching `context-improved` overlay automatically.
+
+All four profiles require the UI skill `impeccable` for matching interface work and `animate` for motion, transitions, or storyboards. Install those skills separately when needed; this repository does not install them automatically. Image work uses the selected tool's companion skill, such as the `oc-multi-imagegen` skill shipped by that plugin. Missing skills must be reported, and installing a missing tool or skill requires authorization. These work-specific requirements do not add prerequisites to a base install.
 
 ### Agent Hive config
 

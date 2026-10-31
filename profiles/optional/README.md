@@ -8,6 +8,8 @@ These optional bundles are Opencode-only. Cursor v1 has no optional MCP bundle i
 
 Each bundle is a partial `opencode.json` fragment. Optional bundles leave `agent_hive.json` unchanged.
 
+The AGENTS profiles' UI and motion guidance requires `impeccable` and `animate` for matching work. These are separate skill dependencies; the MCP bundles do not install them. Report missing capabilities and obtain authorization before installing tools or skills, including MarkItDown conversion dependencies.
+
 The accompanying profile targets OpenCode v1 >= 1.18.30 only and pins `oc-arkive@5.2.0`. Ownership and skill inventory were checked against `oc-arkive` 5.2.0. Check `opencode --version` before updating the plugin or profile and restarting its host process.
 
 Purpose:

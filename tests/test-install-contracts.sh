@@ -1826,7 +1826,7 @@ cp "${BASELINE_PWD}/profiles/agents/personal-default.md" "${REPO_FIXTURE}/profil
 OPENCODE_CONFIG_DIR="${td17c}" OPENCODE_AGENTS_PROFILE=personal-default bash "${INSTALL_HELPER}" --apply 2>"${td17c}/err" && pass "17c-a: personal install succeeded" || fail "17c-b: personal install failed: $(cat "${td17c}/err")"
 [[ -f "${AGENTS_SKILLS_DIR}/ivan-writing/SKILL.md" ]] && pass "17c-c: ivan-writing in agents dir" || fail "17c-d: ivan-writing missing from agents dir"
 [[ ! -e "${td17c}/skills/ivan-writing" ]] && pass "17c-e: ivan-writing absent from OpenCode skills" || fail "17c-f: ivan-writing leaked into OpenCode skills"
-diff -r "${BASELINE_PWD}/profiles/personal/skills/ivan-writing" "${AGENTS_SKILLS_DIR}/ivan-writing" >/dev/null && cmp -s "${BASELINE_PWD}/profiles/agents/personal-default.md" "${td17c}/AGENTS.md" && pass "17c: OpenCode installs the personal source tree and loading guidance" || fail "17c: installed personal source tree or loading guidance differs"
+  diff -r "${BASELINE_PWD}/profiles/personal/skills/ivan-writing" "${AGENTS_SKILLS_DIR}/ivan-writing" >/dev/null && pass "17c: OpenCode installs the personal source tree" || fail "17c: installed personal source tree differs"
 
 printf '\n=== 17c. OpenCode backs up dangling canonical and personal skills ===\n'
 for profile17c in shared personal-default; do
@@ -4052,7 +4052,7 @@ for relative in (
         errors.append(f'{relative} still mentions consolidate-test-suites')
     if '| Starting isolated feature work' in text or '| Starting isolated feature work or executing an approved implementation plan |' in text:
         errors.append(f'{relative} still loads using-git-worktrees for isolated work')
-    if selected_tdd not in text:
+    if 'Load `test-driven-development` only when TDD is selected by the operator, plan, repository policy, or design need; loading it means TDD was selected.' not in text:
         errors.append(f'{relative} must load TDD only when TDD is selected')
 tdd = (root / '.apm/cursor/skills/test-driven-development/SKILL.md').read_text(encoding='utf-8')
 if not tdd.startswith('---\n'):
@@ -4646,7 +4646,30 @@ else
   fail "68t: installer classification, sync list, or shared command list drifted"
 fi
 
-# Base-profile compatibility and merge/recovery instructions are public contracts.
+# Every selection copies the real profile bytes through the installer. Context
+# profiles use the real overlay helper with non-secret and executable fixtures.
+build_fixture
+cp "${BASELINE_PWD}/scripts/enable-optional.sh" "${REPO_FIXTURE}/scripts/enable-optional.sh"
+mkdir -p "${REPO_FIXTURE}/profiles/optional"
+cp "${BASELINE_PWD}/profiles/optional/opencode.context-improved.json" "${REPO_FIXTURE}/profiles/optional/opencode.context-improved.json"
+for profile in shared shared-context-improved personal-default personal-context-improved; do
+  cp "${BASELINE_PWD}/profiles/agents/${profile}.md" "${REPO_FIXTURE}/profiles/agents/${profile}.md"
+  profile_target="${TMPDIR}/profile-copy-${profile}"
+  mkdir -p "${profile_target}/home" "${profile_target}/agents-skills"
+  write_secret "${profile_target}" context7
+  if HOME="${profile_target}/home" PATH="${optional_bin}:/usr/bin:/bin" \
+    OPENCODE_CONFIG_DIR="${profile_target}" AGENTS_SKILLS_DIR="${profile_target}/agents-skills" \
+    OPENCODE_AGENTS_PROFILE="${profile}" OPENCODE_AGENTS_MODE=install \
+    bash "${INSTALL_HELPER}" --apply >"${profile_target}/install.log" 2>&1 \
+    && cmp -s "${BASELINE_PWD}/profiles/agents/${profile}.md" "${profile_target}/AGENTS.md"; then
+    pass "${profile}: installed AGENTS.md matches the real profile bytes"
+  else
+    fail "${profile}: install failed or AGENTS.md differs (see ${profile_target}/install.log)"
+  fi
+done
+
+# Base-profile compatibility, common policy, variants, and merge/recovery
+# instructions are public contracts; proposal hashes are not a permanent gate.
 if python3 - "${BASELINE_PWD}" <<'PY'
 import re
 import sys
@@ -4669,19 +4692,78 @@ for name in ('README.md', 'FOR-LLM-AGENTS.md', 'profiles/agents/README.md', 'pro
         errors.append(f'{name}: missing scoped ownership/inventory baseline')
 merge_do = 'Use the owning Hive merge tool with `historyIntent: "rewrite-private"` for private squash/rebase, or `historyIntent: "preserve-source"` and a normal merge for published history. Inspect retained operations with `hive_worktree_recover` before worktree mutations; acknowledge recovery only after all operation processes have stopped. Remove the worktree and task branch after successful integration.'
 merge_dont = 'Load `finishing-a-development-branch` to pick a generic merge/PR/discard menu, use a plain merge commit for private temporary history, or leave generated artifacts/duplicate churn behind'
+profiles = {}
+common_contracts = {
+    'policy corrections': ('reconcile affected unfinished tasks', 'Preserve completed-task history', 'approval before changing binding gates'),
+    'bounded verification': ('operator narrows readiness to named commands', 'Binding requirements still apply', 'enforced limit, a sampled maximum, and an exact physical maximum differ'),
+    'failure evidence': ('Preflight the exact runner and environment', 'exercise a controlled failure through its real I/O boundaries', 'Missing diagnostics remain unknown', 'Faster focused checks alone do not prove faster completion'),
+    'prerequisite closure': ('unfinished target and its unfinished transitive prerequisites', 'Task numbers are identifiers, not a range', 'order shared writes in the DAG'),
+    'permission and activity evidence': ('inspection commands install dependencies, refresh indexes, or write caches', 'progressing only with recent runtime or tool activity', 'align each agent\'s instructions, required skills, and exposed tools'),
+    'payload boundaries': ('Separate product input limits from serialized transport limits', 'Do not add an item-count cap solely for an internal message'),
+    'runtime provenance': ('whether recorded arguments precede or follow hook mutation', 'compare this session\'s mutations with Git operation metadata and timestamps', 'confirm it started after the fix commit', 'isolated scratch server on a forked session'),
+    'published ancestry': ('git merge-base --is-ancestor <published-tip> <destination>', 'NO_TRACKED_CHANGES', 'do not bypass the owning tool with raw Git', 'primary clean up a registered Hive worktree through its matching cleanup tool', 'Obtain explicit permission before stashing, reverting, or committing it'),
+    'skill pairing': ('load the companion skill it names before generating', 'also load `impeccable`', 'load `animate` and decide each motion\'s purpose and frequency', 'do not install a workaround without authorization'),
+    'authorized conversion': ('If tool installation is authorized', 'retry the same file when installation is authorized; otherwise report the gap'),
+    'evidenced learning': ('an operator decision alone is insufficient', 'session or task logs outside version control', 'Integration elsewhere requires authorization'),
+}
 for profile in ('shared', 'shared-context-improved', 'personal-default', 'personal-context-improved'):
     text = (root / f'profiles/agents/{profile}.md').read_text(encoding='utf-8')
+    profiles[profile] = text
     if text.count(f'| {merge_do} | {merge_dont} |') != 1:
         errors.append(f'{profile}: missing exact merge history intent and guarded recovery row')
     if 'cherry-pick via Hive merge tools' in text:
         errors.append(f'{profile}: obsolete merge instruction remains')
+    for label, markers in common_contracts.items():
+        if any(marker not in text for marker in markers):
+            errors.append(f'{profile}: missing {label} contract')
+    if not text.startswith('# Agent Instructions\n\nFollow these instructions unless a higher-priority or closer applicable instruction overrides them.\n'):
+        errors.append(f'{profile}: incorrect instruction precedence')
+    if re.search(r'/home/|/Users/|\bawsp\b|opencode\.service|## Engineering Judgment|\| Trigger \|', text):
+        errors.append(f'{profile}: machine-local rule, duplicated judgment, or skill trigger table')
+    if '\n# Agent Self Improvement\n' in text:
+        errors.append(f'{profile}: empty self-improvement footer')
+
+def section(text, heading):
+    match = re.search(rf'^## {re.escape(heading)}\n(.*?)(?=^## |\Z)', text, re.MULTILINE | re.DOTALL)
+    return match.group(1) if match else ''
+
+personal_persona = (
+    "- Preserve Ivan's actual level of ownership and confidence. Choose the strongest defensible claim; do not reflexively undersell direct experience because a question names a narrower example tool or imperfect category.\n"
+    '- Treat good writing as fidelity to how the work operated, not as surface polish.\n'
+)
+personal_prose = section(profiles['personal-default'], 'Prose policy')
+context_rules = section(profiles['shared-context-improved'], 'ast-grep Rules')
+if not context_rules or 'ast_grep_find_code_by_rule' not in context_rules:
+    errors.append('context profiles: missing explicit ast-grep tool rules')
+for profile, text in profiles.items():
+    if profile.startswith('personal-'):
+        if personal_persona not in section(text, 'Persona') or section(text, 'Prose policy') != personal_prose:
+            errors.append(f'{profile}: personal blocks differ')
+        text = text.replace('\n' + personal_persona, '')
+        text = text.replace(personal_prose, section(profiles['shared'], 'Prose policy'), 1)
+    elif 'Ivan' in text or 'ivan-writing' in text:
+        errors.append(f'{profile}: personal guidance leaked into shared profile')
+    if profile.endswith('-context-improved'):
+        if section(text, 'ast-grep Rules') != context_rules:
+            errors.append(f'{profile}: context-only rules differ')
+        text = text.replace('## ast-grep Rules\n' + context_rules, '', 1)
+        for label in ('Official current library/framework docs', 'Public GitHub implementation examples'):
+            row_pattern = rf'^\| {re.escape(label)} \|.*$'
+            expected = re.search(row_pattern, profiles['shared'], re.MULTILINE).group(0)
+            if expected.replace('; use only when available.', '.') not in text:
+                errors.append(f'{profile}: context tool availability assumptions changed')
+            text = re.sub(row_pattern, lambda _: expected, text, flags=re.MULTILINE)
+    elif section(text, 'ast-grep Rules'):
+        errors.append(f'{profile}: context-only rules leaked into plain profile')
+    if text != profiles['shared']:
+        errors.append(f'{profile}: shared policy differs beyond personal/context variant blocks')
 if errors:
     raise SystemExit('\n'.join(errors))
 PY
 then
-  pass "base docs retain v1-only compatibility and all four profiles retain merge/recovery contract"
+  pass "base docs retain v1-only compatibility; profiles retain shared policy, variant boundaries, and merge/recovery contract"
 else
-  fail "base compatibility or profile merge/recovery contract drifted"
+  fail "base compatibility, profile policy, variant boundaries, or merge/recovery contract drifted"
 fi
 
 # Shared prompts keep argument handling that works in OpenCode and Cursor.
