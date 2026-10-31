@@ -230,7 +230,7 @@ Other examples:
 Some notes:
 
 - the script requires `jq`
-- it creates a timestamped backup of the current `opencode.json` before replacing it
+- it backs up the current `opencode.json` before replacing it, into a new `.backup/<timestamp>.<suffix>/` directory per run, so two snippets applied in the same second keep separate backups. `OPENCODE_OPTIONAL_SKIP_BACKUP=1` skips the backup
 - it refuses to apply a snippet if a listed binary is missing, or if a secret file the snippet references is missing, unreadable, or blank; it checks secret files under the selected `OPENCODE_CONFIG_DIR`
 - it never creates, copies, or backs up `secrets/`; `scripts/write-secret.sh` writes key files
 - installing the base profile again replaces `opencode.json` and drops merged snippets, so reapply them after each base reinstall

@@ -59,6 +59,8 @@ check_secret_file() {
 
 BACKUP_DIR=""
 
+# One backup directory per run, created on first use. mktemp keeps it unique when
+# two runs start in the same second, so a later run cannot overwrite an earlier backup.
 backup_json() {
   local source_path="$1"
   local backup_name="$2"
@@ -69,8 +71,8 @@ backup_json() {
 
   if [[ -f "${source_path}" ]]; then
     if [[ -z "${BACKUP_DIR}" ]]; then
-      BACKUP_DIR="${TARGET_DIR}/.backup/$(date +%Y%m%d-%H%M%S)"
-      mkdir -p "${BACKUP_DIR}"
+      mkdir -p "${TARGET_DIR}/.backup"
+      BACKUP_DIR="$(mktemp -d "${TARGET_DIR}/.backup/$(date +%Y%m%d-%H%M%S).XXXXXX")"
     fi
     cp -a "${source_path}" "${BACKUP_DIR}/${backup_name}"
   fi

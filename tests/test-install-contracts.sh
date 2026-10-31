@@ -1009,6 +1009,75 @@ else
   fail "0f: atlassian must add the OAuth remote MCP and name the sign-in command"
 fi
 
+# Two bundles applied within one clock second must keep separate backups.
+td_backup="${TMPDIR}/test-optional-backups"; backup_bin="${td_backup}/bin"; mkdir -p "${backup_bin}"
+printf '#!/bin/sh\nprintf "20250101-000000\\n"\n' > "${backup_bin}/date"
+printf '#!/bin/sh\nexit 0\n' > "${backup_bin}/npx"
+chmod +x "${backup_bin}/date" "${backup_bin}/npx"
+mkdir -p "${td_backup}/config"
+printf '{"mcp":{"unrelated":{"type":"local","command":["unrelated-server"]}}}\n' > "${td_backup}/config/opencode.json"
+cp "${td_backup}/config/opencode.json" "${td_backup}/original.json"
+backup_ok=1
+PATH="${backup_bin}:${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_backup}/config" bash "${BASELINE_PWD}/scripts/enable-optional.sh" atlassian >"${td_backup}/first.out" 2>&1 || backup_ok=0
+cp "${td_backup}/config/opencode.json" "${td_backup}/intermediate.json"
+PATH="${backup_bin}:${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_backup}/config" bash "${BASELINE_PWD}/scripts/enable-optional.sh" chrome-devtools >"${td_backup}/second.out" 2>&1 || backup_ok=0
+first_backup="$(sed -n 's/^Backed up the previous config to //p' "${td_backup}/first.out")"
+second_backup="$(sed -n 's/^Backed up the previous config to //p' "${td_backup}/second.out")"
+if [[ "${backup_ok}" -eq 1 && -n "${first_backup}" && -n "${second_backup}" && "${first_backup}" != "${second_backup}" ]] \
+  && cmp -s "${td_backup}/original.json" "${first_backup}/opencode.json" \
+  && cmp -s "${td_backup}/intermediate.json" "${second_backup}/opencode.json" \
+  && [[ "$(find "${td_backup}/config/.backup" -name opencode.json | wc -l)" -eq 2 ]]; then
+  pass "0g: same-second optional bundles keep the original and intermediate backups apart"
+else
+  fail "0g: same-second optional bundles overwrote or misplaced a backup: $(cat "${td_backup}/first.out" "${td_backup}/second.out")"
+fi
+td_skip_backup="${TMPDIR}/test-optional-skip-backup"; mkdir -p "${td_skip_backup}"
+printf '{}\n' > "${td_skip_backup}/opencode.json"
+if PATH="${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_skip_backup}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" atlassian >"${td_skip_backup}/out" \
+  && [[ ! -e "${td_skip_backup}/.backup" ]] && ! grep -q 'Backed up' "${td_skip_backup}/out"; then
+  pass "0g: OPENCODE_OPTIONAL_SKIP_BACKUP=1 writes no backup"
+else
+  fail "0g: OPENCODE_OPTIONAL_SKIP_BACKUP=1 still wrote a backup"
+fi
+
+# The install warning follows the binary dcg-guard runs: DCG_BIN when set, else dcg on PATH.
+td_dcg="${TMPDIR}/test-dcg-warning"; dcg_tools="${td_dcg}/tools"; dcg_on_path="${td_dcg}/path-dcg"
+mkdir -p "${dcg_tools}" "${dcg_on_path}"
+ln -s "$(command -v jq)" "${dcg_tools}/jq"
+printf '#!/bin/sh\n' > "${td_dcg}/dcg-executable"; chmod 755 "${td_dcg}/dcg-executable"
+printf '#!/bin/sh\n' > "${td_dcg}/dcg-not-executable"; chmod 644 "${td_dcg}/dcg-not-executable"
+cp "${td_dcg}/dcg-executable" "${dcg_on_path}/dcg"
+sandbox_agents_skills
+dcg_install() {
+  local name="$1" path_prefix="$2"
+  shift 2
+  env -u DCG_BIN "$@" PATH="${path_prefix}${dcg_tools}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_dcg}/${name}" OPENCODE_AGENTS_PROFILE=shared \
+    bash "${INSTALL_HELPER}" --apply >/dev/null 2>"${td_dcg}/${name}.err"
+}
+if dcg_install dcg-bin "" DCG_BIN="${td_dcg}/dcg-executable" && ! grep -q 'dcg-guard plugin' "${td_dcg}/dcg-bin.err" \
+  && dcg_install path-dcg "${dcg_on_path}:" && ! grep -q 'dcg-guard plugin' "${td_dcg}/path-dcg.err"; then
+  pass "0h: an executable dcg from DCG_BIN or PATH gets no install warning"
+else
+  fail "0h: install warned although DCG_BIN or PATH provides an executable dcg: $(cat "${td_dcg}/dcg-bin.err" "${td_dcg}/path-dcg.err" 2>/dev/null)"
+fi
+if dcg_install dcg-bin-broken "${dcg_on_path}:" DCG_BIN="${td_dcg}/dcg-not-executable" \
+  && grep -qF "Warning: DCG_BIN=${td_dcg}/dcg-not-executable is not an executable file." "${td_dcg}/dcg-bin-broken.err" \
+  && grep -qF 'A nonempty DCG_BIN takes precedence over PATH, even when invalid; there is no PATH fallback.' "${td_dcg}/dcg-bin-broken.err" \
+  && grep -qF 'Unset DCG_BIN to use dcg on PATH, or point it to an executable.' "${td_dcg}/dcg-bin-broken.err" \
+  && grep -q 'lets bash commands run unchecked' "${td_dcg}/dcg-bin-broken.err"; then
+  pass "0h: a non-executable DCG_BIN warns by name even when PATH has dcg"
+else
+  fail "0h: a non-executable DCG_BIN must warn by name: $(cat "${td_dcg}/dcg-bin-broken.err" 2>/dev/null)"
+fi
+if [[ -n "$(PATH=/usr/bin:/bin type -P dcg)" ]]; then
+  printf '  NOTE: 0h: no-dcg warning case not run because /usr/bin or /bin provides dcg\n'
+elif dcg_install no-dcg "" && grep -qF 'Warning: dcg is not on PATH and DCG_BIN is unset in this shell.' "${td_dcg}/no-dcg.err" \
+  && grep -q 'lets bash commands run unchecked' "${td_dcg}/no-dcg.err"; then
+  pass "0h: no dcg from DCG_BIN or PATH warns that commands run unchecked"
+else
+  fail "0h: install without dcg must warn that commands run unchecked: $(cat "${td_dcg}/no-dcg.err" 2>/dev/null)"
+fi
+
 td_write_secret="${TMPDIR}/test-write-secret"
 mkdir -p "${td_write_secret}/secrets"
 chmod 755 "${td_write_secret}/secrets"
@@ -2865,10 +2934,10 @@ if "PR and review drafts require explicit operator selection of personal voice u
 
 if not plugin_path.is_file():
     errors.append("profiles/base/plugins/dcg-guard.js missing")
-else:
-    text = plugin_path.read_text(encoding="utf-8")
-    if "Bun.which(\"dcg\")" not in text or "tool.execute.before" not in text:
-        errors.append("dcg-guard.js is not the Destructive Command Guard adapter")
+# tests/dcg-guard.test.js owns the adapter's behavior, including binary lookup.
+dcg_tests = root / "tests/dcg-guard.test.js"
+if not dcg_tests.is_file() or 'from "../profiles/base/plugins/dcg-guard.js"' not in dcg_tests.read_text(encoding="utf-8"):
+    errors.append("tests/dcg-guard.test.js must exercise profiles/base/plugins/dcg-guard.js")
 shell_agents = root / "profiles/base/plugins/shell-agents.js"
 if not shell_agents.is_file():
     errors.append("profiles/base/plugins/shell-agents.js missing")

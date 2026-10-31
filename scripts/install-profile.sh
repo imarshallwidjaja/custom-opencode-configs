@@ -753,8 +753,16 @@ if command -v cymbal >/dev/null 2>&1; then
   fi
 fi
 
-if ! command -v dcg >/dev/null 2>&1; then
-  printf 'Warning: dcg is not on PATH. The installed dcg-guard plugin stays inactive until Destructive Command Guard is installed.\n' >&2
+# The dcg-guard plugin runs DCG_BIN when it is set and non-empty, else dcg from PATH.
+dcg_command="${DCG_BIN:-dcg}"
+dcg_path="$(type -P -- "${dcg_command}" 2>/dev/null || true)"
+if [[ -z "${dcg_path}" || ! -f "${dcg_path}" || ! -x "${dcg_path}" ]]; then
+  if [[ -n "${DCG_BIN:-}" ]]; then
+    printf 'Warning: DCG_BIN=%s is not an executable file.\n' "${DCG_BIN}" >&2
+  else
+    printf 'Warning: dcg is not on PATH and DCG_BIN is unset in this shell.\n' >&2
+  fi
+  printf 'A nonempty DCG_BIN takes precedence over PATH, even when invalid; there is no PATH fallback. Unset DCG_BIN to use dcg on PATH, or point it to an executable. If the selected binary cannot start, the dcg-guard plugin lets bash commands run unchecked and warns on each one. The plugin needs Destructive Command Guard v0.15.2 or later.\n' >&2
   printf '%s\n' 'Install: curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh?$(date +%s)" | bash -s -- --easy-mode' >&2
 fi
 
