@@ -110,6 +110,9 @@ case "${SNIPPET_NAME}" in
   keenable)
     check_secret_file keenable
     ;;
+  railway)
+    check_command railway
+    ;;
 esac
 
 if ! jq '.' "${TARGET_JSON}" >/dev/null 2>&1; then
@@ -129,6 +132,10 @@ if [[ "${SNIPPET_NAME}" == "context-improved" ]]; then
 fi
 
 printf 'Applied %s to %s\n' "${SNIPPET_NAME}" "${TARGET_JSON}"
+case "${SNIPPET_NAME}" in
+  railway) printf 'The railway MCP reuses the Railway CLI sign-in; run `railway login` if it is not signed in.\n' ;;
+  atlassian) printf 'Run `opencode mcp auth atlassian` to complete the Atlassian OAuth sign-in, then restart Opencode.\n' ;;
+esac
 if [[ -n "${BACKUP_DIR}" ]]; then
   printf 'Backed up the previous config to %s\n' "${BACKUP_DIR}"
 fi

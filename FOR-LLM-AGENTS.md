@@ -43,8 +43,12 @@ Do not invent extra setup questions. This repository exposes the following real 
 6. Whether to enable the optional Keenable web search MCP:
    - none
    - `keenable`
-7. Whether to install the optional Agent Hive / `oc-arkive` VS Code companion from the latest release `.vsix`.
-8. Whether to install the separate Cursor prompt-level assets:
+7. Whether to enable the optional Railway and Atlassian MCPs:
+   - none
+   - `railway`
+   - `atlassian`
+8. Whether to install the optional Agent Hive / `oc-arkive` VS Code companion from the `v5.2.0` release `.vsix`.
+9. Whether to install the separate Cursor prompt-level assets:
    - skip Cursor setup
    - validate and inspect the Cursor assets only
    - install the Cursor assets into `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` or semicolon-separated `CURSOR_CONFIG_DIRS` targets and paste Rules manually
@@ -52,28 +56,31 @@ Do not invent extra setup questions. This repository exposes the following real 
 Some setup facts are not user choices:
 
 - Running `./scripts/install-profile.sh` with no arguments previews without changes or hooks. Use `--apply` for the full install, or `--help` for usage.
-- The default repo profile uses `openai/gpt-6-luna` and `openai/gpt-6.1-sol` in `agent_hive.json`. The base Opencode config disables the built-in `explore` agent, runs `agent.compaction` on `openai/gpt-6-luna` with `variant: medium`, and sets `snapshot: false` (no UI rollback of agent edits) and `autoupdate: false` (Opencode updates are manual). Top-level compaction `auto` and `prune` stay disabled.
+- Every model in `agent_hive.json`, including the task-trace summarizer, is exactly `openai/gpt-6.1-sol` or `openai/gpt-6.1-terra`, with no `-fast` or `-ultrafast` variant and no other provider. The base Opencode config sets `small_model` to Sol, runs `agent.compaction` and `agent.magic-compact-summarizer` on Sol with `variant: low`, disables the built-in `explore` agent and the `amazon-bedrock` provider, sets the OpenAI `headerTimeout` to 60000 and `chunkTimeout` to 1800000, and sets `snapshot: false` (no UI rollback of agent edits) and `autoupdate: false` (Opencode updates are manual). Top-level compaction `auto` and `prune` stay disabled. It sets no `permission` block, so Opencode's default permission policy applies.
+- The base `opencode.json` pins three plugins: `oc-arkive@5.2.0`, `oc-multi-imagegen@1.0.0`, and `arkive-compact@1.3.0`. The installer merges `profiles/base/tui.json` into the target `tui.json` instead of replacing it: it manages only the `arkive-compact` TUI entry, replaces an older `arkive-compact` entry or the local Magic Compact checkout entry (a file URL, absolute, Windows, or `./`-relative path ending in `magic-compact/packages/opencode-plugin/src/tui.ts`) in place, keeps `[name, options]` options, and preserves other keys and plugins, including other local paths. For a `tui.json` that nests settings under a `tui` object, it edits the plugin array Opencode reads: the top-level `plugin` when present, otherwise `tui.plugin`; a shadowed nested array stays untouched. It refuses before writing anything when `tui.json` is a symlink, not a regular file, unreadable, not a strict JSON object (`NaN` and `Infinity` included), has an invalid `plugin` value, holds `arkive-compact` entries with different options, or sits next to a `tui.jsonc`. The installer needs `python3` for that merge.
 - The installer copies `plugins/shell-agents.js`, which extends Opencode's nested `AGENTS.md` discovery from the `read` tool to `bash` commands and deduplicates reminders still visible in active history. It has no prerequisites. It relies on experimental Opencode hooks; `bun test tests/shell-agents.test.js` from the repository root checks it against stand-in hosts. The same file exports an OpenCode 2 `setup` that appends those files to `shell` output only, delivered with the next model step; native OpenCode 2 `read` keeps its own handling. The plugin was tested in containers on OpenCode 1.18.30 and 2.0.26 with a scripted provider, not a real model. The rest of this profile still targets OpenCode 1, and the OpenCode 2 path should be checked again on any other OpenCode 2 release. OpenCode 1 loads plugins only at startup, so restart every Opencode process that uses the config directory, including a long-lived `opencode serve`, after install or update. OpenCode 2.0.26 reloads an updated `shell-agents.js` from the watched config directory; a change it does not watch, such as an updated plugin dependency, may still need a restart.
 - The installer copies `plugins/dcg-guard.js`. Opencode auto-loads it. The plugin is a no-op until the `dcg` CLI is on `PATH`; install it from [destructive_command_guard](https://github.com/dicklesworthstone/destructive_command_guard) with `curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh?$(date +%s)" | bash -s -- --easy-mode`.
-- Hive routing follows the seat map in [README.md](README.md#agent-hive-config): Luna (`openai/gpt-6-luna`) `high` for search, documents, and documentation review, and `medium` for the helper, task-trace summarizer, and compaction; Sol (`openai/gpt-6.1-sol`) `medium` for ordinary implementation, UI work, first-pass review, the adversarial documentation pass, and all three orchestration seats (`hive-master`, `swarm-orchestrator`, `hive-builder`); Sol `xhigh` for capable and smart foragers, architecture planning, approach advice, and the adversarial plan, code, simplicity, and approach reviewers; Sol `max` for the security reviewer and the boundary approach seat. Sol `high` is unused. Do not mechanically preserve another provider's maximum effort when remapping roles.
-- `scout-researcher` is the search agent; fan independent questions out in parallel. `plan-reviewer` and `code-reviewer` own their full first-pass scope. `forager-worker` is the default for named features, fixes, refactors, integrations, review remediation, and verification, including backend and multi-file work. Use `forager-capable` only when that named change depends on coupled invariants or subtle state or concurrency; if unsure, use `forager-worker`. Use `forager-smart` up front when the mechanism is unsettled, and after a dead-end prior attempt. Adversarial passes supplement ordinary review on risk: public contracts, persistence, authorization, concurrency, state transitions, destructive behavior, or other failure-sensitive logic for code, and added abstractions, configuration, flags, adapters, validation layers, fallback paths, or branching for simplicity. The `minimal-change` council group uses `adversarial-simplicity-reviewer`. Portable profiles exclude personal `ivan-writing` and `impeccable` auto-loads and all non-OpenAI providers.
-- The base `opencode.json` also includes the `opencode-gpt-imagegen` plugin. It currently requires ChatGPT Plus or Pro OAuth and does not provide API-key image generation; no credentials are stored in this repository.
-- `forager-worker`'s configured `autoLoadSkills` in this profile are canonical `verification` only. This profile does not add a verification auto-load to `hive-builder`. Agent Hive may prepend built-in defaults before these configured additions, so this file does not describe the runtime-effective skill list. Planner, swarm, and builder include `background-delegation`. Only `forager-documents`, `documentation-reviewer`, and `adversarial-documentation-reviewer` auto-load `unslop` together with `writing-for-humans`; `humanizer` and `stop-slop` load conditionally through `unslop`. `adversarial-documentation-reviewer` also retains `adversarial-review`. Other seats load `unslop` on demand. `hive-helper` is hardcoded to no auto-loaded skills; hidden summarizers are not normal seats. Custom agents use only supported `baseAgent` values from the current Hive contract.
+- Hive routing follows the seat map in [README.md](README.md#agent-hive-config). Terra (`openai/gpt-6.1-terra`) runs `forager-backup`, `forager-documents`, `forager-browser`, `forager-ui`, `scout-researcher`, `adversarial-plan-reviewer`, `ui-reviewer`, `documentation-reviewer`, `adversarial-code-reviewer`, `adversarial-simplicity-reviewer`, `adversarial-approach-advisor`, and `ui-design-advisor`. Sol (`openai/gpt-6.1-sol`) runs every other role and the task-trace summarizer. Each effort is a native catalog value for its model: Sol accepts `low`, `medium`, `high`, `xhigh`, and `max`; Terra also accepts `none`. Do not change a model or effort without updating the seat map and `tests/test-install-contracts.sh`.
+- `scout-researcher` is the search agent; fan independent questions out in parallel. `plan-reviewer` and `code-reviewer` own their full first-pass scope. `forager-worker` is the default for a named implementation, fix, refactor, integration, or review remediation, including the diagnosis and verification needed to finish it. `forager-investigator` owns standalone diagnosis, experiments, and verify-only work. Use `forager-capable` for a named change that depends on coupled invariants or subtle state or concurrency; if unsure, use `forager-worker`. `forager-smart` is for exceptional difficulty with a nameable reasoning obstacle, or a substantive dead end from a prior attempt. `forager-backup` is a last-resort failover for infrastructure faults; it shares the OpenAI account with every other role, so it cannot recover from an account-wide OpenAI outage, sign-in failure, or quota limit. Adversarial passes supplement ordinary review on risk: public contracts, persistence, authorization, concurrency, state transitions, destructive behavior, or other failure-sensitive logic for code, and added abstractions, configuration, flags, adapters, validation layers, fallback paths, or branching for simplicity. The `minimal-change` council group uses `adversarial-simplicity-reviewer`. Portable profiles exclude personal `ivan-writing` and `impeccable` auto-loads and all non-OpenAI providers.
+- `oc-multi-imagegen` uses the Opencode ChatGPT sign-in through its default Codex backend and needs no separate image key. It ships its own `oc-multi-imagegen` skill; this repository does not vendor a copy. No credentials are stored in this repository.
+- `arkive-compact` commands need Opencode running with a listener: `opencode --port 0`, or `opencode serve` plus `opencode attach`. `/magic-trim --heuristic` and `/magic-compact --heuristic` work without any extra key. Task-aware retention, the default without `--heuristic`, needs `TYPESAFE_API_KEY` (TypeSafe Jev, the default backend) or `MAGIC_COMPACT_OPENAI_DECISIONS_API_KEY` with `MAGIC_COMPACT_RETENTION_BACKEND=openai-decisions` in the Opencode server environment. The OpenAI Decisions key is a separate plain OpenAI API key, not the ChatGPT sign-in. Do not ask for, store, or print either key.
+- `forager-worker`'s and `forager-investigator`'s configured `autoLoadSkills` in this profile are canonical `verification` only. This profile does not add a verification auto-load to `hive-builder`. Agent Hive may prepend built-in defaults before these configured additions, so this file does not describe the runtime-effective skill list. Planner, swarm, and builder include `background-delegation`. Only `forager-documents`, `documentation-reviewer`, and `adversarial-documentation-reviewer` auto-load `unslop` together with `writing-for-humans`; `humanizer` and `stop-slop` load conditionally through `unslop`. `adversarial-documentation-reviewer` also retains `adversarial-review`. Other seats load `unslop` on demand. `hive-helper` is hardcoded to no auto-loaded skills; hidden summarizers are not normal seats. Custom agents use only supported `baseAgent` values from the current Hive contract.
 - All four Opencode AGENTS profiles reference `unslop` for human-facing prose and prose handoffs, conditional depth-skill routing, and the task's required output format. Permitted prose handoffs require each child to load the named skills itself. `writing-for-humans` owns drafting, the finish pass, and durable naming. OpenCode loads Hive's bundled skills. The OpenCode installer preserves and reports all 29 current bundled names in the agents skills directory and OpenCode config `skills/` directory, then exits 1 after the install finishes. Retired `writing-policy` is preserved and reported as unversioned. Cursor installs its selected copies only into the Cursor config `skills/` directory and leaves an agents-dir copy in place with a conflict line. A leftover in `~/.claude/skills` still shadows Hive and is not reported by either installer. See `CURSOR.md` for the pinned imports and local adapters.
-- The published `oc-arkive@latest` plugin is installed by Opencode on first run.
-- Updating this repository's profile files does not prove Opencode is using the latest cached `oc-arkive@latest` plugin. After a profile update, restart Opencode. If the Agent Hive commands or plugin manifest still match an older release, remove or refresh the cached `oc-arkive` plugin entry according to the local Opencode cache layout before starting Opencode again.
-- This profile targets OpenCode v1 >= 1.18.30 only and uses `oc-arkive@latest`. Ownership and skill inventory were checked against `oc-arkive` 5.2.0. Check `opencode --version` before updating. Hive no longer configures research MCPs or bundles an `ast-grep` skill; operator-configured research MCPs work independently of skill availability. Hive rejects `agent_hive.json` files containing `disableMcps`, `sandbox`, `dockerImage`, or `persistentContainers`. A rejected file falls back to defaults, losing agents, customAgents, council, and model routing; repository and worktree tools can also fail with an invalid-config error. Replace or update that file before restarting. The base config omits all four fields; the optional context-improved bundle adds local `ast_grep` and enabled `context7` to `opencode.json` only.
+- Opencode downloads the pinned plugins on first run.
+- Updating this repository's profile files does not prove Opencode loaded the pinned versions. After a profile update, restart Opencode. If the Agent Hive commands or plugin manifest still match an older release, remove the cached `oc-arkive` package according to the local Opencode cache layout before starting Opencode again.
+- This profile targets OpenCode v1 >= 1.18.30 only and pins `oc-arkive@5.2.0`. Ownership and skill inventory were checked against `oc-arkive` 5.2.0. Check `opencode --version` before updating. Hive no longer configures research MCPs or bundles an `ast-grep` skill; operator-configured research MCPs work independently of skill availability. Hive rejects `agent_hive.json` files containing `disableMcps`, `sandbox`, `dockerImage`, or `persistentContainers`. A rejected file falls back to defaults, losing agents, customAgents, council, and model routing; repository and worktree tools can also fail with an invalid-config error. Replace or update that file before restarting. The base config omits all four fields; the optional context-improved bundle adds local `ast_grep` and enabled `context7` to `opencode.json` only.
 - Agent Hive reads `$HOME/.config/opencode/agent_hive.json` whatever `OPENCODE_CONFIG_DIR` says, and writes a default there when it is missing. With a custom config directory, the installed Hive copy is not read and the installer warns. Obtain approval to replace the shared default-location file, review and back up an existing regular file, and resolve any symlink or non-regular destination manually before copying from the installed custom directory as shown in [README.md](README.md#target-config-directory).
 - `context7` is present in the base config but disabled by default and has no API-key header. The `context-improved` and `mcp-context7-enabled` snippets enable it and add a `{file:secrets/context7}` header; the `keenable` snippet uses `{file:secrets/keenable}`. Opencode resolves those paths relative to the config directory and refuses to start when a referenced file is missing, so `scripts/enable-optional.sh` and the context-improved install check that the file exists and contains a non-whitespace character. The installers never create or back up `secrets/`; the operator writes keys with `./scripts/write-secret.sh <name>`. Older installs could pass the Context7 key through `CONTEXT7_API_KEY`; this profile no longer reads that variable.
 - Keenable also answers without a key on a shared public tier limited per IP address. This profile requires a Keenable key on purpose so agent traffic runs on the operator's own account limits; do not remove the header to skip the key.
 - `cymbal` is a separate optional CLI tool. When it is available on `PATH`, both the base installer and the context-improved bundle attempt to install its supported OpenCode hook into the selected `OPENCODE_CONFIG_DIR` with `cymbal hook install opencode --scope user`; a hook failure warns without failing the install. Do not copy `cymbal-opencode.js` by hand unless the CLI is unavailable.
 - The Railway CLI, with auth, installs and maintains its own `use-railway` agent skill via `railway setup agent` / `railway skills`; this repository does not package or install it.
+- The optional `railway` bundle runs `railway mcp`, which reuses the Railway CLI login; it needs the Railway CLI on `PATH` (5.44.0 or later) and `railway login`. The optional `atlassian` bundle adds the remote Atlassian Rovo MCP at `https://mcp.atlassian.com/v2/mcp`; after enabling it, the operator runs `opencode mcp auth atlassian` and signs in through a browser. Neither bundle stores credentials.
 - The packaged `drawio-skill` needs `uv` and the draw.io desktop CLI; Graphviz (`dot`) is optional for auto-layout. Without those tools it is unused.
 - The packaged `frontend-slides` skill needs `uv` for PPTX conversion and Node.js for PDF export or Vercel deploy. Without those tools the authoring guidance still applies.
 - The packaged `ui-mockups` skill needs an exposed image generation or editing tool that accepts reference images; it names no specific tool and reports a missing one before generating. Its layout references use Pillow, its storyboard helper runs through `uv` (`--with pillow --with numpy`) and needs `fc-match` from fontconfig unless font file paths are passed, and studying a named reference site needs a browser tool. Its transition storyboards also need an `animate` skill installed separately (for example at `~/.agents/skills/animate/SKILL.md`); this repository does not install it.
 - Direct `apm install -g ...` is not the right default for first-time setup because it does not install `opencode.json`, `agent_hive.json`, or `AGENTS.md`.
 - This profile ships non-Hive prompt-backed commands `interview-drill-down`, `planning-prompt`, and `reflect`. Each of those three has one tracked source under `.apm/prompts/` for both Opencode and Cursor; `$ARGUMENTS` is used only when it was interpolated, and Cursor falls back to the text typed after the command name. It proposes scratchpad, project, global, or manual Cursor User Rules learnings and waits for explicit approval before durable edits. Hive workflow commands still come from the published `oc-arkive` plugin; the installer removes the old managed Hive command files from `commands/` after backing the directory up.
-- Cursor setup is separate from Opencode setup. It does not install `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, or `oc-arkive`.
+- Cursor setup is separate from Opencode setup. It does not install `opencode.json`, `tui.json`, `agent_hive.json`, Opencode `AGENTS.md`, or `oc-arkive`.
 - Cursor v1 is prompt-level, Hive-Builder-like orchestration using Cursor-native named subagents. The default parent delegates non-trivial work and owns lane coordination, result and diff inspection, combined verification, review, synthesis, and integration. Planning uses Cursor's Plan mode or a supplied plan, integration authority is settled before any lane is placed, and creating a worktree grants no Git authority. It has no Agent Hive tools, state, task DAG, board, or worktree lifecycle and is not Agent Hive runtime parity.
 - Cursor delegation is a strong prompt policy, but routing is heuristic and not runtime-guaranteed. Its bounded direct-work exception covers coordination, setup, and trivial conversation. Bounded direct reads and cheap parent checks stay with the parent. Non-trivial implementation, test, debug, refactor, integration, and review stay delegated. Separate context does not isolate files in a shared checkout. Parallel writing lanes, including overlapping writers, each get their own git worktree or isolated project copy. One writer may use the shared checkout when no other writer is active. If a separate placement cannot be created, report the blocker. Do not put two writers in one checkout, even on disjoint paths.
 - Cursor installs assets under `${CURSOR_CONFIG_DIR:-$HOME/.cursor}` or every target in semicolon-separated `CURSOR_CONFIG_DIRS`, sources `commands/reflect.md`, `commands/planning-prompt.md`, and `commands/interview-drill-down.md` from `.apm/prompts/`, appends the pinned Engineering Judgment to every installed agent file, and requires manual paste of the printed Rules into Cursor Customize -> Rules -> User Rules (paste the complete output again whenever it changes). Cursor documents User Rules for the parent Agent but does not guarantee propagation to every child, so critical child instructions remain in named agent definitions and delegation handoffs. Cursor documents subagents, native isolation, skills, Rules, and Plan mode, but this package is validated statically and the Cursor CLI is not installed on the maintainer host, so live Cursor behavior is unvalidated.
@@ -109,7 +116,7 @@ I recommend updating the normal Opencode config at ~/.config/opencode. Is this t
 6. Run the installer with the selected `OPENCODE_CONFIG_DIR` and `OPENCODE_AGENTS_PROFILE` values.
 7. The installer replaces `opencode.json`, which drops every optional bundle merged into it earlier; only the `*-context-improved` profiles reapply `context-improved` automatically. Record which bundles the old `opencode.json` had before step 6, then reapply the ones the operator still wants when prerequisites pass. If the old setup exported `CONTEXT7_API_KEY`, have the operator run `printf '%s\n' "$CONTEXT7_API_KEY" | OPENCODE_CONFIG_DIR="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}" ./scripts/write-secret.sh context7` before step 6 or before reapplying a Context7 bundle. Remove the export from startup files and run `unset CONTEXT7_API_KEY` in the current shell. Do not assume an older local optional setup still belongs in the updated config.
 8. Restart every Opencode process that uses the config directory, including a long-lived `opencode serve`, so config and plugin resolution are reloaded. If Opencode still exposes an older Agent Hive command surface, remove or refresh the cached `oc-arkive` plugin entry according to the local Opencode cache layout, then start Opencode again.
-9. Verify the result: validate `opencode.json` and `agent_hive.json` as JSON, run `opencode` or the smallest available Opencode startup check, confirm the `oc-arkive` plugin manifest or Agent Hive commands match the expected latest release, and report the backup directory printed by the installer.
+9. Verify the result: validate `opencode.json`, `tui.json`, and `agent_hive.json` as JSON, run `opencode` or the smallest available Opencode startup check, confirm the `oc-arkive` plugin manifest or Agent Hive commands match 5.2.0, and report the backup directory printed by the installer.
 
 Clean replacement example:
 
@@ -211,7 +218,8 @@ Verify or install the local tools:
 
 - `git`
 - `curl`
-- OpenCode v1 >= 1.18.30. This profile targets OpenCode v1 only. Ownership and skill inventory were checked against `oc-arkive` 5.2.0 (keep `oc-arkive@latest` in the profile).
+- OpenCode v1 >= 1.18.30. This profile targets OpenCode v1 only. Ownership and skill inventory were checked against `oc-arkive` 5.2.0, the version the profile pins.
+- `python3` for the installer's `tui.json` merge
 
 Also verify that the operator has OpenAI access available before running `opencode auth login -p openai`.
 
@@ -275,13 +283,13 @@ Recommendation:
 
 ### 5. Install the base profile
 
-`profiles/base/agent_hive.json` is the sole Hive config source. It uses `openai/gpt-6-luna` and `openai/gpt-6.1-sol`. Confirm OpenAI ChatGPT OAuth is available before install.
+`profiles/base/agent_hive.json` is the sole Hive config source. It uses `openai/gpt-6.1-sol` and `openai/gpt-6.1-terra`. Confirm OpenAI ChatGPT OAuth is available before install.
 
-Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, and `AGENTS.md` with this repo's versions. In `skills/`, it replaces the OpenCode-local skill (`writing-skills`). A leftover shared canonical skill is preserved and reported there. All 29 current Hive-bundled names and retired names (including the legacy aliases `code-reviewer`, `docker-mastery`, `verification-before-completion`, and `verification-reviewer`, plus `writing-policy`, `ast-grep`, `using-git-worktrees`, `finishing-a-development-branch`, `consolidate-test-suites`, `root-cause-finder`, and `context-mode`) are preserved and reported in both the OpenCode and agents skill roots. Current Hive names are conflicts with Hive materialization; retired names and legacy aliases are unversioned. Each produces one `decision needed` line on stderr. Unrelated user-managed skills stay in place and are not reported.
+Explain this before running the installer: it replaces the target directory's `opencode.json`, `agent_hive.json`, and `AGENTS.md` with this repo's versions, and merges only the pinned `arkive-compact` entry into `tui.json`. In `skills/`, it replaces the OpenCode-local skill (`writing-skills`). A leftover shared canonical skill is preserved and reported there. All 29 current Hive-bundled names and retired names (including the legacy aliases `code-reviewer`, `docker-mastery`, `verification-before-completion`, and `verification-reviewer`, plus `writing-policy`, `ast-grep`, `using-git-worktrees`, `finishing-a-development-branch`, `consolidate-test-suites`, `root-cause-finder`, and `context-mode`) are preserved and reported in both the OpenCode and agents skill roots. Current Hive names are conflicts with Hive materialization; retired names and legacy aliases are unversioned. Each produces one `decision needed` line on stderr. Unrelated user-managed skills stay in place and are not reported.
 
 In `${AGENTS_SKILLS_DIR}`, the installer replaces the fifteen shared canonical skills for both hosts and adds personal skills when selected. Shared-profile installs leave an unowned `skills/ivan-writing` in place and do not report it; personal profiles copy `ivan-writing` into the agents dir and leave a leftover OpenCode `skills/ivan-writing` in place as a conflict. After plugins, commands, the optional bundle, and warnings, the installer exits 1 when any decision line was printed. A clean install exits 0. It installs optional standalone `agents/` or prompt-backed `commands/` only when this repo packages them; removes the old managed Hive command prompt files from `commands/`; and writes timestamped backups under `<target>/.backup/` first when those paths already exist, including a whole-`skills/` backup before that directory is mutated. For the `shared-context-improved` and `personal-context-improved` profiles, it also preflights `jq`, `uvx`, and a non-blank `secrets/context7` file in the target config directory, then auto-applies the `context-improved` OpenCode snippet. This is the clean install path; when you are merging into an existing `AGENTS.md`, use the manual merge workflow below so the user's file stays the base.
 
-Keep all sixteen `.apm/skills/` trees, including third-party snapshots; their external upstreams are not plugins managed by this profile. Local-only third-party skills and the separate `oc-multi-imagegen` project remain under their own installer or operator's control. `ui-mockups` owns screen sets, viewport scale, layout references, storyboard composition, and measured deliverables; `oc-multi-imagegen` owns image-tool operations. See the root README's skill ownership guidance before changing packaging.
+Keep all sixteen `.apm/skills/` trees, including third-party snapshots; their external upstreams are not plugins managed by this profile. Local-only third-party skills remain under their own installer or operator's control. The `oc-multi-imagegen` plugin ships its own skill. `ui-mockups` owns screen sets, viewport scale, layout references, storyboard composition, and measured deliverables; `oc-multi-imagegen` owns image-tool operations. See the root README's skill ownership guidance before changing packaging.
 
 Run one of these:
 
@@ -417,7 +425,21 @@ Only enable it if the operator wants it, `jq` is installed, `secrets/keenable` i
 ./scripts/enable-optional.sh keenable
 ```
 
-Do not apply the snippet before the base profile exists in the target directory.
+Then offer the Railway and Atlassian MCPs:
+
+```text
+Do you want the Railway MCP (needs the Railway CLI signed in with railway login) or the Atlassian MCP for Jira and Confluence (needs an Atlassian Cloud sign-in in a browser)?
+```
+
+Enable `railway` only when `railway` is on `PATH` and `railway whoami` succeeds. Enable `atlassian` only when the operator has an Atlassian Cloud account; after enabling it, run `opencode mcp auth atlassian` so the operator can complete the OAuth sign-in:
+
+```bash
+./scripts/enable-optional.sh railway
+./scripts/enable-optional.sh atlassian
+opencode mcp auth atlassian
+```
+
+Do not apply a snippet before the base profile exists in the target directory.
 
 ### 9. Offer the optional VS Code extension
 
@@ -427,17 +449,17 @@ Ask:
 Do you use VS Code on this machine, and if so, do you want the optional Agent Hive / oc-arkive extension installed there too?
 ```
 
-If yes and the `code` CLI is available, install the `.vsix` from the latest Agent Hive fork release:
+If yes and the `code` CLI is available, install the `.vsix` from the `v5.2.0` Agent Hive fork release, which matches the pinned `oc-arkive@5.2.0` plugin; an extension from another release can use a different `.hive` lock protocol:
 
 ```bash
-curl -L -o vscode-arkive.vsix https://github.com/imarshallwidjaja/agent-hive/releases/latest/download/vscode-arkive.vsix
+curl -L -o vscode-arkive.vsix https://github.com/imarshallwidjaja/agent-hive/releases/download/v5.2.0/vscode-arkive.vsix
 code --install-extension ./vscode-arkive.vsix
 ```
 
-If the `code` CLI is not available, give the operator the latest release page and tell them to install the `vscode-arkive.vsix` asset manually:
+If the `code` CLI is not available, give the operator the `v5.2.0` release page and tell them to install the `vscode-arkive.vsix` asset manually:
 
 ```text
-https://github.com/imarshallwidjaja/agent-hive/releases/latest
+https://github.com/imarshallwidjaja/agent-hive/releases/tag/v5.2.0
 ```
 
 ### 10. Offer the separate Cursor prompt-level assets
@@ -498,7 +520,7 @@ Run:
 opencode
 ```
 
-This allows Opencode to resolve `oc-arkive@latest` from `opencode.json` on first run.
+This allows Opencode to download the pinned plugins from `opencode.json` on first run. To use the `/magic-compact` commands later, start Opencode with `opencode --port 0` instead.
 
 If the context-improved bundle was enabled, this first run also needs to start the local MCP tooling without errors.
 
@@ -512,6 +534,7 @@ Verify that the target config directory now contains:
 
 - `opencode.json`
 - `agent_hive.json`
+- `tui.json`
 - `AGENTS.md`
 - `plugins/dcg-guard.js`
 - `plugins/shell-agents.js`
@@ -528,9 +551,10 @@ Concrete checks:
 - if `chrome-devtools` was enabled, verify `mcp.chrome-devtools.command` is `["npx", "-y", "chrome-devtools-mcp@latest", "--isolated=true", "--category-extensions=true"]`
 - if `keenable` was enabled, verify `mcp.keenable.enabled` is `true` and its `X-API-Key` header is `{file:secrets/keenable}`
 - if any secret-file MCP was enabled, verify the referenced file under `secrets/` contains a non-whitespace character without printing it, for example with `LC_ALL=C grep -q '[^[:space:]]' <file> && echo present`
-- verify `plugin` includes `opencode-gpt-imagegen`
+- verify the `plugin` array in the installed `opencode.json` file is exactly `["oc-arkive@5.2.0", "oc-multi-imagegen@1.0.0", "arkive-compact@1.3.0"]`; the effective config Opencode resolves also lists the plugins it auto-discovers in `plugins/`, such as `dcg-guard.js`, `shell-agents.js`, and the optional Cymbal hook, so do not expect the exact list there. Verify `tui.json` `plugin` contains `arkive-compact@1.3.0` once alongside any other TUI plugins the operator already had
+- if `railway` was enabled, verify `mcp.railway.command` is `["railway", "mcp"]`; if `atlassian` was enabled, verify `mcp.atlassian.url` is `https://mcp.atlassian.com/v2/mcp` and `opencode mcp list` shows it signed in
 - verify `plugins/dcg-guard.js` and `plugins/shell-agents.js` exist in the target config directory
-- verify every Hive model is exactly `openai/gpt-6-luna` or `openai/gpt-6.1-sol`, with no other provider; the base `opencode.json` `compaction` agent uses `openai/gpt-6-luna` and `variant` `medium`, and `explore` is disabled. Confirm model IDs and configured variants with `opencode models openai --verbose`, then separately verify inference access; listing alone is insufficient
+- verify every Hive model is exactly `openai/gpt-6.1-sol` or `openai/gpt-6.1-terra`, with no other provider; `small_model` is Sol, the base `opencode.json` `compaction` and `magic-compact-summarizer` agents use Sol with `variant` `low`, and `explore` is disabled. Confirm model IDs and configured variants with `opencode models openai --verbose --refresh` (without a cached catalog, Opencode 1.19.0 listed neither model), then separately verify inference access; listing alone is insufficient
 
 If the operator wanted `cymbal`, verify that `cymbal` is available on `PATH` with a simple command such as:
 
@@ -558,6 +582,7 @@ Then report back with:
 - whether `context7` was enabled
 - whether `chrome-devtools` was enabled
 - whether `keenable` was enabled
+- whether `railway` or `atlassian` was enabled
 - whether `cymbal` is installed as a CLI on this machine
 - whether `dcg` is installed as a CLI on this machine
 - whether the VS Code extension was installed
@@ -577,8 +602,10 @@ Use this as the source of truth for the interview.
 | `context7` MCP only | enable or skip | skip | `jq`, `secrets/context7`, network access |
 | chrome-devtools MCP | enable or skip | skip | `jq`, `npx`, network for first `npx` download |
 | Keenable MCP | enable or skip | skip | `jq`, `secrets/keenable`, network access |
+| Railway MCP | enable or skip | skip | `jq`, Railway CLI 5.44.0 or later on `PATH`, `railway login` |
+| Atlassian MCP | enable or skip | skip | `jq`, Atlassian Cloud account, browser for `opencode mcp auth atlassian` |
 | Destructive Command Guard CLI | install `dcg` or skip | recommend install; not required for profile copy | network for the upstream installer; plugin is inactive without `dcg` on `PATH` |
-| VS Code companion extension | install or skip | skip unless operator uses VS Code | VS Code and usually `code` CLI; latest Agent Hive fork release `.vsix` |
+| VS Code companion extension | install or skip | skip unless operator uses VS Code | VS Code and usually `code` CLI; `v5.2.0` Agent Hive fork release `.vsix` |
 | Cursor prompt-level assets | skip, inspect only, or install into the selected Cursor config target | skip unless operator asks for Cursor | `python3`; manual paste into Cursor Customize -> Rules -> User Rules |
 
 ## Commands The Agent Will Usually Need
@@ -639,10 +666,18 @@ Enable the Keenable web search MCP, after `secrets/keenable` exists:
 ./scripts/enable-optional.sh keenable
 ```
 
+Enable the Railway MCP, after `railway login`, or the Atlassian MCP and its OAuth sign-in:
+
+```bash
+./scripts/enable-optional.sh railway
+./scripts/enable-optional.sh atlassian
+opencode mcp auth atlassian
+```
+
 Install the VS Code companion extension:
 
 ```bash
-curl -L -o vscode-arkive.vsix https://github.com/imarshallwidjaja/agent-hive/releases/latest/download/vscode-arkive.vsix
+curl -L -o vscode-arkive.vsix https://github.com/imarshallwidjaja/agent-hive/releases/download/v5.2.0/vscode-arkive.vsix
 code --install-extension ./vscode-arkive.vsix
 ```
 
@@ -677,6 +712,8 @@ CURSOR_CONFIG_DIRS="$HOME/.cursor;/mnt/c/Users/<WindowsUser>/.cursor" ./scripts/
 
 - Do not ask the operator to choose model IDs from this repo. Those defaults are already encoded.
 - Do not add `opencode-go/*`, `xai/*`, or other non-OpenAI providers to the portable Hive config.
+- Do not change the installed plugin pins to `@latest` or to a local build path; a version change belongs in this repository.
+- Do not add a `permission` block to `opencode.json`; the profile keeps Opencode's default permission policy.
 - Do not default to direct `apm install -g` for first-time setup.
 - Do not treat AGENTS merge as a blind append.
 - Do not silently overwrite the user's existing `AGENTS.md` during merge.

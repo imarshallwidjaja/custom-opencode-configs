@@ -1,0 +1,12 @@
+{
+  "mcp": {
+    "railway": {
+      "type": "local",
+      "command": [
+        "railway",
+        "mcp"
+      ],
+      "enabled": true
+    }
+  }
+}

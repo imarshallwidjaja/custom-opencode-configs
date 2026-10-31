@@ -67,7 +67,7 @@ Load `agents-md-mastery` for any AGENTS.md edit, including additions.
 - Delegate multi-step code search and context retrieval to subagents when the task is well scoped.
 - Use scouts/foragers for retrieval and evidence; the orchestrator owns decisions.
 - Prefer `scout-researcher` for read-only codebase/context retrieval.
-- Use `forager-worker` for complex read-only exploration across many files or uncertain codebase areas. Explicitly instruct it not to modify files.
+- Use `forager-investigator` for standalone diagnosis, experiments, and verify-only work. Keep implementation-coupled diagnosis with its Forager. Split broad read-only retrieval into bounded parallel `scout-researcher` tasks.
 - Break broad research into narrow independent subtopics and dispatch in parallel when useful.
 - Always ask subagents for a final summary with completed work, key findings, blockers, and relevant errors.
 - If you are a delegated subagent, always return the requested final summary before finishing, including blockers and errors.

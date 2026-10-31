@@ -2,18 +2,27 @@
   "$schema": "https://opencode.ai/config.json",
   "snapshot": false,
   "autoupdate": false,
+  "disabled_providers": [
+    "amazon-bedrock"
+  ],
+  "small_model": "openai/gpt-6.1-sol",
   "agent": {
     "explore": {
       "disable": true
     },
     "compaction": {
-      "model": "openai/gpt-6-luna",
-      "variant": "medium"
+      "model": "openai/gpt-6.1-sol",
+      "variant": "low"
+    },
+    "magic-compact-summarizer": {
+      "model": "openai/gpt-6.1-sol",
+      "variant": "low"
     }
   },
   "plugin": [
-    "oc-arkive@latest",
-    "opencode-gpt-imagegen"
+    "oc-arkive@5.2.0",
+    "oc-multi-imagegen@1.0.0",
+    "arkive-compact@1.3.0"
   ],
   "compaction": {
     "auto": false,
@@ -22,7 +31,8 @@
   "provider": {
     "openai": {
       "options": {
-        "headerTimeout": 60000
+        "headerTimeout": 60000,
+        "chunkTimeout": 1800000
       }
     }
   },

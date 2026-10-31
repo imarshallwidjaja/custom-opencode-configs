@@ -6,7 +6,7 @@ This is a strong prompt policy, but Cursor routing is heuristic and not runtime-
 
 Planning uses Cursor's own Plan mode or a plan you supply; there is no planner agent. Before the parent places any lane it settles integration authority: a user-approved local commit or squash path runs without a repeated menu, absent commit permission it integrates uncommitted changes only when the destination holds no conflicting user work (otherwise it asks at that decision), and creating a worktree never grants Git authority. Missing required delegation or isolation is reported as a blocker; the parent does not silently implement the delegated work itself.
 
-This is prompt-level behavior, not Agent Hive runtime parity. It has no Hive tools, state, task DAG, board, or worktree lifecycle, and it does not install `oc-arkive`, OpenCode commands, `opencode.json`, `agent_hive.json`, or an OpenCode `AGENTS.md` profile. Execution stays inside Cursor's own subagent, editor, terminal, project-copy, and Rules features.
+This is prompt-level behavior, not Agent Hive runtime parity. It has no Hive tools, state, task DAG, board, or worktree lifecycle, and it does not install `oc-arkive`, OpenCode commands, `opencode.json`, `tui.json`, `agent_hive.json`, or an OpenCode `AGENTS.md` profile. Execution stays inside Cursor's own subagent, editor, terminal, project-copy, and Rules features.
 
 ## What Cursor v1 Includes
 
@@ -182,7 +182,7 @@ Excluded examples include:
 
 - Hive lifecycle commands such as plan approval, task sync, worktree start, merge, and feature completion
 - Hive MCP/tool calls and OpenCode-only tool syntax
-- `opencode.json`, `agent_hive.json`, Opencode `AGENTS.md`, and optional Opencode MCP snippets
+- `opencode.json`, `tui.json`, `agent_hive.json`, Opencode `AGENTS.md`, and optional Opencode MCP snippets
 - the `oc-arkive` plugin and the VS Code companion extension
 
 The Cursor assets can describe workflows and review expectations, but they cannot create Agent Hive features, update Hive task state, call Hive tools, or guarantee the same runtime behavior as Opencode.

@@ -8,7 +8,7 @@ These optional bundles are Opencode-only. Cursor v1 has no optional MCP bundle i
 
 Each bundle is a partial `opencode.json` fragment. Optional bundles leave `agent_hive.json` unchanged.
 
-The accompanying profile targets OpenCode v1 >= 1.18.30 only and uses `oc-arkive@latest`. Ownership and skill inventory were checked against `oc-arkive` 5.2.0. Check `opencode --version` before updating the plugin or profile and restarting its host process.
+The accompanying profile targets OpenCode v1 >= 1.18.30 only and pins `oc-arkive@5.2.0`. Ownership and skill inventory were checked against `oc-arkive` 5.2.0. Check `opencode --version` before updating the plugin or profile and restarting its host process.
 
 Purpose:
 
@@ -103,7 +103,7 @@ Some notes:
 
 - AGENTS profiles route interactive browser work to `chrome-devtools`
 - keep the command PATH-based; do not embed absolute Node or home-directory paths
-- the bundle does not pass `--headless`, so Chrome opens a visible window; isolated runs do not keep logins or cookies between sessions
+- the bundle does not pass `--headless`, so Chrome opens a visible window; isolated runs do not keep logins or cookies between sessions. On a machine without a display, add `"--headless"` to the merged `command` array yourself; the bundle keeps the visible window so an operator can watch and take over a run
 
 Portability:
 
@@ -138,6 +138,65 @@ Portability:
 - high
 - no local binary required
 
+### `opencode.railway.json`
+
+Purpose: Enables the Railway MCP server through the Railway CLI.
+
+It adds:
+
+- a local `railway` MCP that runs `railway mcp`, which connects to `mcp.railway.com` over stdio and signs each request with the Railway CLI login
+
+Prerequisites:
+
+- the Railway CLI on `PATH`; connecting to `mcp.railway.com` needs Railway CLI 5.44.0 or later
+- a Railway account signed in with `railway login`
+
+Verification:
+
+- `railway --version`
+- `railway whoami`
+- after enable, confirm `mcp.railway.command` is `["railway", "mcp"]`
+
+Some notes:
+
+- the bundle stores no Railway credentials; the CLI keeps and refreshes its own login
+- `enable-optional.sh railway` refuses to merge when `railway` is not on `PATH`
+- the Railway CLI also installs and maintains its own `use-railway` agent skill through `railway setup agent` / `railway skills`; this repository does not package or install it
+
+Portability:
+
+- medium
+- needs the Railway CLI and a signed-in Railway account on each machine
+
+### `opencode.atlassian.json`
+
+Purpose: Enables the Atlassian Rovo MCP server for Jira, Confluence, and other Atlassian Cloud products.
+
+It adds:
+
+- a remote `atlassian` MCP at `https://mcp.atlassian.com/v2/mcp`, enabled on merge, with no stored credentials
+
+Prerequisites:
+
+- an Atlassian Cloud site and an account with access to the products you want agents to use
+- network access to `https://mcp.atlassian.com`
+- a browser on the machine for the OAuth 2.1 sign-in; a site admin may need to allow the Rovo MCP app first
+
+Verification:
+
+- after enable, run `opencode mcp auth atlassian` and complete the sign-in in the browser
+- `opencode mcp list` shows `atlassian` as connected after the next Opencode start
+
+Some notes:
+
+- Opencode stores the OAuth tokens itself; the bundle and this repository hold no Atlassian credentials
+- the packaged `working-with-atlassian`, `connecting-atlassian-tools`, and `managing-work-in-jira` skills operate this server's tools
+
+Portability:
+
+- high
+- no local binary required
+
 ## Merge workflow
 
 The merge workflow involves the following:
@@ -162,6 +221,8 @@ Other examples:
 ```bash
 ./scripts/enable-optional.sh chrome-devtools
 ./scripts/enable-optional.sh keenable
+./scripts/enable-optional.sh railway
+./scripts/enable-optional.sh atlassian
 ```
 
 Some notes:

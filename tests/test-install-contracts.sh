@@ -219,6 +219,7 @@ SKILL
   mkdir -p "${REPO_FIXTURE}/profiles/base"
   echo '{"source":"profiles/base/opencode.json"}' > "${REPO_FIXTURE}/profiles/base/opencode.json"
   echo '{"source":"profiles/base/agent_hive.json"}' > "${REPO_FIXTURE}/profiles/base/agent_hive.json"
+  cp "${BASELINE_PWD}/profiles/base/tui.json" "${REPO_FIXTURE}/profiles/base/tui.json"
   mkdir -p "${REPO_FIXTURE}/profiles/base/plugins"
   printf '%s\n' '// fixture dcg-guard' > "${REPO_FIXTURE}/profiles/base/plugins/dcg-guard.js"
   printf '%s\n' '// fixture shell-agents' > "${REPO_FIXTURE}/profiles/base/plugins/shell-agents.js"
@@ -232,6 +233,7 @@ SKILL
   # Copy real scripts so BASH_SOURCE resolves the fixture root.
   cp "${BASELINE_PWD}/scripts/cursor-assets.sh" "${REPO_FIXTURE}/scripts/cursor-assets.sh"
   cp "${BASELINE_PWD}/scripts/install-profile.sh" "${REPO_FIXTURE}/scripts/install-profile.sh"
+  cp "${BASELINE_PWD}/scripts/merge-tui-plugin.py" "${REPO_FIXTURE}/scripts/merge-tui-plugin.py"
   if [[ -f "${BASELINE_PWD}/scripts/sync-engineering-judgment.py" ]]; then
     cp "${BASELINE_PWD}/scripts/sync-engineering-judgment.py" "${REPO_FIXTURE}/scripts/sync-engineering-judgment.py"
   fi
@@ -319,7 +321,7 @@ cursor_target_unmodified() {
 
 opencode_target_unmodified() {
   local dir="$1"
-  [[ ! -e "${dir}/opencode.json" && ! -e "${dir}/agent_hive.json" && ! -e "${dir}/AGENTS.md" && ! -e "${dir}/agents" && ! -e "${dir}/commands" && ! -e "${dir}/skills" && ! -e "${dir}/.backup" ]]
+  [[ ! -e "${dir}/opencode.json" && ! -e "${dir}/agent_hive.json" && ! -e "${dir}/tui.json" && ! -e "${dir}/AGENTS.md" && ! -e "${dir}/agents" && ! -e "${dir}/commands" && ! -e "${dir}/skills" && ! -e "${dir}/.backup" ]]
 }
 
 replace_fixture_text() {
@@ -431,7 +433,8 @@ printf '=== Preflight: helpers exist ===\n'
 if [[ -x "${CURSOR_HELPER}" ]]; then pass "cursor-assets.sh exists and is executable"; else fail "cursor-assets.sh missing or not executable"; fi
 if [[ -x "${INSTALL_HELPER}" ]]; then pass "install-profile.sh exists and is executable"; else fail "install-profile.sh missing or not executable"; fi
 if [[ -f "${BASELINE_PWD}/profiles/base/opencode.json" && -f "${BASELINE_PWD}/profiles/base/agent_hive.json" ]]; then pass "base payloads live under profiles/base"; else fail "base payloads missing from profiles/base"; fi
-if [[ ! -e "${BASELINE_PWD}/opencode.json" && ! -e "${BASELINE_PWD}/agent_hive.json" ]]; then pass "repository root has no auto-discovered config payloads"; else fail "repository root still contains config payloads"; fi
+# Tracked files only: a maintainer's ignored local opencode.json override is not shipped.
+if [[ -z "$(git -C "${BASELINE_PWD}" ls-files -- opencode.json agent_hive.json tui.json)" ]]; then pass "repository root ships no auto-discovered config payloads"; else fail "repository root still tracks config payloads"; fi
 if [[ -f "${BASELINE_PWD}/.apm/prompts/reflect.prompt.md" ]]; then pass "canonical shared reflect prompt exists"; else fail "canonical shared reflect prompt missing"; fi
 if [[ ! -e "${BASELINE_PWD}/.apm/cursor/commands/reflect.md" ]]; then pass "stale Cursor reflect duplicate is absent"; else fail "stale Cursor reflect duplicate still exists"; fi
 if [[ -f "${BASELINE_PWD}/.apm/cursor/skills/agents-md-mastery/SKILL.md" ]]; then pass "Cursor agents-md-mastery skill exists"; else fail "Cursor agents-md-mastery skill missing"; fi
@@ -953,6 +956,37 @@ else
   fail "0f: keenable enables the remote MCP with a relative secret-file header"
 fi
 
+# Railway reuses the Railway CLI sign-in and Atlassian uses Opencode's MCP OAuth; neither reads a secret file.
+td_railway="${TMPDIR}/test-railway"; mkdir -p "${td_railway}"
+printf '{"mcp":{"unrelated":{"type":"local","command":["unrelated-server"]}}}\n' > "${td_railway}/opencode.json"
+cp "${td_railway}/opencode.json" "${td_railway}/opencode.json.before"
+if ! PATH="${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_railway}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" railway >/dev/null 2>"${td_railway}/err" \
+  && grep -q 'Missing prerequisite on PATH: railway' "${td_railway}/err" \
+  && cmp -s "${td_railway}/opencode.json" "${td_railway}/opencode.json.before"; then
+  pass "0f: railway refuses without the Railway CLI and leaves the config unchanged"
+else
+  fail "0f: railway must refuse without the Railway CLI and leave the config unchanged"
+fi
+railway_bin="${TMPDIR}/railway-bin"; mkdir -p "${railway_bin}"
+printf '#!/bin/sh\nexit 0\n' > "${railway_bin}/railway"; chmod +x "${railway_bin}/railway"
+if PATH="${railway_bin}:${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_railway}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" railway >/dev/null \
+  && jq -e '(.mcp.unrelated.command == ["unrelated-server"]) and (.mcp.railway == {"type": "local", "command": ["railway", "mcp"], "enabled": true})' "${td_railway}/opencode.json" >/dev/null \
+  && [[ ! -e "${td_railway}/secrets" ]]; then
+  pass "0f: railway adds the CLI-backed MCP and preserves unrelated MCPs"
+else
+  fail "0f: railway must add the CLI-backed MCP and preserve unrelated MCPs"
+fi
+td_atlassian="${TMPDIR}/test-atlassian"; mkdir -p "${td_atlassian}"
+printf '{"mcp":{"unrelated":{"type":"local","command":["unrelated-server"]}}}\n' > "${td_atlassian}/opencode.json"
+if PATH="${optional_bin}:/usr/bin:/bin" OPENCODE_CONFIG_DIR="${td_atlassian}" OPENCODE_OPTIONAL_SKIP_BACKUP=1 bash "${BASELINE_PWD}/scripts/enable-optional.sh" atlassian >"${td_atlassian}/out" \
+  && grep -q 'opencode mcp auth atlassian' "${td_atlassian}/out" \
+  && jq -e '(.mcp.unrelated.command == ["unrelated-server"]) and (.mcp.atlassian == {"type": "remote", "url": "https://mcp.atlassian.com/v2/mcp", "enabled": true})' "${td_atlassian}/opencode.json" >/dev/null \
+  && [[ ! -e "${td_atlassian}/secrets" ]]; then
+  pass "0f: atlassian adds the OAuth remote MCP and names the sign-in command"
+else
+  fail "0f: atlassian must add the OAuth remote MCP and name the sign-in command"
+fi
+
 td_write_secret="${TMPDIR}/test-write-secret"
 mkdir -p "${td_write_secret}/secrets"
 chmod 755 "${td_write_secret}/secrets"
@@ -1055,10 +1089,15 @@ chrome = json.loads((root / "profiles/optional/opencode.chrome-devtools.json").r
 command = chrome["mcp"]["chrome-devtools"]["command"]
 if command != ["npx", "-y", "chrome-devtools-mcp@latest", "--isolated=true", "--category-extensions=true"]:
     errors.append(f"chrome-devtools command={command!r}")
-optional = {path.name for path in (root / "profiles/optional").glob("opencode.*.json")}
-for blocked in ("railway", "atlassian"):
-    if any(blocked in name for name in optional):
-        errors.append(f"optional bundles must not include {blocked}")
+credential_free_bundles = {
+    "railway": {"railway": {"type": "local", "command": ["railway", "mcp"], "enabled": True}},
+    "atlassian": {"atlassian": {"type": "remote", "url": "https://mcp.atlassian.com/v2/mcp", "enabled": True}},
+}
+for bundle, expected in credential_free_bundles.items():
+    path = root / f"profiles/optional/opencode.{bundle}.json"
+    actual = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
+    if actual != {"mcp": expected}:
+        errors.append(f"{path.name} must hold only {expected!r} and no credentials, got {actual!r}")
 gitignore = (root / ".gitignore").read_text(encoding="utf-8").splitlines()
 if "secrets/" not in gitignore:
     errors.append(".gitignore must ignore secrets/")
@@ -1404,6 +1443,234 @@ if ! OPENCODE_CONFIG_DIR="${td12c}" OPENCODE_AGENTS_PROFILE=shared bash "${INSTA
 else
   fail "12c-g: install should have failed when profiles/base/agent_hive.json is absent"
 fi
+build_fixture
+
+# ---------------------------------------------------------------------------
+# 12t. tui.json: only the pinned arkive-compact entry is managed
+# ---------------------------------------------------------------------------
+printf '\n=== 12t. TUI plugin merge ===\n'
+tui_legacy='file:///home/example/workspaces/magic-compact/packages/opencode-plugin/src/tui.ts'
+td12t="${TMPDIR}/test12t"
+sandbox_agents_skills
+
+# Existing live-shaped file: legacy local Compact entry first, another TUI plugin kept.
+mkdir -p "${td12t}/legacy"
+printf '{\n  "theme": "keep",\n  "plugin": ["%s", "oc-go-multi-auth@0.1.3"]\n}\n' "${tui_legacy}" > "${td12t}/legacy/tui.json"
+cp "${td12t}/legacy/tui.json" "${TMPDIR}/test12t-legacy.before"
+before12t="$(snapshot_tree "${td12t}/legacy")"
+OPENCODE_CONFIG_DIR="${td12t}/legacy" bash "${INSTALL_HELPER}" >"${TMPDIR}/test12t-preview.out" 2>&1 \
+  && grep -Fq "Would update ${td12t}/legacy/tui.json replacing '${tui_legacy}' with arkive-compact@1.3.0" "${TMPDIR}/test12t-preview.out" \
+  && [[ "${before12t}" == "$(snapshot_tree "${td12t}/legacy")" ]] \
+  && pass "12t-a: preview reports the legacy replacement without writing" || fail "12t-a: preview changed the target or misreported: $(cat "${TMPDIR}/test12t-preview.out")"
+OPENCODE_CONFIG_DIR="${td12t}/legacy" bash "${INSTALL_HELPER}" --apply >"${TMPDIR}/test12t-apply.out" 2>&1 || fail "12t-b0: apply failed: $(cat "${TMPDIR}/test12t-apply.out")"
+python3 - "${td12t}/legacy/tui.json" <<'PY' && pass "12t-b: legacy entry replaced in place; other plugins and keys kept" || fail "12t-b: merged tui.json is wrong"
+import json, sys
+data = json.load(open(sys.argv[1]))
+assert data == {"theme": "keep", "plugin": ["arkive-compact@1.3.0", "oc-go-multi-auth@0.1.3"]}, data
+PY
+cmp -s "${TMPDIR}/test12t-legacy.before" "$(ls -d "${td12t}"/legacy/.backup/*/tui.json | head -n 1)" \
+  && pass "12t-c: original tui.json backed up before the merge" || fail "12t-c: tui.json backup missing or changed"
+legacy_snapshot="$(snapshot_tree "${td12t}/legacy/tui.json")"
+OPENCODE_CONFIG_DIR="${td12t}/legacy" bash "${INSTALL_HELPER}" --apply >"${TMPDIR}/test12t-reapply.out" 2>&1 \
+  && [[ "${legacy_snapshot}" == "$(snapshot_tree "${td12t}/legacy/tui.json")" ]] \
+  && grep -Fq "Left unchanged ${td12t}/legacy/tui.json" "${TMPDIR}/test12t-reapply.out" \
+  && pass "12t-d: matching reinstall leaves tui.json untouched" || fail "12t-d: matching reinstall rewrote tui.json"
+
+# Clean target: created from the base payload, then idempotent.
+OPENCODE_CONFIG_DIR="${td12t}/clean" bash "${INSTALL_HELPER}" --apply >/dev/null 2>&1 \
+  && cmp -s "${REPO_FIXTURE}/profiles/base/tui.json" "${td12t}/clean/tui.json" \
+  && pass "12t-e: clean install writes the base tui.json" || fail "12t-e: clean install did not write the base tui.json"
+clean_snapshot="$(snapshot_tree "${td12t}/clean/tui.json")"
+OPENCODE_CONFIG_DIR="${td12t}/clean" bash "${INSTALL_HELPER}" --apply >/dev/null 2>&1 \
+  && [[ "${clean_snapshot}" == "$(snapshot_tree "${td12t}/clean/tui.json")" ]] \
+  && pass "12t-f: clean reinstall is idempotent" || fail "12t-f: clean reinstall changed tui.json"
+
+# Old pin with tuple options, a bare duplicate, and an unrelated local path.
+mkdir -p "${td12t}/tuple"
+printf '{"plugin": [["arkive-compact@1.2.0", {"opt": true}], "/somewhere/else/tui.ts", "arkive-compact"], "keybinds": {"leader": "ctrl+x"}}\n' > "${td12t}/tuple/tui.json"
+chmod 600 "${td12t}/tuple/tui.json"
+OPENCODE_CONFIG_DIR="${td12t}/tuple" bash "${INSTALL_HELPER}" --apply >/dev/null 2>&1 || fail "12t-g0: tuple apply failed"
+python3 - "${td12t}/tuple/tui.json" <<'PY' && pass "12t-g: old pin replaced with options kept, duplicate dropped, unknown path and keys kept, mode kept" || fail "12t-g: tuple merge is wrong"
+import json, os, stat, sys
+data = json.load(open(sys.argv[1]))
+assert data == {"plugin": [["arkive-compact@1.3.0", {"opt": True}], "/somewhere/else/tui.ts"], "keybinds": {"leader": "ctrl+x"}}, data
+assert stat.S_IMODE(os.stat(sys.argv[1]).st_mode) == 0o600
+PY
+
+# Numeric spellings compare by value recursively; retain the first tuple's options.
+mkdir -p "${td12t}/numeric-options"
+printf '{"plugin": [["arkive-compact@1.2.0", {"count": 1.0, "nested": [{"zero": 0, "enabled": true}], "empty": {}}], ["arkive-compact", {"empty": {}, "nested": [{"enabled": true, "zero": -0.0}], "count": 1}]]}\n' > "${td12t}/numeric-options/tui.json"
+OPENCODE_CONFIG_DIR="${td12t}/numeric-options" bash "${INSTALL_HELPER}" --apply >"${TMPDIR}/test12t-numeric-options.out" 2>&1 || fail "12t-g1: numeric-equivalent options apply failed: $(cat "${TMPDIR}/test12t-numeric-options.out")"
+python3 - "${td12t}/numeric-options/tui.json" <<'PY' && pass "12t-g2: numeric-equivalent nested options merged; first options retained" || fail "12t-g2: numeric-equivalent options merge is wrong"
+import json, sys
+data = json.load(open(sys.argv[1]))
+assert data == {"plugin": [["arkive-compact@1.3.0", {"count": 1.0, "nested": [{"zero": 0, "enabled": True}], "empty": {}}]]}, data
+options = data["plugin"][0][1]
+assert type(options["count"]) is float
+assert type(options["nested"][0]["zero"]) is int
+assert type(options["nested"][0]["enabled"]) is bool
+assert list(options) == ["count", "nested", "empty"]
+PY
+
+# Known local Compact checkout entries in relative and Windows forms are replaced;
+# other local paths, including near-miss names, are kept.
+mkdir -p "${td12t}/local-forms"
+python3 - "${td12t}/local-forms/tui.json" <<'PY'
+import json, sys
+plugins = [
+    "./magic-compact/packages/opencode-plugin/src/tui.ts",
+    "./my-plugins/tui.ts",
+    "C:\\Users\\me\\magic-compact\\packages\\opencode-plugin\\src\\tui.ts",
+    r"\\server\share\magic-compact\packages\opencode-plugin\src\tui.ts",
+    r"\Users\me\magic-compact\packages\opencode-plugin\src\tui.ts",
+    "..\\magic-compact\\packages\\opencode-plugin\\src\\tui.ts",
+    "file:///C:/Users/me/magic-compact/packages/opencode-plugin/src/tui.ts",
+    "./not-magic-compact/packages/opencode-plugin/src/tui.ts",
+    "D:\\tools\\other\\tui.ts",
+    r"\\server\share\other\tui.ts",
+    r"\Users\me\other\tui.ts",
+]
+json.dump({"plugin": plugins}, open(sys.argv[1], "w"))
+PY
+OPENCODE_CONFIG_DIR="${td12t}/local-forms" bash "${INSTALL_HELPER}" --apply >"${TMPDIR}/test12t-local-forms.out" 2>&1 || fail "12t-h0: local-forms apply failed: $(cat "${TMPDIR}/test12t-local-forms.out")"
+python3 - "${td12t}/local-forms/tui.json" <<'PY' && pass "12t-h: relative and Windows Compact checkout entries replaced; unknown local paths kept" || fail "12t-h: local-form merge is wrong"
+import json, sys
+data = json.load(open(sys.argv[1]))
+assert data == {"plugin": [
+    "arkive-compact@1.3.0",
+    "./my-plugins/tui.ts",
+    "./not-magic-compact/packages/opencode-plugin/src/tui.ts",
+    "D:\\tools\\other\\tui.ts",
+    r"\\server\share\other\tui.ts",
+    r"\Users\me\other\tui.ts",
+]}, data
+PY
+
+# Nested {"tui": {...}} shape: OpenCode reads {...tui, ...outer}, so the merge edits
+# the plugin array that is in effect and leaves a shadowed nested array alone.
+mkdir -p "${td12t}/nested-only" "${td12t}/nested-shadowed"
+printf '{"tui": {"plugin": ["oc-go-multi-auth@0.1.3"], "theme": "nested"}, "keybinds": {"leader": "ctrl+x"}}\n' > "${td12t}/nested-only/tui.json"
+printf '{"plugin": ["arkive-compact@1.2.0"], "tui": {"plugin": ["hidden-plugin@1.0.0"], "theme": "nested"}}\n' > "${td12t}/nested-shadowed/tui.json"
+nested_ok=1
+for nested_case in nested-only nested-shadowed; do
+  OPENCODE_CONFIG_DIR="${td12t}/${nested_case}" bash "${INSTALL_HELPER}" --apply >"${TMPDIR}/test12t-${nested_case}.out" 2>&1 || nested_ok=0
+done
+[[ "${nested_ok}" -eq 1 ]] || fail "12t-i0: nested apply failed: $(cat "${TMPDIR}"/test12t-nested-*.out)"
+python3 - "${td12t}/nested-only/tui.json" "${td12t}/nested-shadowed/tui.json" <<'PY' && pass "12t-i: nested tui plugin array merged where OpenCode reads it; shadowed nested plugins stay inactive" || fail "12t-i: nested tui merge is wrong"
+import json, sys
+def effective(data):
+    outer = {key: value for key, value in data.items() if key != "tui"}
+    return {**data["tui"], **outer}
+only = json.load(open(sys.argv[1]))
+assert only == {"tui": {"plugin": ["oc-go-multi-auth@0.1.3", "arkive-compact@1.3.0"], "theme": "nested"}, "keybinds": {"leader": "ctrl+x"}}, only
+assert effective(only)["plugin"] == ["oc-go-multi-auth@0.1.3", "arkive-compact@1.3.0"]
+shadowed = json.load(open(sys.argv[2]))
+assert shadowed == {"plugin": ["arkive-compact@1.3.0"], "tui": {"plugin": ["hidden-plugin@1.0.0"], "theme": "nested"}}, shadowed
+assert effective(shadowed)["plugin"] == ["arkive-compact@1.3.0"]
+PY
+
+# Two installs in the same second get separate backup directories, so the
+# second run cannot overwrite the first run's copy of the original config.
+mkdir -p "${td12t}/rapid" "${TMPDIR}/fixed-date-bin" "${TMPDIR}/test12t-rapid.before"
+cat > "${TMPDIR}/fixed-date-bin/date" <<EOF
+#!/usr/bin/env bash
+if [[ "\$1" == "+%Y%m%d-%H%M%S" ]]; then echo 20260101-000000; else exec $(command -v date) "\$@"; fi
+EOF
+chmod +x "${TMPDIR}/fixed-date-bin/date"
+printf '{"original": "opencode"}\n' > "${td12t}/rapid/opencode.json"
+printf '{"original": "agent-hive"}\n' > "${td12t}/rapid/agent_hive.json"
+printf '{"theme": "original", "plugin": ["%s"]}\n' "${tui_legacy}" > "${td12t}/rapid/tui.json"
+cp -a "${td12t}/rapid/." "${TMPDIR}/test12t-rapid.before/"
+rapid_ok=1
+for rapid_run in 1 2; do
+  PATH="${TMPDIR}/fixed-date-bin:${PATH}" OPENCODE_CONFIG_DIR="${td12t}/rapid" bash "${INSTALL_HELPER}" --apply >"${TMPDIR}/test12t-rapid-${rapid_run}.out" 2>&1 || rapid_ok=0
+done
+[[ "${rapid_ok}" -eq 1 ]] || fail "12t-j0: rapid reinstall failed: $(cat "${TMPDIR}"/test12t-rapid-*.out)"
+python3 - "${td12t}/rapid/.backup" "${TMPDIR}/test12t-rapid.before" <<'PY' && pass "12t-j: same-second reinstall keeps the original config backup" || fail "12t-j: same-second reinstall lost or merged a backup"
+import sys
+from pathlib import Path
+backups, before = Path(sys.argv[1]), Path(sys.argv[2])
+dirs = sorted(backups.iterdir())
+assert len(dirs) == 2 and all(d.name.startswith("20260101-000000") for d in dirs), dirs
+names = ("opencode.json", "agent_hive.json", "tui.json")
+originals = [d for d in dirs if all((d / n).read_bytes() == (before / n).read_bytes() for n in names)]
+assert len(originals) == 1, [(d.name, sorted(p.name for p in d.iterdir())) for d in dirs]
+PY
+
+# Refusals happen before the first managed write, in preview and apply.
+for tui_case in malformed jsonc-comment non-object plugin-object plugin-entry option-conflict option-bool-number option-false-zero nested-plugin-object nan infinity negative-infinity number-overflow symlink directory unreadable dual-file jsonc-only; do
+  if [[ "${tui_case}" == unreadable && "$(id -u)" -eq 0 ]]; then
+    pass "12t-${tui_case}: SKIP - effective UID is root"
+    continue
+  fi
+  case_dir="${td12t}/refuse-${tui_case}"
+  mkdir -p "${case_dir}"
+  printf '{"existing":"opencode"}\n' > "${case_dir}/opencode.json"
+  case "${tui_case}" in
+    malformed) printf '{"plugin": [' > "${case_dir}/tui.json" ;;
+    jsonc-comment) printf '{\n  // comment\n  "plugin": []\n}\n' > "${case_dir}/tui.json" ;;
+    non-object) printf '["arkive-compact@1.2.0"]\n' > "${case_dir}/tui.json" ;;
+    plugin-object) printf '{"plugin": {"arkive-compact": true}}\n' > "${case_dir}/tui.json" ;;
+    plugin-entry) printf '{"plugin": ["arkive-compact@1.2.0", 7]}\n' > "${case_dir}/tui.json" ;;
+    option-conflict) printf '{"plugin": [["arkive-compact@1.2.0", {"a": 1}], ["arkive-compact", {"a": 2}]]}\n' > "${case_dir}/tui.json" ;;
+    option-bool-number) printf '{"plugin": [["arkive-compact@1.2.0", {"a": true}], ["arkive-compact", {"a": 1}]]}\n' > "${case_dir}/tui.json" ;;
+    option-false-zero) printf '{"plugin": [["arkive-compact@1.2.0", {"a": [false]}], ["arkive-compact", {"a": [0]}]]}\n' > "${case_dir}/tui.json" ;;
+    nested-plugin-object) printf '{"tui": {"plugin": {"arkive-compact": true}}}\n' > "${case_dir}/tui.json" ;;
+    nan) printf '{"plugin": [["other-plugin@1.0.0", {"ratio": NaN}]]}\n' > "${case_dir}/tui.json" ;;
+    infinity) printf '{"plugin": [["other-plugin@1.0.0", {"ratio": Infinity}]]}\n' > "${case_dir}/tui.json" ;;
+    negative-infinity) printf '{"plugin": [], "scroll": {"speed": -Infinity}}\n' > "${case_dir}/tui.json" ;;
+    number-overflow) printf '{"plugin": [["other-plugin@1.0.0", {"ratio": 1e400}]]}\n' > "${case_dir}/tui.json" ;;
+    symlink) printf '{"plugin": []}\n' > "${case_dir}/real-tui.json"; ln -s real-tui.json "${case_dir}/tui.json" ;;
+    directory) mkdir -p "${case_dir}/tui.json" ;;
+    unreadable) printf '{"plugin": []}\n' > "${case_dir}/tui.json"; chmod 000 "${case_dir}/tui.json" ;;
+    dual-file) printf '{"plugin": []}\n' > "${case_dir}/tui.json"; printf '{}\n' > "${case_dir}/tui.jsonc" ;;
+    jsonc-only) printf '{}\n' > "${case_dir}/tui.jsonc" ;;
+  esac
+  case_before="$(snapshot_tree "${case_dir}")"
+  skills_before="$(snapshot_tree "${AGENTS_SKILLS_DIR}")"
+  preview_status=0
+  OPENCODE_CONFIG_DIR="${case_dir}" bash "${INSTALL_HELPER}" >"${TMPDIR}/test12t-${tui_case}-preview.out" 2>&1 || preview_status=$?
+  apply_status=0
+  OPENCODE_CONFIG_DIR="${case_dir}" bash "${INSTALL_HELPER}" --apply >"${TMPDIR}/test12t-${tui_case}-apply.out" 2>&1 || apply_status=$?
+  if [[ "${preview_status}" -eq 1 && "${apply_status}" -eq 1 ]] \
+    && grep -q '^ERROR: ' "${TMPDIR}/test12t-${tui_case}-apply.out" \
+    && [[ "${case_before}" == "$(snapshot_tree "${case_dir}")" && "${skills_before}" == "$(snapshot_tree "${AGENTS_SKILLS_DIR}")" ]]; then
+    pass "12t-${tui_case}: preview and apply refuse before any write"
+  else
+    fail "12t-${tui_case}: preview=${preview_status} apply=${apply_status} or a write happened: $(cat "${TMPDIR}/test12t-${tui_case}-apply.out")"
+  fi
+  [[ "${tui_case}" != unreadable ]] || chmod 644 "${case_dir}/tui.json"
+done
+
+# The packaged source must be a regular file holding one exact name@version pin.
+tui_source="${REPO_FIXTURE}/profiles/base/tui.json"
+for source_case in range dist-tag empty-version bare-name nonfinite symlink; do
+  rm -f "${tui_source}"
+  case "${source_case}" in
+    range) printf '{"plugin": ["arkive-compact@^1.3.0"]}\n' > "${tui_source}" ;;
+    dist-tag) printf '{"plugin": ["arkive-compact@next"]}\n' > "${tui_source}" ;;
+    empty-version) printf '{"plugin": ["arkive-compact@"]}\n' > "${tui_source}" ;;
+    bare-name) printf '{"plugin": ["arkive-compact"]}\n' > "${tui_source}" ;;
+    nonfinite) printf '{"plugin": ["arkive-compact@1.3.0"], "ratio": NaN}\n' > "${tui_source}" ;;
+    symlink) printf '{"plugin": ["arkive-compact@1.3.0"]}\n' > "${tui_source}.real"; ln -s tui.json.real "${tui_source}" ;;
+  esac
+  case_dir="${td12t}/source-${source_case}"
+  mkdir -p "${case_dir}"
+  printf '{"existing":"opencode"}\n' > "${case_dir}/opencode.json"
+  printf '{"plugin": []}\n' > "${case_dir}/tui.json"
+  case_before="$(snapshot_tree "${case_dir}")"
+  preview_status=0
+  OPENCODE_CONFIG_DIR="${case_dir}" bash "${INSTALL_HELPER}" >"${TMPDIR}/test12t-source-${source_case}-preview.out" 2>&1 || preview_status=$?
+  apply_status=0
+  OPENCODE_CONFIG_DIR="${case_dir}" bash "${INSTALL_HELPER}" --apply >"${TMPDIR}/test12t-source-${source_case}-apply.out" 2>&1 || apply_status=$?
+  if [[ "${preview_status}" -eq 1 && "${apply_status}" -eq 1 ]] \
+    && grep -q '^ERROR: .*source' "${TMPDIR}/test12t-source-${source_case}-apply.out" \
+    && [[ "${case_before}" == "$(snapshot_tree "${case_dir}")" ]]; then
+    pass "12t-source-${source_case}: invalid packaged source refused before any write"
+  else
+    fail "12t-source-${source_case}: preview=${preview_status} apply=${apply_status} or a write happened: $(cat "${TMPDIR}/test12t-source-${source_case}-apply.out")"
+  fi
+done
 build_fixture
 
 # ---------------------------------------------------------------------------
@@ -2180,7 +2447,7 @@ fi
 build_fixture
 
 # ---------------------------------------------------------------------------
-# 65. Repository payloads use the portable Luna/Sol Hive policy
+# 65. Repository payloads use the portable Sol/Terra Hive policy and pinned plugins
 # ---------------------------------------------------------------------------
 printf '\n=== 65. Repository OpenAI-only payload contracts ===\n'
 if python3 - "${BASELINE_PWD}" <<'PY'
@@ -2212,42 +2479,58 @@ except json.JSONDecodeError as exc:
     print(f"invalid JSON: {exc}")
     raise SystemExit(1)
 
-allowed_models = {"openai/gpt-6-luna", "openai/gpt-6.1-sol"}
-blocked_substrings = ("opencode-go/", "magic-compact", "opencode-go-multi-auth")
-for path, value in walk(hive):
-    if not isinstance(value, str):
-        continue
-    if path.endswith(".model") and value not in allowed_models:
-        errors.append(f"{hive_path.name} {path}={value}")
-
-for path, value in walk(opencode):
-    if not isinstance(value, str):
-        continue
-    if any(part in value for part in blocked_substrings):
-        errors.append(f"{open_path.name} {path}={value}")
-    if path.endswith(".model") and value not in allowed_models:
-        errors.append(f"{open_path.name} {path}={value}")
+# Native OpenAI catalog efforts: Sol has no "none"; Terra adds it. Fast, ultrafast, and other providers stay out.
+SOL = "openai/gpt-6.1-sol"
+TERRA = "openai/gpt-6.1-terra"
+model_efforts = {
+    SOL: {"low", "medium", "high", "xhigh", "max"},
+    TERRA: {"none", "low", "medium", "high", "xhigh", "max"},
+}
+blocked_substrings = ("opencode-go/", "magic-compact", "opencode-go-multi-auth", "9router", "meridian", "-fast", "-ultrafast")
+for source_name, payload in ((hive_path.name, hive), (open_path.name, opencode)):
+    for path, value in walk(payload):
+        if not isinstance(value, str):
+            continue
+        if source_name == open_path.name and any(part in value for part in blocked_substrings):
+            errors.append(f"{source_name} {path}={value}")
+        if path.endswith(".model") or path == "$.small_model":
+            if value not in model_efforts:
+                errors.append(f"{source_name} {path}={value} is not exactly Sol or Terra")
+    for path, value in walk(payload):
+        if path.endswith(".variant"):
+            parent = payload
+            for key in re.findall(r"\.([^.\[]+)", path)[:-1]:
+                parent = parent[key]
+            model = parent.get("model")
+            if model in model_efforts and value not in model_efforts[model]:
+                errors.append(f"{source_name} {path}={value} is not a native effort for {model}")
 
 plugin = opencode.get("plugin") or []
-if "oc-arkive@latest" not in plugin:
-    errors.append("opencode.json missing oc-arkive@latest")
-if "opencode-gpt-imagegen" not in plugin:
-    errors.append("opencode.json missing opencode-gpt-imagegen")
-for entry in plugin:
-    if not isinstance(entry, str) or entry.startswith(("file:", "/", "./", "../", "~")):
-        errors.append(f"opencode.json plugin must be a package reference, got {entry!r}")
+if plugin != ["oc-arkive@5.2.0", "oc-multi-imagegen@1.0.0", "arkive-compact@1.3.0"]:
+    errors.append(f"opencode.json plugin must pin exactly oc-arkive@5.2.0, oc-multi-imagegen@1.0.0, arkive-compact@1.3.0: {plugin!r}")
+tui = json.loads((root / "profiles/base/tui.json").read_text(encoding="utf-8"))
+if tui != {"$schema": "https://opencode.ai/tui.json", "plugin": ["arkive-compact@1.3.0"]}:
+    errors.append(f"profiles/base/tui.json must hold only the schema and the arkive-compact@1.3.0 pin: {tui!r}")
+if not hive.get("$schema", "").startswith("https://raw.githubusercontent.com/imarshallwidjaja/agent-hive/v5.2.0/"):
+    errors.append(f"agent_hive.json $schema must be pinned to the v5.2.0 tag: {hive.get('$schema')!r}")
 if opencode.get("snapshot") is not False or opencode.get("autoupdate") is not False:
     errors.append("opencode.json must set snapshot and autoupdate to false")
+if opencode.get("compaction") != {"auto": False, "prune": False}:
+    errors.append(f"native compaction must stay manual without pruning: {opencode.get('compaction')!r}")
 open_agents = opencode.get("agent") or {}
 if open_agents.get("explore") != {"disable": True}:
     errors.append(f"built-in explore must be disabled without a model override: {open_agents.get('explore')!r}")
-if open_agents.get("compaction") != {"model": "openai/gpt-6-luna", "variant": "medium"}:
-    errors.append(f"compaction agent={open_agents.get('compaction')!r}")
-for key in ("small_model", "permission", "disabled_providers"):
-    if key in opencode:
-        errors.append(f"opencode.json must not set {key}")
-if set(opencode.get("provider") or {}) != {"openai"}:
-    errors.append(f"opencode.json providers={sorted(opencode.get('provider') or {})}, expected only openai")
+for name in ("compaction", "magic-compact-summarizer"):
+    if open_agents.get(name) != {"model": SOL, "variant": "low"}:
+        errors.append(f"{name} agent={open_agents.get(name)!r}, expected Sol low")
+if opencode.get("small_model") != SOL:
+    errors.append(f"small_model={opencode.get('small_model')!r}, expected {SOL}")
+if opencode.get("disabled_providers") != ["amazon-bedrock"]:
+    errors.append(f"disabled_providers={opencode.get('disabled_providers')!r}")
+if "permission" in opencode:
+    errors.append("opencode.json must not set permission; the profile keeps OpenCode's default permission policy")
+if opencode.get("provider") != {"openai": {"options": {"headerTimeout": 60000, "chunkTimeout": 1800000}}}:
+    errors.append(f"opencode.json provider={opencode.get('provider')!r}, expected only the OpenAI timeouts")
 
 required_custom = {
     "documentation-reviewer",
@@ -2306,33 +2589,38 @@ for group_name in ("design", "ui"):
     if "code-reviewer-ui" in members:
         errors.append(f"council.groups.{group_name} still references code-reviewer-ui")
 
+# Terra seats are the browser, document, UI, search, and adversarial/second-opinion roles; every other seat is Sol.
+# Efforts keep the live profile's strings.
 exact_seats = {
-    "forager-smart": ("openai/gpt-6.1-sol", "xhigh"),
-    "forager-capable": ("openai/gpt-6.1-sol", "xhigh"),
-    "forager-documents": ("openai/gpt-6-luna", "high"),
-    "forager-ui": ("openai/gpt-6.1-sol", "medium"),
-    "adversarial-plan-reviewer": ("openai/gpt-6.1-sol", "xhigh"),
-    "adversarial-documentation-reviewer": ("openai/gpt-6.1-sol", "medium"),
-    "adversarial-code-reviewer": ("openai/gpt-6.1-sol", "xhigh"),
-    "adversarial-simplicity-reviewer": ("openai/gpt-6.1-sol", "xhigh"),
-    "adversarial-approach-advisor": ("openai/gpt-6.1-sol", "xhigh"),
-    "ui-design-advisor": ("openai/gpt-6.1-sol", "medium"),
-    "approach-advisor-xhigh-reasoning": ("openai/gpt-6.1-sol", "max"),
-    "ui-reviewer": ("openai/gpt-6.1-sol", "medium"),
-    "documentation-reviewer": ("openai/gpt-6-luna", "high"),
-    "hive-master": ("openai/gpt-6.1-sol", "medium"),
-    "architect-planner": ("openai/gpt-6.1-sol", "xhigh"),
-    "swarm-orchestrator": ("openai/gpt-6.1-sol", "medium"),
-    "scout-researcher": ("openai/gpt-6-luna", "high"),
-    "forager-worker": ("openai/gpt-6.1-sol", "medium"),
-    "hive-helper": ("openai/gpt-6-luna", "medium"),
-    "plan-reviewer": ("openai/gpt-6.1-sol", "medium"),
-    "code-reviewer": ("openai/gpt-6.1-sol", "medium"),
-    "simplicity-reviewer": ("openai/gpt-6.1-sol", "medium"),
-    "approach-advisor": ("openai/gpt-6.1-sol", "xhigh"),
-    "vulnerability-reviewer": ("openai/gpt-6.1-sol", "max"),
-    "hive-builder": ("openai/gpt-6.1-sol", "medium"),
-    "taskTraceSummarizer": ("openai/gpt-6-luna", "medium"),
+    "forager-backup": (TERRA, "medium"),
+    "forager-smart": (SOL, "xhigh"),
+    "forager-capable": (SOL, "high"),
+    "forager-documents": (TERRA, "medium"),
+    "forager-ui": (TERRA, "medium"),
+    "forager-browser": (TERRA, "medium"),
+    "adversarial-plan-reviewer": (TERRA, "high"),
+    "ui-reviewer": (TERRA, "high"),
+    "documentation-reviewer": (TERRA, "medium"),
+    "adversarial-documentation-reviewer": (SOL, "xhigh"),
+    "adversarial-code-reviewer": (TERRA, "max"),
+    "adversarial-simplicity-reviewer": (TERRA, "max"),
+    "approach-advisor-xhigh-reasoning": (SOL, "xhigh"),
+    "adversarial-approach-advisor": (TERRA, "high"),
+    "ui-design-advisor": (TERRA, "high"),
+    "hive-master": (SOL, "high"),
+    "architect-planner": (SOL, "high"),
+    "swarm-orchestrator": (SOL, "high"),
+    "scout-researcher": (TERRA, "low"),
+    "forager-worker": (SOL, "medium"),
+    "forager-investigator": (SOL, "high"),
+    "hive-helper": (SOL, "medium"),
+    "plan-reviewer": (SOL, "high"),
+    "code-reviewer": (SOL, "high"),
+    "simplicity-reviewer": (SOL, "medium"),
+    "approach-advisor": (SOL, "high"),
+    "vulnerability-reviewer": (SOL, "max"),
+    "hive-builder": (SOL, "medium"),
+    "taskTraceSummarizer": (SOL, "low"),
 }
 seats = {**agents, **custom, "taskTraceSummarizer": hive.get("taskTraceSummarizer") or {}}
 if set(seats) != set(exact_seats):
@@ -2345,10 +2633,32 @@ for name, expected in exact_seats.items():
 for name, entry in custom.items():
     if entry.get("baseAgent") not in agents:
         errors.append(f"{name} has unsupported baseAgent {entry.get('baseAgent')!r}")
+if (custom.get("forager-browser") or {}).get("baseAgent") != "forager-investigator":
+    errors.append("forager-browser must derive from forager-investigator")
+
+# Council resolution, mirroring oc-arkive 5.2.0 commands/council.ts: a seat is usable only when it is a
+# registered role, not excluded, and derives from a read-only council-eligible base. Every configured
+# member must resolve, so no group silently loses a seat.
+read_only_bases = {"scout-researcher", "plan-reviewer", "code-reviewer", "simplicity-reviewer", "approach-advisor"}
+council = hive.get("council") or {}
+excluded = set(council.get("excludedAgents") or [])
+required_excluded = {"hive-master", "swarm-orchestrator", "forager-worker", "forager-investigator", "hive-builder", "hive-helper"}
+if not required_excluded <= excluded:
+    errors.append(f"council.excludedAgents must keep oc-arkive's mutable-role defaults: missing {sorted(required_excluded - excluded)}")
+if council.get("defaultGroup") not in groups:
+    errors.append(f"council.defaultGroup {council.get('defaultGroup')!r} is not a configured group")
+def base_of(name):
+    return (custom[name] or {}).get("baseAgent") if name in custom else name
 for name, group in groups.items():
-    unknown = set(group.get("members") or []) - (set(agents) | set(custom))
+    members = group.get("members") or []
+    unknown = set(members) - (set(agents) | set(custom))
     if unknown:
         errors.append(f"council.groups.{name} references unknown roles: {sorted(unknown)}")
+    usable = [member for member in members if member not in excluded and base_of(member) in read_only_bases]
+    if usable != members or len(set(members)) != len(members):
+        errors.append(f"council.groups.{name} has unusable or duplicate seats: {sorted(set(members) - set(usable))}")
+    if len(members) > group.get("maxMembers", council.get("maxMembers", 4)):
+        errors.append(f"council.groups.{name} lists more members than its cap")
 minimal_members = (groups.get("minimal-change") or {}).get("members") or []
 if "adversarial-simplicity-reviewer" not in minimal_members or "adversarial-code-reviewer" in minimal_members:
     errors.append(f"council.groups.minimal-change must use adversarial-simplicity-reviewer: {minimal_members!r}")
@@ -2364,6 +2674,7 @@ orchestration_skills = {
     "hive-builder": ["parallel-exploration", "dispatching-parallel-agents", "background-delegation"],
     "scout-researcher": ["cymbal"],
     "forager-worker": ["verification"],
+    "forager-investigator": ["verification"],
 }
 for name, expected in orchestration_skills.items():
     if (agents.get(name) or {}).get("autoLoadSkills") != expected:
@@ -2385,8 +2696,11 @@ for name, phrases in {
     "adversarial-code-reviewer": ("failure-sensitive logic", "unresolved correctness risk", "Skip routine, localized behavior changes"),
     "code-reviewer": ("failure-sensitive logic", "Skip the adversarial pass for routine, localized behavior changes"),
     "adversarial-simplicity-reviewer": ("introduces or expands abstractions", "materially larger"),
-    "forager-smart": ("mechanism is unsettled", "substantive dead end", "Named changes stay with forager-worker or forager-capable"),
-    "forager-capable": ("Use up front only when", "use forager-worker", "goes to forager-smart"),
+    "forager-smart": ("concrete reasoning obstacle", "substantive dead end", "go to forager-investigator", "Ordinary named changes go to forager-worker or forager-capable"),
+    "forager-capable": ("Use up front for a named change", "use forager-worker", "goes to forager-smart"),
+    "forager-backup": ("Last-resort technical failover only", "confirmed provider outages", "Never use for task difficulty"),
+    "forager-investigator": ("standalone diagnosis", "verify-only", "stays with its implementation owner"),
+    "forager-browser": ("browser operation", "not whole-desktop control"),
     "scout-researcher": ("Search agent", "decomposed and fanned out", "parallel dispatches"),
 }.items():
     if any(phrase not in (seats.get(name) or {}).get("description", "") for phrase in phrases):
@@ -2473,6 +2787,13 @@ for profile_path in sorted((root / "profiles/agents").glob("*.md")):
         errors.append(f"{rel} must carry the retrieved-evidence rule")
     if "`explore`" in text:
         errors.append(f"{rel} must not route to the disabled built-in explore agent")
+    investigator_line = (
+        "- Use `forager-investigator` for standalone diagnosis, experiments, and verify-only work. "
+        "Keep implementation-coupled diagnosis with its Forager. "
+        "Split broad read-only retrieval into bounded parallel `scout-researcher` tasks.\n"
+    )
+    if text.count(investigator_line) != 1 or "complex read-only exploration" in text:
+        errors.append(f"{rel} must route standalone diagnosis to forager-investigator instead of read-only forager-worker")
     prose_sections = re.findall(r"^## Prose policy\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
     if len(prose_sections) != 1:
         errors.append(f"{rel} must have one short Prose policy section")
@@ -2543,9 +2864,9 @@ if errors:
 print("ok")
 PY
 then
-  pass "65a: base payloads enforce portable Luna/Sol Hive roles and efforts"
+  pass "65a: base payloads enforce pinned plugins, Sol/Terra roles, native efforts, and usable council seats"
 else
-  fail "65b: base payloads enforce portable Luna/Sol Hive roles and efforts"
+  fail "65b: base payloads enforce pinned plugins, Sol/Terra roles, native efforts, and usable council seats"
 fi
 
 # ---------------------------------------------------------------------------

@@ -100,6 +100,8 @@ AGENTS_MODE="${OPENCODE_AGENTS_MODE:-install}"
 BASE_PAYLOAD_DIR="${REPO_ROOT}/profiles/base"
 OPENCODE_SOURCE="${BASE_PAYLOAD_DIR}/opencode.json"
 AGENT_HIVE_SOURCE="${BASE_PAYLOAD_DIR}/agent_hive.json"
+TUI_SOURCE="${BASE_PAYLOAD_DIR}/tui.json"
+TUI_MERGE_SCRIPT="${SCRIPT_DIR}/merge-tui-plugin.py"
 BASE_PLUGINS=(
   dcg-guard.js
   shell-agents.js
@@ -271,14 +273,26 @@ report_opencode_skill_decisions() {
   esac
 }
 
+# tui.json is merged, not replaced: only the pinned arkive-compact entry is managed.
+# The plan step refuses an unsafe target before the install writes anything.
+plan_tui_plugin() {
+  check_command python3
+  python3 "${TUI_MERGE_SCRIPT}" plan "${TUI_SOURCE}" "${TARGET_DIR}"
+}
+
 if [[ "${MODE}" == preview ]]; then
   abort_if_agents_skills_aliased "${TARGET_DIR}" "OpenCode TARGET_DIR"
   abort_if_agents_skills_aliased "${TARGET_DIR}/skills" "OpenCode TARGET_DIR/skills"
   printf 'Would install Opencode profile into %s\n' "${TARGET_DIR}"
   printf 'Would install shared skills into %s\n' "${AGENTS_SKILLS_DIR}"
   printf 'AGENTS profile: %s; mode: %s\n' "${AGENTS_PROFILE}" "${AGENTS_MODE}"
+  tui_status=0
+  plan_tui_plugin || tui_status=$?
   printf 'Run with --apply to install.\n'
   report_opencode_skill_decisions
+  if [[ "${tui_status}" -ne 0 ]]; then
+    exit 1
+  fi
   exit_if_skill_decisions
   exit 0
 fi
@@ -588,16 +602,23 @@ preflight_source_readable() {
   fi
 }
 preflight_source_readable
+plan_tui_plugin >/dev/null || exit 1
 
 BACKUP_DIR=""
+
+# One backup directory per run, created on first use. mktemp keeps it unique when
+# two runs start in the same second, so a rerun cannot overwrite an earlier backup.
+ensure_backup_dir() {
+  if [[ -z "${BACKUP_DIR}" ]]; then
+    mkdir -p "${TARGET_DIR}/.backup"
+    BACKUP_DIR="$(mktemp -d "${TARGET_DIR}/.backup/$(date +%Y%m%d-%H%M%S).XXXXXX")"
+  fi
+}
 
 backup_path() {
   local path="$1"
   if [[ -e "${path}" ]]; then
-    if [[ -z "${BACKUP_DIR}" ]]; then
-      BACKUP_DIR="${TARGET_DIR}/.backup/$(date +%Y%m%d-%H%M%S)"
-      mkdir -p "${BACKUP_DIR}"
-    fi
+    ensure_backup_dir
     cp -a "${path}" "${BACKUP_DIR}/$(basename "${path}")"
   fi
 }
@@ -606,10 +627,7 @@ backup_agents_skill() {
   local skill_name="$1"
   local path="${AGENTS_SKILLS_DIR}/${skill_name}"
   if [[ -e "${path}" || -L "${path}" ]]; then
-    if [[ -z "${BACKUP_DIR}" ]]; then
-      BACKUP_DIR="${TARGET_DIR}/.backup/$(date +%Y%m%d-%H%M%S)"
-      mkdir -p "${BACKUP_DIR}"
-    fi
+    ensure_backup_dir
     mkdir -p "${BACKUP_DIR}/agents-skills"
     cp -a "${path}" "${BACKUP_DIR}/agents-skills/${skill_name}"
   fi
@@ -647,6 +665,7 @@ mkdir -p "${TARGET_DIR}"
 
 backup_path "${TARGET_DIR}/opencode.json"
 backup_path "${TARGET_DIR}/agent_hive.json"
+backup_path "${TARGET_DIR}/tui.json"
 for plugin_name in "${BASE_PLUGINS[@]}"; do
   backup_path "${TARGET_DIR}/plugins/${plugin_name}"
 done
@@ -661,6 +680,7 @@ mkdir -p "${TARGET_DIR}/skills" "${TARGET_DIR}/agents" "${AGENTS_SKILLS_DIR}"
 
 install -m 0644 "${OPENCODE_SOURCE}" "${TARGET_DIR}/opencode.json"
 install -m 0644 "${AGENT_HIVE_SOURCE}" "${TARGET_DIR}/agent_hive.json"
+python3 "${TUI_MERGE_SCRIPT}" apply "${TUI_SOURCE}" "${TARGET_DIR}" || exit 1
 mkdir -p "${TARGET_DIR}/plugins"
 for plugin_name in "${BASE_PLUGINS[@]}"; do
   install -m 0644 "${BASE_PAYLOAD_DIR}/plugins/${plugin_name}" "${TARGET_DIR}/plugins/${plugin_name}"
